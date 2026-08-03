@@ -193,10 +193,9 @@ Callers may supply stricter valid limits. The stager checks both declared metada
 
 ### 6.2 Path and type rejection
 
-The stager rejects:
+The stager normalizes backslashes to forward slashes before path registration, so slash/backslash aliases collide under one canonical archive path. It then rejects:
 
 - rooted paths and traversal;
-- backslash aliases after normalization;
 - alternate-data-stream syntax and invalid Windows characters;
 - controls, empty segments, trailing spaces/dots, and reserved device names;
 - case-insensitive duplicates;
