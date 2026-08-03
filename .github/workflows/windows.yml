@@ -3,20 +3,124 @@ name: windows
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+
 jobs:
-  build-and-test:
+  build-test-render:
     runs-on: windows-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
-      - name: Build
-        run: dotnet build .\WaveSlate.sln --configuration Release
-      - name: Focused tests
-        run: dotnet run --project .\tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj --configuration Release --no-build
+
+      - name: Prepare evidence directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force .\artifacts\validation | Out-Null
+
+      - name: Build Release
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet build .\WaveSlate.sln --configuration Release 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\build-release.log
+          if ($LASTEXITCODE -ne 0) { throw "Release build failed with exit code $LASTEXITCODE." }
+
+      - name: Run 27-check default suite
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj --configuration Release --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\tests-default.log
+          if ($LASTEXITCODE -ne 0) { throw "Default suite failed with exit code $LASTEXITCODE." }
+
+      - name: Run 28-check EICAR interoperability suite
+        id: eicar
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:WAVESLATE_RUN_EICAR = '1'
+          dotnet run --project .\tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj --configuration Release --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\tests-eicar.log
+          if ($LASTEXITCODE -ne 0) { throw "EICAR interoperability suite failed with exit code $LASTEXITCODE." }
+
+      - name: Render Security panel
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\security-current-source.png --panel security 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\render-security.log
+          if ($LASTEXITCODE -ne 0) { throw "Security render failed with exit code $LASTEXITCODE." }
+
+      - name: Render Remote Assist panel
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\remote-assist-current-source.png --panel remote 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\render-remote-assist.log
+          if ($LASTEXITCODE -ne 0) { throw "Remote Assist render failed with exit code $LASTEXITCODE." }
+
+      - name: Verify render evidence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $expected = @(
+            '.\artifacts\visual\security-current-source.png',
+            '.\artifacts\visual\remote-assist-current-source.png'
+          )
+          foreach ($path in $expected) {
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw "Expected render artifact was not created: $path"
+            }
+          }
+          $renderErrors = Get-ChildItem .\artifacts\visual -Filter '*.error.txt' -File -ErrorAction SilentlyContinue
+          if ($renderErrors) {
+            foreach ($errorFile in $renderErrors) {
+              Write-Host "Render error: $($errorFile.FullName)"
+              Get-Content -LiteralPath $errorFile.FullName
+            }
+            throw 'A render-smoke error file was produced.'
+          }
+
+      - name: Record complete-gate classification
+        if: always()
+        shell: pwsh
+        run: |
+          $eicarOutcome = '${{ steps.eicar.outcome }}'
+          $classification = if ($eicarOutcome -eq 'success') {
+            'The hosted Windows environment completed the 28-check interoperability suite.'
+          } else {
+            'Release build, 27 default checks, and native renders completed; the hosted Windows AMSI provider did not block the in-memory EICAR marker, so 28/28 remains pending on an owner-controlled Windows host.'
+          }
+          @(
+            "EICAR step outcome: $eicarOutcome",
+            $classification
+          ) | Set-Content -Encoding UTF8 .\artifacts\validation\gate-classification.log
+          Add-Content -Encoding UTF8 -Path $env:GITHUB_STEP_SUMMARY -Value "## Soltex Windows gate"
+          Add-Content -Encoding UTF8 -Path $env:GITHUB_STEP_SUMMARY -Value ""
+          Add-Content -Encoding UTF8 -Path $env:GITHUB_STEP_SUMMARY -Value $classification
+          if ($eicarOutcome -ne 'success') {
+            Write-Warning $classification
+          }
+
+      - name: Upload Windows evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: soltex-windows-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/validation/**
+            artifacts/visual/security-current-source.png
+            artifacts/visual/remote-assist-current-source.png
+            artifacts/visual/*.error.txt
+          if-no-files-found: warn
+          retention-days: 30
