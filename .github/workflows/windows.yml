@@ -42,6 +42,14 @@ jobs:
             Tee-Object -FilePath .\artifacts\validation\tests-default.log
           if ($LASTEXITCODE -ne 0) { throw "Default suite failed with exit code $LASTEXITCODE." }
 
+      - name: Run supply-chain hardening suite
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\tests\WaveSlate.Security.SupplyChain.Tests\WaveSlate.Security.SupplyChain.Tests.csproj --configuration Release --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\tests-supply-chain.log
+          if ($LASTEXITCODE -ne 0) { throw "Supply-chain suite failed with exit code $LASTEXITCODE." }
+
       - name: Run 28-check EICAR interoperability suite
         id: eicar
         continue-on-error: true
@@ -99,7 +107,7 @@ jobs:
           $classification = if ($eicarOutcome -eq 'success') {
             'The hosted Windows environment completed the 28-check interoperability suite.'
           } else {
-            'Release build, 27 default checks, and native renders completed; the hosted Windows AMSI provider did not block the in-memory EICAR marker, so 28/28 remains pending on an owner-controlled Windows host.'
+            'Release build, 27 default checks, the supply-chain suite, and native renders completed; the hosted Windows AMSI provider did not block the in-memory EICAR marker, so 28/28 remains pending on an owner-controlled Windows host.'
           }
           @(
             "EICAR step outcome: $eicarOutcome",

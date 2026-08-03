@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaveSlate.RemoteAssist", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaveSlate.Security.Tests", "tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj", "{43D8F0B8-5D44-4A38-AE4E-7D92DF6080E3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WaveSlate.Security.SupplyChain.Tests", "tests\WaveSlate.Security.SupplyChain.Tests\WaveSlate.Security.SupplyChain.Tests.csproj", "{AB66E472-D502-4C9C-8651-FD30420D0459}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,5 +34,9 @@ Global
 		{43D8F0B8-5D44-4A38-AE4E-7D92DF6080E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43D8F0B8-5D44-4A38-AE4E-7D92DF6080E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43D8F0B8-5D44-4A38-AE4E-7D92DF6080E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB66E472-D502-4C9C-8651-FD30420D0459}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB66E472-D502-4C9C-8651-FD30420D0459}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB66E472-D502-4C9C-8651-FD30420D0459}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB66E472-D502-4C9C-8651-FD30420D0459}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
