@@ -7,13 +7,16 @@ public enum AuthenticodeStatus
     Trusted,
     MissingSignature,
     Untrusted,
+    UnsupportedSignatureTopology,
     Error
 }
 
 public sealed record AuthenticodeVerificationResult(
     AuthenticodeStatus Status,
     int NativeStatus,
-    string Detail)
+    string Detail,
+    uint? SecondarySignatureCount = null,
+    uint? VerifiedSignatureIndex = null)
 {
     public bool IsTrusted => Status == AuthenticodeStatus.Trusted;
 }
@@ -28,6 +31,8 @@ public static class AuthenticodeVerifier
     private const uint WtdRevocationCheckChainExcludeRoot = 0x80;
     private const uint WtdCacheOnlyUrlRetrieval = 0x1000;
     private const uint WtdDisableMd2Md4 = 0x2000;
+    private const uint WssVerifySpecific = 0x1;
+    private const uint WssGetSecondarySignatureCount = 0x2;
 
     private const int TrustENoSignature = unchecked((int)0x800B0100);
     private const int TrustEExplicitDistrust = unchecked((int)0x800B0111);
@@ -38,7 +43,8 @@ public static class AuthenticodeVerifier
 
     public static AuthenticodeVerificationResult Verify(
         string path,
-        bool allowNetworkRevocationRetrieval = false)
+        bool allowNetworkRevocationRetrieval = false,
+        bool requireSingleEmbeddedSignature = false)
     {
         string fullPath = PathSafety.NormalizeExistingFile(path);
         if (!OperatingSystem.IsWindows())
@@ -51,6 +57,7 @@ public static class AuthenticodeVerifier
 
         nint pathPointer = nint.Zero;
         nint fileInfoPointer = nint.Zero;
+        nint signatureSettingsPointer = nint.Zero;
         WinTrustData trustData = default;
         try
         {
@@ -64,6 +71,22 @@ public static class AuthenticodeVerifier
             };
             fileInfoPointer = Marshal.AllocCoTaskMem(Marshal.SizeOf<WinTrustFileInfo>());
             Marshal.StructureToPtr(fileInfo, fileInfoPointer, false);
+
+            if (requireSingleEmbeddedSignature)
+            {
+                WinTrustSignatureSettings signatureSettings = new()
+                {
+                    StructureSize = checked((uint)Marshal.SizeOf<WinTrustSignatureSettings>()),
+                    SignatureIndex = 0,
+                    Flags = WssVerifySpecific | WssGetSecondarySignatureCount,
+                    SecondarySignatureCount = 0,
+                    VerifiedSignatureIndex = uint.MaxValue,
+                    CryptoPolicy = nint.Zero
+                };
+                signatureSettingsPointer = Marshal.AllocCoTaskMem(
+                    Marshal.SizeOf<WinTrustSignatureSettings>());
+                Marshal.StructureToPtr(signatureSettings, signatureSettingsPointer, false);
+            }
 
             uint providerFlags = WtdRevocationCheckChainExcludeRoot | WtdDisableMd2Md4;
             if (!allowNetworkRevocationRetrieval)
@@ -85,11 +108,44 @@ public static class AuthenticodeVerifier
                 UrlReference = nint.Zero,
                 ProviderFlags = providerFlags,
                 UiContext = 0,
-                SignatureSettings = nint.Zero
+                SignatureSettings = signatureSettingsPointer
             };
 
             Guid action = GenericVerifyV2;
             int status = NativeMethods.WinVerifyTrust(new nint(-1), ref action, ref trustData);
+            uint? secondarySignatureCount = null;
+            uint? verifiedSignatureIndex = null;
+            if (signatureSettingsPointer != nint.Zero)
+            {
+                WinTrustSignatureSettings observed =
+                    Marshal.PtrToStructure<WinTrustSignatureSettings>(signatureSettingsPointer);
+                secondarySignatureCount = observed.SecondarySignatureCount;
+                verifiedSignatureIndex = observed.VerifiedSignatureIndex;
+            }
+
+            if (status == 0 && requireSingleEmbeddedSignature)
+            {
+                if (verifiedSignatureIndex != 0)
+                {
+                    return new AuthenticodeVerificationResult(
+                        AuthenticodeStatus.UnsupportedSignatureTopology,
+                        status,
+                        "Publisher authorization requires Windows to verify embedded signature index 0.",
+                        secondarySignatureCount,
+                        verifiedSignatureIndex);
+                }
+
+                if (secondarySignatureCount != 0)
+                {
+                    return new AuthenticodeVerificationResult(
+                        AuthenticodeStatus.UnsupportedSignatureTopology,
+                        status,
+                        "Publisher authorization requires exactly one embedded Authenticode signature.",
+                        secondarySignatureCount,
+                        verifiedSignatureIndex);
+                }
+            }
+
             return status switch
             {
                 0 => new AuthenticodeVerificationResult(
@@ -97,32 +153,50 @@ public static class AuthenticodeVerifier
                     status,
                     allowNetworkRevocationRetrieval
                         ? "The Authenticode signature and certificate chain are trusted."
-                        : "The Authenticode signature and locally cached certificate chain are trusted."),
+                        : "The Authenticode signature and locally cached certificate chain are trusted.",
+                    secondarySignatureCount,
+                    verifiedSignatureIndex),
                 TrustENoSignature => new AuthenticodeVerificationResult(
                     AuthenticodeStatus.MissingSignature,
                     status,
-                    "The file has no verifiable Authenticode signature."),
+                    "The file has no verifiable Authenticode signature.",
+                    secondarySignatureCount,
+                    verifiedSignatureIndex),
                 TrustEExplicitDistrust => new AuthenticodeVerificationResult(
                     AuthenticodeStatus.Untrusted,
                     status,
-                    "The Authenticode signer is explicitly distrusted."),
+                    "The Authenticode signer is explicitly distrusted.",
+                    secondarySignatureCount,
+                    verifiedSignatureIndex),
                 TrustESubjectNotTrusted => new AuthenticodeVerificationResult(
                     AuthenticodeStatus.Untrusted,
                     status,
-                    "The Authenticode signature or signer is not trusted."),
+                    "The Authenticode signature or signer is not trusted.",
+                    secondarySignatureCount,
+                    verifiedSignatureIndex),
                 CryptESecuritySettings => new AuthenticodeVerificationResult(
                     AuthenticodeStatus.Untrusted,
                     status,
-                    "Local security policy rejected the Authenticode subject."),
+                    "Local security policy rejected the Authenticode subject.",
+                    secondarySignatureCount,
+                    verifiedSignatureIndex),
                 _ => new AuthenticodeVerificationResult(
                     AuthenticodeStatus.Untrusted,
                     status,
-                    $"Authenticode verification failed with status 0x{status:X8}.")
+                    $"Authenticode verification failed with status 0x{status:X8}.",
+                    secondarySignatureCount,
+                    verifiedSignatureIndex)
             };
         }
-        catch (Exception exception) when (exception is OutOfMemoryException or TypeLoadException)
+        catch (Exception exception) when (
+            exception is OutOfMemoryException or
+            TypeLoadException or
+            ArgumentException)
         {
-            return new AuthenticodeVerificationResult(AuthenticodeStatus.Error, -1, exception.Message);
+            return new AuthenticodeVerificationResult(
+                AuthenticodeStatus.Error,
+                -1,
+                $"Authenticode verification could not complete: {exception.GetType().Name}.");
         }
         finally
         {
@@ -131,6 +205,11 @@ public static class AuthenticodeVerifier
                 trustData.StateAction = WtdStateActionClose;
                 Guid action = GenericVerifyV2;
                 _ = NativeMethods.WinVerifyTrust(new nint(-1), ref action, ref trustData);
+            }
+
+            if (signatureSettingsPointer != nint.Zero)
+            {
+                Marshal.FreeCoTaskMem(signatureSettingsPointer);
             }
 
             if (fileInfoPointer != nint.Zero)
@@ -152,6 +231,17 @@ public static class AuthenticodeVerifier
         internal nint FilePath;
         internal nint FileHandle;
         internal nint KnownSubject;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct WinTrustSignatureSettings
+    {
+        internal uint StructureSize;
+        internal uint SignatureIndex;
+        internal uint Flags;
+        internal uint SecondarySignatureCount;
+        internal uint VerifiedSignatureIndex;
+        internal nint CryptoPolicy;
     }
 
     [StructLayout(LayoutKind.Sequential)]
