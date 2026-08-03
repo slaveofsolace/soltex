@@ -35,13 +35,17 @@ public sealed class ReleaseSequenceStore : IDisposable
     private const int StateSchemaVersion = 1;
     private const int MaximumChannels = 32;
     private const int MaximumVersionLength = 64;
+    private const int ProcessLockTimeoutMilliseconds = 10_000;
+    private const int ProcessLockRetryMilliseconds = 50;
     private readonly AuthenticatedJsonStore _store;
+    private readonly string _processLockPath;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private bool _disposed;
 
     public ReleaseSequenceStore(string stateRoot)
     {
         string safeStateRoot = NormalizeOrCreateStateRoot(stateRoot);
+        _processLockPath = Path.Combine(safeStateRoot, ".release-sequences.lock");
         _store = new AuthenticatedJsonStore(safeStateRoot, "release-sequences");
     }
 
@@ -66,6 +70,8 @@ public sealed class ReleaseSequenceStore : IDisposable
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            await using FileStream processLock = await AcquireProcessLockAsync(cancellationToken)
+                .ConfigureAwait(false);
             ReleaseSequenceState state = await _store.LoadAsync(
                 static () => new ReleaseSequenceState(StateSchemaVersion, []),
                 cancellationToken).ConfigureAwait(false);
@@ -153,6 +159,8 @@ public sealed class ReleaseSequenceStore : IDisposable
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            await using FileStream processLock = await AcquireProcessLockAsync(cancellationToken)
+                .ConfigureAwait(false);
             ReleaseSequenceState state = await _store.LoadAsync(
                 static () => new ReleaseSequenceState(StateSchemaVersion, []),
                 cancellationToken).ConfigureAwait(false);
@@ -164,6 +172,64 @@ public sealed class ReleaseSequenceStore : IDisposable
         finally
         {
             _gate.Release();
+        }
+    }
+
+    private async Task<FileStream> AcquireProcessLockAsync(
+        CancellationToken cancellationToken)
+    {
+        long started = Environment.TickCount64;
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            RejectReparseLockFile();
+            try
+            {
+                FileStream stream = new(
+                    _processLockPath,
+                    FileMode.OpenOrCreate,
+                    FileAccess.ReadWrite,
+                    FileShare.None,
+                    bufferSize: 1,
+                    FileOptions.Asynchronous | FileOptions.WriteThrough);
+                try
+                {
+                    RejectReparseLockFile();
+                    return stream;
+                }
+                catch
+                {
+                    await stream.DisposeAsync().ConfigureAwait(false);
+                    throw;
+                }
+            }
+            catch (IOException exception)
+            {
+                if (Environment.TickCount64 - started >= ProcessLockTimeoutMilliseconds)
+                {
+                    throw new TimeoutException(
+                        "Timed out waiting for the cross-process release-sequence lock.",
+                        exception);
+                }
+
+                await Task.Delay(ProcessLockRetryMilliseconds, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+        }
+    }
+
+    private void RejectReparseLockFile()
+    {
+        if (!File.Exists(_processLockPath))
+        {
+            return;
+        }
+
+        FileAttributes attributes = File.GetAttributes(_processLockPath);
+        if ((attributes & FileAttributes.ReparsePoint) != 0)
+        {
+            throw new InvalidDataException(
+                "A reparse-point release-sequence lock file is not accepted.");
         }
     }
 

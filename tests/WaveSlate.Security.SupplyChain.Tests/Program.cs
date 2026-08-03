@@ -17,6 +17,7 @@ List<(string Name, Func<Task> Test)> tests =
     ("Signed release state is idempotent for identical bytes", SignedReleaseIsIdempotentAsync),
     ("Signed release state rejects sequence equivocation", SignedReleaseRejectsEquivocationAsync),
     ("Signed release state detects local tampering", SignedReleaseStateDetectsTamperingAsync),
+    ("Signed release state honors cross-process lock cancellation", SignedReleaseHonorsCrossProcessLockCancellationAsync),
     ("Signed release rejects noncanonical file paths", SignedReleaseRejectsNonCanonicalPathsAsync),
     ("Signed release requires an explicit UTC publication time", SignedReleaseRequiresUtcPublicationTimeAsync),
     ("Bounded ZIP staging preserves benign bytes", ArchiveStagingPreservesBenignBytesAsync),
@@ -274,6 +275,42 @@ static async Task SignedReleaseStateDetectsTamperingAsync()
         await File.AppendAllTextAsync(statePath, " ");
         using ReleaseSequenceStore reopened = new(stateRoot);
         await ThrowsAsync<InvalidDataException>(() => reopened.ListAsync());
+    });
+}
+
+static async Task SignedReleaseHonorsCrossProcessLockCancellationAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        using RSA rsa = RSA.Create(2_048);
+        SignedReleaseVerificationResult release = await CreateVerifiedReleaseAsync(
+            root,
+            rsa,
+            sequence: 1,
+            version: "1.0.0",
+            payload: "process lock fixture");
+        string stateRoot = Path.Combine(root, "state");
+        using (ReleaseSequenceStore initializer = new(stateRoot))
+        {
+            True((await initializer.AcceptVerifiedAsync(release)).Accepted, "The release was rejected.");
+        }
+
+        string lockPath = Path.Combine(stateRoot, ".release-sequences.lock");
+        using ReleaseSequenceStore blockedStore = new(stateRoot);
+        await using (FileStream heldLock = new(
+                         lockPath,
+                         FileMode.OpenOrCreate,
+                         FileAccess.ReadWrite,
+                         FileShare.None))
+        {
+            using CancellationTokenSource cancellation = new(TimeSpan.FromMilliseconds(200));
+            await ThrowsAsync<OperationCanceledException>(
+                () => blockedStore.ListAsync(cancellation.Token));
+        }
+
+        IReadOnlyList<AcceptedReleaseSequence> recovered = await blockedStore.ListAsync();
+        Equal(1, recovered.Count);
+        Equal(1L, recovered[0].Sequence);
     });
 }
 
