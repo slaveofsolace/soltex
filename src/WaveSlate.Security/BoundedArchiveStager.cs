@@ -62,10 +62,13 @@ public sealed class StagedArchive : IDisposable, IAsyncDisposable
         }
 
         _disposed = true;
-        GC.SuppressFinalize(this);
     }
 
-    public void Dispose() => Delete();
+    public void Dispose()
+    {
+        Delete();
+        GC.SuppressFinalize(this);
+    }
 
     public ValueTask DisposeAsync()
     {
@@ -77,7 +80,7 @@ public sealed class StagedArchive : IDisposable, IAsyncDisposable
 public sealed class BoundedArchiveStager
 {
     private const int CopyBufferBytes = 64 * 1024;
-    private static readonly char[] InvalidWindowsNameCharacters = ['<', '>', ':', '"', '|', '?', '*'];
+    private static readonly SearchValues<char> InvalidWindowsNameCharacters = SearchValues.Create("<>:\\"|?*");
     private static readonly HashSet<string> ReservedWindowsNames = BuildReservedWindowsNames();
     private readonly ArchiveStagingLimits _limits;
 
@@ -310,7 +313,7 @@ public sealed class BoundedArchiveStager
                 segment is "." or ".." ||
                 segment.EndsWith(' ') ||
                 segment.EndsWith('.') ||
-                segment.IndexOfAny(InvalidWindowsNameCharacters) >= 0 ||
+                segment.AsSpan().IndexOfAny(InvalidWindowsNameCharacters) >= 0 ||
                 segment.Any(character => character < ' '))
             {
                 throw new InvalidDataException("A ZIP entry contains an unsafe path segment.");

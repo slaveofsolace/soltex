@@ -27,6 +27,7 @@ jobs:
         run: New-Item -ItemType Directory -Force .\artifacts\validation | Out-Null
 
       - name: Build Release
+        id: build
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -35,6 +36,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Release build failed with exit code $LASTEXITCODE." }
 
       - name: Run 27-check default suite
+        id: default_tests
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -43,6 +45,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Default suite failed with exit code $LASTEXITCODE." }
 
       - name: Run supply-chain hardening suite
+        id: supply_chain
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -62,6 +65,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "EICAR interoperability suite failed with exit code $LASTEXITCODE." }
 
       - name: Render Security panel
+        id: render_security
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -70,6 +74,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Security render failed with exit code $LASTEXITCODE." }
 
       - name: Render Remote Assist panel
+        id: render_remote
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -78,6 +83,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Remote Assist render failed with exit code $LASTEXITCODE." }
 
       - name: Verify render evidence
+        id: verify_renders
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -103,20 +109,37 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $eicarOutcome = '${{ steps.eicar.outcome }}'
-          $classification = if ($eicarOutcome -eq 'success') {
-            'The hosted Windows environment completed the 28-check interoperability suite.'
+          $outcomes = [ordered]@{
+            build = '${{ steps.build.outcome }}'
+            default_tests = '${{ steps.default_tests.outcome }}'
+            supply_chain = '${{ steps.supply_chain.outcome }}'
+            render_security = '${{ steps.render_security.outcome }}'
+            render_remote = '${{ steps.render_remote.outcome }}'
+            verify_renders = '${{ steps.verify_renders.outcome }}'
+            eicar = '${{ steps.eicar.outcome }}'
+          }
+          $requiredFailures = @(
+            $outcomes.GetEnumerator() |
+              Where-Object {
+                $_.Key -ne 'eicar' -and $_.Value -ne 'success'
+              } |
+              ForEach-Object { "$($_.Key)=$($_.Value)" }
+          )
+          if ($requiredFailures.Count -gt 0) {
+            $classification = 'The repository gate is incomplete: ' + ($requiredFailures -join ', ') + '.'
+          } elseif ($outcomes.eicar -eq 'success') {
+            $classification = 'Release build, 27 default checks, the supply-chain suite, native renders, and the 28-check interoperability suite completed.'
           } else {
-            'Release build, 27 default checks, the supply-chain suite, and native renders completed; the hosted Windows AMSI provider did not block the in-memory EICAR marker, so 28/28 remains pending on an owner-controlled Windows host.'
+            $classification = 'Release build, 27 default checks, the supply-chain suite, and native renders completed; the hosted Windows AMSI provider did not block the in-memory EICAR marker, so 28/28 remains pending on an owner-controlled Windows host.'
           }
           @(
-            "EICAR step outcome: $eicarOutcome",
+            $outcomes.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }
             $classification
           ) | Set-Content -Encoding UTF8 .\artifacts\validation\gate-classification.log
           Add-Content -Encoding UTF8 -Path $env:GITHUB_STEP_SUMMARY -Value "## Soltex Windows gate"
           Add-Content -Encoding UTF8 -Path $env:GITHUB_STEP_SUMMARY -Value ""
           Add-Content -Encoding UTF8 -Path $env:GITHUB_STEP_SUMMARY -Value $classification
-          if ($eicarOutcome -ne 'success') {
+          if ($requiredFailures.Count -gt 0 -or $outcomes.eicar -ne 'success') {
             Write-Warning $classification
           }
 
