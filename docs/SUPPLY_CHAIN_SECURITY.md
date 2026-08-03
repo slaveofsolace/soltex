@@ -33,6 +33,7 @@ The current primitives are designed to reject or expose:
 - a lower release sequence;
 - a different signed manifest reusing an accepted sequence;
 - ordinary local mutation of release-sequence state;
+- concurrent Soltex processes racing the same release-sequence state;
 - ZIP traversal, alternate-data-stream syntax, Windows device names, case collisions, file/directory collisions, reparse/symbolic links, unsupported types, excessive entry count, excessive expansion, excessive compression ratio, and incomplete failure cleanup.
 
 The controls are deliberately narrow. They do not establish that content is benign, high quality, compatible, licensed, or appropriate to execute.
@@ -74,7 +75,7 @@ A trusted signature is necessary but not sufficient. `PublisherPolicy` also requ
 
 This avoids relying on display-name string parsing or a certificate thumbprint alone. The public-key pin remains stable across a normal certificate renewal only when the same key is deliberately reused; a new key requires an explicit policy update.
 
-The file is SHA-256 hashed before and after trust and identity evaluation. A mismatch produces `FileChangedDuringVerification` rather than an approval.
+The file is SHA-256 hashed before and after trust and identity evaluation. A mismatch produces `FileChangedDuringVerification` rather than an approval. A later installer must still bind approval to the exact bytes it activates; this primitive does not reserve the path against subsequent same-user replacement.
 
 ### 3.4 Production configuration gap
 
@@ -161,11 +162,27 @@ Rejected outcomes:
 
 The state is serialized through the existing authenticated per-user JSON store. Its authentication key is protected using the existing Windows per-user DPAPI boundary. The store validates schema, unique channels, sequence, version, hash, UTC acceptance time, and reparse-free state path.
 
-### 5.1 Anti-rollback nonclaim
+### 5.1 Cross-process serialization
 
-This is local authenticated state, not a TPM monotonic counter, secure boot measurement, remote transparency log, or server-enforced feed sequence. It detects ordinary mutation and feed rollback against the state currently present on disk.
+The in-process semaphore is supplemented by a state-directory lock file opened with `FileShare.None`. Each read or read-modify-write operation:
 
-It does not prove resistance to a fully compromised same-user account that can restore an older authenticated state file together with corresponding DPAPI-protected key material. Stronger rollback resistance would require a separately threat-modeled hardware, server, or transparency-log anchor.
+1. acquires the instance semaphore;
+2. attempts to acquire the cross-process file lock;
+3. retries at 50-millisecond intervals;
+4. honors caller cancellation;
+5. fails after a bounded ten seconds;
+6. rejects a reparse-point lock file;
+7. holds the lock through authenticated load, validation, and save.
+
+The operating system releases the file handle when a process exits. The lock file contains no credentials or state; it is only a serialization primitive.
+
+The focused regression initializes accepted state, holds the lock with a separate file handle, confirms that another store operation cancels, releases the handle, and confirms that the same store instance can read the accepted sequence afterward.
+
+### 5.2 Anti-rollback nonclaim
+
+This is local authenticated state, not a TPM monotonic counter, secure boot measurement, remote transparency log, or server-enforced feed sequence. It detects ordinary mutation and feed rollback against the state currently present on disk and prevents cooperating processes from racing a read-modify-write operation.
+
+It does not prove resistance to a fully compromised same-user account. Such an account can deny service by holding or replacing user-owned files and may be able to restore an older authenticated state file together with corresponding DPAPI-protected key material. Stronger rollback resistance would require a separately threat-modeled hardware, server, or transparency-log anchor.
 
 ## 6. Bounded ZIP staging
 
@@ -243,7 +260,7 @@ The installer phase must then provide transactional activation, rollback, repair
 
 ## 8. Windows-verified test evidence
 
-Implementation commit `592b96d1a31779676d797ad3c1033b5ccd63975e` passed the Windows warnings-as-errors build and all 17 focused supply-chain checks in GitHub Actions run `30857239356`.
+Implementation commit `6ea85727935564122c5237ae9c3b85cd81cbbc72` passed the Windows warnings-as-errors build and all 18 focused supply-chain checks in GitHub Actions run `30858289994`.
 
 The suite covers:
 
@@ -253,6 +270,7 @@ The suite covers:
 - trusted primary-signature publisher verification with zero secondary signatures;
 - first release, upgrade, idempotency, rollback, and equivocation;
 - authenticated-state mutation;
+- cross-process lock cancellation and recovery;
 - noncanonical manifest path;
 - non-UTC publication time;
 - benign archive preservation;
@@ -262,7 +280,7 @@ The suite covers:
 - expanded-size limit;
 - compression-ratio limit.
 
-The broader existing suite remained 27/27. The hosted EICAR interoperability run remained 27/28 because the installed hosted AMSI provider returned native result `1`. Both current WPF panels rendered natively and produced the expected artifacts. See [`VALIDATION.md`](VALIDATION.md) for exact commands, environment, logs, and artifact identity.
+The broader existing suite remained 27/27. The hosted EICAR interoperability run remained 27/28 because the installed hosted AMSI provider returned native result `1`. Both current WPF panels rendered natively and produced the expected artifacts. Pixel inspection records unresolved truncation in the Security panel; human visual acceptance remains open. See [`VALIDATION.md`](VALIDATION.md) for exact commands, environment, logs, and artifact identity.
 
 ## 9. Explicit nonclaims
 

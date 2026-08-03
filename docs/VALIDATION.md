@@ -20,13 +20,13 @@ Current solution identifier: `WaveSlate.sln`
 Implementation commit:
 
 ```text
-592b96d1a31779676d797ad3c1033b5ccd63975e
+6ea85727935564122c5237ae9c3b85cd81cbbc72
 ```
 
 GitHub pull-request merge preview exercised by the run:
 
 ```text
-f456d277411cf59ee45c9661641363efb1056a37
+811b55ad875c79d3b2c50f746ae853c291ad210e
 ```
 
 Base `main` commit:
@@ -37,8 +37,8 @@ eb0d2ffeacc52d16b46795cd4facdd17a5816b32
 
 Environment:
 
-- GitHub Actions run `30857239356`;
-- job `91830977054`;
+- GitHub Actions run `30858289994`;
+- job `91834318247`;
 - Windows Server 2025, build `10.0.26100`;
 - runner image `windows-2025-vs2026`, version `20260728.188.1`;
 - .NET SDK `10.0.302`;
@@ -46,10 +46,11 @@ Environment:
 
 Retained evidence:
 
-- artifact name: `soltex-windows-evidence-30857239356-1`;
-- artifact ID: `8872960871`;
-- final artifact size: 224,642 bytes;
-- artifact ZIP SHA-256: `55E3369054F86740E3DB5B8C2C1440A28883E70B2D9F509D0F7E692C924B0946`;
+- artifact name: `soltex-windows-evidence-30858289994-1`;
+- artifact ID: `8873339056`;
+- downloaded artifact ZIP size: 224,240 bytes;
+- uncompressed evidence payload: 242,129 bytes across seven files;
+- artifact ZIP SHA-256: `B2720273046CA62D9D5D675AEA13E48CE6D5CAE35ACAB95F5B3725A13B68538C`;
 - configured retention: 30 days;
 - uploaded files: build log, existing-test log, supply-chain-test log, EICAR log, gate classification, Security PNG, Remote Assist PNG.
 
@@ -91,20 +92,21 @@ Hosted-runner observations from this suite:
 ```text
 Windows Security change registration:
   registered=False
+  duration=8.7 ms
   detail=Unable to load DLL 'wscapi.dll' ... 0x8007007E
 
 Windows protection health:
   WSC=Unknown
   mode=Normal
-  bounded duration approximately 6.1 seconds
+  bounded duration=5713.6 ms
 
 Defender Operational events:
   16 events
-  approximately 1.0 seconds
+  duration=735.0 ms
 
 Observation means:
-  WSC read approximately 0.349 ms
-  AMSI 4 KiB call approximately 0.369 ms
+  WSC read=0.344 ms
+  AMSI 4 KiB call=0.379 ms
 ```
 
 These measurements describe one hosted run and are not performance guarantees. The `wscapi.dll` result means this host proves bounded degradation, not successful live provider enumeration.
@@ -121,7 +123,7 @@ dotnet run `
 Result:
 
 ```text
-17/17 tests passed.
+18/18 tests passed.
 ```
 
 Executed cases:
@@ -135,14 +137,15 @@ Executed cases:
 7. identical signed release accepted idempotently;
 8. same-sequence/different-manifest equivocation rejected;
 9. local authenticated sequence state detects mutation;
-10. signed noncanonical `./plugin.dll` alias rejected;
-11. signed non-UTC publication time rejected;
-12. benign ZIP bytes and SHA-256 preserved;
-13. traversal rejected and private staging cleaned;
-14. case-colliding archive paths rejected;
-15. symbolic-link entry rejected;
-16. expanded-size ceiling enforced;
-17. compression-ratio ceiling enforced.
+10. a separately held process lock causes bounded cancellation, then the same sequence-store instance recovers after release;
+11. signed noncanonical `./plugin.dll` alias rejected;
+12. signed non-UTC publication time rejected;
+13. benign ZIP bytes and SHA-256 preserved;
+14. traversal rejected and private staging cleaned;
+15. case-colliding archive paths rejected;
+16. symbolic-link entry rejected;
+17. expanded-size ceiling enforced;
+18. compression-ratio ceiling enforced.
 
 The test certificate and key material are ephemeral fixtures. They are not Soltex production signing material and are not committed.
 
@@ -180,6 +183,8 @@ dotnet run `
 ```
 
 Result: command succeeded and the expected 1044×788 PNG was present.
+
+Pixel inspection found no render exception, but the current scan subtitle and event-detail column contain visible truncation. This is recorded as an open UI defect rather than accepted polish.
 
 ### Native Remote Assist render
 
@@ -245,6 +250,7 @@ Permitted test material:
 - ephemeral self-signed test certificates and keys created in memory;
 - Microsoft-signed `.NET` host already installed on the runner;
 - benign random/text payloads;
+- a locally held lock-file handle representing another Soltex process;
 - ZIP metadata fixtures representing traversal, case collision, symbolic link, size, and ratio boundaries;
 - the standardized harmless EICAR marker submitted to AMSI in memory only.
 
@@ -268,5 +274,5 @@ The following must exist before any signed installer/update claim:
 - authenticated update acquisition and bounded download limits;
 - a composed update planner and transaction;
 - atomic activation and interrupted-update rollback/recovery tests;
-- tampered manifest/package, stale sequence, pin mismatch, expired/revoked certificate, partial I/O, disk-full, locked-file, reboot, downgrade, and cancellation evidence;
+- tampered manifest/package, stale sequence, concurrent process, lock timeout, pin mismatch, expired/revoked certificate, partial I/O, disk-full, locked-file, reboot, downgrade, and cancellation evidence;
 - retained hashes, signatures, logs, and exact reproduction commands for a release candidate.

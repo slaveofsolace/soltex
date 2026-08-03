@@ -34,6 +34,7 @@ The current supply-chain foundation adds:
 - strict schema-2 `Soltex` release manifests signed with detached RSA-PSS/SHA-256 signatures;
 - canonical Windows-relative manifest paths, explicit UTC publication time, length and SHA-256 validation, and reparse-point rejection;
 - authenticated per-user release-sequence state that rejects lower sequences and same-sequence/different-manifest equivocation;
+- a bounded, cancellation-aware cross-process lock around release-sequence reads and writes;
 - bounded ZIP staging that rejects traversal, Windows device names, alternate-data-stream syntax, case collisions, reparse/symbolic links, unsupported entry types, excessive entry counts, expanded sizes, and compression ratios;
 - private staging roots with failure, cancellation, and owner-disposal cleanup.
 
@@ -79,17 +80,17 @@ dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Re
 
 ## Evidence
 
-The implementation code at branch commit `592b96d1a31779676d797ad3c1033b5ccd63975e` was exercised by GitHub Actions run `30857239356` on Windows Server 2025 with .NET SDK 10.0.302:
+The implementation code at branch commit `6ea85727935564122c5237ae9c3b85cd81cbbc72` was exercised by GitHub Actions run `30858289994` on Windows Server 2025 with .NET SDK 10.0.302:
 
 - Release build: **passed**, 0 warnings and 0 errors;
 - existing focused suite: **27/27 passed**;
-- supply-chain suite: **17/17 passed**;
+- supply-chain suite: **18/18 passed**;
 - opt-in hosted EICAR suite: **27/28** because the installed hosted-runner AMSI provider returned native result `1` for the in-memory marker;
 - native Security render: **passed**;
 - native Remote Assist render: **passed**;
 - render artifact verification: **passed**, with no render-error files.
 
-The retained Actions artifact is `soltex-windows-evidence-30857239356-1` (artifact ID `8872960871`, ZIP SHA-256 `55E3369054F86740E3DB5B8C2C1440A28883E70B2D9F509D0F7E692C924B0946`). The hosted server did not expose a usable live `wscapi.dll` provider boundary, so this run proves bounded fallback behavior rather than successful live provider enumeration. Native rendering is runtime evidence, not owner visual acceptance.
+The retained Actions artifact is `soltex-windows-evidence-30858289994-1` (artifact ID `8873339056`, ZIP SHA-256 `B2720273046CA62D9D5D675AEA13E48CE6D5CAE35ACAB95F5B3725A13B68538C`). The hosted server did not expose a usable live `wscapi.dll` provider boundary, so this run proves bounded fallback behavior rather than successful live provider enumeration. Native rendering is runtime evidence, not owner visual acceptance. Pixel inspection also shows unresolved text truncation in the current Security panel.
 
 Documentation:
 

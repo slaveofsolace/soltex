@@ -16,13 +16,13 @@ A passing narrow test proves only that boundary. It does not establish productio
 
 ## Windows-verified current branch baseline
 
-Implementation commit `592b96d1a31779676d797ad3c1033b5ccd63975e` was exercised in pull-request merge preview `f456d277411cf59ee45c9661641363efb1056a37` by GitHub Actions run `30857239356` on Windows Server 2025 (`10.0.26100`, image `windows-2025-vs2026` `20260728.188.1`) with .NET SDK `10.0.302`.
+Implementation commit `6ea85727935564122c5237ae9c3b85cd81cbbc72` was exercised in pull-request merge preview `811b55ad875c79d3b2c50f746ae853c291ad210e` by GitHub Actions run `30858289994` on Windows Server 2025 (`10.0.26100`, image `windows-2025-vs2026` `20260728.188.1`) with .NET SDK `10.0.302`.
 
 | Gate | Result | Scope |
 |---|---:|---|
 | Release build | 0 warnings, 0 errors | Entire `WaveSlate.sln`, including the new test project |
 | Existing focused suite | 27/27 passed | Security companion, monitoring boundaries, Remote Assist regressions |
-| Supply-chain suite | 17/17 passed | Publisher policy, signed release, sequence state, bounded ZIP staging |
+| Supply-chain suite | 18/18 passed | Publisher policy, signed release, sequence state including cross-process lock, bounded ZIP staging |
 | Opt-in EICAR interoperability | 27/28 | Hosted AMSI provider returned native result `1`; owner-host evidence remains pending |
 | Security native render | Passed | 1044×788 render-smoke output created |
 | Remote Assist native render | Passed | 1044×788 render-smoke output created |
@@ -30,13 +30,15 @@ Implementation commit `592b96d1a31779676d797ad3c1033b5ccd63975e` was exercised i
 
 Retained workflow evidence:
 
-- run: `30857239356`;
-- artifact: `soltex-windows-evidence-30857239356-1`;
-- artifact ID: `8872960871`;
-- artifact ZIP SHA-256: `55E3369054F86740E3DB5B8C2C1440A28883E70B2D9F509D0F7E692C924B0946`;
+- run: `30858289994`;
+- job: `91834318247`;
+- artifact: `soltex-windows-evidence-30858289994-1`;
+- artifact ID: `8873339056`;
+- downloaded artifact ZIP size: 224,240 bytes;
+- artifact ZIP SHA-256: `B2720273046CA62D9D5D675AEA13E48CE6D5CAE35ACAB95F5B3725A13B68538C`;
 - retention configured by the workflow: 30 days.
 
-The hosted Windows Server image did not expose a usable live `wscapi.dll` boundary. The provider-neutral health test therefore proved bounded failure/fallback behavior and an `Unknown` state, not successful provider inventory on that host. Native rendering proves that both current panels initialize and capture; owner visual acceptance remains pending.
+The hosted Windows Server image did not expose a usable live `wscapi.dll` boundary. The provider-neutral health test therefore proved bounded failure/fallback behavior and an `Unknown` state, not successful provider inventory on that host. Native rendering proves that both current panels initialize and capture; owner visual acceptance remains pending. Pixel inspection identified unresolved text truncation in the Security scan subtitle and event-detail column.
 
 ## Implemented: Security companion
 
@@ -89,7 +91,9 @@ A certificate thumbprint alone is deliberately not the authorization identity. T
 
 `ReleaseSequenceStore` persists the highest accepted sequence and signed-manifest hash per channel in authenticated, per-user state. It accepts first release, upgrade, and exact idempotent replay; it rejects a lower sequence and a different manifest reusing an accepted sequence. State schema, timestamp, channel, version, hash, duplicate, and reparse boundaries are validated.
 
-**Nonclaims:** this is not a TPM- or hardware-backed monotonic counter. A fully compromised same-user account that can restore an older authenticated state file and matching DPAPI-protected key material is outside the proven boundary. The verifier does not fetch updates, establish transport authenticity, select a production public key, install files, activate versions, or recover a failed installation.
+Each read-modify-write operation is additionally serialized through a state-directory lock file opened with `FileShare.None`. Lock acquisition retries for a bounded ten seconds, honors cancellation, rejects a reparse-point lock file, and releases automatically if a process exits. The regression suite holds the lock from a separate file handle, verifies cancellation, releases it, and confirms the same store instance recovers.
+
+**Nonclaims:** this is not a TPM- or hardware-backed monotonic counter. A fully compromised same-user account can deny service by holding or manipulating user-owned state and may be able to restore an older authenticated state file together with matching DPAPI-protected key material. The verifier does not fetch updates, establish transport authenticity, select a production public key, install files, activate versions, or recover a failed installation.
 
 ## Implemented: bounded ZIP staging primitive
 
