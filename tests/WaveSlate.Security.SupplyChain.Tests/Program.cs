@@ -144,7 +144,7 @@ static async Task AuthenticodePublisherPinsDotNetHostAsync()
     True(result.IsApproved, result.Detail);
     Equal(AuthenticodePublisherStatus.Approved, result.Status);
     True(result.Authenticode is not null, "Publisher verification did not retain WinTrust evidence.");
-    Equal((uint?)0, result.Authenticode!.VerifiedSignatureIndex);
+    Equal((uint?)0, result.Authenticode!.RequestedSignatureIndex);
     Equal((uint?)0, result.Authenticode.SecondarySignatureCount);
     True(
         !string.IsNullOrWhiteSpace(result.FileSha256) && result.FileSha256.Length == 64,
