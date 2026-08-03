@@ -11,12 +11,14 @@ List<(string Name, Func<Task> Test)> tests =
     ("Publisher policy accepts an exact code-signing identity", PublisherPolicyAcceptsExactIdentityAsync),
     ("Publisher policy rejects the same subject with a different key", PublisherPolicyRejectsKeyMismatchAsync),
     ("Publisher policy requires the code-signing EKU", PublisherPolicyRequiresCodeSigningUsageAsync),
-    ("Authenticode publisher verification pins the signed .NET host", AuthenticodePublisherPinsDotNetHostAsync),
+    ("Authenticode publisher verification pins one trusted .NET host signature", AuthenticodePublisherPinsDotNetHostAsync),
     ("Signed release state accepts a monotonic upgrade", SignedReleaseAcceptsUpgradeAsync),
     ("Signed release state rejects rollback", SignedReleaseRejectsRollbackAsync),
     ("Signed release state is idempotent for identical bytes", SignedReleaseIsIdempotentAsync),
     ("Signed release state rejects sequence equivocation", SignedReleaseRejectsEquivocationAsync),
     ("Signed release state detects local tampering", SignedReleaseStateDetectsTamperingAsync),
+    ("Signed release rejects noncanonical file paths", SignedReleaseRejectsNonCanonicalPathsAsync),
+    ("Signed release requires an explicit UTC publication time", SignedReleaseRequiresUtcPublicationTimeAsync),
     ("Bounded ZIP staging preserves benign bytes", ArchiveStagingPreservesBenignBytesAsync),
     ("Bounded ZIP staging rejects traversal and cleans up", ArchiveStagingRejectsTraversalAsync),
     ("Bounded ZIP staging rejects case-colliding paths", ArchiveStagingRejectsCaseCollisionAsync),
@@ -141,6 +143,9 @@ static async Task AuthenticodePublisherPinsDotNetHostAsync()
         await AuthenticodePublisherVerifier.VerifyAsync(signedHostPath, policy);
     True(result.IsApproved, result.Detail);
     Equal(AuthenticodePublisherStatus.Approved, result.Status);
+    True(result.Authenticode is not null, "Publisher verification did not retain WinTrust evidence.");
+    Equal((uint?)0, result.Authenticode!.VerifiedSignatureIndex);
+    Equal((uint?)0, result.Authenticode.SecondarySignatureCount);
     True(
         !string.IsNullOrWhiteSpace(result.FileSha256) && result.FileSha256.Length == 64,
         "Publisher verification should retain the verified file SHA-256.");
@@ -269,6 +274,54 @@ static async Task SignedReleaseStateDetectsTamperingAsync()
         await File.AppendAllTextAsync(statePath, " ");
         using ReleaseSequenceStore reopened = new(stateRoot);
         await ThrowsAsync<InvalidDataException>(() => reopened.ListAsync());
+    });
+}
+
+static async Task SignedReleaseRejectsNonCanonicalPathsAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        using RSA rsa = RSA.Create(2_048);
+        SignedReleaseVerificationResult verification = await CreateReleaseVerificationAsync(
+            root,
+            rsa,
+            sequence: 20,
+            version: "5.0.0",
+            payload: "canonical path fixture",
+            manifestFilePath: "./plugin.dll");
+        True(!verification.Succeeded, "A signed alias path unexpectedly verified.");
+        True(
+            verification.Errors.Any(error =>
+                error.Contains("not canonical", StringComparison.OrdinalIgnoreCase)),
+            "The signed alias path did not produce a canonical-path error.");
+    });
+}
+
+static async Task SignedReleaseRequiresUtcPublicationTimeAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        using RSA rsa = RSA.Create(2_048);
+        DateTimeOffset nonUtcTimestamp = new(
+            2026,
+            8,
+            3,
+            12,
+            0,
+            0,
+            TimeSpan.FromHours(-5));
+        SignedReleaseVerificationResult verification = await CreateReleaseVerificationAsync(
+            root,
+            rsa,
+            sequence: 21,
+            version: "5.0.1",
+            payload: "timestamp fixture",
+            publishedAtUtc: nonUtcTimestamp);
+        True(!verification.Succeeded, "A non-UTC publication timestamp unexpectedly verified.");
+        True(
+            verification.Errors.Any(error =>
+                error.Contains("UTC timestamp", StringComparison.OrdinalIgnoreCase)),
+            "The non-UTC timestamp did not produce the expected verification error.");
     });
 }
 
@@ -479,6 +532,27 @@ static async Task<SignedReleaseVerificationResult> CreateVerifiedReleaseAsync(
     string version,
     string payload)
 {
+    SignedReleaseVerificationResult verification = await CreateReleaseVerificationAsync(
+        root,
+        signingKey,
+        sequence,
+        version,
+        payload);
+    True(verification.Succeeded, string.Join("; ", verification.Errors));
+    Equal(1, verification.VerifiedFileCount);
+    Equal("plugin.dll", verification.Manifest?.Files.Single().Path);
+    return verification;
+}
+
+static async Task<SignedReleaseVerificationResult> CreateReleaseVerificationAsync(
+    string root,
+    RSA signingKey,
+    long sequence,
+    string version,
+    string payload,
+    string manifestFilePath = "plugin.dll",
+    DateTimeOffset? publishedAtUtc = null)
+{
     string fixtureRoot = Path.Combine(
         root,
         $"release-{sequence}-{Guid.NewGuid():N}");
@@ -493,11 +567,11 @@ static async Task<SignedReleaseVerificationResult> CreateVerifiedReleaseAsync(
         Channel: "stable",
         Sequence: sequence,
         Version: version,
-        PublishedAtUtc: DateTimeOffset.UtcNow,
+        PublishedAtUtc: publishedAtUtc ?? DateTimeOffset.UtcNow,
         Files:
         [
             new IntegrityManifestFile(
-                "plugin.dll",
+                manifestFilePath,
                 contentInfo.Length,
                 await FileHashing.Sha256Async(contentPath))
         ]);
@@ -511,20 +585,16 @@ static async Task<SignedReleaseVerificationResult> CreateVerifiedReleaseAsync(
         manifestBytes,
         HashAlgorithmName.SHA256,
         RSASignaturePadding.Pss);
-    string manifestPath = Path.Combine(fixtureRoot, "release.json");
+    string releaseManifestPath = Path.Combine(fixtureRoot, "release.json");
     string signaturePath = Path.Combine(fixtureRoot, "release.sig");
-    await File.WriteAllBytesAsync(manifestPath, manifestBytes);
+    await File.WriteAllBytesAsync(releaseManifestPath, manifestBytes);
     await File.WriteAllBytesAsync(signaturePath, signature);
 
-    SignedReleaseVerificationResult verification =
-        await SignedReleaseManifestVerifier.VerifyAsync(
-            contentRoot,
-            manifestPath,
-            signaturePath,
-            signingKey.ExportSubjectPublicKeyInfoPem());
-    True(verification.Succeeded, string.Join("; ", verification.Errors));
-    Equal(1, verification.VerifiedFileCount);
-    return verification;
+    return await SignedReleaseManifestVerifier.VerifyAsync(
+        contentRoot,
+        releaseManifestPath,
+        signaturePath,
+        signingKey.ExportSubjectPublicKeyInfoPem());
 }
 
 static void CreateZip(string path, Action<ZipArchive> populate)
