@@ -249,6 +249,7 @@ public enum AuthenticodePublisherStatus
     Approved,
     FileChangedDuringVerification,
     SignatureNotTrusted,
+    UnsupportedSignatureTopology,
     SignerIdentityUnavailable,
     PublisherNotApproved,
     Error
@@ -282,11 +283,19 @@ public static class AuthenticodePublisherVerifier
                 .ConfigureAwait(false);
             AuthenticodeVerificationResult trust = AuthenticodeVerifier.Verify(
                 fullPath,
-                allowNetworkRevocationRetrieval);
+                allowNetworkRevocationRetrieval,
+                requireSingleEmbeddedSignature: true);
             if (!trust.IsTrusted)
             {
+                AuthenticodePublisherStatus status = trust.Status switch
+                {
+                    AuthenticodeStatus.UnsupportedSignatureTopology =>
+                        AuthenticodePublisherStatus.UnsupportedSignatureTopology,
+                    AuthenticodeStatus.Error => AuthenticodePublisherStatus.Error,
+                    _ => AuthenticodePublisherStatus.SignatureNotTrusted
+                };
                 return new AuthenticodePublisherVerificationResult(
-                    AuthenticodePublisherStatus.SignatureNotTrusted,
+                    status,
                     hashBefore,
                     trust,
                     null,
