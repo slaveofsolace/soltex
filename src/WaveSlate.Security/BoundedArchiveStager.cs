@@ -80,7 +80,8 @@ public sealed class StagedArchive : IDisposable, IAsyncDisposable
 public sealed class BoundedArchiveStager
 {
     private const int CopyBufferBytes = 64 * 1024;
-    private static readonly SearchValues<char> InvalidWindowsNameCharacters = SearchValues.Create("<>:\\"|?*");
+    private static readonly SearchValues<char> InvalidWindowsNameCharacters = SearchValues.Create(
+        new[] { '<', '>', ':', (char)92, (char)34, '|', '?', '*' });
     private static readonly HashSet<string> ReservedWindowsNames = BuildReservedWindowsNames();
     private readonly ArchiveStagingLimits _limits;
 
