@@ -16,7 +16,8 @@ public sealed record AuthenticodeVerificationResult(
     int NativeStatus,
     string Detail,
     uint? SecondarySignatureCount = null,
-    uint? VerifiedSignatureIndex = null)
+    uint? VerifiedSignatureIndex = null,
+    uint? RequestedSignatureIndex = null)
 {
     public bool IsTrusted => Status == AuthenticodeStatus.Trusted;
 }
@@ -72,12 +73,14 @@ public static class AuthenticodeVerifier
             fileInfoPointer = Marshal.AllocCoTaskMem(Marshal.SizeOf<WinTrustFileInfo>());
             Marshal.StructureToPtr(fileInfo, fileInfoPointer, false);
 
+            uint? requestedSignatureIndex = null;
             if (requireSingleEmbeddedSignature)
             {
+                requestedSignatureIndex = 0;
                 WinTrustSignatureSettings signatureSettings = new()
                 {
                     StructureSize = checked((uint)Marshal.SizeOf<WinTrustSignatureSettings>()),
-                    SignatureIndex = 0,
+                    SignatureIndex = requestedSignatureIndex.Value,
                     Flags = WssVerifySpecific | WssGetSecondarySignatureCount,
                     SecondarySignatureCount = 0,
                     VerifiedSignatureIndex = uint.MaxValue,
@@ -123,27 +126,17 @@ public static class AuthenticodeVerifier
                 verifiedSignatureIndex = observed.VerifiedSignatureIndex;
             }
 
-            if (status == 0 && requireSingleEmbeddedSignature)
+            if (status == 0 &&
+                requireSingleEmbeddedSignature &&
+                secondarySignatureCount != 0)
             {
-                if (verifiedSignatureIndex != 0)
-                {
-                    return new AuthenticodeVerificationResult(
-                        AuthenticodeStatus.UnsupportedSignatureTopology,
-                        status,
-                        "Publisher authorization requires Windows to verify embedded signature index 0.",
-                        secondarySignatureCount,
-                        verifiedSignatureIndex);
-                }
-
-                if (secondarySignatureCount != 0)
-                {
-                    return new AuthenticodeVerificationResult(
-                        AuthenticodeStatus.UnsupportedSignatureTopology,
-                        status,
-                        "Publisher authorization requires exactly one embedded Authenticode signature.",
-                        secondarySignatureCount,
-                        verifiedSignatureIndex);
-                }
+                return new AuthenticodeVerificationResult(
+                    AuthenticodeStatus.UnsupportedSignatureTopology,
+                    status,
+                    "Publisher authorization requires exactly one embedded Authenticode signature.",
+                    secondarySignatureCount,
+                    verifiedSignatureIndex,
+                    requestedSignatureIndex);
             }
 
             return status switch
@@ -155,37 +148,43 @@ public static class AuthenticodeVerifier
                         ? "The Authenticode signature and certificate chain are trusted."
                         : "The Authenticode signature and locally cached certificate chain are trusted.",
                     secondarySignatureCount,
-                    verifiedSignatureIndex),
+                    verifiedSignatureIndex,
+                    requestedSignatureIndex),
                 TrustENoSignature => new AuthenticodeVerificationResult(
                     AuthenticodeStatus.MissingSignature,
                     status,
                     "The file has no verifiable Authenticode signature.",
                     secondarySignatureCount,
-                    verifiedSignatureIndex),
+                    verifiedSignatureIndex,
+                    requestedSignatureIndex),
                 TrustEExplicitDistrust => new AuthenticodeVerificationResult(
                     AuthenticodeStatus.Untrusted,
                     status,
                     "The Authenticode signer is explicitly distrusted.",
                     secondarySignatureCount,
-                    verifiedSignatureIndex),
+                    verifiedSignatureIndex,
+                    requestedSignatureIndex),
                 TrustESubjectNotTrusted => new AuthenticodeVerificationResult(
                     AuthenticodeStatus.Untrusted,
                     status,
                     "The Authenticode signature or signer is not trusted.",
                     secondarySignatureCount,
-                    verifiedSignatureIndex),
+                    verifiedSignatureIndex,
+                    requestedSignatureIndex),
                 CryptESecuritySettings => new AuthenticodeVerificationResult(
                     AuthenticodeStatus.Untrusted,
                     status,
                     "Local security policy rejected the Authenticode subject.",
                     secondarySignatureCount,
-                    verifiedSignatureIndex),
+                    verifiedSignatureIndex,
+                    requestedSignatureIndex),
                 _ => new AuthenticodeVerificationResult(
                     AuthenticodeStatus.Untrusted,
                     status,
                     $"Authenticode verification failed with status 0x{status:X8}.",
                     secondarySignatureCount,
-                    verifiedSignatureIndex)
+                    verifiedSignatureIndex,
+                    requestedSignatureIndex)
             };
         }
         catch (Exception exception) when (
