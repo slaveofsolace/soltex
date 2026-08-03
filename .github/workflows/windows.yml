@@ -43,6 +43,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Default suite failed with exit code $LASTEXITCODE." }
 
       - name: Run 28-check EICAR interoperability suite
+        id: eicar
+        continue-on-error: true
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -87,6 +89,17 @@ jobs:
               Get-Content -LiteralPath $errorFile.FullName
             }
             throw 'A render-smoke error file was produced.'
+          }
+
+      - name: Classify complete gate
+        if: always()
+        shell: pwsh
+        run: |
+          $eicarOutcome = '${{ steps.eicar.outcome }}'
+          "EICAR step outcome: $eicarOutcome" |
+            Tee-Object -FilePath .\artifacts\validation\gate-classification.log
+          if ($eicarOutcome -ne 'success') {
+            throw 'Build, default tests, and render evidence may be valid, but the complete 28-check gate remains incomplete because the installed CI AMSI provider did not block the in-memory EICAR marker.'
           }
 
       - name: Upload Windows evidence
