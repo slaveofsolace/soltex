@@ -182,7 +182,8 @@ public sealed class BoundedArchiveStager
             throw;
         }
         catch (Exception exception) when (
-            exception is IOException or
+            exception is InvalidDataException or
+            IOException or
             UnauthorizedAccessException or
             NotSupportedException or
             ArgumentException or
