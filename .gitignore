@@ -1,0 +1,16 @@
+.dotnet/
+.vs/
+.idea/
+artifacts/*
+!artifacts/visual/
+artifacts/visual/*
+!artifacts/visual/security-dashboard.png
+!artifacts/visual/security-monitoring-v1.png
+!artifacts/visual/remote-assist-v1.png
+bin/
+obj/
+TestResults/
+*.user
+*.suo
+*.nupkg
+*.snupkg

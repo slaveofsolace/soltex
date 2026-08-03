@@ -1,0 +1,55 @@
+SOLTEX PERSONAL DEVICE FABRIC — STRUCTURED CONTINUATION GOAL
+
+OBJECTIVE
+Continue Soltex in C:\Users\suhai\Documents\SOL Tools after the current Security V1 verification gate. The current solution and namespaces retain the legacy `WaveSlate.*` identifier. Build a private, lightweight personal-device fabric that lets the user issue visible voice/text requests across approved Windows PCs, Macs, a NAS, Google Drive, and an isolated work Box profile. Use small capability-bounded agents for automation and keep the separately installed RustDesk client as consent-based remote hands. Preserve a proprietary clean-room Soltex codebase and keep every security claim proportional to demonstrated evidence.
+
+STARTING CONTRACT
+1. Re-read docs\PERSONAL_DEVICE_FABRIC.md, docs\REMOTE_ASSIST.md, docs\THREAT_MODEL.md, docs\IMPLEMENTATION_STATUS.md, and docs\VALIDATION.md.
+2. Re-verify the physical checkout, branch, HEAD, dirty-file ownership, active WaveSlate processes, and current evidence before editing.
+3. Preserve all existing work. Do not reset, clean, stash, overwrite, or merge unrelated changes.
+4. Do not replace the unfinished Security V1 goal with this goal until its current-source Release build, default tests, opt-in in-memory EICAR check, and Security/Remote native render-smokes have produced fresh evidence.
+
+ARCHITECTURE REQUIREMENTS
+- The Soltex controller converts user intent into typed jobs; it never exposes a generic remote shell.
+- Each device runs a small unelevated agent with a deny-by-default capability manifest and device-local policy.
+- Every job is target-bound, capability-bound, short-lived, nonce-bearing, replay-resistant, cancellable, and auditable.
+- High-impact actions require a concrete preview and visible device-local consent.
+- AI may propose a job but cannot mint rights, bypass policy, supply credentials, or silently broaden scope.
+- Tailscale remains a separately installed private-mesh dependency. Mesh reachability is not job authorization; do not open public ingress or weaken ACLs.
+- RustDesk remains a separately installed AGPL program and visible remote-hands fallback. Do not embed its code/binary, supply passwords, enable unattended access, hide consent UI, request elevation, or install its service.
+- The NAS stores shared data, indexes, backups, and permitted receipt mirrors; it never stores live connector secrets, device private keys, approval policy, or authoritative commands.
+- Google Drive may be read-write, using user OAuth, OS secret storage, bounded folders, deterministic conflicts, previews, and confirmations for destructive/broad mutations.
+- Box is an isolated work profile with separate credentials, process/profile, index, audit, and UI identity. No personal/work/NAS/AI cross-domain transfer occurs by default.
+- Windows Credential Manager/DPAPI and macOS Keychain own local secrets. Never place tokens or private keys in prompts, logs, the NAS, or source control.
+
+DELIVERY ORDER
+Phase 0 — Finish and reconcile Security V1 and Remote Assist verification evidence.
+Phase 1 — Read-only device inventory and versioned capability model; loopback tests only.
+Phase 2 — Windows controller/agent protocol with signed envelopes, replay defense, approvals, cancellation, receipts, and recovery.
+Phase 3 — macOS agent with protocol parity and Keychain-backed secrets.
+Phase 4 — Optional external Tailscale reachability without ACL/public-ingress mutation.
+Phase 5 — Consent-first RustDesk handoff associated with registered devices.
+Phase 6 — Bounded NAS files/index/evidence connector with no authorization role.
+Phase 7 — Personal Google Drive read-write connector and safe directional sync rules.
+Phase 8 — Isolated work Box connector after enterprise/cross-domain policy review.
+Phase 9 — Voice/AI intent translation only after every executable capability works deterministically without AI.
+
+MANDATORY FAILURE/RECOVERY COVERAGE
+Test and document offline targets, mesh failure, invalid/expired/replayed jobs, capability mismatch, consent denial/timeout, cancellation, partial transfer, hash mismatch, cloud-token revocation, sync conflict, NAS outage/rollback, connector restart, and RustDesk launch/session failure. Fail closed without silently escalating, exposing a public listener, retrying credentials, or overwriting conflicting data.
+
+PERFORMANCE AND PRIVACY BUDGETS
+Keep agents idle when unused. Measure idle CPU, working set, network heartbeat traffic, command p50/p95 latency, sync throughput, and UI responsiveness on actual supported devices. Bound queues, payloads, logs, retries, timeouts, and retained evidence. Prove that secrets and unredacted paths/content do not enter logs or NAS receipt mirrors.
+
+VERIFICATION GATES
+- Focused unit/integration tests for each capability and every deny/recovery path.
+- Cross-device runtime evidence on each claimed Windows/macOS version.
+- No-public-listener/network-boundary evidence.
+- Fresh native UI captures at representative sizes and explicit human visual acceptance.
+- Factual docs, threat model, research/license provenance, measurements, and nonclaims.
+- No production, zero-trust, compliance, DLP, antivirus, remote-security, or backup claim without independent evidence matching that scope.
+
+EXACT FIRST STEP
+Do not start by integrating a cloud account or accepting remote commands. First finish the recorded Security V1 verification. Then add only the Phase 1 typed capability schema and a loopback-only, deny-by-default device inventory slice with tests for invalid target, unknown capability, expiry, replay, cancellation, and redacted receipts.
+
+DURABLE CHECKPOINT FORMAT
+At each bounded stop record: cwd/physical root; branch/HEAD; dirty-state ownership; files changed; running process/port ownership; tests/build/renders actually completed; measured results; evidence paths; nonclaims; remaining work; and one exact resume command or edit.

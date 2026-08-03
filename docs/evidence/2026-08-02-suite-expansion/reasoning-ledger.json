@@ -1,0 +1,1105 @@
+{
+  "schema_version": "2.0.0",
+  "ledger_id": "waveslate_suite_expansion",
+  "created_at": "2026-08-02T15:53:27-05:00",
+  "depth": "DEEP",
+  "iteration": 3,
+  "root": {
+    "kind": "DECISION",
+    "node_id": "root_suite",
+    "statement": "Expand the committed WaveSlate scaffold into an original Windows workstation suite with process management, system monitoring, benchmarks, privacy controls, security, consent-first remote assistance, audio routing, and capture while preserving safety, privacy, performance, licensing, and clean-room boundaries.",
+    "source_state": "WaveSlate has a verified pre-correction security baseline, current unverified security hardening, placeholder Audio and Clips surfaces, and no native remote-session engine.",
+    "target_state": "WaveSlate has coherent working suite modules, current runtime evidence, explicit nonclaims, and a publishable private-repository handoff.",
+    "conditions": [
+      "Keep privileged, destructive, privacy-changing, and benchmark stress actions explicitly user-driven.",
+      "Use proprietary applications only as black-box feature and workflow references.",
+      "Keep RustDesk AGPL source and binaries outside the proprietary WaveSlate process; use only a visible, consent-first external-client boundary."
+    ],
+    "boundary": "C:\\Users\\suhai\\Documents\\SOL Tools, the read-only RustDesk reference cache under C:\\Users\\suhai\\Documents\\WaveSlate References, explicitly requested reference applications and chats, and the intended private slaveofsolace/WaveSlate repository.",
+    "objective_claim_id": "claim_objective",
+    "invariant_ids": [
+      "inv_cleanroom",
+      "inv_nondestructive",
+      "inv_security",
+      "inv_realtime"
+    ],
+    "uncertainty_changes_decision": true
+  },
+  "project_model": {
+    "status": "PARTIAL",
+    "facets": {
+      "intent": {
+        "summary": "Deliver one visually coherent Windows application that replaces fragmented monitoring, process, benchmark, privacy, security, consent-first remote-assistance, audio, and capture workflows.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_objective"
+        ],
+        "unknown_disposition": ""
+      },
+      "decision": {
+        "summary": "Choose an original modular architecture and the smallest complete implementation batch that materially works now.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_objective",
+          "claim_cleanroom"
+        ],
+        "unknown_disposition": ""
+      },
+      "acceptance_contract": {
+        "summary": "Working local telemetry and process inspection, bounded benchmarks, explicit-confirmation mutations, useful privacy diagnostics, strong security companion behavior, a consent-first external Remote Assist boundary, original visual language, clean build and tests, and honest feature/nonclaim documentation.",
+        "knowledge": "ASSUMED",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_objective",
+          "claim_visual_baseline",
+          "claim_cleanroom"
+        ],
+        "unknown_disposition": "Final visual quality and the breadth of later audio and capture parity remain human-owned acceptance decisions."
+      },
+      "mechanism": {
+        "summary": "A .NET 10 WPF shell can host bounded collectors and services off the UI thread, expose safe operations through confirmations, keep future real-time audio and capture work isolated, and launch a separately installed RustDesk client through a fixed shell-free contract.",
+        "knowledge": "ASSUMED",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_current_state",
+          "claim_remote_source"
+        ],
+        "unknown_disposition": "Current source still needs compilation, Remote Assist launch/failure testing with a trusted external client, and a native render before the mechanism can be accepted."
+      },
+      "current_state_history": {
+        "summary": "The repository began clean on main at bf2662de80992cfed761625642f084d3caaa0f04. A 16-test security baseline passed; current task-owned dirty source now defines 27 default tests and adds later monitoring/process/event hardening, Remote Assist, and a visual refresh without current build/runtime evidence.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_current_state",
+          "claim_visual_baseline",
+          "claim_remote_source"
+        ],
+        "unknown_disposition": ""
+      },
+      "people_incentives": {
+        "summary": "The user owns product direction and acceptance; Windows and third-party vendors own platform and reference-product behavior; future users need trustworthy controls that do not overclaim.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_objective",
+          "claim_cleanroom"
+        ],
+        "unknown_disposition": ""
+      },
+      "lifecycle_recovery": {
+        "summary": "Local changes are recoverable through targeted inverse patches or Git revert; benchmarks require cancellation, cooldown, and no persistence; process, privacy, and remote launches require confirmation and auditable outcomes. RustDesk transport/session recovery remains owned by the external client.",
+        "knowledge": "ASSUMED",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_current_state",
+          "claim_privacy_unknown"
+        ],
+        "unknown_disposition": "Privacy Tool state transitions and production RustDesk publisher/update provenance remain to be designed and tested."
+      }
+    },
+    "invariants": [
+      {
+        "id": "inv_cleanroom",
+        "statement": "Do not copy proprietary code, assets, branding, protected internals, or pixel-identical expression from AppControl, NZXT CAM, SteelSeries Sonar, Zen Browser, or other reference products; do not embed RustDesk AGPL code or binaries into proprietary WaveSlate.",
+        "owner": "Codex implementation and user product owner",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": [
+          "ev_user_references",
+          "ev_remote_static"
+        ]
+      },
+      {
+        "id": "inv_nondestructive",
+        "statement": "Do not terminate processes, change priorities, alter privacy settings, or run stress benchmarks without explicit in-app intent, safeguards, and recoverable handling.",
+        "owner": "WaveSlate runtime",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": [
+          "ev_git_baseline"
+        ]
+      },
+      {
+        "id": "inv_security",
+        "statement": "Do not weaken or misrepresent the antivirus provider registered with Windows or the existing WaveSlate security boundaries.",
+        "owner": "WaveSlate Security",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": [
+          "ev_git_baseline"
+        ]
+      },
+      {
+        "id": "inv_realtime",
+        "statement": "Telemetry, privacy, security, and benchmark work must never execute on future real-time audio, capture, encoder, APO, or driver threads.",
+        "owner": "WaveSlate architecture",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": [
+          "ev_git_baseline"
+        ]
+      }
+    ],
+    "dependencies": [
+      {
+        "id": "dep_windows",
+        "name": "Windows telemetry and process APIs",
+        "role": "Provide current system state and bounded process operations.",
+        "claim_ids": [
+          "claim_current_state"
+        ]
+      },
+      {
+        "id": "dep_privacy_chat",
+        "name": "Privacy Tool - V1 task",
+        "role": "Authoritative project history for privacy integration.",
+        "claim_ids": [
+          "claim_privacy_unknown"
+        ]
+      },
+      {
+        "id": "dep_rustdesk",
+        "name": "Separately installed RustDesk client",
+        "role": "Own remote capture, transport, authentication, consent, input, and session recovery outside WaveSlate.",
+        "claim_ids": [
+          "claim_remote_source"
+        ]
+      },
+      {
+        "id": "dep_github",
+        "name": "GitHub publication tooling",
+        "role": "Create and publish the intended private repository.",
+        "claim_ids": [
+          "claim_github_blocker"
+        ]
+      }
+    ],
+    "stakeholders": [
+      {
+        "id": "stake_user",
+        "name": "User and product owner",
+        "role": "Owns product scope, destructive-action intent, residual risk, and subjective acceptance.",
+        "claim_ids": [
+          "claim_objective"
+        ]
+      },
+      {
+        "id": "stake_end_user",
+        "name": "Future WaveSlate user",
+        "role": "Needs accurate telemetry, predictable controls, privacy, accessibility, and recoverability.",
+        "claim_ids": [
+          "claim_objective",
+          "claim_cleanroom"
+        ]
+      }
+    ]
+  },
+  "authority": {
+    "scope": "Research named reference products and chats; study official RustDesk source under its license; implement, test, and document the local WaveSlate suite and external-client boundary; publish only to the intended private repository when prerequisites are satisfied.",
+    "decision_owner": "User and product owner",
+    "authorized_actions": [
+      "Inspect the supplied images, current repository, named chats, and public authoritative documentation.",
+      "Download and safely inspect official RustDesk source outside the proprietary repository without building, executing, or copying it into WaveSlate.",
+      "Launch and navigate pre-existing SteelSeries software for non-destructive black-box feature research.",
+      "Implement and verify local WaveSlate source, tests, evidence, and documentation.",
+      "Create and push the intended private GitHub repository after required authentication tooling is available."
+    ],
+    "forbidden_actions": [
+      "Copy proprietary code, assets, branding, hidden protocols, or protected internals.",
+      "Embed RustDesk AGPL source or binaries in proprietary WaveSlate, automate remote passwords or unattended access, request elevation, install a remote-control service, or hide consent.",
+      "Change Windows, SteelSeries, antivirus, privacy, or third-party application settings during reference research.",
+      "Terminate unrelated processes, run unbounded stress, or overwrite unrelated work."
+    ],
+    "human_reserved_decisions": [
+      "Final visual and product acceptance.",
+      "Authorization of any real remote-control session and acceptance of the remote endpoint.",
+      "Actual termination of a process or application of a privacy change.",
+      "Production release, signing-key policy, and residual-risk acceptance."
+    ],
+    "external_state_allowed": true,
+    "hard_gates": [
+      {
+        "id": "gate_authority",
+        "category": "AUTHORITY",
+        "status": "CLEAR",
+        "rationale": "The user explicitly requested research, implementation, launch, and GitHub continuation.",
+        "claim_ids": [
+          "claim_objective"
+        ]
+      },
+      {
+        "id": "gate_safety",
+        "category": "SAFETY",
+        "status": "CLEAR",
+        "rationale": "The user explicitly revoked the temporary PC-manager hold. Current verification is blocked by repeated PowerShell command-startup timeouts, not by missing safety authority; protection weakening and unrelated mutations remain forbidden.",
+        "claim_ids": [
+          "claim_cleanroom",
+          "claim_host_stability"
+        ]
+      },
+      {
+        "id": "gate_privacy",
+        "category": "PRIVACY_SECURITY_LEGAL",
+        "status": "CLEAR",
+        "rationale": "AppControl and Privacy Tool were inspected. The security slice remains provider-cooperative and path-private. Remote Assist stays a separate-process, consent-first adapter; no session, credential, elevation, service, or network setting was created during implementation.",
+        "claim_ids": [
+          "claim_privacy_unknown",
+          "claim_unknown_appcontrol",
+          "claim_remote_source"
+        ]
+      },
+      {
+        "id": "gate_external",
+        "category": "IRREVERSIBLE_EXTERNAL_STATE",
+        "status": "BLOCKED",
+        "rationale": "The intended GitHub repository is absent and GitHub CLI was unavailable at the last verified checkpoint.",
+        "claim_ids": [
+          "claim_github_blocker"
+        ]
+      },
+      {
+        "id": "gate_production",
+        "category": "DESTRUCTIVE_PRODUCTION",
+        "status": "NOT_APPLICABLE",
+        "rationale": "No deployment, system configuration change, or production action is currently in scope.",
+        "claim_ids": [
+          "claim_current_state"
+        ]
+      },
+      {
+        "id": "gate_human",
+        "category": "HUMAN_RESERVED",
+        "status": "CLEAR",
+        "rationale": "Implementation may proceed while final subjective acceptance and destructive runtime decisions remain reserved.",
+        "claim_ids": [
+          "claim_reference_direction"
+        ]
+      },
+      {
+        "id": "gate_rollback",
+        "category": "ROLLBACK_FAILURE",
+        "status": "CLEAR",
+        "rationale": "The clean committed baseline is known and local edits can be reversed with targeted patches or a later Git revert.",
+        "claim_ids": [
+          "claim_current_state"
+        ]
+      }
+    ]
+  },
+  "companion_findings": {
+    "lead_skill": "HUMAN_CORTEX",
+    "applicable_domains": [
+      "VISUAL",
+      "UI",
+      "AUDIO",
+      "RUNTIME_EXPERIENCE",
+      "ACCESSIBILITY_COMFORT"
+    ],
+    "observation_input": "CURRENT_CAPTURE",
+    "cold_eye_status": "TOOL_LIMITED",
+    "cold_eye_before_source_inspection": true,
+    "findings": [
+      {
+        "id": "eye_current_scaffold",
+        "source_skill": "HUMAN_EYE",
+        "domain": "UI",
+        "label": "OBSERVED",
+        "verdict": "REVISE",
+        "statement": "The last rendered Security page is coherent and readable but relies on generic rectangular cards, sparse navigation, and large low-information regions; it predates the current visual source changes.",
+        "evidence_ids": [
+          "ev_current_ui"
+        ]
+      },
+      {
+        "id": "eye_nzxt_hierarchy",
+        "source_skill": "HUMAN_EYE",
+        "domain": "VISUAL",
+        "label": "OBSERVED",
+        "verdict": "KEEP",
+        "statement": "The supplied NZXT CAM reference demonstrates fast system-state parsing through grouped telemetry, restrained decoration, and a dense process table.",
+        "evidence_ids": [
+          "ev_user_references"
+        ]
+      },
+      {
+        "id": "eye_human_acceptance",
+        "source_skill": "HUMAN_EYE",
+        "domain": "RUNTIME_EXPERIENCE",
+        "label": "UNKNOWN",
+        "verdict": "UNKNOWN",
+        "statement": "No redesigned runnable build exists yet, so subjective presentation quality and interaction feel remain unverified.",
+        "evidence_ids": []
+      }
+    ],
+    "completion_axes": {
+      "functional_implementation": {
+        "status": "UNKNOWN",
+        "signal": "Current source contains the Remote Assist adapter, WPF flow, and three deterministic tests, but the current solution has not compiled or executed.",
+        "evidence_ids": [
+          "ev_remote_static"
+        ],
+        "rationale": "Static source existence is not functional proof; re-evaluate after the 27-test default run and targeted launch/failure checks."
+      },
+      "runtime_integration": {
+        "status": "UNKNOWN",
+        "signal": "The existing Security page has render evidence; the expanded suite does not.",
+        "evidence_ids": [
+          "ev_current_ui"
+        ],
+        "rationale": "Re-evaluate using a current native render and representative interactions."
+      },
+      "player_eye_presentation": {
+        "status": "UNKNOWN",
+        "signal": "Human Eye revised the old generic scaffold; the new Zen-inspired source has no native render and cannot inherit approval from source inspection.",
+        "evidence_ids": [
+          "ev_current_ui",
+          "ev_user_references"
+        ],
+        "rationale": "Render the current Security and Remote Assist pages, then perform a new cold-eye pass and reserve final taste for the user."
+      },
+      "evidence_regression_coverage": {
+        "status": "UNKNOWN",
+        "signal": "Three Remote Assist regressions are defined and XAML wiring has static checks, but none has execution or current render evidence.",
+        "evidence_ids": [
+          "ev_remote_static"
+        ],
+        "rationale": "Run the 27-test default gate, 28-check EICAR gate, and native render-smoke before upgrading this axis."
+      },
+      "human_acceptance": {
+        "status": "UNKNOWN",
+        "signal": "The user has not reviewed a redesigned runtime build.",
+        "evidence_ids": [],
+        "rationale": "Human acceptance cannot be self-granted."
+      }
+    }
+  },
+  "claims": [
+    {
+      "id": "claim_objective",
+      "label": "OBSERVED",
+      "statement": "The user requested one substantially improved WaveSlate application containing process management, monitoring, benchmarks, privacy, security, audio, capture, and screen sharing/control, with RustDesk as an architectural base and an immersive Zen-inspired visual direction.",
+      "evidence_ids": [
+        "ev_user_references"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Direct user instruction in the current task."
+      }
+    },
+    {
+      "id": "claim_current_state",
+      "label": "MEASURED",
+      "statement": "The starting repository is clean on main at bf2662de80992cfed761625642f084d3caaa0f04.",
+      "evidence_ids": [
+        "ev_git_baseline"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Current Git inspection."
+      }
+    },
+    {
+      "id": "claim_visual_baseline",
+      "label": "OBSERVED",
+      "statement": "The last WaveSlate runtime capture is readable but visually and functionally incomplete for the expanded suite and predates the Remote Assist/visual source changes.",
+      "evidence_ids": [
+        "ev_current_ui"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Human Eye cold-eye inspection of the current native render."
+      }
+    },
+    {
+      "id": "claim_reference_direction",
+      "label": "PROPOSED",
+      "statement": "An original quiet immersive-workspace direction with compact numbered navigation, editorial hierarchy, warm near-black chrome, restrained coral interaction color, and green reserved for trusted system signals best fits the requested workflows without copying Zen or other references.",
+      "evidence_ids": [
+        "ev_current_ui",
+        "ev_user_references"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "MEDIUM",
+        "basis": "Derived from the supplied reference and current-surface deficiencies; final taste remains user-owned."
+      }
+    },
+    {
+      "id": "claim_cleanroom",
+      "label": "PROPOSED",
+      "statement": "Black-box feature learning with original visual expression and a separate-process boundary for incompatible open-source licensing is the appropriate implementation boundary.",
+      "evidence_ids": [
+        "ev_user_references",
+        "ev_remote_static"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Preserves legal, product, and architecture constraints while meeting the functional intent."
+      }
+    },
+    {
+      "id": "claim_unknown_appcontrol",
+      "label": "OBSERVED",
+      "statement": "AppControl is the proprietary local-first Windows historical task manager at appcontrol.com; its official surface includes bounded history, process and publisher context, alerts, rules, a read-only MCP option, and a CLI, and it explicitly is not antivirus.",
+      "evidence_ids": [
+        "ev_appcontrol_official"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Resolved against the product's official site, FAQ, and EULA; retained as reference-only clean-room research."
+      }
+    },
+    {
+      "id": "claim_privacy_unknown",
+      "label": "OBSERVED",
+      "statement": "Privacy Tool - V1 is a separate Cloudflare Worker and React data-removal product at E:\\AI Projects\\Projects\\Privacy Tool; authentication, tenant state, core UI, and audit are present while discovery, dispatch, R2 evidence, workflow, breach-provider, and export paths remain scaffolded.",
+      "evidence_ids": [
+        "ev_privacy_repo"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "The named task was read and its clean branch, HEAD, README, feature matrix, architecture, and authentication documentation were inspected live."
+      }
+    },
+    {
+      "id": "claim_security_slice",
+      "label": "MEASURED",
+        "statement": "The pre-advisory build demonstrated a useful unelevated security-monitoring slice using supported WSC, Defender PowerShell/Event Log, and AMSI interfaces, including bounded failure backoff, recovery reporting, path redaction, and clean native rendering; later source-only polling-wait, process-output-bound, provider-health-precedence, System32-native-resolution, and PowerShell system-module-provenance corrections still require current-source validation.",
+      "evidence_ids": [
+        "ev_security_verification",
+        "ev_security_static_hardening",
+        "ev_security_render"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+          "basis": "The Release build, 16 focused tests, live timings, shutdown-race regression, and native render passed before the earlier advisory. Direct source inspection finds eleven security hardening corrections, eight security-focused regression additions, and three consent-first external Remote Assist boundary regressions, bringing current source to 27 default tests. Compilation, execution, and the redesigned native renders remain open because the Codex PowerShell command path timed out; the user has the exact manual validation sequence."
+      }
+    },
+    {
+      "id": "claim_remote_source",
+      "label": "OBSERVED",
+      "statement": "Current source adds an independently written external RustDesk adapter and Zen-inspired Remote Assist page with bounded discovery, exact filename/reparse checks, SHA-256 approval and launch-time revalidation, Authenticode gating, constrained peer IDs, fixed shell-free arguments, local confirmation, and explicit nonclaims; no current compile, launch, failure-recovery, or native render result exists.",
+      "evidence_ids": [
+        "ev_remote_static"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Direct current-source and external-reference inspection; execution and presentation outcomes are explicitly excluded from the claim."
+      }
+    },
+    {
+      "id": "claim_host_stability",
+      "label": "OBSERVED",
+      "statement": "The earlier MEMORY_CORRUPTION_ONE_BIT and corrected CPU parity advisory remains historical context, but the user explicitly revoked that hold. The current validation blocker is an observed PowerShell command-startup timeout, not missing Intel-default authority.",
+      "evidence_ids": [
+        "ev_stability_advisory",
+        "ev_resume_directive"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Owner-provided advisory followed by an explicit owner resume directive; a bounded no-op PowerShell probe then timed out after 15 seconds."
+      }
+    },
+    {
+      "id": "claim_github_blocker",
+      "label": "MEASURED",
+      "statement": "At the last checkpoint GitHub CLI was absent and slaveofsolace/WaveSlate did not exist.",
+      "evidence_ids": [
+        "ev_git_baseline"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Current-task prerequisite and authenticated connector checks immediately before this request."
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev_git_baseline",
+      "kind": "MEASUREMENT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "C:\\Users\\suhai\\Documents\\SOL Tools git main bf2662de80992cfed761625642f084d3caaa0f04",
+      "captured_at": "2026-08-02T15:53:27-05:00",
+      "integrity": "Clean Git status at capture time.",
+      "supports_claim_ids": [
+        "claim_current_state",
+        "claim_github_blocker"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_current_ui",
+      "kind": "ARTIFACT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "artifacts/visual/security-monitoring-v1.png",
+      "captured_at": "2026-08-02T15:53:27-05:00",
+      "integrity": "sha256:1194b76817178dc65bc6dd74a35c31e96c598f036dedd589278c5f2d2c785f9c; this render predates current Remote Assist and visual source changes",
+      "supports_claim_ids": [
+        "claim_visual_baseline",
+        "claim_reference_direction"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_user_references",
+      "kind": "ARTIFACT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "User-supplied NZXT CAM and skills screenshots plus the 2026-08-03 RustDesk and Zen Browser continuation instruction in the current task.",
+      "captured_at": "2026-08-03T18:06:03.954Z",
+      "integrity": "nzxt sha256:1fac45ab5485beb702e126bd3da7cc6063a74a83d7ed44140d425cd370eed27d; skills sha256:35735d7b902ce82fb6677d9f0b5353be5cb393eb9d151a1f7339d103f3169374; current instruction retained in task history",
+      "supports_claim_ids": [
+        "claim_objective",
+        "claim_reference_direction",
+        "claim_cleanroom"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_appcontrol_official",
+      "kind": "SOURCE",
+      "access": "INSPECTED_CURRENT",
+      "locator": "https://www.appcontrol.com/ ; https://www.appcontrol.com/faq/ ; https://www.appcontrol.com/eula/",
+      "captured_at": "2026-08-02T16:21:34-05:00",
+      "integrity": "First-party product, FAQ, and license pages inspected; no installer, binary, code, or asset acquired.",
+      "supports_claim_ids": [
+        "claim_unknown_appcontrol",
+        "claim_cleanroom"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_privacy_repo",
+      "kind": "ARTIFACT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "E:\\AI Projects\\Projects\\Privacy Tool branch codex/p0-1-authentication-sessions at c5e7261dc8c4203e109e9de56ce6e13125067064",
+      "captured_at": "2026-08-02T16:21:34-05:00",
+      "integrity": "Clean live Git checkout; README, FEATURES, ARCHITECTURE, and AUTH_SETUP inspected without modification.",
+      "supports_claim_ids": [
+        "claim_privacy_unknown"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_security_verification",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "WaveSlate Release build and tests/WaveSlate.Security.Tests before PC stability advisory",
+      "captured_at": "2026-08-02T16:21:34-05:00",
+      "integrity": "Pre-correction baseline: 0 warnings/errors; 16/16 tests; WSC registration 5.4 ms, health 607.4 ms, event query 422.0 ms, WSC mean 0.336 ms, AMSI mean 1.033 ms. This does not verify the later polling-wait/output-bound/provider-precedence/native-resolution/module-provenance corrections or the five added regressions.",
+      "supports_claim_ids": [
+        "claim_security_slice"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_security_static_hardening",
+      "kind": "ARTIFACT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "src/WaveSlate.Security/PowerShellDefenderClient.cs; src/WaveSlate.Security/NativeImportPolicy.cs; src/WaveSlate.Security/ProtectionMonitor.cs; src/WaveSlate.Security/Models.cs; tests/WaveSlate.Security.Tests/Program.cs",
+      "captured_at": "2026-08-03T04:02:56.868Z",
+      "integrity": "Direct source inspection confirms five bounded corrections and five focused regressions, including System32 native resolution and direct PSHOME system-module manifests with module-qualified security cmdlets. Static inspection does not prove compilation, runtime module resolution, test success, or protection efficacy.",
+      "supports_claim_ids": [
+        "claim_security_slice"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_remote_static",
+      "kind": "SOURCE",
+      "access": "INSPECTED_CURRENT",
+      "locator": "src/WaveSlate.RemoteAssist; src/WaveSlate.App/MainWindow.xaml and .xaml.cs; tests/WaveSlate.Security.Tests/Program.cs; docs/REMOTE_ASSIST.md; C:\\Users\\suhai\\Documents\\WaveSlate References\\RustDesk\\1.4.7; official RustDesk and Zen first-party pages",
+      "captured_at": "2026-08-03T20:12:32.054Z",
+      "integrity": "RustDesk archive sha256:895030877bc23e2902c6c560cacff17eafefb77852042c501ef0e6c3c2fa1574; 27 default test registrations; only --connect switch in adapter; monitoring/provider subscriber isolation and PowerShell working-directory/stderr/event-count boundaries present; XAML tag stack balanced, 41 unique names, all 19 handlers resolve; zero PackageReference; static evidence only",
+      "supports_claim_ids": [
+        "claim_remote_source",
+        "claim_cleanroom"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_security_render",
+      "kind": "ARTIFACT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "artifacts/visual/security-monitoring-v1.png",
+      "captured_at": "2026-08-02T16:21:34-05:00",
+      "integrity": "sha256:1194b76817178dc65bc6dd74a35c31e96c598f036dedd589278c5f2d2c785f9c",
+      "supports_claim_ids": [
+        "claim_security_slice",
+        "claim_reference_direction"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_stability_advisory",
+      "kind": "HUMAN_DECISION",
+      "access": "INSPECTED_CURRENT",
+      "locator": "Active-task PC STABILITY ADVISORY and docs/evidence/2026-08-02-suite-expansion/PC_STABILITY_CHECKPOINT.md",
+      "captured_at": "2026-08-02T16:21:34-05:00",
+      "integrity": "Owner-directed stability boundary; no heavy post-advisory workload launched.",
+      "supports_claim_ids": [
+        "claim_host_stability"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_resume_directive",
+      "kind": "HUMAN_DECISION",
+      "access": "INSPECTED_CURRENT",
+      "locator": "Explicit user goal-resume delegation in the active task and docs/evidence/2026-08-02-suite-expansion/PC_STABILITY_CHECKPOINT.md",
+      "captured_at": "2026-08-03T03:33:47.435Z",
+      "integrity": "The user revoked the temporary PC-manager hold. A single bounded no-op PowerShell command then timed out after 15 seconds, identifying command startup as the current technical blocker.",
+      "supports_claim_ids": [
+        "claim_host_stability"
+      ],
+      "contradicts_claim_ids": []
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "hyp_inprocess",
+      "statement": "Bounded in-process .NET collectors are sufficient for a useful first monitoring, process, benchmark, and privacy-diagnostics release.",
+      "mechanism": "Documented unelevated Windows APIs and short background samples provide the required read-only telemetry while explicit user actions invoke only already-supported process controls.",
+      "status": "ACTIVE",
+      "supporting_claim_ids": [
+        "claim_current_state"
+      ],
+      "contradicting_claim_ids": [],
+      "distinguishing_prediction": "An unelevated prototype returns representative CPU, memory, storage, network, process, startup, and privacy-posture data within two seconds without blocking the dispatcher.",
+      "falsifier": "Acceptance-critical data or safe controls consistently require elevation, a service, a driver, or unsupported APIs.",
+      "decision_if_true": "Implement the first release as bounded in-process services and keep privileged operations out of scope.",
+      "test_ids": [
+        "test_unelevated_surface"
+      ],
+      "confidence": {
+        "level": "MEDIUM",
+        "basis": "The security-monitoring subset now passes unelevated with measured bounded latency; broader process, benchmark, and privacy surfaces remain unmeasured."
+      }
+    },
+    {
+      "id": "hyp_helper_required",
+      "statement": "A useful AppControl-like and privacy-management release requires a separate elevated helper or service for acceptance-critical functionality.",
+      "mechanism": "Windows access controls deny required process, startup, hardware, or privacy state to an unelevated desktop process, making a least-privilege broker necessary.",
+      "status": "ACTIVE",
+      "supporting_claim_ids": [
+        "claim_privacy_unknown"
+      ],
+      "contradicting_claim_ids": [
+        "claim_security_slice"
+      ],
+      "distinguishing_prediction": "The unelevated prototype has material access-denied or unavailable results for workflows the user considers core.",
+      "falsifier": "The representative acceptance workflows succeed unelevated and any unavailable data is optional or safely degradable.",
+      "decision_if_true": "Keep the current implementation read-only and design a separately reviewed broker protocol before adding privileged mutations.",
+      "test_ids": [
+        "test_unelevated_surface"
+      ],
+      "confidence": {
+        "level": "LOW",
+        "basis": "No current measurement yet shows that a privileged helper is required."
+      }
+    }
+  ],
+  "tests": [
+    {
+      "id": "test_unelevated_surface",
+      "question": "Can the representative monitoring, process, benchmark, and privacy-diagnostic workflows run usefully and responsively in the existing unelevated WPF process?",
+      "kind": "EXPERIMENT",
+      "discriminates_hypothesis_ids": [
+        "hyp_inprocess",
+        "hyp_helper_required"
+      ],
+      "predicted_outcomes": [
+        {
+          "hypothesis_id": "hyp_inprocess",
+          "outcome": "Representative read-only telemetry succeeds within the sampling budget and safe process controls can be clearly capability-gated."
+        },
+        {
+          "hypothesis_id": "hyp_helper_required",
+          "outcome": "Acceptance-critical reads or controls fail due to privilege boundaries and cannot be safely degraded."
+        }
+      ],
+      "expected_decision_value": "HIGH",
+      "cost": "MEDIUM",
+      "risk": "LOW",
+      "authorization_status": "AUTHORIZED",
+      "status": "PROPOSED",
+      "evidence_ids": [],
+      "changes_decision_if": "A privileged helper is required only if the unavailable surface is acceptance-critical; otherwise the first release remains in-process and least-privilege."
+    },
+    {
+      "id": "test_security_monitoring_slice",
+      "question": "Can the next security-monitoring slice run unelevated with supported Windows interfaces, bounded latency, explicit failure recovery, private event output, and a clean native lifecycle?",
+      "kind": "EXPERIMENT",
+      "discriminates_hypothesis_ids": [
+        "hyp_inprocess",
+        "hyp_helper_required"
+      ],
+      "predicted_outcomes": [
+        {
+          "hypothesis_id": "hyp_inprocess",
+          "outcome": "WSC, Defender status/events, AMSI, monitoring recovery, and UI lifecycle work without an elevated helper."
+        },
+        {
+          "hypothesis_id": "hyp_helper_required",
+          "outcome": "Acceptance-critical security state or lifecycle behavior requires elevation, a service, driver, or unsupported interface."
+        }
+      ],
+      "expected_decision_value": "HIGH",
+      "cost": "LOW",
+      "risk": "LOW",
+      "authorization_status": "AUTHORIZED",
+      "status": "PASS",
+      "evidence_ids": [
+        "ev_security_verification",
+        "ev_security_render"
+      ],
+      "changes_decision_if": "The security companion remains in-process and unelevated; any future system-wide enforcement stays a separately reviewed product boundary."
+    }
+  ],
+  "trace": {
+    "bounds": {
+      "max_depth": 6,
+      "max_nodes": 80,
+      "stop_rule": "Expand only branches that can change module scope, safety controls, architecture, acceptance, monitoring, rollback, or ownership."
+    },
+    "nodes": [
+      {
+        "id": "root_suite",
+        "kind": "ROOT",
+        "statement": "Expand WaveSlate into a coherent original workstation suite.",
+        "claim_id": "claim_objective",
+        "depth": 0,
+        "terminal": false,
+        "closure_reason": "EXPANDED"
+      },
+      {
+        "id": "state_research",
+        "kind": "STATE",
+        "statement": "Reference-product and privacy-task evidence resolves the safe parity boundary.",
+        "claim_id": "claim_unknown_appcontrol",
+        "depth": 1,
+        "terminal": true,
+        "closure_reason": "MONITORED"
+      },
+      {
+        "id": "state_architecture",
+        "kind": "MITIGATION",
+        "statement": "Bounded collectors and confirmation-gated controls protect responsiveness and user intent.",
+        "claim_id": "claim_cleanroom",
+        "depth": 1,
+        "terminal": true,
+        "closure_reason": "BOUNDED"
+      },
+      {
+        "id": "state_visual",
+        "kind": "CONSEQUENCE",
+        "statement": "A unified precision-workstation language improves scan speed and cross-module trust.",
+        "claim_id": "claim_reference_direction",
+        "depth": 1,
+        "terminal": true,
+        "closure_reason": "MONITORED"
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_research",
+        "relation": "FORWARD",
+        "source_node_id": "root_suite",
+        "target_node_id": "state_research",
+        "source_delta": "Scope expands from three scaffold tabs to a multi-module workstation suite.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "Inspect named primary chat, official product documentation, and non-destructive black-box UI behavior before selecting parity features.",
+        "conditions": [
+          "Do not copy protected expression or change reference-app settings."
+        ],
+        "lag": "Before architecture and UI implementation.",
+        "target_delta": "Ambiguous feature requests become an evidence-backed module contract.",
+        "affected_refs": [
+          "inv_cleanroom",
+          "dep_privacy_chat"
+        ],
+        "supporting_claim_ids": [
+          "claim_objective",
+          "claim_cleanroom"
+        ],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Research audit identifies sources, features, nonclaims, and unresolved ambiguity.",
+          "latency": "Same implementation iteration.",
+          "failure_to_detect": "Feature scope could be based on the wrong AppControl product or copied visual assumptions."
+        },
+        "falsifier": "Primary evidence fails to identify a relevant process-management AppControl product.",
+        "confidence": {
+          "level": "HIGH",
+          "basis": "Direct evidence is the cheapest discriminator for the named products."
+        }
+      },
+      {
+        "id": "edge_architecture",
+        "relation": "FORWARD",
+        "source_node_id": "root_suite",
+        "target_node_id": "state_architecture",
+        "source_delta": "More modules increase sampling, privilege, and mutation risk.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "Bound sampling rates, isolate services from the UI and future real-time threads, and gate mutations with explicit confirmations.",
+        "conditions": [
+          "No background benchmark or silent process/privacy mutation."
+        ],
+        "lag": "At implementation and every runtime action.",
+        "target_delta": "The suite remains responsive and user-controlled.",
+        "affected_refs": [
+          "inv_nondestructive",
+          "inv_realtime",
+          "stake_end_user"
+        ],
+        "supporting_claim_ids": [
+          "claim_current_state",
+          "claim_cleanroom"
+        ],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Unit tests, cancellation tests, UI responsiveness, and confirmation states.",
+          "latency": "Build and runtime validation.",
+          "failure_to_detect": "Telemetry or benchmark work could freeze the UI or destructive actions could occur without clear intent."
+        },
+        "falsifier": "Collectors block the dispatcher, ignore cancellation, or process/privacy mutations lack confirmation.",
+        "confidence": {
+          "level": "HIGH",
+          "basis": "The mechanism follows directly from Windows desktop concurrency and destructive-action boundaries."
+        }
+      },
+      {
+        "id": "edge_visual",
+        "relation": "FORWARD",
+        "source_node_id": "root_suite",
+        "target_node_id": "state_visual",
+        "source_delta": "Information volume increases across telemetry, processes, audio, privacy, and security.",
+        "mechanism_status": "HYPOTHESIZED",
+        "mechanism": "Consistent typography, status color, grid rhythm, and live signal treatment reduce context-switching cost.",
+        "conditions": [
+          "Dense information must retain keyboard access, contrast, and clear destructive-action separation."
+        ],
+        "lag": "At first use and repeated navigation.",
+        "target_delta": "Users can scan health and act across modules without relearning the interface.",
+        "affected_refs": [
+          "stake_end_user"
+        ],
+        "supporting_claim_ids": [
+          "claim_visual_baseline",
+          "claim_reference_direction"
+        ],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Human Eye comparative captures and user review.",
+          "latency": "After native render and interaction build.",
+          "failure_to_detect": "A visually polished screenshot could hide poor density, focus behavior, or interaction feedback."
+        },
+        "falsifier": "Representative users cannot identify module state or primary actions faster than the current scaffold.",
+        "confidence": {
+          "level": "MEDIUM",
+          "basis": "The reference and baseline support the direction, but subjective acceptance is still open."
+        }
+      }
+    ],
+    "feedback_loops": [],
+    "thresholds": [
+      {
+        "id": "threshold_benchmark",
+        "variable": "Benchmark duration, thread count, and cancellation latency",
+        "boundary": "Short, user-started, cancellable diagnostic workloads only.",
+        "direction": "Stop or reject any workload exceeding configured duration, cancellation, or thermal guardrails.",
+        "evidence_or_test_ids": []
+      }
+    ]
+  },
+  "decision": {
+    "iteration_choice": "ANALYZE",
+    "recommendation": "Retain the supported-interface security architecture and the clean separate-process RustDesk adapter. The next decision-changing evidence is a responsive Release build, 27-test default gate, 28-check in-memory EICAR gate, targeted trusted-client launch/failure exercise, and current native renders with Human Eye and user review; do not broaden remote privileges or make visual/completion claims before those results.",
+    "selected_action_ids": [
+      "act_research",
+      "act_implement"
+    ],
+    "rejected_options": [
+      "Do not reproduce reference products pixel-for-pixel or copy their assets.",
+      "Do not implement privileged process, privacy, driver, or benchmark behavior before safe boundaries are defined.",
+      "Do not embed RustDesk AGPL code/binaries or add passwords, unattended access, elevation, service installation, or hidden-session behavior."
+    ],
+    "decision_claim_ids": [
+      "claim_objective",
+      "claim_current_state",
+      "claim_cleanroom",
+      "claim_reference_direction",
+      "claim_security_slice",
+      "claim_remote_source"
+    ],
+    "remaining_unknown_claim_ids": [
+      "claim_github_blocker"
+    ],
+    "human_owner": "User and product owner",
+    "consecutive_stable_checks": 0,
+    "reopen_trigger": "Re-evaluate the adapter or visual direction if compilation fails, launch arguments differ from the fixed contract, byte/signature revalidation fails open, RustDesk licensing/provenance changes, or the current native render/user review rejects the hierarchy."
+  },
+  "actions": [
+    {
+      "id": "act_research",
+      "description": "Inspect AppControl sources, Privacy Tool - V1, SteelSeries Sonar workflows, supplied references, official RustDesk source/licensing, Zen Browser principles, and the current WaveSlate runtime evidence.",
+      "status": "EXECUTED",
+      "authorization_status": "AUTHORIZED",
+      "authority_basis": "Explicit current user request.",
+      "destructive": false,
+      "production": false,
+      "external_state_change": false,
+      "irreversible": false,
+      "monitoring": "Record source identity, screenshots or UI trees, and unresolved ambiguity in the research audit and ledger.",
+      "rollback": {
+        "kind": "NONE",
+        "procedure": "Read-only research creates no system mutation to roll back.",
+        "preconditions": [],
+        "verification": "Reference applications retain their original settings and state.",
+        "evidence_ids": [],
+        "irreversible_residue": "Only local research notes remain."
+      },
+      "recovery": {
+        "procedure": "Stop reference-app interaction if a permission, security, privacy, authentication, or destructive prompt appears.",
+        "owner": "Codex",
+        "evidence_ids": []
+      },
+      "mitigation_consequence_node_ids": [
+        "state_research"
+      ]
+    },
+    {
+      "id": "act_implement",
+      "description": "Implement the original WaveSlate suite modules, separate-process Remote Assist boundary, visual system, tests, evidence, and documentation.",
+      "status": "EXECUTED",
+      "authorization_status": "AUTHORIZED",
+      "authority_basis": "Explicit current user request to recreate and improve the named workflows.",
+      "destructive": false,
+      "production": false,
+      "external_state_change": false,
+      "irreversible": false,
+      "monitoring": "Keep Git status scoped, validate the ledger after material updates, build with warnings as errors, test bounded operations, and render representative views.",
+      "rollback": {
+        "kind": "TRUE_ROLLBACK",
+        "procedure": "Apply targeted inverse patches to this batch or create a Git revert after a dedicated commit; never reset unrelated work.",
+        "preconditions": [
+          "Identify only files owned by this expansion batch."
+        ],
+        "verification": "Git diff and tests match the recorded baseline behavior.",
+        "evidence_ids": [
+          "ev_git_baseline"
+        ],
+        "irreversible_residue": "None for uncommitted local source changes."
+      },
+      "recovery": {
+        "procedure": "Retain the verified bf2662d baseline and continue from the last validated module if a later module fails.",
+        "owner": "Codex and user",
+        "evidence_ids": [
+          "ev_git_baseline"
+        ]
+      },
+      "mitigation_consequence_node_ids": [
+        "state_architecture",
+        "state_visual"
+      ]
+    },
+    {
+      "id": "act_publish",
+      "description": "Create the intended private GitHub repository and push the verified main branch.",
+      "status": "PROPOSED",
+      "authorization_status": "AUTHORIZED",
+      "authority_basis": "The user resumed the prior GitHub publish request and explicitly invoked the GitHub plugin.",
+      "destructive": false,
+      "production": false,
+      "external_state_change": true,
+      "irreversible": true,
+      "monitoring": "Verify authenticated owner, private visibility, exact remote URL, pushed commit, and clean local status.",
+      "rollback": {
+        "kind": "COMPENSATING_ACTION",
+        "procedure": "If publication is wrong, stop and request explicit confirmation before deleting or altering the remote; local history remains intact.",
+        "preconditions": [
+          "GitHub CLI installed and authenticated.",
+          "Repository name and private visibility verified."
+        ],
+        "verification": "GitHub connector and git ls-remote agree on repository and branch identity.",
+        "evidence_ids": [],
+        "irreversible_residue": "GitHub audit events and any fetched clones may persist."
+      },
+      "recovery": {
+        "procedure": "Keep the local clean commit as the source of truth until remote identity and push are verified.",
+        "owner": "User and Codex",
+        "evidence_ids": [
+          "ev_git_baseline"
+        ]
+      },
+      "mitigation_consequence_node_ids": []
+    }
+  ],
+  "verification": {
+    "mechanism": {
+      "status": "UNKNOWN",
+      "signal": "Current source statically contains the Remote Assist boundary, trust/fingerprint gates, fixed launch plans, confirmations, visual flow, and three tests.",
+      "evidence_ids": [
+        "ev_remote_static",
+        "ev_security_static_hardening"
+      ],
+      "rationale": "Static source evidence cannot establish compilation, external-client behavior, or real failure/recovery paths."
+    },
+    "endpoint": {
+      "status": "UNKNOWN",
+      "signal": "No current expanded runnable build or redesigned native render exists.",
+      "evidence_ids": [],
+      "rationale": "The actual objective requires representative runtime workflows, not only compilation."
+    },
+    "guardrails": {
+      "status": "UNKNOWN",
+      "signal": "Clean-room and license separation are statically documented; confirmation, accessibility, launch integrity, performance, and coexistence remain untested in the current build.",
+      "evidence_ids": [
+        "ev_remote_static"
+      ],
+      "rationale": "Keep open until the current build, targeted Remote Assist failure cases, and visual/accessibility inspection run."
+    },
+    "recovery": {
+      "status": "UNKNOWN",
+      "signal": "Source blocks missing, changed, reparse-point, untrusted, malformed-ID, and startup-failure cases, but runtime recovery and RustDesk-owned session recovery have not been exercised.",
+      "evidence_ids": [
+        "ev_git_baseline"
+      ],
+      "rationale": "Git recovery is known; process-launch and external-session recovery remain unknown."
+    }
+  },
+  "closure": {
+    "status": "OPEN",
+    "summary": "The bounded Remote Assist and visual source slice is implemented and documented, but current compilation, tests, trusted-client runtime behavior, redesigned render evidence, GitHub publication, and human acceptance remain open.",
+    "residual_risks": [
+      "AppControl identity is resolved to the proprietary local-first product at appcontrol.com; complete clean-room workflow parity remains open.",
+      "Privacy Tool - V1 repository state is identified; a concrete WaveSlate integration contract and executable backend paths remain open.",
+      "Authenticode trust does not pin an official RustDesk publisher/release, and a narrow validate-to-process-start race remains.",
+      "The current Zen-inspired WPF source has no native render, accessibility pass, or user acceptance.",
+      "Reference-product feature breadth may exceed a single safe implementation batch.",
+      "Final visual and interaction quality require human review."
+    ],
+    "human_acceptance_required": true,
+    "accepted_by": "",
+    "acceptance_evidence_ids": [],
+    "nonclaims": [
+      "This ledger does not contain hidden chain-of-thought.",
+      "This work will not copy proprietary code, assets, branding, or protected internals.",
+      "WaveSlate does not embed RustDesk, own its transport/authentication/session security, or provide passwords, unattended access, elevation, service installation, or consent bypass.",
+      "Automated checks and screenshots do not grant human acceptance.",
+      "The current scaffold is not yet a complete AppControl, NZXT CAM, SteelSeries Sonar, Privacy Tool, RustDesk, or Zen Browser replacement."
+    ]
+  }
+}

@@ -1,11 +1,13 @@
-# WaveSlate
+# Soltex
 
-WaveSlate is a proprietary Windows desktop scaffold for four related product areas:
+Soltex is a proprietary personal-computing workspace. The current Windows solution and code namespaces retain the legacy `WaveSlate.*` identifier until a separately verified rename; **Soltex** is the canonical product and repository name.
+
+The current desktop scaffold covers four related product areas:
 
 - **Audio** — future per-application routing, parametric EQ, microphone processing, and stream mixes.
 - **Clips** — future bounded rolling capture with a separate, non-injected overlay.
 - **Security** — the implemented focus of this repository: a lightweight companion that cooperates with the antivirus provider registered with Windows.
-- **Remote Assist** — a consent-first launcher for a separately installed, Windows-trusted RustDesk client; WaveSlate does not own or embed the remote-session transport.
+- **Remote Assist** — a consent-first launcher for a separately installed, Windows-trusted RustDesk client; Soltex does not own or embed the remote-session transport.
 
 This is a clean-room product. It is not affiliated with, endorsed by, or derived from SteelSeries, Malwarebytes, Zen Browser, or RustDesk. It contains no copied binaries, signatures, detection models, private protocols, branding, or UI assets from those products. RustDesk remains a separately licensed external program.
 
@@ -29,7 +31,7 @@ The last executed .NET 10 WPF baseline builds and runs on Windows. Current sourc
 
 The current Remote Assist source adds explicit RustDesk executable selection, Authenticode and SHA-256 revalidation, fixed shell-free launch arguments, constrained peer IDs, local confirmation, and peer-ID-free auditing. It does not bundle RustDesk, store passwords, enable unattended access, request elevation, install a service, or hide the external client.
 
-System-wide real-time scanning, behavior monitoring, cloud intelligence, and remediation come from Microsoft Defender or another antivirus provider registered with Windows. WaveSlate does not disable or replace that provider.
+System-wide real-time scanning, behavior monitoring, cloud intelligence, and remediation come from Microsoft Defender or another antivirus provider registered with Windows. Soltex does not disable or replace that provider.
 
 ## Build and verify
 
@@ -68,12 +70,12 @@ dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Re
 - Remote Assist license and trust boundary: [`docs/REMOTE_ASSIST.md`](docs/REMOTE_ASSIST.md).
 - Proposed private device fabric, NAS, Drive, and isolated Box boundaries: [`docs/PERSONAL_DEVICE_FABRIC.md`](docs/PERSONAL_DEVICE_FABRIC.md).
 - Complete built/current/planned systems and visual/coding roadmap: [`docs/MASTER_PROJECT_BLUEPRINT.md`](docs/MASTER_PROJECT_BLUEPRINT.md).
-- Copy-ready Pro-chat GitHub scaffold prompt: [`WAVESLATE_PRO_CHAT_MASTER_BLUEPRINT.txt`](WAVESLATE_PRO_CHAT_MASTER_BLUEPRINT.txt).
+- Copy-ready Pro-chat GitHub scaffold prompt: [`WAVESLATE_PRO_CHAT_MASTER_BLUEPRINT.txt`](WAVESLATE_PRO_CHAT_MASTER_BLUEPRINT.txt) (canonical product name: Soltex; current implementation namespace: `WaveSlate.*`).
 - Copy-ready next-stage device-fabric goal: [`WaveSlate_DEVICE_FABRIC_GOAL_PROMPT.txt`](WaveSlate_DEVICE_FABRIC_GOAL_PROMPT.txt).
 - Copy-ready continuation: [`WaveSlate_HANDOFF_PROMPT.txt`](WaveSlate_HANDOFF_PROMPT.txt).
 
 ## Important boundary
 
-WaveSlate Security is not currently a registered third-party antivirus product. A true replacement antivirus requires, among other things, a production detection organization, secure cloud intelligence, independently measured efficacy, signed update infrastructure, Windows Security Center provider integration, and potentially a signed minifilter, protected service, and ELAM program participation. Those capabilities are not represented as implemented.
+Soltex Security is not currently a registered third-party antivirus product. A true replacement antivirus requires, among other things, a production detection organization, secure cloud intelligence, independently measured efficacy, signed update infrastructure, Windows Security Center provider integration, and potentially a signed minifilter, protected service, and ELAM program participation. Those capabilities are not represented as implemented.
 
 Copyright © 2026. All rights reserved. See [`LICENSE.txt`](LICENSE.txt).

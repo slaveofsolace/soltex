@@ -1,0 +1,24 @@
+Continue the Soltex project (current Windows solution/namespace: `WaveSlate.*`) at:
+C:\Users\suhai\Documents\SOL Tools
+
+GitHub: https://github.com/slaveofsolace/soltex
+Default branch: main
+Canonical product name: Soltex
+
+The private repository was initialized through the authenticated GitHub connector on 2026-08-03. Re-verify remote `main` before editing. Do not bulk-rename `WaveSlate.sln`, assemblies, namespaces, or filenames until the current build/test/render gate passes and a focused compatibility migration is approved.
+
+Verify cwd, branch, HEAD, dirty status, running WaveSlate processes, and docs\IMPLEMENTATION_STATUS.md before editing. Preserve all existing work.
+
+Last verified pre-correction baseline:
+- .NET 10 WPF Security companion implemented.
+- Release build: 0 warnings, 0 errors.
+- The executed default suite passed 16/16 tests, including live WSC health/change registration, outage/backoff/recovery, shutdown-race regression, path-redacted Defender events, Authenticode, and benign AMSI. Current source defines 27 tests after eight security-focused regressions and three Remote Assist boundary regressions; all eleven remain unexecuted because the Codex PowerShell command path timed out during startup. The 28-check expanded opt-in EICAR suite is pending until command startup responds or the supplied manual validation command returns evidence; the in-memory integration passed on the prior baseline.
+- Current source also adds `WaveSlate.RemoteAssist` and a Zen-inspired WPF Remote Assist page. RustDesk 1.4.7 was reviewed from an external cache only; its AGPL source/binary is not copied or bundled. The adapter requires explicit `RustDesk.exe` selection, SHA-256 and Authenticode revalidation, a fixed shell-free launch plan, constrained peer IDs, and confirmation. Read `docs\REMOTE_ASSIST.md` before broadening it.
+- Native render: artifacts\visual\security-monitoring-v1.png.
+- Security model: docs\THREAT_MODEL.md.
+
+Do not disable Defender, add antivirus exclusions, automate Windows Security settings, claim registered antivirus status, copy SteelSeries/Malwarebytes/Zen assets or proprietary implementation, or embed RustDesk AGPL code into the proprietary WaveSlate process. Do not add remote passwords, unattended access, elevation, service installation, or hidden-session behavior.
+
+Next: verify the published private GitHub baseline; define publisher pinning; add signed manifest anti-rollback; implement bounded archive staging; optionally add provider-name inventory without changing registration; then complete signed installer/update/recovery evidence.
+
+Minifilter, ELAM, PPL, Windows Security Center provider registration, cloud reputation, detection research, MVI, certification, and efficacy claims remain separate future work/nonclaims.
