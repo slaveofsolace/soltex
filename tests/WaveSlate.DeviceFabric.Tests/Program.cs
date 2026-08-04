@@ -7,6 +7,8 @@ List<(string Name, Action Test)> tests =
     ("Read-only observations require device-local policy", ReadOnlyPolicyIsRequired),
     ("State-changing requests require visible local consent", StateChangeRequiresConsent),
     ("Remote handoff requires a visible external client", RemoteHandoffRequiresVisibleClient),
+    ("A target manifest is required", TargetManifestIsRequired),
+    ("Known but unadvertised capabilities are denied", UnadvertisedCapabilityIsDenied),
     ("Generic shell capability is denied", GenericShellIsDenied),
     ("Arbitrary download-execute capability is denied", DownloadExecuteIsDenied),
     ("Hidden remote-control capability is denied", HiddenControlIsDenied),
@@ -75,7 +77,11 @@ static void CapabilityCatalogIsExact()
 
 static void ReadOnlyPolicyIsRequired()
 {
+    DeviceManifest target = CreateManifest(
+        "studio-windows-01",
+        [CapabilityIds.SystemHealthObserve]);
     CapabilityPolicyDecision denied = CapabilityPolicy.Evaluate(
+        target,
         CapabilityIds.SystemHealthObserve,
         readOnlyPolicyAllows: false,
         hasVisibleLocalConsent: false,
@@ -84,6 +90,7 @@ static void ReadOnlyPolicyIsRequired()
     True(!denied.Allowed, "A disabled device-local observation policy was bypassed.");
 
     CapabilityPolicyDecision allowed = CapabilityPolicy.Evaluate(
+        target,
         CapabilityIds.SystemHealthObserve,
         readOnlyPolicyAllows: true,
         hasVisibleLocalConsent: false,
@@ -94,7 +101,11 @@ static void ReadOnlyPolicyIsRequired()
 
 static void StateChangeRequiresConsent()
 {
+    DeviceManifest target = CreateManifest(
+        "studio-windows-01",
+        [CapabilityIds.DefenderQuickScanRequest]);
     CapabilityPolicyDecision denied = CapabilityPolicy.Evaluate(
+        target,
         CapabilityIds.DefenderQuickScanRequest,
         readOnlyPolicyAllows: true,
         hasVisibleLocalConsent: false,
@@ -102,6 +113,7 @@ static void StateChangeRequiresConsent()
     Equal(CapabilityPolicyStatus.DeniedVisibleLocalConsentRequired, denied.Status);
 
     CapabilityPolicyDecision allowed = CapabilityPolicy.Evaluate(
+        target,
         CapabilityIds.DefenderQuickScanRequest,
         readOnlyPolicyAllows: false,
         hasVisibleLocalConsent: true,
@@ -111,7 +123,11 @@ static void StateChangeRequiresConsent()
 
 static void RemoteHandoffRequiresVisibleClient()
 {
+    DeviceManifest target = CreateManifest(
+        "studio-windows-01",
+        [CapabilityIds.RustDeskHandoffPrepare]);
     CapabilityPolicyDecision hidden = CapabilityPolicy.Evaluate(
+        target,
         CapabilityIds.RustDeskHandoffPrepare,
         readOnlyPolicyAllows: false,
         hasVisibleLocalConsent: true,
@@ -119,11 +135,37 @@ static void RemoteHandoffRequiresVisibleClient()
     Equal(CapabilityPolicyStatus.DeniedExternalClientNotVisible, hidden.Status);
 
     CapabilityPolicyDecision visible = CapabilityPolicy.Evaluate(
+        target,
         CapabilityIds.RustDeskHandoffPrepare,
         readOnlyPolicyAllows: false,
         hasVisibleLocalConsent: true,
         externalClientVisible: true);
     Equal(CapabilityPolicyStatus.AllowedByVisibleLocalConsent, visible.Status);
+}
+
+static void TargetManifestIsRequired()
+{
+    CapabilityPolicyDecision decision = CapabilityPolicy.Evaluate(
+        null,
+        CapabilityIds.SystemHealthObserve,
+        readOnlyPolicyAllows: true,
+        hasVisibleLocalConsent: true,
+        externalClientVisible: true);
+    Equal(CapabilityPolicyStatus.DeniedTargetManifestRequired, decision.Status);
+}
+
+static void UnadvertisedCapabilityIsDenied()
+{
+    DeviceManifest target = CreateManifest(
+        "studio-windows-01",
+        [CapabilityIds.SystemHealthObserve]);
+    CapabilityPolicyDecision decision = CapabilityPolicy.Evaluate(
+        target,
+        CapabilityIds.DefenderQuickScanRequest,
+        readOnlyPolicyAllows: true,
+        hasVisibleLocalConsent: true,
+        externalClientVisible: true);
+    Equal(CapabilityPolicyStatus.DeniedCapabilityNotAdvertised, decision.Status);
 }
 
 static void GenericShellIsDenied() =>
@@ -138,6 +180,7 @@ static void HiddenControlIsDenied() =>
 static void UnknownCapabilityIsDenied(string capabilityId)
 {
     CapabilityPolicyDecision decision = CapabilityPolicy.Evaluate(
+        CreateManifest("studio-windows-01"),
         capabilityId,
         readOnlyPolicyAllows: true,
         hasVisibleLocalConsent: true,

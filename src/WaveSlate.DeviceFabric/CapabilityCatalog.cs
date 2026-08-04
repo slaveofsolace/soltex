@@ -117,6 +117,8 @@ public enum CapabilityPolicyStatus
     AllowedByDevicePolicy,
     AllowedByVisibleLocalConsent,
     DeniedUnknownCapability,
+    DeniedTargetManifestRequired,
+    DeniedCapabilityNotAdvertised,
     DeniedByDevicePolicy,
     DeniedVisibleLocalConsentRequired,
     DeniedExternalClientNotVisible
@@ -134,6 +136,7 @@ public sealed record CapabilityPolicyDecision(
 public static class CapabilityPolicy
 {
     public static CapabilityPolicyDecision Evaluate(
+        DeviceManifest? targetDevice,
         string? capabilityId,
         bool readOnlyPolicyAllows,
         bool hasVisibleLocalConsent,
@@ -145,6 +148,20 @@ public static class CapabilityPolicy
             return new CapabilityPolicyDecision(
                 CapabilityPolicyStatus.DeniedUnknownCapability,
                 "The requested capability is not in the exact Soltex capability catalog.");
+        }
+
+        if (targetDevice is null)
+        {
+            return new CapabilityPolicyDecision(
+                CapabilityPolicyStatus.DeniedTargetManifestRequired,
+                "A validated target-device manifest is required for every capability decision.");
+        }
+
+        if (!targetDevice.CapabilityIds.Contains(capabilityId!, StringComparer.Ordinal))
+        {
+            return new CapabilityPolicyDecision(
+                CapabilityPolicyStatus.DeniedCapabilityNotAdvertised,
+                "The target device did not advertise this exact capability.");
         }
 
         if (descriptor.Effect == CapabilityEffect.ReadOnlyObservation)
