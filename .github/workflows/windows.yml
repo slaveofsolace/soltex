@@ -110,6 +110,33 @@ jobs:
             Tee-Object -FilePath .\artifacts\validation\tests-eicar.log
           if ($LASTEXITCODE -ne 0) { throw "EICAR interoperability suite failed with exit code $LASTEXITCODE." }
 
+      - name: Render Home workspace
+        id: render_home
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\home-current-source.png --panel home 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\render-home.log
+          if ($LASTEXITCODE -ne 0) { throw "Home render failed with exit code $LASTEXITCODE." }
+
+      - name: Render Monitoring workspace
+        id: render_monitoring
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\monitoring-current-source.png --panel monitoring 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\render-monitoring.log
+          if ($LASTEXITCODE -ne 0) { throw "Monitoring render failed with exit code $LASTEXITCODE." }
+
+      - name: Render Devices workspace
+        id: render_devices
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\devices-current-source.png --panel devices 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\render-devices.log
+          if ($LASTEXITCODE -ne 0) { throw "Devices render failed with exit code $LASTEXITCODE." }
+
       - name: Render Security panel
         id: render_security
         shell: pwsh
@@ -143,6 +170,9 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $expected = @(
+            '.\artifacts\visual\home-current-source.png',
+            '.\artifacts\visual\monitoring-current-source.png',
+            '.\artifacts\visual\devices-current-source.png',
             '.\artifacts\visual\security-current-source.png',
             '.\artifacts\visual\remote-assist-current-source.png',
             '.\artifacts\visual\updates-current-source.png'
@@ -174,6 +204,9 @@ jobs:
             update_tests = '${{ steps.update_tests.outcome }}'
             device_fabric_tests = '${{ steps.device_fabric_tests.outcome }}'
             monitoring_tests = '${{ steps.monitoring_tests.outcome }}'
+            render_home = '${{ steps.render_home.outcome }}'
+            render_monitoring = '${{ steps.render_monitoring.outcome }}'
+            render_devices = '${{ steps.render_devices.outcome }}'
             render_security = '${{ steps.render_security.outcome }}'
             render_remote = '${{ steps.render_remote.outcome }}'
             render_update = '${{ steps.render_update.outcome }}'
@@ -212,6 +245,9 @@ jobs:
           name: soltex-windows-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             artifacts/validation/**
+            artifacts/visual/home-current-source.png
+            artifacts/visual/monitoring-current-source.png
+            artifacts/visual/devices-current-source.png
             artifacts/visual/security-current-source.png
             artifacts/visual/remote-assist-current-source.png
             artifacts/visual/updates-current-source.png
