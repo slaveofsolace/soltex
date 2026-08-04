@@ -123,7 +123,7 @@
                                         <ProgressBar Grid.Column="1"
                                                      Margin="10,0"
                                                      Maximum="100"
-                                                     Value="{Binding UsedPercent}"
+                                                     Value="{Binding UsedPercent, Mode=OneWay}"
                                                      Style="{StaticResource MetricProgressStyle}"
                                                      Foreground="{StaticResource SignalBrush}"
                                                      VerticalAlignment="Center" />
