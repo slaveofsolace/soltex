@@ -3,11 +3,13 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Media;
 using Microsoft.Win32;
 using WaveSlate.RemoteAssist;
 using WaveSlate.Security;
+using WaveSlate.Update;
 
 namespace WaveSlate.App;
 
@@ -20,6 +22,9 @@ public partial class MainWindow : Window
     private readonly SecurityRuntime _runtime = SecurityRuntime.CreateDefault();
     private readonly ObservableCollection<QuarantineRow> _quarantineRows = [];
     private readonly ObservableCollection<DefenderEventRow> _defenderEventRows = [];
+    private readonly ObservableCollection<UpdateJournalRow> _updateJournalRows = [];
+    private readonly UpdatePlanningJournal _updateJournal;
+    private readonly string _updateStagingRoot;
     private CancellationTokenSource? _operationCancellation;
     private ImportFolderMonitor? _importMonitor;
     private ProtectionMonitor? _protectionMonitor;
@@ -30,8 +35,12 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        _updateStagingRoot = Path.Combine(_runtime.DataRoot, "update", "staging");
+        _updateJournal = new UpdatePlanningJournal(Path.Combine(_runtime.DataRoot, "update", "journal"));
         QuarantineGrid.ItemsSource = _quarantineRows;
         DefenderEventGrid.ItemsSource = _defenderEventRows;
+        UpdateJournalGrid.ItemsSource = _updateJournalRows;
+        CurrentBuildText.Text = typeof(MainWindow).Assembly.GetName().Version?.ToString() ?? "development";
         RemotePeerIdInput.TextChanged += RemotePeerId_TextChanged;
         SetRemoteAssistExecutable(RemoteAssistExecutableLocator.FindInstalled());
     }
@@ -47,8 +56,9 @@ public partial class MainWindow : Window
             new WindowsSecurityChangeMonitor());
         _protectionMonitor.Updated += OnProtectionMonitorUpdated;
         await RefreshAllAsync();
+        await RefreshUpdateJournalAsync();
         _protectionMonitor.Start();
-        AddActivity("WaveSlate import guard is active.");
+        AddActivity("Soltex import guard is active.");
         AddActivity(_protectionMonitor.ChangeNotificationsAvailable
             ? "Windows Security change notifications are active."
             : "Windows Security notifications are unavailable; bounded polling remains active.");
@@ -69,6 +79,7 @@ public partial class MainWindow : Window
         }
 
         _operationCancellation?.Dispose();
+        _updateJournal.Dispose();
         _runtime.Dispose();
     }
 
@@ -245,7 +256,7 @@ public partial class MainWindow : Window
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException or InvalidOperationException)
         {
             AddActivity("Operation failed: " + exception.Message);
-            MessageBox.Show(this, exception.Message, "WaveSlate Security", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(this, exception.Message, "Soltex Security", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally
         {
@@ -314,7 +325,7 @@ public partial class MainWindow : Window
             {
                 MessageBoxResult choice = MessageBox.Show(
                     this,
-                    assessment.Detail + "\n\nMove this file into WaveSlate quarantine?",
+                    assessment.Detail + "\n\nMove this file into Soltex quarantine?",
                     "Threat detected",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Warning);
@@ -327,7 +338,7 @@ public partial class MainWindow : Window
                     await _runtime.AuditLog.AppendAsync(
                         "quarantine.add",
                         SecurityEventSeverity.Critical,
-                        "A file was moved into WaveSlate quarantine.",
+                        "A file was moved into Soltex quarantine.",
                         entry.OriginalPath,
                         entry.Detection,
                         cancellationToken);
@@ -413,7 +424,7 @@ public partial class MainWindow : Window
     {
         if (QuarantineGrid.SelectedItem is not QuarantineRow row)
         {
-            MessageBox.Show(this, "Select a quarantine item first.", "WaveSlate Security");
+            MessageBox.Show(this, "Select a quarantine item first.", "Soltex Security");
             return;
         }
 
@@ -446,7 +457,7 @@ public partial class MainWindow : Window
     {
         if (QuarantineGrid.SelectedItem is not QuarantineRow row)
         {
-            MessageBox.Show(this, "Select a quarantine item first.", "WaveSlate Security");
+            MessageBox.Show(this, "Select a quarantine item first.", "Soltex Security");
             return;
         }
 
@@ -514,7 +525,7 @@ public partial class MainWindow : Window
 
         MessageBoxResult confirmation = MessageBox.Show(
             this,
-            "WaveSlate will open the external RustDesk interface. WaveSlate does not expose your screen by itself, create credentials, enable unattended access, or bypass the remote client's consent controls. Continue?",
+            "Soltex will open the external RustDesk interface. Soltex does not expose your screen by itself, create credentials, enable unattended access, or bypass the remote client's consent controls. Continue?",
             "Open screen sharing",
             MessageBoxButton.YesNo,
             MessageBoxImage.Information);
@@ -543,7 +554,7 @@ public partial class MainWindow : Window
 
         MessageBoxResult confirmation = MessageBox.Show(
             this,
-            "WaveSlate will pass this peer ID to the external RustDesk client using its documented connect command. No password, elevation flag, service command, or consent bypass is supplied. Confirm that you are authorized to control the remote device, then continue.",
+            "Soltex will pass this peer ID to the external RustDesk client using its documented connect command. No password, elevation flag, service command, or consent bypass is supplied. Confirm that you are authorized to control the remote device, then continue.",
             "Connect to authorized peer",
             MessageBoxButton.YesNo,
             MessageBoxImage.Information);
@@ -588,7 +599,7 @@ public partial class MainWindow : Window
                 _remoteAssistTrust = new AuthenticodeVerificationResult(
                     AuthenticodeStatus.Error,
                     NativeStatus: -1,
-                    Detail: "WaveSlate could not verify the selected external client: " + exception.Message);
+                    Detail: "Soltex could not verify the selected external client: " + exception.Message);
             }
         }
 
@@ -601,7 +612,7 @@ public partial class MainWindow : Window
             ? "RustDesk is not connected"
             : trusted ? "Trusted external client" : "Signature trust failed";
         RemoteTrustDetail.Text = executable is null
-            ? "Choose an installed, signed RustDesk.exe. WaveSlate never bundles or silently downloads the remote-control runtime."
+            ? "Choose an installed, signed RustDesk.exe. Soltex never bundles or silently downloads the remote-control runtime."
             : _remoteAssistTrust!.Detail;
         RemoteTrustDot.Fill = (Brush)FindResource(executable is null
             ? "MutedBrush"
@@ -670,6 +681,67 @@ public partial class MainWindow : Window
         }
     }
 
+    private async Task RefreshUpdateJournalAsync()
+    {
+        UpdateInspectButton.IsEnabled = false;
+        try
+        {
+            UpdatePlanningRecoveryReport report = await _updateJournal.InspectAsync(_updateStagingRoot);
+            _updateJournalRows.Clear();
+            foreach (UpdatePlanningJournalEntry entry in report.Entries
+                         .OrderByDescending(item => item.TimestampUtc)
+                         .Take(32))
+            {
+                _updateJournalRows.Add(new UpdateJournalRow(entry));
+            }
+
+            int entryCount = report.Entries.Count;
+            UpdateJournalCount.Text = entryCount == 1 ? "1 entry" : $"{entryCount} entries";
+            bool reviewRequired = report.HasIncompletePlanningAttempt ||
+                                  report.ExistingPrivateStagingTokens.Count > 0;
+            Brush stateBrush = (Brush)FindResource(reviewRequired ? "WarningBrush" : "SignalBrush");
+            UpdateStateDot.Fill = stateBrush;
+            UpdateReadinessHero.BorderBrush = stateBrush;
+            UpdateStateTitle.Text = reviewRequired ? "Cleanup review required" : "Planner state is clean";
+            UpdateStatePill.Text = reviewRequired ? "REVIEW" : "IDLE";
+            UpdateStatePill.Foreground = stateBrush;
+            UpdateStateDetail.Text = reviewRequired
+                ? report.Detail
+                : "No signed release source is configured, and no incomplete planning attempt is recorded.";
+            UpdateRecoveryTitle.Text = reviewRequired
+                ? "Interrupted evidence exists"
+                : "No interrupted attempt";
+            UpdateRecoveryTitle.Foreground = stateBrush;
+            UpdateRecoveryDetail.Text = reviewRequired
+                ? $"{report.ExistingPrivateStagingTokens.Count} private staging token(s) require explicit owner review. Nothing was activated."
+                : "No private staging token requires review.";
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+                                          InvalidDataException or CryptographicException)
+        {
+            Brush danger = (Brush)FindResource("DangerBrush");
+            _updateJournalRows.Clear();
+            UpdateJournalCount.Text = "Unavailable";
+            UpdateStateDot.Fill = danger;
+            UpdateReadinessHero.BorderBrush = danger;
+            UpdateStateTitle.Text = "Planning evidence unavailable";
+            UpdateStatePill.Text = "FAILED CLOSED";
+            UpdateStatePill.Foreground = danger;
+            UpdateStateDetail.Text = "Soltex could not authenticate the local planning journal. No update action is available.";
+            UpdateRecoveryTitle.Text = "Manual review required";
+            UpdateRecoveryTitle.Foreground = danger;
+            UpdateRecoveryDetail.Text =
+                "The authenticated journal could not be read. No path or update action is exposed from this failed-closed state.";
+        }
+        finally
+        {
+            UpdateInspectButton.IsEnabled = true;
+        }
+    }
+
+    private async void UpdateInspect_Click(object sender, RoutedEventArgs e) =>
+        await RefreshUpdateJournalAsync();
+
     private void OpenUri(string target)
     {
         try
@@ -690,6 +762,8 @@ public partial class MainWindow : Window
 
     private void RemoteNav_Click(object sender, RoutedEventArgs e) => ShowPanel(RemotePanel, RemoteNavButton);
 
+    private void UpdateNav_Click(object sender, RoutedEventArgs e) => ShowPanel(UpdatePanel, UpdateNavButton);
+
     internal bool TrySelectRenderSmokePanel(string panelName)
     {
         string normalized = panelName.Trim();
@@ -702,6 +776,13 @@ public partial class MainWindow : Window
         if (string.Equals(normalized, "remote", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(RemotePanel, RemoteNavButton);
+            return true;
+        }
+
+        if (string.Equals(normalized, "update", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(normalized, "updates", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(UpdatePanel, UpdateNavButton);
             return true;
         }
 
@@ -726,12 +807,14 @@ public partial class MainWindow : Window
         ClipsPanel.Visibility = panel == ClipsPanel ? Visibility.Visible : Visibility.Collapsed;
         SecurityPanel.Visibility = panel == SecurityPanel ? Visibility.Visible : Visibility.Collapsed;
         RemotePanel.Visibility = panel == RemotePanel ? Visibility.Visible : Visibility.Collapsed;
+        UpdatePanel.Visibility = panel == UpdatePanel ? Visibility.Visible : Visibility.Collapsed;
         foreach (System.Windows.Controls.Button button in new[]
                  {
                      MixerNavButton,
                      ClipsNavButton,
                      SecurityNavButton,
-                     RemoteNavButton
+                     RemoteNavButton,
+                     UpdateNavButton
                  })
         {
             button.Background = (Brush)FindResource(button == selectedButton ? "SelectedNavBrush" : "NavRestBrush");
@@ -757,5 +840,12 @@ public partial class MainWindow : Window
         public string Detail => item.ResourcePathRedacted
             ? item.Detail + " · resource path redacted"
             : item.Detail;
+    }
+
+    private sealed class UpdateJournalRow(UpdatePlanningJournalEntry entry)
+    {
+        public string When => entry.TimestampUtc.ToLocalTime().ToString("g", CultureInfo.CurrentCulture);
+        public string Phase => entry.Phase.ToString();
+        public string Detail => entry.Detail;
     }
 }

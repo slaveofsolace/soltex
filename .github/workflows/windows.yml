@@ -102,6 +102,15 @@ jobs:
             Tee-Object -FilePath .\artifacts\validation\render-remote-assist.log
           if ($LASTEXITCODE -ne 0) { throw "Remote Assist render failed with exit code $LASTEXITCODE." }
 
+      - name: Render Updates panel
+        id: render_update
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\updates-current-source.png --panel update 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\render-updates.log
+          if ($LASTEXITCODE -ne 0) { throw "Updates render failed with exit code $LASTEXITCODE." }
+
       - name: Verify render evidence
         id: verify_renders
         shell: pwsh
@@ -109,7 +118,8 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $expected = @(
             '.\artifacts\visual\security-current-source.png',
-            '.\artifacts\visual\remote-assist-current-source.png'
+            '.\artifacts\visual\remote-assist-current-source.png',
+            '.\artifacts\visual\updates-current-source.png'
           )
           foreach ($path in $expected) {
             if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
@@ -137,6 +147,7 @@ jobs:
             update_tests = '${{ steps.update_tests.outcome }}'
             render_security = '${{ steps.render_security.outcome }}'
             render_remote = '${{ steps.render_remote.outcome }}'
+            render_update = '${{ steps.render_update.outcome }}'
             verify_renders = '${{ steps.verify_renders.outcome }}'
             eicar = '${{ steps.eicar.outcome }}'
           }
@@ -174,6 +185,7 @@ jobs:
             artifacts/validation/**
             artifacts/visual/security-current-source.png
             artifacts/visual/remote-assist-current-source.png
+            artifacts/visual/updates-current-source.png
             artifacts/visual/*.error.txt
           if-no-files-found: warn
           retention-days: 30
