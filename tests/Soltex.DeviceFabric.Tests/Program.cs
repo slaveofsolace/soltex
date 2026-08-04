@@ -22,7 +22,11 @@ List<(string Name, Action Test)> tests =
     ("Invalid agent versions are rejected", InvalidAgentVersionIsRejected),
     ("Duplicate inventory device IDs are rejected", DuplicateDeviceIdsAreRejected),
     ("Inventory input is copied and capture time normalized", InventoryInputIsCopied),
-    ("Oversized inventories fail closed", OversizedInventoryIsRejected)
+    ("Oversized inventories fail closed", OversizedInventoryIsRejected),
+    ("Local observation is explicitly unenrolled", LocalObservationIsUnenrolled),
+    ("Local observation fields are bounded", LocalObservationFieldsAreBounded),
+    ("Local observation provenance is explicit", LocalObservationProvenanceIsExplicit),
+    ("Local observation field sanitization removes controls", LocalObservationSanitizesFields)
 ];
 
 int failed = 0;
@@ -335,6 +339,49 @@ static void OversizedInventoryIsRejected()
         out _,
         out _);
     True(!created, "An oversized inventory snapshot was accepted.");
+}
+
+static void LocalObservationIsUnenrolled()
+{
+    LocalDeviceObservation observation = LocalDeviceObservationProvider.Capture();
+    Equal(DeviceEnrollmentState.NotEnrolled, observation.EnrollmentState);
+    True(
+        observation.CapturedAtUtc > DateTimeOffset.UtcNow.AddMinutes(-1),
+        "The local observation timestamp is stale.");
+}
+
+static void LocalObservationFieldsAreBounded()
+{
+    LocalDeviceObservation observation = LocalDeviceObservationProvider.Capture();
+    string[] fields =
+    [
+        observation.DisplayName,
+        observation.OperatingSystem,
+        observation.OperatingSystemArchitecture,
+        observation.ProcessArchitecture,
+        observation.Framework
+    ];
+    foreach (string field in fields)
+    {
+        True(field.Length is > 0 and <= LocalDeviceObservationProvider.MaximumFieldLength, "A local observation field is outside its bound.");
+        True(!field.Any(char.IsControl), "A local observation field contains a control character.");
+        True(string.Equals(field, field.Trim(), StringComparison.Ordinal), "A local observation field is not trimmed.");
+    }
+}
+
+static void LocalObservationProvenanceIsExplicit()
+{
+    LocalDeviceObservation observation = LocalDeviceObservationProvider.Capture();
+    True(observation.Provenance.Contains("Environment.MachineName", StringComparison.Ordinal), "Machine-name provenance is missing.");
+    True(observation.Provenance.Contains("RuntimeInformation", StringComparison.Ordinal), "Runtime provenance is missing.");
+}
+
+static void LocalObservationSanitizesFields()
+{
+    Equal("StudioWindows", LocalDeviceObservationProvider.SanitizeField("  Studio\r\nWindows  ", "Fallback"));
+    Equal("Fallback", LocalDeviceObservationProvider.SanitizeField("\r\n", "Fallback"));
+    string oversized = new('X', LocalDeviceObservationProvider.MaximumFieldLength + 20);
+    Equal(LocalDeviceObservationProvider.MaximumFieldLength, LocalDeviceObservationProvider.SanitizeField(oversized, "Fallback").Length);
 }
 
 static DeviceManifest CreateManifest(

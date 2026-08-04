@@ -6,4 +6,7 @@
     <AssemblyName>Soltex.DeviceFabric</AssemblyName>
     <Description>Fail-closed device inventory and typed capability policy for Soltex.</Description>
   </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Soltex.DeviceFabric.Tests" />
+  </ItemGroup>
 </Project>
