@@ -87,6 +87,8 @@ Current evidence totals are Security 31/31, supply chain 18/18, hardening 12/12,
 - RustDesk is AGPL-3.0 and remains a separate installed program. Soltex's current boundary is an external process, not embedded or linked code.
 - Similarity goals mean capability coverage and interaction quality, never a deceptive 1:1 visual clone.
 
+The verified public-source comparison, rights disposition, derived AppControl requirements, and ordered clean-room implementation stages are maintained in `REFERENCE_SYSTEMS.md`. AppControl's proprietary desktop application remains `REFERENCE ONLY`; its separate MIT read-only MCP repository was reviewed as architecture metadata but was not cloned or imported.
+
 ### 4.3 Isolation and least authority
 
 - Keep the WPF shell unelevated for ordinary use.
@@ -131,6 +133,8 @@ The full device-fabric protocol, failure model, delivery sequence, and nonclaims
 ### 6.2 Performance, Task Manager, and App Control
 
 Clean-room behavior references: Windows Task Manager, NZXT CAM, and public AppControl workflows.
+
+The differentiator to retain from AppControl is historical causality: a shared time range that correlates bounded resource samples with process, security, install, and privacy events while clearly separating temporal overlap from proven cause. The differentiator is not a 1:1 layout or a broad kill/disable feature.
 
 Planned capabilities:
 

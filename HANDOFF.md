@@ -14,6 +14,8 @@ This is the only current continuation handoff for Soltex. Files under `docs/arch
 - Identity draft PR: `https://github.com/slaveofsolace/soltex/pull/4`
 - Frozen immersive implementation checkpoint: `2a0699b2ca77b30fa636279b1d5ecab603a8bde9`
 
+The GitHub stack and eventual cleanup contract are recorded in `docs/GITHUB_CONSOLIDATION.md`. The selected path is one `release/soltex-v1-foundation` draft PR to `main` after this branch's final docs commit is green. Do not merge, close stacked PRs, or delete branches until the integration head, merge preview, ancestry proof, and post-merge Windows workflow all pass.
+
 The protected owner checkout was re-observed at `main`, commit `bf2662de80992cfed761625642f084d3caaa0f04`, with extensive pre-existing legacy-named dirty and untracked work owned outside this task. Do not reset, clean, stash, merge, rebase, overwrite, or use it as a build-output target. Continue in the task-owned worktree and re-check branch, HEAD, status, remotes, PR base, and process ownership before changing anything.
 
 ## What is built
@@ -33,6 +35,8 @@ Audio and Clips remain visible product foundations rather than working DSP/captu
 
 ## Clean-room and trust boundaries
 
+- AppControl desktop is `REFERENCE ONLY`: its public history, event, process-context, privacy, alert, and range-selection behaviors inform independent requirements. The proprietary installer was not downloaded or executed, and no 1:1 UI, binary, insight, asset, protocol, or implementation was copied. See `docs/REFERENCE_SYSTEMS.md` and `docs/evidence/2026-08-04-reference-systems/`.
+- AppControl's separate MCP repository is public MIT metadata for a local read-only query boundary; it was not cloned or imported. Any Soltex AI evidence interface stays off by default, read-only, consented, bounded, and separate from action authority.
 - Zen Browser is `REFERENCE ONLY`: general calm-workspace, compact-navigation, focus, and balance principles were observed; no Zen source, asset, screenshot, layout measurement, icon, trademark, or design token was copied.
 - RustDesk remains a separately installed AGPL-3.0 external program. No repository payload or runtime is linked, bundled, disguised, or imported into Soltex.
 - Soltex never passes RustDesk passwords, enables unattended access, installs its service, requests elevation, hides the client, or treats a remote session as authorization for an AI job.
@@ -76,11 +80,12 @@ Read `docs/IMPLEMENTATION_STATUS.md`, `docs/VALIDATION.md`, and the current evid
 
 1. Owner visual review plus a representative viewport/scaling, keyboard, contrast, and screen-reader pass for the current UI.
 2. Device Fabric Stage 2: loopback-only signed envelope, target/issuer binding, expiry, nonce, idempotency, policy version, replay store, cancellation, approval level, and redacted receipts. Keep it non-networked and non-executing until hostile parser/state tests pass.
-3. Read-only Applications inventory and a separately authorized, bounded process-action model; no arbitrary shell or silent task termination.
-4. Supported audio endpoint/session inventory before routing, EQ, microphone processing, or virtual-device claims.
-5. Privacy adapters and local/NAS search with explicit roots, provenance, quotas, cancellation, and recovery.
-6. Personal Google Drive read-write connector, then a separately governed work Box connector with explicit cross-domain transfer policy.
-7. Optional Tailscale-local status and enrolled multi-device transport only after signed job/receipt semantics are proven.
-8. Production signing identities, authenticated update source, installer, atomic activation, rollback, recovery, and uninstall as a separate release program.
+3. Durable bounded local monitoring/event history with retention, corruption recovery, redaction, measured idle/storage cost, and a shared selected-time range.
+4. Read-only Applications inventory, then a separately authorized and bounded process-action model; no arbitrary shell, publisher-wide block in the first slice, or silent task termination.
+5. Supported audio endpoint/session inventory before routing, EQ, microphone processing, or virtual-device claims.
+6. Privacy adapters and local/NAS search with explicit roots, provenance, quotas, cancellation, and recovery.
+7. Personal Google Drive read-write connector, then a separately governed work Box connector with explicit cross-domain transfer policy.
+8. Optional Tailscale-local status and enrolled multi-device transport only after signed job/receipt semantics are proven.
+9. Production signing identities, authenticated update source, installer, atomic activation, rollback, recovery, and uninstall as a separate release program.
 
 Do not begin the next stage with provider registration, a driver, a service, public ingress, Defender mutations, unattended remote control, or automatic execution of staged content.
