@@ -224,6 +224,57 @@
         </Setter>
     </Style>
 
+    <Style TargetType="ScrollBar">
+        <Setter Property="Width" Value="9" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <Border Background="#242421" CornerRadius="4">
+                        <primitives:Track x:Name="PART_Track"
+                                          Minimum="{TemplateBinding Minimum}"
+                                          Maximum="{TemplateBinding Maximum}"
+                                          Value="{TemplateBinding Value}"
+                                          ViewportSize="{TemplateBinding ViewportSize}"
+                                          Orientation="{TemplateBinding Orientation}"
+                                          IsDirectionReversed="True">
+                            <primitives:Track.DecreaseRepeatButton>
+                                <RepeatButton x:Name="DecreaseButton"
+                                              Command="{x:Static ScrollBar.PageUpCommand}"
+                                              Focusable="False"
+                                              Opacity="0" />
+                            </primitives:Track.DecreaseRepeatButton>
+                            <primitives:Track.Thumb>
+                                <primitives:Thumb Margin="1">
+                                    <primitives:Thumb.Template>
+                                        <ControlTemplate TargetType="primitives:Thumb">
+                                            <Border Background="#5B5850" CornerRadius="4" />
+                                        </ControlTemplate>
+                                    </primitives:Thumb.Template>
+                                </primitives:Thumb>
+                            </primitives:Track.Thumb>
+                            <primitives:Track.IncreaseRepeatButton>
+                                <RepeatButton x:Name="IncreaseButton"
+                                              Command="{x:Static ScrollBar.PageDownCommand}"
+                                              Focusable="False"
+                                              Opacity="0" />
+                            </primitives:Track.IncreaseRepeatButton>
+                        </primitives:Track>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Orientation" Value="Horizontal">
+                            <Setter Property="Width" Value="Auto" />
+                            <Setter Property="Height" Value="9" />
+                            <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False" />
+                            <Setter TargetName="DecreaseButton" Property="Command" Value="{x:Static ScrollBar.PageLeftCommand}" />
+                            <Setter TargetName="IncreaseButton" Property="Command" Value="{x:Static ScrollBar.PageRightCommand}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style TargetType="DataGrid">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{StaticResource TextBrush}" />

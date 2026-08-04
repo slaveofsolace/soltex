@@ -5,7 +5,9 @@
              Background="Transparent"
              Foreground="{StaticResource TextBrush}"
              FontFamily="{StaticResource UiFont}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  HorizontalContentAlignment="Stretch">
         <StackPanel>
             <Grid>
                 <Grid.ColumnDefinitions>

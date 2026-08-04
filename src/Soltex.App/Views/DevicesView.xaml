@@ -4,7 +4,9 @@
              Background="Transparent"
              Foreground="{StaticResource TextBrush}"
              FontFamily="{StaticResource UiFont}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  HorizontalContentAlignment="Stretch">
         <StackPanel>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -32,11 +34,11 @@
                 </Border>
             </Grid>
 
-            <Border Margin="0,20,0,0" Style="{StaticResource HeroCardStyle}" MinHeight="215">
+            <Border x:Name="DeviceHeroCard" Margin="0,20,0,0" Style="{StaticResource HeroCardStyle}" Height="220">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1.34*" />
-                        <ColumnDefinition Width="1" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="280" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Margin="0,0,28,0">
                         <TextBlock Text="THIS WINDOWS PC" Style="{StaticResource PageEyebrowStyle}" Foreground="{StaticResource SignalBrush}" />
@@ -52,7 +54,7 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <Border Grid.Column="1" Background="#20201D" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="13" Padding="18">
+                    <Border x:Name="DeviceProfileCard" Grid.Column="1" Background="#20201D" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="13" Padding="18">
                         <StackPanel>
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>

@@ -86,6 +86,8 @@ internal static class Program
         True(CountVisiblePixels(pixels) > 5_000, "The Home view render was unexpectedly empty.");
         True(view.HomeStateText.Text.Length > 0, "Home did not expose a telemetry state.");
         True(view.MachineNameText.Text == device.DisplayName, "Home did not render the observed local device.");
+        True(view.HomeHeroCard.ActualHeight <= 266, "The Home hero exceeded its bounded viewport height.");
+        True(view.MachineProfileCard.ActualWidth >= 220, "The Home machine profile collapsed below its usable width.");
     }
 
     private static void MonitoringViewRenders(SystemTelemetrySnapshot snapshot)
@@ -107,6 +109,8 @@ internal static class Program
         True(CountVisiblePixels(pixels) > 5_000, "The Devices view render was unexpectedly empty.");
         True(view.CapabilityItems.Items.Count == 6, "Devices did not render the exact capability catalog.");
         True(view.DeviceProvenanceText.Text.Contains("NotEnrolled", StringComparison.Ordinal), "Devices did not expose the unenrolled state.");
+        True(view.DeviceHeroCard.ActualHeight <= 221, "The Devices hero exceeded its bounded viewport height.");
+        True(view.DeviceProfileCard.ActualWidth >= 240, "The Devices profile collapsed below its usable width.");
     }
 
     private static byte[] Render(FrameworkElement element, int width, int height)

@@ -61,6 +61,11 @@ public sealed class Sparkline : FrameworkElement
             .TakeLast(120)
             .Select(value => Math.Clamp(value, 0, 100))
             .ToArray() ?? [];
+        if (samples.Length == 1)
+        {
+            samples = [samples[0], samples[0]];
+        }
+
         if (samples.Length < 2 || ActualWidth <= 1 || ActualHeight <= 1)
         {
             return;

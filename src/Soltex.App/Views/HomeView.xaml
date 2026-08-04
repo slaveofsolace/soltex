@@ -5,7 +5,9 @@
              Background="Transparent"
              Foreground="{StaticResource TextBrush}"
              FontFamily="{StaticResource UiFont}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  HorizontalContentAlignment="Stretch">
         <StackPanel>
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -34,11 +36,11 @@
                 </Border>
             </Grid>
 
-            <Border Margin="0,20,0,0" Style="{StaticResource HeroCardStyle}" MinHeight="238">
+            <Border x:Name="HomeHeroCard" Margin="0,20,0,0" Style="{StaticResource HeroCardStyle}" Height="265">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1.55*" />
-                        <ColumnDefinition Width="1" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="260" />
                     </Grid.ColumnDefinitions>
                     <Grid Margin="0,0,28,0">
                         <Grid.RowDefinitions>
@@ -64,10 +66,12 @@
                                    Foreground="{StaticResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="10"
+                                   TextWrapping="Wrap"
                                    Text="Waiting for the first bounded sample" />
                     </Grid>
 
-                    <Border Grid.Column="1"
+                    <Border x:Name="MachineProfileCard"
+                            Grid.Column="1"
                             Background="#20201D"
                             BorderBrush="{StaticResource BorderBrush}"
                             BorderThickness="1"
