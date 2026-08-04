@@ -51,10 +51,10 @@ static Task ValidDescriptorVerifiesAsync()
     using UpdateFixture fixture = new();
     Dictionary<string, byte[]> payloads = CreatePayloads();
     UpdateAcquisitionDescriptor descriptor = fixture.CreateDescriptor(payloads);
-    byte[] bytes = fixture.Serialize(descriptor);
+    byte[] bytes = UpdateFixture.Serialize(descriptor);
     UpdateDescriptorVerificationResult result = UpdateDescriptorVerifier.Verify(
         bytes,
-        [fixture.Sign("metadata-1", fixture.MetadataKey, bytes)],
+        [UpdateFixture.Sign("metadata-1", fixture.MetadataKey, bytes)],
         fixture.CreatePolicy(),
         fixture.NowUtc);
 
@@ -88,10 +88,10 @@ static Task ExpiredDescriptorIsClassifiedAsync()
         IssuedAtUtc = fixture.NowUtc.AddHours(-2),
         ExpiresAtUtc = fixture.NowUtc.AddHours(-1)
     };
-    byte[] bytes = fixture.Serialize(descriptor);
+    byte[] bytes = UpdateFixture.Serialize(descriptor);
     UpdateDescriptorVerificationResult result = UpdateDescriptorVerifier.Verify(
         bytes,
-        [fixture.Sign("metadata-1", fixture.MetadataKey, bytes)],
+        [UpdateFixture.Sign("metadata-1", fixture.MetadataKey, bytes)],
         fixture.CreatePolicy(),
         fixture.NowUtc);
     Equal(UpdateDescriptorStatus.Expired, result.Status);
@@ -102,10 +102,10 @@ static Task DescriptorQuorumIsEnforcedAsync()
 {
     using UpdateFixture fixture = new();
     UpdateAcquisitionDescriptor descriptor = fixture.CreateDescriptor(CreatePayloads());
-    byte[] bytes = fixture.Serialize(descriptor);
+    byte[] bytes = UpdateFixture.Serialize(descriptor);
     UpdateDescriptorVerificationResult result = UpdateDescriptorVerifier.Verify(
         bytes,
-        [fixture.Sign("metadata-1", fixture.MetadataKey, bytes)],
+        [UpdateFixture.Sign("metadata-1", fixture.MetadataKey, bytes)],
         fixture.CreatePolicy(quorum: 2, includeSecondMetadataKey: true),
         fixture.NowUtc);
     Equal(UpdateDescriptorStatus.InsufficientSignatures, result.Status);
@@ -119,10 +119,10 @@ static Task UnsignedRedirectOriginIsRejectedAsync()
     {
         AllowedRedirectOrigins = ["https://redirect.soltex.invalid"]
     };
-    byte[] bytes = fixture.Serialize(descriptor);
+    byte[] bytes = UpdateFixture.Serialize(descriptor);
     UpdateDescriptorVerificationResult result = UpdateDescriptorVerifier.Verify(
         bytes,
-        [fixture.Sign("metadata-1", fixture.MetadataKey, bytes)],
+        [UpdateFixture.Sign("metadata-1", fixture.MetadataKey, bytes)],
         fixture.CreatePolicy(),
         fixture.NowUtc);
     Equal(UpdateDescriptorStatus.InvalidDescriptor, result.Status);
@@ -132,7 +132,7 @@ static Task UnsignedRedirectOriginIsRejectedAsync()
 static Task ExactTrustReplayIsIdempotentAsync()
 {
     using UpdateFixture fixture = new();
-    byte[] current = fixture.Serialize(fixture.CreatePolicy());
+    byte[] current = UpdateFixture.Serialize(fixture.CreatePolicy());
     UpdateTrustTransitionDecision decision = UpdateTrustTransitionEvaluator.Evaluate(
         current,
         current,
@@ -145,8 +145,8 @@ static Task ExactTrustReplayIsIdempotentAsync()
 static Task TrustRollbackIsRejectedAsync()
 {
     using UpdateFixture fixture = new();
-    byte[] current = fixture.Serialize(fixture.CreatePolicy(sequence: 2));
-    byte[] proposed = fixture.Serialize(fixture.CreatePolicy(sequence: 1));
+    byte[] current = UpdateFixture.Serialize(fixture.CreatePolicy(sequence: 2));
+    byte[] proposed = UpdateFixture.Serialize(fixture.CreatePolicy(sequence: 1));
     UpdateTrustTransitionDecision decision = UpdateTrustTransitionEvaluator.Evaluate(
         current,
         proposed,
@@ -165,8 +165,8 @@ static Task TrustEquivocationIsRejectedAsync()
         ValidUntilUtc = currentPolicy.ValidUntilUtc.AddMinutes(1)
     };
     UpdateTrustTransitionDecision decision = UpdateTrustTransitionEvaluator.Evaluate(
-        fixture.Serialize(currentPolicy),
-        fixture.Serialize(conflictingPolicy),
+        UpdateFixture.Serialize(currentPolicy),
+        UpdateFixture.Serialize(conflictingPolicy),
         [],
         fixture.NowUtc);
     Equal(UpdateTrustTransitionStatus.RejectedEquivocation, decision.Status);
@@ -178,11 +178,11 @@ static Task TrustUpgradeIsAcceptedAsync()
     using UpdateFixture fixture = new();
     UpdateTrustPolicy currentPolicy = fixture.CreatePolicy();
     UpdateTrustPolicy proposedPolicy = currentPolicy with { Sequence = 2 };
-    byte[] proposed = fixture.Serialize(proposedPolicy);
+    byte[] proposed = UpdateFixture.Serialize(proposedPolicy);
     UpdateTrustTransitionDecision decision = UpdateTrustTransitionEvaluator.Evaluate(
-        fixture.Serialize(currentPolicy),
+        UpdateFixture.Serialize(currentPolicy),
         proposed,
-        [fixture.Sign("metadata-1", fixture.MetadataKey, proposed)],
+        [UpdateFixture.Sign("metadata-1", fixture.MetadataKey, proposed)],
         fixture.NowUtc);
     Equal(UpdateTrustTransitionStatus.AcceptedUpgrade, decision.Status);
     Equal("metadata-1", decision.AuthorizingKeyIds.Single());
@@ -203,11 +203,11 @@ static Task TrustKeyReplacementIsRejectedAsync()
         Sequence = 2,
         MetadataKeys = [replaced]
     };
-    byte[] proposed = fixture.Serialize(proposedPolicy);
+    byte[] proposed = UpdateFixture.Serialize(proposedPolicy);
     UpdateTrustTransitionDecision decision = UpdateTrustTransitionEvaluator.Evaluate(
-        fixture.Serialize(currentPolicy),
+        UpdateFixture.Serialize(currentPolicy),
         proposed,
-        [fixture.Sign("metadata-1", fixture.MetadataKey, proposed)],
+        [UpdateFixture.Sign("metadata-1", fixture.MetadataKey, proposed)],
         fixture.NowUtc);
     Equal(UpdateTrustTransitionStatus.RejectedKeyReplacement, decision.Status);
     return Task.CompletedTask;
