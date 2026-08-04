@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Soltex.App.Tests</RootNamespace>
+    <AssemblyName>Soltex.App.Tests</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Soltex.App\Soltex.App.csproj" />
+    <ProjectReference Include="..\..\src\Soltex.DeviceFabric\Soltex.DeviceFabric.csproj" />
+    <ProjectReference Include="..\..\src\Soltex.Monitoring\Soltex.Monitoring.csproj" />
+  </ItemGroup>
+</Project>

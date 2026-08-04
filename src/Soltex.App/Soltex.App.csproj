@@ -15,4 +15,7 @@
     <ProjectReference Include="..\Soltex.Monitoring\Soltex.Monitoring.csproj" />
     <ProjectReference Include="..\Soltex.DeviceFabric\Soltex.DeviceFabric.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Soltex.App.Tests" />
+  </ItemGroup>
 </Project>
