@@ -1,8 +1,8 @@
 # Soltex supply-chain security boundary
 
-Status: Windows-verified primitives; no installer or updater integration  
-Snapshot: 2026-08-03  
-Implementation namespace: `WaveSlate.Security`
+Status: Windows-verified non-installing planner; no installer or activation boundary
+Snapshot: 2026-08-04
+Implementation namespaces: `WaveSlate.Security`, `WaveSlate.Update`
 
 ## 1. Scope
 
@@ -15,9 +15,11 @@ The implemented components are:
 - `SignedReleaseManifestVerifier`;
 - `ReleaseSequenceStore`;
 - `BoundedArchiveStager`;
-- `WaveSlate.Security.SupplyChain.Tests`.
+- `UpdateDescriptorVerifier`, `UpdateTrustTransitionEvaluator`, and `PinnedHttpsTransport`;
+- `BoundedHttpsAcquirer`, `SoltexUpdatePlanner`, and `UpdatePlanningJournal`;
+- `WaveSlate.Security.SupplyChain.Tests`, `WaveSlate.Security.Hardening.Tests`, and `WaveSlate.Update.Tests`.
 
-These components are not a release service. They do not download, install, execute, activate, repair, roll back, or uninstall software. No production Soltex certificate, release public key, feed, installer, or updater is configured.
+These components are not a release service. Given an already configured signed descriptor and trust policy, the planner can authenticate and download bounded inert artifacts into private staging, verify them, and produce a user-visible plan. It does not install, execute, elevate, activate, repair, roll back, or uninstall software. No production Soltex certificate, metadata/release public key, TLS pin, signed trust policy, descriptor source, installer, or updater is configured.
 
 ## 2. Threats addressed
 
@@ -241,9 +243,9 @@ Successful staging is not approval. The stager does not:
 
 Those steps require an explicit orchestrator and separate evidence.
 
-## 7. Composition requirements for a future updater
+## 7. Implemented non-installing composition
 
-A future non-elevated update planner should produce a typed, user-visible plan in this order:
+`SoltexUpdatePlanner` produces a typed, user-visible plan in this order:
 
 1. identify channel and currently accepted sequence;
 2. acquire bounded metadata and package bytes over authenticated transport;
@@ -254,13 +256,19 @@ A future non-elevated update planner should produce a typed, user-visible plan i
 7. apply Authenticode publisher authorization to every executable file required by policy;
 8. evaluate the release-sequence decision without mutating installation state;
 9. show exact publisher, version, sequence, files, hashes, permissions, disk impact, and recovery plan;
-10. require explicit confirmation before crossing an installer/elevation boundary.
+10. issue an exact, expiring confirmation challenge for a later installer/elevation boundary.
+
+Acquisition begins only after the exact descriptor bytes satisfy the active metadata-signature quorum. `PinnedHttpsTransport` exposes only HTTPS responses whose observed TLS SubjectPublicKeyInfo hash belongs to the active signed pin set. `BoundedHttpsAcquirer` rejects unsigned redirect origins, excess redirects, missing or mismatched lengths, excess bytes, hash mismatch, timeouts, cancellation, and reparse/collision conditions; it cleans partial private staging on failure.
+
+The planner's deterministic preview binds product, channel, current/target version, target sequence, descriptor/manifest/package hashes, release key, descriptor signers, approved publishers, exact file changes, disk impact, warnings, recovery prerequisites, and confirmation to one plan SHA-256. `PreparedSoltexUpdate` keeps the underlying inert artifacts locked and removes them on disposal.
+
+`UpdatePlanningJournal` retains at most 128 sanitized phase records in authenticated current/last-known-good state. Recovery inspection reports unfinished attempts and existing Soltex-owned private staging tokens without displaying the token or a raw path in the WPF surface. Cleanup is explicit and bounded to tokens already authenticated in the journal.
 
 The installer phase must then provide transactional activation, rollback, repair, uninstall, crash recovery, disk-full handling, locked-file handling, reboot behavior, and retained evidence. It must not execute directly from the archive or staging directory.
 
 ## 8. Windows-verified test evidence
 
-Implementation commit `6ea85727935564122c5237ae9c3b85cd81cbbc72` passed the Windows warnings-as-errors build and all 18 focused supply-chain checks in GitHub Actions run `30858289994`.
+Implementation commit `252fd9fd5314e5403e7abd060855b19468bc2719` passed the Windows warnings-as-errors build, 27 existing checks, 18 supply-chain checks, 12 hostile hardening checks, and 17 update-planner checks in GitHub Actions run `30915008164`.
 
 The suite covers:
 
@@ -280,14 +288,16 @@ The suite covers:
 - expanded-size limit;
 - compression-ratio limit.
 
-The broader existing suite remained 27/27. The hosted EICAR interoperability run remained 27/28 because the installed hosted AMSI provider returned native result `1`. Both current WPF panels rendered natively and produced the expected artifacts. Pixel inspection records unresolved truncation in the Security panel; human visual acceptance remains open. See [`VALIDATION.md`](VALIDATION.md) for exact commands, environment, logs, and artifact identity.
+The update-planner suite additionally covers signed descriptor validity/expiry/quorum, unauthorized redirects, trust replay/rollback/equivocation/overlap/key replacement, exact locked acquisition bytes, rejection/cancellation cleanup, journal sanitization/recovery cleanup, and exact expiring confirmation. It completed in 2,602.5 ms on the recorded hosted run; that diagnostic timing is not a performance guarantee.
+
+The hosted EICAR interoperability run remained 27/28 because the installed hosted AMSI provider returned native result `1`. Security, Remote Assist, and Updates rendered natively and produced the expected artifacts. Pixel inspection confirms the two previously recorded Security truncations are corrected at the captured viewport; broader visual/accessibility acceptance remains open. See [`VALIDATION.md`](VALIDATION.md) for exact commands, environment, logs, and artifact identity.
 
 ## 9. Explicit nonclaims
 
 This implementation is not described as:
 
 - a complete signed release system;
-- a secure updater or installer;
+- an installing updater, installer, or release service;
 - production-ready;
 - resistant to a fully compromised user account;
 - resistant to compromised release infrastructure;

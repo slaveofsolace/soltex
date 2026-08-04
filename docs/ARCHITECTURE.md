@@ -16,6 +16,12 @@ WaveSlate.App (WPF, unelevated)
     |     +-- constrained peer-ID value object
     |           |
     |           +-- separately installed RustDesk UI/process
+    +-- WaveSlate.Update
+    |     +-- signed acquisition descriptors and trust rotation
+    |     +-- pinned HTTPS transport and bounded private acquisition
+    |     +-- signed manifest/archive/publisher composition
+    |     +-- deterministic non-installing preview and confirmation
+    |     +-- authenticated planning/recovery journal
     +-- WaveSlate.Security
           +-- protection monitor with retry/backoff/recovery state
           +-- AMSI intake scanner
@@ -28,7 +34,7 @@ WaveSlate.App (WPF, unelevated)
           +-- bounded WaveSlate Imports watcher
 ```
 
-WaveSlate installs no Windows service, background tray process, kernel driver, browser extension, network proxy, or cloud backend in this release. A user-approved RustDesk process is external to WaveSlate and retains its own runtime behavior.
+Soltex installs no Windows service, background tray process, kernel driver, browser extension, network proxy, or cloud backend in this release. A user-approved RustDesk process is external to Soltex and retains its own runtime behavior.
 
 ## Trust boundaries
 
@@ -38,9 +44,10 @@ WaveSlate installs no Windows service, background tray process, kernel driver, b
 - **Event boundary:** the Defender Operational reader asks Windows for at most 24 recent allow-listed event IDs in the app and 100 at the library boundary, with a 512 KiB stdout byte ceiling enforced while the child stream is read. It treats only a no-matching-events condition as an empty result, surfaces other provider/access failures, and re-enforces the requested count after deserialization. `DefenderEventLogParser` constructs descriptions from an allow-list of fields and never exposes file, process, or scan-resource paths.
 - **Content-intake boundary:** `FileAssessmentService` normalizes existing non-reparse files, hashes them, checks the exact-hash allow list, and sends at most 16 MiB to AMSI.
 - **Release boundary:** `IntegrityManifestVerifier` verifies exact manifest bytes with RSA-PSS/SHA-256 before validating bounded relative paths, lengths, and hashes. `AuthenticodeVerifier` asks Windows to validate an individual signed file.
+- **Update-planning boundary:** `UpdateDescriptorVerifier` requires exact signed descriptor bytes and metadata-key quorum before any network operation. `PinnedHttpsTransport` accepts only HTTPS with an active signed TLS SPKI pin; `BoundedHttpsAcquirer` constrains origins, redirects, time, lengths, hashes, and private reparse-free staging. `SoltexUpdatePlanner` composes signed-manifest, archive, publisher, and disk-impact evidence into one deterministic preview and exact expiring confirmation, then stops without installation or elevation.
 - **Local-state boundary:** DPAPI protects a per-user HMAC key. Allow-list and quarantine indexes are authenticated. Quarantined payloads are re-hashed before restoration.
-- **Privacy boundary:** audit records store an HMAC of a full path rather than the raw path. The log is chained so modification is detectable, though a same-user attacker can still truncate or delete local state.
-- **Remote-assistance boundary:** WaveSlate never embeds the AGPL RustDesk runtime. It accepts only an explicit existing `RustDesk.exe`, rejects a reparse-point file, records a SHA-256 approval fingerprint, requires cached Windows Authenticode trust, and revalidates the bytes and signature at launch. Sharing uses no arguments; control passes only `--connect` and one constrained peer ID through `ProcessStartInfo.ArgumentList` with `UseShellExecute=false`. RustDesk owns transport, authentication, consent, elevation behavior, updates, and session termination. WaveSlate does not provide passwords, unattended access, elevation flags, service installation, or a hidden session.
+- **Privacy boundary:** audit records store an HMAC of a full path rather than the raw path. Update-journal detail is sanitized and the Updates page displays neither release URLs nor raw local paths. The local logs are authenticated/chained, though a same-user attacker can still truncate or delete local state.
+- **Remote-assistance boundary:** Soltex never embeds the AGPL RustDesk runtime. It accepts only an explicit existing `RustDesk.exe`, rejects a reparse-point file, records a SHA-256 approval fingerprint, requires cached Windows Authenticode trust, and revalidates the bytes and signature at launch. Sharing uses no arguments; control passes only `--connect` and one constrained peer ID through `ProcessStartInfo.ArgumentList` with `UseShellExecute=false`. RustDesk owns transport, authentication, consent, elevation behavior, updates, and session termination. Soltex does not provide passwords, unattended access, elevation flags, service installation, or a hidden session.
 
 ## Performance isolation
 
@@ -54,6 +61,7 @@ WaveSlate installs no Windows service, background tray process, kernel driver, b
 - Audit rotation: 4 MiB plus one prior segment.
 - Security operations run asynchronously and are not shared with future audio/capture threads.
 - Remote Assist has no polling loop or resident network component. File hashing and Authenticode checks occur only when a client is selected or a user confirms a launch.
+- Update planning has no scheduler or resident downloader. It runs only from explicit input, applies declared byte/time/count ceilings, holds inert artifacts in private staging, and deletes them when the prepared preview is disposed.
 
 ## Future subsystem boundaries
 

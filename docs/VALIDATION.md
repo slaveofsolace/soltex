@@ -1,6 +1,6 @@
 # Validation and evidence
 
-Snapshot: 2026-08-03  
+Snapshot: 2026-08-04
 Repository: `slaveofsolace/soltex`  
 Canonical product: Soltex  
 Current solution identifier: `WaveSlate.sln`
@@ -20,25 +20,25 @@ Current solution identifier: `WaveSlate.sln`
 Implementation commit:
 
 ```text
-6ea85727935564122c5237ae9c3b85cd81cbbc72
+252fd9fd5314e5403e7abd060855b19468bc2719
 ```
 
 GitHub pull-request merge preview exercised by the run:
 
 ```text
-811b55ad875c79d3b2c50f746ae853c291ad210e
+e464be421851523f48a512fdf9ce42b75dad750d
 ```
 
 Base `main` commit:
 
 ```text
-eb0d2ffeacc52d16b46795cd4facdd17a5816b32
+39eaf628f6add6c89963a81b7c1971c2f74f02a1
 ```
 
 Environment:
 
-- GitHub Actions run `30858289994`;
-- job `91834318247`;
+- GitHub Actions run `30915008164`;
+- job `92010795630`;
 - Windows Server 2025, build `10.0.26100`;
 - runner image `windows-2025-vs2026`, version `20260728.188.1`;
 - .NET SDK `10.0.302`;
@@ -46,13 +46,12 @@ Environment:
 
 Retained evidence:
 
-- artifact name: `soltex-windows-evidence-30858289994-1`;
-- artifact ID: `8873339056`;
-- downloaded artifact ZIP size: 224,240 bytes;
-- uncompressed evidence payload: 242,129 bytes across seven files;
-- artifact ZIP SHA-256: `B2720273046CA62D9D5D675AEA13E48CE6D5CAE35ACAB95F5B3725A13B68538C`;
+- artifact name: `soltex-windows-evidence-30915008164-1`;
+- artifact ID: `8894704016`;
+- uploaded artifact ZIP size: 323,145 bytes;
+- GitHub-recorded artifact ZIP SHA-256: `9D90D3E98A4DF9235636DFA1185894B527038EFB242007DEE3ED82E6FEBC376C`;
 - configured retention: 30 days;
-- uploaded files: build log, existing-test log, supply-chain-test log, EICAR log, gate classification, Security PNG, Remote Assist PNG.
+- uploaded files: build log, five focused-suite logs, gate classification, Security PNG, Remote Assist PNG, and Updates PNG.
 
 ## Commands exercised by the workflow
 
@@ -92,21 +91,21 @@ Hosted-runner observations from this suite:
 ```text
 Windows Security change registration:
   registered=False
-  duration=8.7 ms
+  duration=8.6 ms
   detail=Unable to load DLL 'wscapi.dll' ... 0x8007007E
 
 Windows protection health:
   WSC=Unknown
   mode=Normal
-  bounded duration=5713.6 ms
+  bounded duration=5121.1 ms
 
 Defender Operational events:
   16 events
-  duration=735.0 ms
+  duration=740.5 ms
 
 Observation means:
-  WSC read=0.344 ms
-  AMSI 4 KiB call=0.379 ms
+  WSC read=0.152 ms
+  AMSI 4 KiB call=0.326 ms
 ```
 
 These measurements describe one hosted run and are not performance guarantees. The `wscapi.dll` result means this host proves bounded degradation, not successful live provider enumeration.
@@ -149,6 +148,57 @@ Executed cases:
 
 The test certificate and key material are ephemeral fixtures. They are not Soltex production signing material and are not committed.
 
+### Storage, publisher, ZIP, and workflow hostile suite
+
+```powershell
+dotnet run `
+  --project .\tests\WaveSlate.Security.Hardening.Tests\WaveSlate.Security.Hardening.Tests.csproj `
+  --configuration Release `
+  --no-build
+```
+
+Result:
+
+```text
+12/12 tests passed.
+```
+
+The cases cover immutable publisher-snapshot binding, source mutation after snapshot, authenticated current/last-known-good state recovery and equivocation, strict duplicate-property JSON, bounded ZIP central-directory preflight, ZIP64/multi-disk rejection, and immutable GitHub Actions SHA/permission policy.
+
+### Non-installing update-planner hostile suite
+
+```powershell
+dotnet run `
+  --project .\tests\WaveSlate.Update.Tests\WaveSlate.Update.Tests.csproj `
+  --configuration Release `
+  --no-build
+```
+
+Result:
+
+```text
+17/17 tests passed.
+MEASURE update_planner_suite tests=17 failed=0 total_ms=2602.5
+```
+
+The cases cover valid signed descriptors, duplicate properties, expiry classification, signature quorum, unsigned redirect origins, exact trust replay, trust rollback/equivocation, overlap-preserving trust upgrade, same-key-ID replacement, exact locked acquisition bytes, redirect/truncation/cancellation cleanup, journal sanitization, private-artifact recovery, and exact expiring confirmation.
+
+Hosted-runner wall-clock observations:
+
+| Observation | Duration |
+|---|---:|
+| Complete 17-case suite | 2,602.5 ms |
+| Slowest case: descriptor quorum | 260.4 ms |
+| Exact locked acquisition and cleanup | 237.8 ms |
+| Unauthorized redirect rejection and cleanup | 107.8 ms |
+| Truncated body rejection and cleanup | 127.0 ms |
+| Cancellation cleanup | 136.0 ms |
+| Journal sanitization | 78.4 ms |
+| Recovery inspection and private cleanup | 81.3 ms |
+| Exact confirmation semantics | 1.0 ms |
+
+These are one-run diagnostic timings for ephemeral RSA fixtures and an in-memory authenticated transport. They are not network, disk, production-feed, installer, startup, or responsiveness guarantees.
+
 ### Opt-in EICAR interoperability
 
 ```powershell
@@ -182,9 +232,7 @@ dotnet run `
   --panel security
 ```
 
-Result: command succeeded and the expected 1044×788 PNG was present.
-
-Pixel inspection found no render exception, but the current scan subtitle and event-detail column contain visible truncation. This is recorded as an open UI defect rather than accepted polish.
+Result: command succeeded and the expected 1044×788 PNG was present. Pixel inspection confirmed that the scan subtitle is fully visible and Defender event details wrap with tooltips instead of being truncated.
 
 ### Native Remote Assist render
 
@@ -200,7 +248,21 @@ dotnet run `
 
 Result: command succeeded and the expected 1044×788 PNG was present.
 
-The verification step found both PNGs and no `*.error.txt` render output. These captures are current native initialization evidence at one viewport. They do not cover 1366×768, 1440p, 4K, 100/125/150/200-percent scaling, reduced motion, full keyboard navigation, text alternatives, or owner visual approval.
+### Native Updates render
+
+```powershell
+dotnet run `
+  --project .\src\WaveSlate.App\WaveSlate.App.csproj `
+  --configuration Release `
+  --no-build `
+  -- `
+  --render-smoke .\artifacts\visual\updates-current-source.png `
+  --panel update
+```
+
+Result: command succeeded and the expected 1044×788 PNG was present. Pixel inspection confirmed the Soltex branding, selected Updates navigation state, honest disabled planning control, authenticated-journal empty state, and explicit non-installing/recovery boundaries without visible truncation in the captured viewport.
+
+The verification step found all three PNGs and no `*.error.txt` render output. These captures are current native initialization evidence at one viewport. They do not cover 1366×768, 1440p, 4K, 100/125/150/200-percent scaling, reduced motion, a full keyboard/screen-reader audit, or owner visual approval.
 
 ## Owner-controlled Windows gate
 
@@ -269,10 +331,9 @@ The following must exist before any signed installer/update claim:
 
 - selected production code-signing and manifest-signing identities;
 - documented key custody, backup, loss, revocation, and recovery procedures;
-- committed public pins/keys with an explicit rotation mechanism;
+- committed public metadata/release keys, TLS/publisher pins, and a signed trust-policy rollout using the implemented overlap/retirement rules;
+- a production authenticated descriptor source and release-candidate evidence using real public release identities;
 - signed installer package and deterministic uninstall evidence;
-- authenticated update acquisition and bounded download limits;
-- a composed update planner and transaction;
 - atomic activation and interrupted-update rollback/recovery tests;
-- tampered manifest/package, stale sequence, concurrent process, lock timeout, pin mismatch, expired/revoked certificate, partial I/O, disk-full, locked-file, reboot, downgrade, and cancellation evidence;
+- installer-bound tampered package, concurrent process, lock timeout, pin mismatch, expired/revoked certificate, partial I/O, disk-full, locked-file, reboot, downgrade, and cancellation evidence;
 - retained hashes, signatures, logs, and exact reproduction commands for a release candidate.

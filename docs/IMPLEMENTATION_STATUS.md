@@ -1,6 +1,6 @@
 # Implementation status
 
-Snapshot: 2026-08-03  
+Snapshot: 2026-08-04
 Product: **Soltex**  
 Repository: `slaveofsolace/soltex` (private)  
 Current implementation identifiers: `WaveSlate.*`
@@ -16,29 +16,32 @@ A passing narrow test proves only that boundary. It does not establish productio
 
 ## Windows-verified current branch baseline
 
-Implementation commit `6ea85727935564122c5237ae9c3b85cd81cbbc72` was exercised in pull-request merge preview `811b55ad875c79d3b2c50f746ae853c291ad210e` by GitHub Actions run `30858289994` on Windows Server 2025 (`10.0.26100`, image `windows-2025-vs2026` `20260728.188.1`) with .NET SDK `10.0.302`.
+Implementation commit `252fd9fd5314e5403e7abd060855b19468bc2719` was exercised in pull-request merge preview `e464be421851523f48a512fdf9ce42b75dad750d` by GitHub Actions run `30915008164` on Windows Server 2025 (`10.0.26100`, image `windows-2025-vs2026` `20260728.188.1`) with .NET SDK `10.0.302`.
 
 | Gate | Result | Scope |
 |---|---:|---|
-| Release build | 0 warnings, 0 errors | Entire `WaveSlate.sln`, including the new test project |
+| Release build | 0 warnings, 0 errors | Entire `WaveSlate.sln`, including Security, Remote Assist, Update, and all focused test projects |
 | Existing focused suite | 27/27 passed | Security companion, monitoring boundaries, Remote Assist regressions |
 | Supply-chain suite | 18/18 passed | Publisher policy, signed release, sequence state including cross-process lock, bounded ZIP staging |
+| Hostile hardening suite | 12/12 passed | Immutable publisher snapshot, authenticated-state recovery, bounded ZIP preflight, pinned workflow policy |
+| Update-planner suite | 17/17 passed | Descriptor quorum/expiry, trust rotation, bounded acquisition cleanup, journal recovery, exact confirmation |
 | Opt-in EICAR interoperability | 27/28 | Hosted AMSI provider returned native result `1`; owner-host evidence remains pending |
 | Security native render | Passed | 1044×788 render-smoke output created |
 | Remote Assist native render | Passed | 1044×788 render-smoke output created |
-| Render artifact check | Passed | Both PNGs present; no `*.error.txt` output |
+| Updates native render | Passed | 1044×788 render-smoke output created |
+| Render artifact check | Passed | All three PNGs present; no `*.error.txt` output |
 
 Retained workflow evidence:
 
-- run: `30858289994`;
-- job: `91834318247`;
-- artifact: `soltex-windows-evidence-30858289994-1`;
-- artifact ID: `8873339056`;
-- downloaded artifact ZIP size: 224,240 bytes;
-- artifact ZIP SHA-256: `B2720273046CA62D9D5D675AEA13E48CE6D5CAE35ACAB95F5B3725A13B68538C`;
+- run: `30915008164`;
+- job: `92010795630`;
+- artifact: `soltex-windows-evidence-30915008164-1`;
+- artifact ID: `8894704016`;
+- uploaded artifact ZIP size: 323,145 bytes;
+- GitHub-recorded artifact ZIP SHA-256: `9D90D3E98A4DF9235636DFA1185894B527038EFB242007DEE3ED82E6FEBC376C`;
 - retention configured by the workflow: 30 days.
 
-The hosted Windows Server image did not expose a usable live `wscapi.dll` boundary. The provider-neutral health test therefore proved bounded failure/fallback behavior and an `Unknown` state, not successful provider inventory on that host. Native rendering proves that both current panels initialize and capture; owner visual acceptance remains pending. Pixel inspection identified unresolved text truncation in the Security scan subtitle and event-detail column.
+The hosted Windows Server image did not expose a usable live `wscapi.dll` boundary. The provider-neutral health test therefore proved bounded failure/fallback behavior and an `Unknown` state, not successful provider inventory on that host. Native rendering proves that the Security, Remote Assist, and Updates panels initialize and capture. Pixel inspection at 1044×788 confirmed that the previously recorded Security scan-subtitle and event-detail truncation is corrected; broader viewport/scaling coverage and owner visual acceptance remain pending.
 
 ## Implemented: Security companion
 
@@ -110,7 +113,23 @@ Each read-modify-write operation is additionally serialized through a state-dire
 
 The source does not call `ExtractToDirectory` for this untrusted boundary.
 
-**Nonclaims:** staged content remains inert. It is not executed, loaded as a plugin, recursively unpacked, copied into an installation directory, or treated as approved merely because extraction succeeded. No orchestrator yet binds archive acquisition, staging, signed-manifest verification, Authenticode publisher authorization, sequence acceptance, transactional installation, or recovery.
+**Nonclaims:** staged content remains inert. It is not executed, loaded as a plugin, recursively unpacked, copied into an installation directory, or treated as approved merely because extraction succeeded. The non-installing planner now binds acquisition, staging, signed-manifest verification, and publisher evidence into a preview, but no transactional installation, activation, or installation recovery exists.
+
+## Implemented: non-installing update planner
+
+`WaveSlate.Update` provides a fail-closed planning boundary for a future Soltex release path:
+
+- strict signed acquisition descriptors with bounded size/count fields, UTC issue/expiry, product/channel/sequence identity, exact artifact lengths and SHA-256 values, authorized origins, and RSA-PSS/SHA-256 metadata-signature quorum;
+- an explicit trust policy for metadata keys, release keys, TLS SubjectPublicKeyInfo pins, and executable publisher identities;
+- signed, overlap-preserving trust-policy rotation with exact replay idempotency and explicit rollback, sequence-equivocation, key-ID replacement, pin replacement, and lost-continuity rejection;
+- `PinnedHttpsTransport` and `BoundedHttpsAcquirer`, which require HTTPS, pass an exact active pin set to the transport, reject unsigned redirect origins, bound redirects/headers/body/time, stream into a private reparse-free directory, enforce declared length and SHA-256, retain exclusive file handles, and clean partial acquisition on rejection or cancellation;
+- `SoltexUpdatePlanner`, which composes descriptor verification, bounded acquisition, signed-manifest verification, bounded archive staging, exact manifest-to-staged-file binding, executable publisher authorization, disk-impact calculation, warning/recovery prerequisites, a deterministic plan hash, and an expiring exact confirmation phrase;
+- an authenticated current/last-known-good planning journal whose untrusted detail is sanitized, whose entries are bounded, and whose recovery inspection identifies only Soltex-owned private staging tokens;
+- a Soltex Updates page that reads the real authenticated journal, fails closed on authentication/read errors, exposes no release URL or raw local path, and truthfully disables planning because production release identities and a signed source are not configured.
+
+The planner stops at `PreparedSoltexUpdate`. Disposal removes its inert private artifacts. It does not execute, install, elevate, activate, repair, uninstall, reboot, mutate Windows security, or silently clean an interrupted attempt.
+
+The 17-case hostile suite completed in 2,602.5 ms on one hosted runner. Individual cases ranged from 1.0 ms for exact confirmation semantics to 260.4 ms for the descriptor-quorum case. These are diagnostic wall-clock observations, not throughput or latency guarantees.
 
 ## Implemented: Remote Assist boundary
 
@@ -123,9 +142,8 @@ It does not embed or link RustDesk AGPL code, store remote passwords, enable una
 The following remain separate work:
 
 - production Soltex publisher identity, key custody, timestamping, pin rollout, and pin rotation;
+- production release-manifest/metadata keys, TLS pins, signed trust policy, and authenticated descriptor source;
 - a signed installer and deterministic uninstall;
-- authenticated update transport and bounded download staging;
-- an update transaction that composes all current primitives;
 - atomic activation, rollback, crash recovery, interrupted-update recovery, and retained installer evidence;
 - optional provider-name inventory without changing Windows Security Center registration;
 - provider registration, minifilter, ELAM, PPL/protected service, MVI participation, cloud reputation, detection research, certification, and efficacy claims;
@@ -147,9 +165,9 @@ Use the exact commands in [`VALIDATION.md`](VALIDATION.md) before modifying or s
 
 ## Exact next implementation slice
 
-1. Select the production Soltex code-signing and release-manifest signing identities, document custody and recovery, and record approved subject/SPKI/public-key values without committing private material.
-2. Define signed pin-rotation and release-key-rotation rules with explicit overlap and rollback behavior.
-3. Build a non-elevated update planner that composes acquisition, bounded staging, manifest verification, publisher authorization, sequence decision, and a user-visible plan without installing anything.
-4. Only after that planner passes hostile-fixture and recovery tests, design the signed installer/elevation boundary, atomic activation, rollback, repair, uninstall, and retained release evidence.
+1. Select the production Soltex code-signing, metadata-signing, and release-manifest-signing identities; document custody/recovery; and commit only approved public subject/SPKI/key values.
+2. Configure a real signed trust policy and authenticated descriptor source, then repeat hostile transport, expiration, revocation, partial-I/O, and recovery evidence against release-candidate fixtures without installing them.
+3. Specify the smallest privileged installer boundary, including immutable input handles, exact plan binding, user confirmation, least privilege, atomic activation, rollback, repair, uninstall, reboot, and retained evidence.
+4. Keep remote correction as a separately authorized, consent-visible command vocabulary with no generic shell, hidden desktop, stored remote password, unattended RustDesk mode, or arbitrary download-and-execute path.
 
 Do not begin with provider registration, a driver, a service, public ingress, Defender mutations, or automatic execution of staged content.

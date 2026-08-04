@@ -2,12 +2,13 @@
 
 Soltex is a proprietary personal-computing workspace. **Soltex** is the canonical product and repository name; the current Windows solution, assemblies, namespaces, and selected filenames retain the legacy `WaveSlate.*` identifier until a separately scoped compatibility migration is approved.
 
-The current desktop solution covers four related product areas:
+The current desktop solution covers five related product areas:
 
 - **Audio** — future per-application routing, parametric EQ, microphone processing, and stream mixes.
 - **Clips** — future bounded rolling capture with a separate, non-injected overlay.
 - **Security** — the implemented focus: a lightweight companion that cooperates with the antivirus provider registered with Windows, plus bounded local supply-chain verification primitives.
 - **Remote Assist** — a consent-first launcher for a separately installed, Windows-trusted RustDesk client; Soltex does not own or embed the remote-session transport.
+- **Updates** — a non-installing signed planner that authenticates bounded release artifacts and stops at an exact human-readable preview.
 
 This is a clean-room product. It is not affiliated with, endorsed by, or derived from SteelSeries, Malwarebytes, Zen Browser, AppControl, NZXT, or RustDesk. It contains no copied binaries, signatures, detection models, private protocols, branding, or UI assets from those products. RustDesk remains a separately licensed external program.
 
@@ -36,9 +37,12 @@ The current supply-chain foundation adds:
 - authenticated per-user release-sequence state that rejects lower sequences and same-sequence/different-manifest equivocation;
 - a bounded, cancellation-aware cross-process lock around release-sequence reads and writes;
 - bounded ZIP staging that rejects traversal, Windows device names, alternate-data-stream syntax, case collisions, reparse/symbolic links, unsupported entry types, excessive entry counts, expanded sizes, and compression ratios;
-- private staging roots with failure, cancellation, and owner-disposal cleanup.
+- private staging roots with failure, cancellation, and owner-disposal cleanup;
+- strict signed acquisition descriptors, metadata-signature quorum, signed trust-policy rotation, TLS SPKI pins, authorized redirect origins, bounded HTTPS acquisition, and exact byte/hash verification;
+- a composed non-installing planner that verifies manifest, archive, executable publisher, file-change, disk-impact, warning, recovery, deterministic plan-hash, and exact expiring confirmation evidence;
+- an authenticated current/last-known-good planning journal plus a real Soltex Updates page that displays bounded sanitized state and fails closed.
 
-These are primitives, not an installer or updater. No production Soltex signing identity is pinned in source, staged archive content is not executed or installed, and no release transaction currently composes download, staging, manifest verification, publisher authorization, installation, rollback, or recovery.
+This is not an installer or release service. No production Soltex signing identity, TLS pin, or signed descriptor source is configured. The planner can authenticate, download, stage, and preview inert bytes, but it cannot execute, install, elevate, activate, repair, roll back, or uninstall them.
 
 The current Remote Assist source provides explicit RustDesk executable selection, Authenticode and SHA-256 revalidation, fixed shell-free launch arguments, constrained peer IDs, local confirmation, and peer-ID-free auditing. It does not bundle RustDesk, store passwords, enable unattended access, request elevation, install a service, or hide the external client.
 
@@ -64,6 +68,16 @@ dotnet run `
   --project .\tests\WaveSlate.Security.SupplyChain.Tests\WaveSlate.Security.SupplyChain.Tests.csproj `
   --configuration Release `
   --no-build
+
+dotnet run `
+  --project .\tests\WaveSlate.Security.Hardening.Tests\WaveSlate.Security.Hardening.Tests.csproj `
+  --configuration Release `
+  --no-build
+
+dotnet run `
+  --project .\tests\WaveSlate.Update.Tests\WaveSlate.Update.Tests.csproj `
+  --configuration Release `
+  --no-build
 ```
 
 The safe EICAR interoperability check is opt-in and submits the harmless marker to AMSI in memory only:
@@ -80,17 +94,20 @@ dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Re
 
 ## Evidence
 
-The implementation code at branch commit `6ea85727935564122c5237ae9c3b85cd81cbbc72` was exercised by GitHub Actions run `30858289994` on Windows Server 2025 with .NET SDK 10.0.302:
+The implementation code at branch commit `252fd9fd5314e5403e7abd060855b19468bc2719` was exercised by GitHub Actions run `30915008164` on Windows Server 2025 with .NET SDK 10.0.302:
 
 - Release build: **passed**, 0 warnings and 0 errors;
 - existing focused suite: **27/27 passed**;
 - supply-chain suite: **18/18 passed**;
+- hostile hardening suite: **12/12 passed**;
+- update-planner suite: **17/17 passed** in 2,602.5 ms on that runner;
 - opt-in hosted EICAR suite: **27/28** because the installed hosted-runner AMSI provider returned native result `1` for the in-memory marker;
 - native Security render: **passed**;
 - native Remote Assist render: **passed**;
+- native Updates render: **passed**;
 - render artifact verification: **passed**, with no render-error files.
 
-The retained Actions artifact is `soltex-windows-evidence-30858289994-1` (artifact ID `8873339056`, ZIP SHA-256 `B2720273046CA62D9D5D675AEA13E48CE6D5CAE35ACAB95F5B3725A13B68538C`). The hosted server did not expose a usable live `wscapi.dll` provider boundary, so this run proves bounded fallback behavior rather than successful live provider enumeration. Native rendering is runtime evidence, not owner visual acceptance. Pixel inspection also shows unresolved text truncation in the current Security panel.
+The retained Actions artifact is `soltex-windows-evidence-30915008164-1` (artifact ID `8894704016`, ZIP SHA-256 `9D90D3E98A4DF9235636DFA1185894B527038EFB242007DEE3ED82E6FEBC376C`). The hosted server did not expose a usable live `wscapi.dll` provider boundary, so this run proves bounded fallback behavior rather than successful live provider enumeration. Native rendering is runtime evidence, not owner visual acceptance. Pixel inspection confirms the two previously recorded Security truncations are corrected at the captured 1044×788 viewport; the broader viewport/scaling/accessibility matrix remains pending.
 
 Documentation:
 
@@ -107,6 +124,6 @@ Documentation:
 
 Soltex Security is not a registered third-party antivirus product. It has no production detection organization, cloud reputation service, Windows Security Center provider registration, file-system minifilter, protected anti-malware service, ELAM component, MVI participation, independent efficacy certification, or supported detection-rate claim.
 
-The new supply-chain code also does not constitute a signed release system. Production certificate procurement and custody, release-key storage, explicit pin rotation, timestamping policy, signed installer selection, authenticated update transport, transactional activation, rollback/recovery, uninstall, and retained release evidence remain separate work.
+The supply-chain and update-planning code does not constitute a production signed release system. Production certificate/key procurement and custody, real public pins and signed trust-policy rollout, timestamping/revocation policy, a production descriptor source, signed installer selection, transactional activation, rollback/recovery, uninstall, and retained release-candidate evidence remain separate work.
 
 Copyright © 2026. All rights reserved. See [`LICENSE.txt`](LICENSE.txt).
