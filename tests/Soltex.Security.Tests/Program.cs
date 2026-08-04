@@ -122,7 +122,7 @@ static async Task HashingIsDeterministicAsync()
 
 static Task PathsCannotEscapeAsync()
 {
-    string root = Path.Combine(Path.GetTempPath(), "waveslate-root");
+    string root = Path.Combine(Path.GetTempPath(), "soltex-root");
     Throws<InvalidDataException>(() => PathSafety.CombineUnderRoot(root, "..\\outside.dll"));
     return Task.CompletedTask;
 }
@@ -258,7 +258,7 @@ static async Task IntegrityManifestIdentityIsVersionedAsync()
 
 static async Task FreshProfileUsesCanonicalDataRootAsync()
 {
-    await WithTempDirectoryAsync(root =>
+    await WithTempDirectoryAsync(async root =>
     {
         ProductDataRootResolution resolution = ProductDataRootResolver.Resolve(root);
         Equal(ProductDataRootKind.Canonical, resolution.Kind);
@@ -298,7 +298,7 @@ static async Task AmbiguousOrUnsafeDataRootsFailClosedAsync()
         return Task.CompletedTask;
     });
 
-    await WithTempDirectoryAsync(root =>
+    await WithTempDirectoryAsync(async root =>
     {
         await File.WriteAllTextAsync(
             Path.Combine(root, ProductIdentity.CanonicalStorageDirectoryName),
@@ -321,10 +321,11 @@ static async Task AmbiguousOrUnsafeDataRootsFailClosedAsync()
             PlatformNotSupportedException)
         {
             Console.WriteLine($"      reparse fixture unavailable: {exception.GetType().Name}");
-            return;
+            return Task.CompletedTask;
         }
 
         Throws<IOException>(() => ProductDataRootResolver.Resolve(root));
+        return Task.CompletedTask;
     });
 }
 

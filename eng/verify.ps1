@@ -5,6 +5,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
+& (Join-Path $PSScriptRoot 'verify-identity.ps1')
+
 $dotnet = Join-Path $repoRoot '.dotnet\dotnet.exe'
 if (-not (Test-Path $dotnet)) {
     $dotnet = (Get-Command dotnet -ErrorAction Stop).Source

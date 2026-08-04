@@ -1,6 +1,6 @@
 # Soltex
 
-Soltex is a proprietary personal-computing workspace. **Soltex** is the canonical product and repository name; the current Windows solution, assemblies, namespaces, and selected filenames retain the legacy `WaveSlate.*` identifier until a separately scoped compatibility migration is approved.
+Soltex is a proprietary personal-computing workspace. **Soltex** is the canonical product, repository, solution, assembly, and namespace identity. A small, tested compatibility boundary preserves existing authenticated local state and historical evidence without presenting the retired working name as current product copy.
 
 The current desktop solution covers five related product areas:
 
@@ -57,25 +57,25 @@ Requirements:
 - PowerShell 5.1 and the Defender module for Defender-specific controls.
 
 ```powershell
-dotnet build .\WaveSlate.sln --configuration Release
+dotnet build .\Soltex.sln --configuration Release
 
 dotnet run `
-  --project .\tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj `
+  --project .\tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj `
   --configuration Release `
   --no-build
 
 dotnet run `
-  --project .\tests\WaveSlate.Security.SupplyChain.Tests\WaveSlate.Security.SupplyChain.Tests.csproj `
+  --project .\tests\Soltex.Security.SupplyChain.Tests\Soltex.Security.SupplyChain.Tests.csproj `
   --configuration Release `
   --no-build
 
 dotnet run `
-  --project .\tests\WaveSlate.Security.Hardening.Tests\WaveSlate.Security.Hardening.Tests.csproj `
+  --project .\tests\Soltex.Security.Hardening.Tests\Soltex.Security.Hardening.Tests.csproj `
   --configuration Release `
   --no-build
 
 dotnet run `
-  --project .\tests\WaveSlate.Update.Tests\WaveSlate.Update.Tests.csproj `
+  --project .\tests\Soltex.Update.Tests\Soltex.Update.Tests.csproj `
   --configuration Release `
   --no-build
 ```
@@ -89,7 +89,7 @@ The safe EICAR interoperability check is opt-in and submits the harmless marker 
 Run the desktop app:
 
 ```powershell
-dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release
 ```
 
 ## Evidence

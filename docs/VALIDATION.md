@@ -3,7 +3,7 @@
 Snapshot: 2026-08-04
 Repository: `slaveofsolace/soltex`  
 Canonical product: Soltex  
-Current solution identifier: `WaveSlate.sln`
+Current solution identifier: `Soltex.sln`
 
 ## Evidence rules
 
@@ -58,7 +58,7 @@ Retained evidence:
 ### Release build
 
 ```powershell
-dotnet build .\WaveSlate.sln --configuration Release
+dotnet build .\Soltex.sln --configuration Release
 ```
 
 Result:
@@ -73,7 +73,7 @@ Build succeeded.
 
 ```powershell
 dotnet run `
-  --project .\tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj `
+  --project .\tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj `
   --configuration Release `
   --no-build
 ```
@@ -114,7 +114,7 @@ These measurements describe one hosted run and are not performance guarantees. T
 
 ```powershell
 dotnet run `
-  --project .\tests\WaveSlate.Security.SupplyChain.Tests\WaveSlate.Security.SupplyChain.Tests.csproj `
+  --project .\tests\Soltex.Security.SupplyChain.Tests\Soltex.Security.SupplyChain.Tests.csproj `
   --configuration Release `
   --no-build
 ```
@@ -152,7 +152,7 @@ The test certificate and key material are ephemeral fixtures. They are not Solte
 
 ```powershell
 dotnet run `
-  --project .\tests\WaveSlate.Security.Hardening.Tests\WaveSlate.Security.Hardening.Tests.csproj `
+  --project .\tests\Soltex.Security.Hardening.Tests\Soltex.Security.Hardening.Tests.csproj `
   --configuration Release `
   --no-build
 ```
@@ -169,7 +169,7 @@ The cases cover immutable publisher-snapshot binding, source mutation after snap
 
 ```powershell
 dotnet run `
-  --project .\tests\WaveSlate.Update.Tests\WaveSlate.Update.Tests.csproj `
+  --project .\tests\Soltex.Update.Tests\Soltex.Update.Tests.csproj `
   --configuration Release `
   --no-build
 ```
@@ -203,7 +203,7 @@ These are one-run diagnostic timings for ephemeral RSA fixtures and an in-memory
 
 ```powershell
 dotnet run `
-  --project .\tests\WaveSlate.DeviceFabric.Tests\WaveSlate.DeviceFabric.Tests.csproj `
+  --project .\tests\Soltex.DeviceFabric.Tests\Soltex.DeviceFabric.Tests.csproj `
   --configuration Release `
   --no-build
 ```
@@ -222,12 +222,12 @@ This suite has no device agent, transport, listener, enrollment, signed envelope
 ### Opt-in EICAR interoperability
 
 ```powershell
-$env:WAVESLATE_RUN_EICAR = '1'
+$env:SOLTEX_RUN_EICAR = '1'
 dotnet run `
-  --project .\tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj `
+  --project .\tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj `
   --configuration Release `
   --no-build
-Remove-Item Env:\WAVESLATE_RUN_EICAR -ErrorAction SilentlyContinue
+Remove-Item Env:\SOLTEX_RUN_EICAR -ErrorAction SilentlyContinue
 ```
 
 Result:
@@ -244,7 +244,7 @@ The marker was submitted to AMSI in memory only. No malware sample or file-syste
 
 ```powershell
 dotnet run `
-  --project .\src\WaveSlate.App\WaveSlate.App.csproj `
+  --project .\src\Soltex.App\Soltex.App.csproj `
   --configuration Release `
   --no-build `
   -- `
@@ -258,7 +258,7 @@ Result: command succeeded and the expected 1044×788 PNG was present. Pixel insp
 
 ```powershell
 dotnet run `
-  --project .\src\WaveSlate.App\WaveSlate.App.csproj `
+  --project .\src\Soltex.App\Soltex.App.csproj `
   --configuration Release `
   --no-build `
   -- `
@@ -272,7 +272,7 @@ Result: command succeeded and the expected 1044×788 PNG was present.
 
 ```powershell
 dotnet run `
-  --project .\src\WaveSlate.App\WaveSlate.App.csproj `
+  --project .\src\Soltex.App\Soltex.App.csproj `
   --configuration Release `
   --no-build `
   -- `
@@ -301,30 +301,30 @@ git status --short --branch
 git diff --stat origin/main...HEAD
 
 # Running-process ownership check
-Get-Process WaveSlate,dotnet -ErrorAction SilentlyContinue |
+Get-Process Soltex,dotnet -ErrorAction SilentlyContinue |
   Select-Object Id, ProcessName, Path, StartTime
 
 # Read the current evidence ledger before mutation
 Get-Content .\docs\IMPLEMENTATION_STATUS.md
 
 # Required build and tests
-dotnet build .\WaveSlate.sln --configuration Release
-dotnet run --project .\tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj --configuration Release --no-build
-dotnet run --project .\tests\WaveSlate.Security.SupplyChain.Tests\WaveSlate.Security.SupplyChain.Tests.csproj --configuration Release --no-build
-dotnet run --project .\tests\WaveSlate.Security.Hardening.Tests\WaveSlate.Security.Hardening.Tests.csproj --configuration Release --no-build
-dotnet run --project .\tests\WaveSlate.Update.Tests\WaveSlate.Update.Tests.csproj --configuration Release --no-build
-dotnet run --project .\tests\WaveSlate.DeviceFabric.Tests\WaveSlate.DeviceFabric.Tests.csproj --configuration Release --no-build
+dotnet build .\Soltex.sln --configuration Release
+dotnet run --project .\tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\Soltex.Security.SupplyChain.Tests\Soltex.Security.SupplyChain.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\Soltex.Security.Hardening.Tests\Soltex.Security.Hardening.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\Soltex.Update.Tests\Soltex.Update.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\Soltex.DeviceFabric.Tests\Soltex.DeviceFabric.Tests.csproj --configuration Release --no-build
 
 # Optional provider-interoperability check
-$env:WAVESLATE_RUN_EICAR = '1'
-dotnet run --project .\tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj --configuration Release --no-build
-Remove-Item Env:\WAVESLATE_RUN_EICAR -ErrorAction SilentlyContinue
+$env:SOLTEX_RUN_EICAR = '1'
+dotnet run --project .\tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj --configuration Release --no-build
+Remove-Item Env:\SOLTEX_RUN_EICAR -ErrorAction SilentlyContinue
 
 # Current native renders
 New-Item -ItemType Directory -Force .\artifacts\visual | Out-Null
-dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\security-current-source.png --panel security
-dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\remote-assist-current-source.png --panel remote
-dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\updates-current-source.png --panel update
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\security-current-source.png --panel security
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\remote-assist-current-source.png --panel remote
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\updates-current-source.png --panel update
 ```
 
 Before editing locally, resolve rather than overwrite any dirty files, untracked files, commits not on the remote branch, or running processes that own build outputs. Do not use `git reset --hard`, `git clean`, forced checkout, or force push as a convenience.

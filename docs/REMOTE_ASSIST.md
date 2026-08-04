@@ -2,7 +2,7 @@
 
 ## Decision
 
-WaveSlate does not copy, link, or bundle RustDesk code into the proprietary application. RustDesk is licensed under AGPL-3.0, including the network-source obligations in section 13. The current implementation therefore treats a separately installed RustDesk client as an external program with its own user interface, transport, authentication, consent, updates, and session lifecycle.
+Soltex does not copy, link, or bundle RustDesk code into the proprietary application. RustDesk is licensed under AGPL-3.0, including the network-source obligations in section 13. The current implementation therefore treats a separately installed RustDesk client as an external program with its own user interface, transport, authentication, consent, updates, and session lifecycle.
 
 Official references:
 
@@ -13,7 +13,7 @@ Official references:
 
 ## Research provenance
 
-The unmodified RustDesk 1.4.7 source archive was cached outside the WaveSlate repository for clean-room architectural study only:
+The unmodified RustDesk 1.4.7 source archive was cached outside the Soltex repository for clean-room architectural study only:
 
 - Archive: `C:\Users\suhai\Documents\WaveSlate References\RustDesk\1.4.7\rustdesk-1.4.7.tar.gz`
 - Extracted reference: `C:\Users\suhai\Documents\WaveSlate References\RustDesk\1.4.7\source`
@@ -24,7 +24,7 @@ Architectural lessons used independently are separation of capture/input/clipboa
 
 ## Implemented current-source slice
 
-`src/WaveSlate.RemoteAssist` provides a small external-process adapter:
+`src/Soltex.RemoteAssist` provides a small external-process adapter:
 
 - discovery is bounded to `RustDesk\RustDesk.exe` under the two Windows Program Files roots;
 - a manually selected executable must exist, have the exact filename, and not be a reparse point;
@@ -35,9 +35,9 @@ Architectural lessons used independently are separation of capture/input/clipboa
 - control accepts only a 3–64 character peer ID containing ASCII letters, numbers, `-`, or `_`;
 - control uses `ProcessStartInfo.ArgumentList` with the fixed pair `--connect`, peer ID;
 - `UseShellExecute` is false, so the peer ID is never interpreted by a command shell;
-- every WaveSlate launch receives a local confirmation and a peer-ID-free audit event.
+- every Soltex launch receives a local confirmation and a peer-ID-free audit event.
 
-The UI exposes explicit **not connected**, **blocked**, and **ready** states. It names RustDesk as the external owner rather than presenting a session as a native WaveSlate capability.
+The UI exposes explicit **not connected**, **blocked**, and **ready** states. It names RustDesk as the external owner rather than presenting a session as a native Soltex capability.
 
 ## Explicit exclusions
 
@@ -50,11 +50,11 @@ This slice does not:
 - hide the RustDesk interface, suppress consent, claim end-to-end security, or certify the remote endpoint;
 - pin a specific RustDesk publisher certificate or prove that an arbitrary signed file named `RustDesk.exe` is an official release.
 
-The last point is important: Authenticode trust proves that Windows trusts the current signature chain, not that WaveSlate has independently attested RustDesk's release provenance. A production distribution flow needs an official-release provenance policy, publisher-identity/change process, signed manifest, revocation behavior, and update rollback design.
+The last point is important: Authenticode trust proves that Windows trusts the current signature chain, not that Soltex has independently attested RustDesk's release provenance. A production distribution flow needs an official-release provenance policy, publisher-identity/change process, signed manifest, revocation behavior, and update rollback design.
 
 ## Threat and failure behavior
 
-| Condition | WaveSlate behavior |
+| Condition | Soltex behavior |
 |---|---|
 | Missing or renamed executable | Reject before creating a launch plan |
 | Reparse-point executable | Reject selection or revalidation |

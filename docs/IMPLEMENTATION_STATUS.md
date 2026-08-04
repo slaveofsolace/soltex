@@ -3,7 +3,7 @@
 Snapshot: 2026-08-04
 Product: **Soltex**  
 Repository: `slaveofsolace/soltex` (private)  
-Current implementation identifiers: `WaveSlate.*`
+Current implementation identifiers: `Soltex.*`
 
 ## Evidence vocabulary
 
@@ -20,7 +20,7 @@ Implementation commit `8ca28f8aa1f50de929787fe1c1cbd23b96b3f6e9` was exercised i
 
 | Gate | Result | Scope |
 |---|---:|---|
-| Release build | 0 warnings, 0 errors | Entire `WaveSlate.sln`, including Security, Remote Assist, Update, Device Fabric, and all focused test projects |
+| Release build | 0 warnings, 0 errors | Entire `Soltex.sln`, including Security, Remote Assist, Update, Device Fabric, and all focused test projects |
 | Existing focused suite | 27/27 passed | Security companion, monitoring boundaries, Remote Assist regressions |
 | Supply-chain suite | 18/18 passed | Publisher policy, signed release, sequence state including cross-process lock, bounded ZIP staging |
 | Hostile hardening suite | 12/12 passed | Immutable publisher snapshot, authenticated-state recovery, bounded ZIP preflight, pinned workflow policy |
@@ -118,7 +118,7 @@ The source does not call `ExtractToDirectory` for this untrusted boundary.
 
 ## Implemented: non-installing update planner
 
-`WaveSlate.Update` provides a fail-closed planning boundary for a future Soltex release path:
+`Soltex.Update` provides a fail-closed planning boundary for a future Soltex release path:
 
 - strict signed acquisition descriptors with bounded size/count fields, UTC issue/expiry, product/channel/sequence identity, exact artifact lengths and SHA-256 values, authorized origins, and RSA-PSS/SHA-256 metadata-signature quorum;
 - an explicit trust policy for metadata keys, release keys, TLS SubjectPublicKeyInfo pins, and executable publisher identities;
@@ -134,13 +134,13 @@ The 17-case hostile suite completed in 2,602.5 ms on one hosted runner. Individu
 
 ## Implemented: Remote Assist boundary
 
-`WaveSlate.RemoteAssist` remains a narrow adapter for a separately installed RustDesk executable. It implements explicit selection, reparse rejection, SHA-256 and Authenticode revalidation, constrained peer IDs, a fixed shell-free `--connect` plan, local confirmation, and peer-ID-free audit events.
+`Soltex.RemoteAssist` remains a narrow adapter for a separately installed RustDesk executable. It implements explicit selection, reparse rejection, SHA-256 and Authenticode revalidation, constrained peer IDs, a fixed shell-free `--connect` plan, local confirmation, and peer-ID-free audit events.
 
 It does not embed or link RustDesk AGPL code, store remote passwords, enable unattended access, install services, request elevation, open listeners, hide sessions, or bypass local consent.
 
 ## Implemented: Device Fabric Stage 1 policy foundation
 
-`WaveSlate.DeviceFabric` implements an immutable, non-executing device inventory and capability-policy model. Its exact six-capability catalog covers three read-only observations, two supported Defender requests, and one visible RustDesk handoff preparation. Every policy decision requires a structurally valid target manifest; a known capability is denied if the target did not advertise it.
+`Soltex.DeviceFabric` implements an immutable, non-executing device inventory and capability-policy model. Its exact six-capability catalog covers three read-only observations, two supported Defender requests, and one visible RustDesk handoff preparation. Every policy decision requires a structurally valid target manifest; a known capability is denied if the target did not advertise it.
 
 Read-only observations still require device-local policy. Defender requests and the RustDesk handoff require visible, per-job local consent, and remote handoff additionally requires the external client to remain visible. The 20-case hostile suite rejects missing target manifests, unadvertised or unknown capabilities, generic shell, arbitrary download-and-execute, hidden control, identifier/display injection, duplicate capabilities/devices, oversized inventory, and non-Windows Defender declarations. The suite completed in 37.5 ms on one hosted runner; this is a diagnostic observation, not a latency guarantee.
 
@@ -165,7 +165,7 @@ The connector cannot establish the state of `C:\Users\suhai\Documents\SOL Tools`
 - current working directory;
 - local branch and HEAD;
 - local dirty/untracked state;
-- whether local `WaveSlate` or related `dotnet` processes are running;
+- whether local `Soltex` or related `dotnet` processes are running;
 - whether the local checkout contains commits or files not present in the private remote;
 - owner-host EICAR behavior;
 - owner visual acceptance.

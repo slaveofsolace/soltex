@@ -3,26 +3,26 @@
 ## Runtime shape
 
 ```text
-WaveSlate.App (WPF, unelevated)
+Soltex.App (WPF, unelevated)
     |
     +-- Windows Security Center health (wscapi.dll)
     +-- Windows Security Center change signal (WscRegisterForChanges)
     +-- Defender status/scans/updates (fixed PowerShell commands)
     +-- Defender Operational event reader (fixed, bounded Get-WinEvent query)
-    +-- WaveSlate.RemoteAssist
+    +-- Soltex.RemoteAssist
     |     +-- bounded RustDesk.exe discovery/selection
     |     +-- SHA-256 approval fingerprint
     |     +-- fixed external launch plans (no shell)
     |     +-- constrained peer-ID value object
     |           |
     |           +-- separately installed RustDesk UI/process
-    +-- WaveSlate.Update
+    +-- Soltex.Update
     |     +-- signed acquisition descriptors and trust rotation
     |     +-- pinned HTTPS transport and bounded private acquisition
     |     +-- signed manifest/archive/publisher composition
     |     +-- deterministic non-installing preview and confirmation
     |     +-- authenticated planning/recovery journal
-    +-- WaveSlate.Security
+    +-- Soltex.Security
           +-- protection monitor with retry/backoff/recovery state
           +-- AMSI intake scanner
           +-- file hashing and assessment
@@ -31,7 +31,7 @@ WaveSlate.App (WPF, unelevated)
           +-- exact-hash allow list
           +-- authenticated quarantine
           +-- HMAC-chained local audit log
-          +-- bounded WaveSlate Imports watcher
+          +-- bounded Soltex Imports watcher
 ```
 
 Soltex installs no Windows service, background tray process, kernel driver, browser extension, network proxy, or cloud backend in this release. A user-approved RustDesk process is external to Soltex and retains its own runtime behavior.
@@ -54,7 +54,7 @@ Soltex installs no Windows service, background tray process, kernel driver, brow
 - No periodic whole-disk scan.
 - One aggregate protection query per minute, plus debounced refreshes after WSC change signals. Failed observations retry from five seconds up to a five-minute ceiling.
 - Defender Operational history is queried only at Security-page startup/manual refresh, with a seven-day/24-event UI bound, ten-second timeout, and 512 KiB captured-output ceiling; excess bytes are drained and discarded before the result is rejected.
-- One `FileSystemWatcher`, limited to `%LOCALAPPDATA%\WaveSlate\Imports`.
+- One `FileSystemWatcher`, limited to `%LOCALAPPDATA%\Soltex\Imports`.
 - Bounded queue: 128 paths, oldest entry dropped under overload.
 - Debounce window: 750 ms; one sequential assessment worker.
 - AMSI in-memory limit: 16 MiB; larger content is delegated to a Defender custom scan.

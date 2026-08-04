@@ -2,13 +2,13 @@
 
 ## Product direction
 
-WaveSlate can become a private control surface for the user's Windows PCs, Macs, NAS, Google Drive, and a separately governed work Box account. The central design rule is that remote desktop is **remote hands**, not the command architecture. RustDesk remains a visible, consent-based fallback when a person needs to see or control a screen. Small WaveSlate agents execute narrowly typed jobs on each device.
+Soltex can become a private control surface for the user's Windows PCs, Macs, NAS, Google Drive, and a separately governed work Box account. The central design rule is that remote desktop is **remote hands**, not the command architecture. RustDesk remains a visible, consent-based fallback when a person needs to see or control a screen. Small Soltex agents execute narrowly typed jobs on each device.
 
 Stage 1 of this direction is implemented as a non-executing policy foundation. The device agent, signed job protocol, Tailscale integration, NAS, Google Drive, Box, and AI orchestration remain proposals and are not implemented in the current repository.
 
 ## Implemented Stage 1 boundary
 
-`src/WaveSlate.DeviceFabric` provides immutable device manifests and inventory snapshots plus an exact six-capability catalog:
+`src/Soltex.DeviceFabric` provides immutable device manifests and inventory snapshots plus an exact six-capability catalog:
 
 - `system.health.observe`;
 - `security.protection.observe`;
@@ -27,7 +27,7 @@ The focused suite passed 20/20 on the .NET 10 Windows gate in run `30918120029` 
 voice/text request
       |
       v
-WaveSlate controller / intent planner
+Soltex controller / intent planner
       |
       +-- policy evaluation + human preview
       +-- short-lived signed job envelope
@@ -48,7 +48,7 @@ The controller may translate a user request such as "ask the Windows PC to expor
 
 ## Responsibilities and boundaries
 
-### WaveSlate device agent
+### Soltex device agent
 
 - Runs unelevated by default and advertises an explicit capability manifest.
 - Supports typed operations such as open an approved app, query system status, copy an approved file, or prepare a RustDesk handoff.
@@ -61,13 +61,13 @@ The controller may translate a user request such as "ask the Windows PC to expor
 
 ### Private mesh
 
-Tailscale is proposed as a separately installed private-network dependency, not as code embedded in WaveSlate. A tailnet can provide reachability and device identity, while WaveSlate still applies its own job authorization and replay protection. Network membership alone is not permission to execute a capability.
+Tailscale is proposed as a separately installed private-network dependency, not as code embedded in Soltex. A tailnet can provide reachability and device identity, while Soltex still applies its own job authorization and replay protection. Network membership alone is not permission to execute a capability.
 
-WaveSlate V1 must not automatically weaken Tailscale ACLs, expose public ingress, open router ports, publish the NAS, or treat a reachable IP address as a trusted user. Initial integration should consume only locally available connection/device state and user-supplied approved targets.
+Soltex V1 must not automatically weaken Tailscale ACLs, expose public ingress, open router ports, publish the NAS, or treat a reachable IP address as a trusted user. Initial integration should consume only locally available connection/device state and user-supplied approved targets.
 
 ### RustDesk remote hands
 
-The existing `WaveSlate.RemoteAssist` external-process boundary remains intact. RustDesk owns capture, transport, authentication, input, session consent, elevation, updates, and termination. The device fabric may prepare or deep-link a user-approved handoff, but it must not supply passwords, enable unattended access, hide the RustDesk UI, install its service, or treat a remote session as proof that an AI job is authorized.
+The existing `Soltex.RemoteAssist` external-process boundary remains intact. RustDesk owns capture, transport, authentication, input, session consent, elevation, updates, and termination. The device fabric may prepare or deep-link a user-approved handoff, but it must not supply passwords, enable unattended access, hide the RustDesk UI, install its service, or treat a remote session as proof that an AI job is authorized.
 
 ### NAS
 
@@ -75,15 +75,15 @@ The NAS may hold shared files, a searchable index, backups, exported reports, an
 
 ### Google Drive personal profile
 
-Read-write access is a valid product target. The first connector should support search, upload, download, create folder, move, rename, trash, restore, and a user-configurable WaveSlate inbox. It should use the user's OAuth grant, minimize requested scopes to implemented operations, surface the active account and destination before mutation, and provide deterministic conflict behavior.
+Read-write access is a valid product target. The first connector should support search, upload, download, create folder, move, rename, trash, restore, and a user-configurable Soltex inbox. It should use the user's OAuth grant, minimize requested scopes to implemented operations, surface the active account and destination before mutation, and provide deterministic conflict behavior.
 
 Destructive or broad operations require a preview and explicit confirmation. Synchronization rules must be directional and folder-bounded; "sync everything" is not a safe default. OAuth tokens remain in the operating-system secret store and are never copied to the NAS, logs, prompts, or another device.
 
 ### Box work profile
 
-Box is a distinct work trust domain, even if the same person controls the WaveSlate UI. It needs a separate connector process/profile, separate credentials, separate search index, separate audit stream, and clear work-account chrome. Enterprise policy and administrator restrictions remain authoritative.
+Box is a distinct work trust domain, even if the same person controls the Soltex UI. It needs a separate connector process/profile, separate credentials, separate search index, separate audit stream, and clear work-account chrome. Enterprise policy and administrator restrictions remain authoritative.
 
-No personal Drive-to-work Box, work Box-to-personal Drive, work Box-to-NAS, or work Box-to-AI-content transfer occurs by default. Each cross-domain transfer needs an explicit policy, visible source/destination preview, per-job approval, and auditable reason. WaveSlate must not claim that local user consent overrides employer data-handling rules.
+No personal Drive-to-work Box, work Box-to-personal Drive, work Box-to-NAS, or work Box-to-AI-content transfer occurs by default. Each cross-domain transfer needs an explicit policy, visible source/destination preview, per-job approval, and auditable reason. Soltex must not claim that local user consent overrides employer data-handling rules.
 
 ## Command flow
 

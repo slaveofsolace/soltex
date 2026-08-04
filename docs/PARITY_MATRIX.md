@@ -2,9 +2,9 @@
 
 This matrix describes product requirements without claiming copied implementation or brand parity.
 
-| Area | Current WaveSlate | Future product work | Nonclaim |
+| Area | Current Soltex | Future product work | Nonclaim |
 | --- | --- | --- | --- |
-| Antivirus health | WSC aggregate health, change notifications, polling recovery, and Defender mode/details | Optional provider-name inventory | WaveSlate is not a registered provider |
+| Antivirus health | WSC aggregate health, change notifications, polling recovery, and Defender mode/details | Optional provider-name inventory | Soltex is not a registered provider |
 | File scanning | Defender quick/custom scans plus bounded, path-redacted Operational event correlation | Longer-lived scan progress UX | No proprietary detection engine |
 | Intake protection | AMSI, hash, signed manifest, Authenticode | Strict archive staging and publisher pinning | Clean AMSI is not universal trust |
 | Quarantine | Authenticated index, restore/delete | Protected-service hardening if product scope changes | Not tamper-proof against same-user malware |

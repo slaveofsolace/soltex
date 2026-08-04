@@ -29,7 +29,7 @@ This gives the application strong practical coverage without adding a second fil
 | Allow list | `AllowListStore.cs` | Stores a maximum of 512 exact SHA-256 entries in authenticated state. |
 | Quarantine | `QuarantineStore.cs` | Moves or verified-copies payloads, authenticates the index, re-hashes before restore, and avoids overwrite collisions. |
 | Audit | `SecurityAuditLog.cs` | HMACs paths, chains entries, bounds fields, and rotates at 4 MiB. |
-| Import guard | `ImportFolderMonitor.cs` | Watches only WaveSlate Imports with a bounded queue and debounce. |
+| Import guard | `ImportFolderMonitor.cs` | Watches only Soltex Imports with a bounded queue and debounce. |
 | Publisher/archive hardening | `AuthenticodePublisherVerifier.cs`, `BoundedArchiveStager.cs` | Binds Windows trust to an immutable snapshot and preflights bounded ZIP metadata before materialization. |
 | Update trust/acquisition | `UpdateDescriptorVerifier.cs`, `UpdateTrustTransition.cs`, `AuthenticatedHttpsTransport.cs`, `BoundedHttpsAcquirer.cs` | Requires signed descriptor quorum and an active signed trust policy, then acquires exact inert bytes over pinned HTTPS with bounded redirects, lengths, hashes, and cleanup. |
 | Update composition/recovery | `SoltexUpdatePlanner.cs`, `UpdatePlanningJournal.cs` | Produces a deterministic non-installing preview and exact confirmation while retaining sanitized authenticated recovery phases. |
@@ -37,11 +37,11 @@ This gives the application strong practical coverage without adding a second fil
 
 ## Defender and Windows boundaries
 
-Microsoft documents Defender Antivirus as layered real-time, behavioral, heuristic, local-intelligence, and cloud-delivered protection. WaveSlate reads status; it does not reproduce those detection systems. Supported commands used here are `Get-MpComputerStatus`, `Get-MpPreference`, `Start-MpScan`, and `Update-MpSignature`.
+Microsoft documents Defender Antivirus as layered real-time, behavioral, heuristic, local-intelligence, and cloud-delivered protection. Soltex reads status; it does not reproduce those detection systems. Supported commands used here are `Get-MpComputerStatus`, `Get-MpPreference`, `Start-MpScan`, and `Update-MpSignature`.
 
-AMSI is an application intake interface. A clean AMSI result means the installed provider did not detect that submitted buffer; it is not a universal trust assertion. WaveSlate therefore keeps executable content in `ReviewRecommended` until release-signature policy also succeeds.
+AMSI is an application intake interface. A clean AMSI result means the installed provider did not detect that submitted buffer; it is not a universal trust assertion. Soltex therefore keeps executable content in `ReviewRecommended` until release-signature policy also succeeds.
 
-Windows Security Center client APIs report provider health. `WscRegisterForChanges` signals that a re-query is needed; the callback itself is not a health verdict. Calling either API does not register WaveSlate as an antivirus provider. SmartScreen is also a separate Windows/Edge reputation boundary; WaveSlate does not claim to query or reproduce a SmartScreen reputation score.
+Windows Security Center client APIs report provider health. `WscRegisterForChanges` signals that a re-query is needed; the callback itself is not a health verdict. Calling either API does not register Soltex as an antivirus provider. SmartScreen is also a separate Windows/Edge reputation boundary; Soltex does not claim to query or reproduce a SmartScreen reputation score.
 
 Defender `AMRunningMode` is surfaced as reported (`Normal`, `Passive`, or `EDR Block Mode`) without changing it. Explicit WSC aggregate states take precedence over Defender detail flags; only an unavailable WSC result permits a `Normal` and active Defender status to serve as a disclosed fallback. Passive Defender never substitutes for unknown registered-provider health. The event reader uses Microsoft's documented Defender Operational log and event IDs. It does not read arbitrary endpoint telemetry, and it intentionally excludes raw `Path`, `Process Name`, and `Scan Resources` values from UI models.
 
@@ -56,23 +56,23 @@ Malwarebytes publicly describes layered web, malware, ransomware, and exploit pr
 - update and package integrity;
 - clear detection history and false-positive recovery.
 
-Do not copy Malwarebytes code, names, icons, layouts, threat taxonomy, signatures, machine-learning models, endpoints, driver design, protocols, or protected internals. WaveSlate's implementation is independently written against Windows documentation.
+Do not copy Malwarebytes code, names, icons, layouts, threat taxonomy, signatures, machine-learning models, endpoints, driver design, protocols, or protected internals. Soltex's implementation is independently written against Windows documentation.
 
-Malwarebytes also documents optional Windows Security Center registration and possible conflicts when multiple security products operate together. WaveSlate does not toggle that registration, add mutual exclusions, disable any layer, or assume coexistence is conflict-free. Provider ownership remains visible through Windows and vendor-owned settings.
+Malwarebytes also documents optional Windows Security Center registration and possible conflicts when multiple security products operate together. Soltex does not toggle that registration, add mutual exclusions, disable any layer, or assume coexistence is conflict-free. Provider ownership remains visible through Windows and vendor-owned settings.
 
 ## False-positive policy
 
 - AMSI malware or administrator-policy blocks may prevent an import.
 - An unknown or unsigned executable is **review required**, not automatically malware.
-- A user may add only an exact SHA-256 to the WaveSlate allow list.
+- A user may add only an exact SHA-256 to the Soltex allow list.
 - Restore requires a warning and never automatically creates an allow entry.
-- WaveSlate does not add Microsoft Defender exclusions.
+- Soltex does not add Microsoft Defender exclusions.
 - High-impact automatic remediation is intentionally absent from the MVP.
 
 ## Privacy policy
 
 - No user file, local path, assessment hash, or sample is uploaded by Soltex. The update planner is download-only and has no production source configured.
-- Defender may use Microsoft's cloud-delivered protection according to the user's Windows policy; WaveSlate only reports whether Defender exposes that layer as active.
+- Defender may use Microsoft's cloud-delivered protection according to the user's Windows policy; Soltex only reports whether Defender exposes that layer as active.
 - Audit records retain an HMAC of paths rather than raw paths.
 - PowerShell stdout/stderr is byte-bounded while it is read; excess is drained and discarded, overflow is rejected, and no already-unbounded `ReadToEndAsync` string enters application state.
 - Future cloud reputation or sample submission requires separate consent, retention, deletion, authentication, and abuse controls.

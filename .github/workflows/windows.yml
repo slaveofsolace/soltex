@@ -28,6 +28,14 @@ jobs:
         shell: pwsh
         run: New-Item -ItemType Directory -Force .\artifacts\validation | Out-Null
 
+      - name: Verify Soltex identity policy
+        id: identity
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\eng\verify-identity.ps1 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\identity-policy.log
+
       - name: Build Release
         id: build
         shell: pwsh
@@ -37,7 +45,7 @@ jobs:
             Tee-Object -FilePath .\artifacts\validation\build-release.log
           if ($LASTEXITCODE -ne 0) { throw "Release build failed with exit code $LASTEXITCODE." }
 
-      - name: Run 27-check default suite
+      - name: Run default security suite
         id: default_tests
         shell: pwsh
         run: |
@@ -149,6 +157,7 @@ jobs:
         shell: pwsh
         run: |
           $outcomes = [ordered]@{
+            identity = '${{ steps.identity.outcome }}'
             build = '${{ steps.build.outcome }}'
             default_tests = '${{ steps.default_tests.outcome }}'
             supply_chain = '${{ steps.supply_chain.outcome }}'

@@ -2,7 +2,7 @@
 
 Status: Windows-verified non-installing planner; no installer or activation boundary
 Snapshot: 2026-08-04
-Implementation namespaces: `WaveSlate.Security`, `WaveSlate.Update`
+Implementation namespaces: `Soltex.Security`, `Soltex.Update`
 
 ## 1. Scope
 
@@ -17,7 +17,7 @@ The implemented components are:
 - `BoundedArchiveStager`;
 - `UpdateDescriptorVerifier`, `UpdateTrustTransitionEvaluator`, and `PinnedHttpsTransport`;
 - `BoundedHttpsAcquirer`, `SoltexUpdatePlanner`, and `UpdatePlanningJournal`;
-- `WaveSlate.Security.SupplyChain.Tests`, `WaveSlate.Security.Hardening.Tests`, and `WaveSlate.Update.Tests`.
+- `Soltex.Security.SupplyChain.Tests`, `Soltex.Security.Hardening.Tests`, and `Soltex.Update.Tests`.
 
 These components are not a release service. Given an already configured signed descriptor and trust policy, the planner can authenticate and download bounded inert artifacts into private staging, verify them, and produce a user-visible plan. It does not install, execute, elevate, activate, repair, roll back, or uninstall software. No production Soltex certificate, metadata/release public key, TLS pin, signed trust policy, descriptor source, installer, or updater is configured.
 

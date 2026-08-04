@@ -1,4 +1,4 @@
-WaveSlate Proprietary License
+Soltex Proprietary License
 Copyright (c) 2026. All rights reserved.
 
 This software and its source code are proprietary and confidential. No right to

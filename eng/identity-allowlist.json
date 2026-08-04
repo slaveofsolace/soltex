@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "path": "eng/identity-allowlist.json",
+      "allowAll": true,
+      "reason": "The policy data must spell the exact legacy tokens that it narrowly permits elsewhere."
+    },
+    {
+      "path": "eng/verify-identity.ps1",
+      "lineContains": [
+        "WaveSlate|Wave Slate|waveslate|WAVESLATE_"
+      ],
+      "reason": "The verifier must spell the exact legacy-token pattern that it rejects by default."
+    },
+    {
+      "path": "src/Soltex.Security/ProductIdentity.cs",
+      "lineContains": [
+        "LegacyStorageDirectoryName = \"WaveSlate\";",
+        "LegacyIntegrityManifestProduct = \"WaveSlate\";",
+        "LegacyRunEicarEnvironmentVariable = \"WAVESLATE_RUN_EICAR\";",
+        "LegacyDpapiDescription = \"WaveSlate authenticated state\";"
+      ],
+      "reason": "Exact compatibility identifiers for installed state, schema-1 manifests, transition automation, and DPAPI-protected keys."
+    },
+    {
+      "path": "src/Soltex.Security/ProductDataRootResolver.cs",
+      "lineContains": [
+        "legacy WaveSlate data roots"
+      ],
+      "reason": "Bounded conflict copy names the legacy root that requires manual resolution."
+    },
+    {
+      "path": "docs/NAMING_AND_COMPATIBILITY.md",
+      "allowAll": true,
+      "reason": "Canonical compatibility contract inventories every retained legacy identifier and its removal gate."
+    },
+    {
+      "pathPrefix": "docs/evidence/",
+      "allowAll": true,
+      "reason": "Append-only historical evidence preserves the product and source identifiers that were true when captured."
+    },
+    {
+      "pathPrefix": "docs/archive/prompts/",
+      "allowAll": true,
+      "reason": "Superseded prompt artifacts are retained only as historical context and are not current instructions."
+    },
+    {
+      "path": "docs/RESEARCH_AUDIT.md",
+      "lineContains": [
+        "C:\\Users\\suhai\\Documents\\WaveSlate References\\RustDesk\\1.4.7"
+      ],
+      "reason": "The cited external clean-room cache has this factual on-disk path; the path is not product identity."
+    },
+    {
+      "path": "docs/REMOTE_ASSIST.md",
+      "lineContains": [
+        "C:\\Users\\suhai\\Documents\\WaveSlate References\\RustDesk\\1.4.7"
+      ],
+      "reason": "The cited external clean-room cache has this factual on-disk path; the path is not product identity."
+    }
+  ]
+}
