@@ -154,7 +154,7 @@ public static class CapabilityPolicy
         {
             return new CapabilityPolicyDecision(
                 CapabilityPolicyStatus.DeniedTargetManifestRequired,
-                "A validated target-device manifest is required for every capability decision.");
+                "A structurally valid target-device manifest is required for every capability decision.");
         }
 
         if (!targetDevice.CapabilityIds.Contains(capabilityId!, StringComparer.Ordinal))
