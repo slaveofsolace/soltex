@@ -278,66 +278,14 @@ public static class AuthenticodePublisherVerifier
 
         try
         {
-            string fullPath = PathSafety.NormalizeExistingFile(path);
-            string hashBefore = await FileHashing.Sha256Async(fullPath, cancellationToken)
-                .ConfigureAwait(false);
-            AuthenticodeVerificationResult trust = AuthenticodeVerifier.Verify(
-                fullPath,
+            await using LockedPublisherFile lockedFile = await LockedPublisherFile.OpenAsync(
+                path,
+                cancellationToken).ConfigureAwait(false);
+            return await VerifyLockedAsync(
+                lockedFile,
+                policy,
                 allowNetworkRevocationRetrieval,
-                requireSingleEmbeddedSignature: true);
-            if (!trust.IsTrusted)
-            {
-                AuthenticodePublisherStatus status = trust.Status switch
-                {
-                    AuthenticodeStatus.UnsupportedSignatureTopology =>
-                        AuthenticodePublisherStatus.UnsupportedSignatureTopology,
-                    AuthenticodeStatus.Error => AuthenticodePublisherStatus.Error,
-                    _ => AuthenticodePublisherStatus.SignatureNotTrusted
-                };
-                return new AuthenticodePublisherVerificationResult(
-                    status,
-                    hashBefore,
-                    trust,
-                    null,
-                    null,
-                    trust.Detail);
-            }
-
-            AuthenticodeSignerIdentityResult identity = AuthenticodeSignerIdentityReader.Read(fullPath);
-            if (!identity.Succeeded || identity.Evidence is null)
-            {
-                return new AuthenticodePublisherVerificationResult(
-                    AuthenticodePublisherStatus.SignerIdentityUnavailable,
-                    hashBefore,
-                    trust,
-                    null,
-                    null,
-                    identity.Detail);
-            }
-
-            string hashAfter = await FileHashing.Sha256Async(fullPath, cancellationToken)
-                .ConfigureAwait(false);
-            if (!string.Equals(hashBefore, hashAfter, StringComparison.OrdinalIgnoreCase))
-            {
-                return new AuthenticodePublisherVerificationResult(
-                    AuthenticodePublisherStatus.FileChangedDuringVerification,
-                    null,
-                    trust,
-                    identity.Evidence,
-                    null,
-                    "The file changed while its signature and publisher identity were being checked.");
-            }
-
-            PublisherPolicyResult evaluation = policy.Evaluate(identity.Evidence);
-            return new AuthenticodePublisherVerificationResult(
-                evaluation.IsApproved
-                    ? AuthenticodePublisherStatus.Approved
-                    : AuthenticodePublisherStatus.PublisherNotApproved,
-                hashAfter,
-                trust,
-                identity.Evidence,
-                evaluation,
-                evaluation.Detail);
+                cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -357,5 +305,72 @@ public static class AuthenticodePublisherVerifier
                 null,
                 $"Publisher verification could not complete: {exception.GetType().Name}.");
         }
+    }
+
+    internal static async Task<AuthenticodePublisherVerificationResult> VerifyLockedAsync(
+        LockedPublisherFile lockedFile,
+        PublisherPolicy policy,
+        bool allowNetworkRevocationRetrieval,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(lockedFile);
+        ArgumentNullException.ThrowIfNull(policy);
+
+        AuthenticodeVerificationResult trust = AuthenticodeVerifier.Verify(
+            lockedFile.FullPath,
+            allowNetworkRevocationRetrieval,
+            requireSingleEmbeddedSignature: true);
+        if (!trust.IsTrusted)
+        {
+            AuthenticodePublisherStatus status = trust.Status switch
+            {
+                AuthenticodeStatus.UnsupportedSignatureTopology =>
+                    AuthenticodePublisherStatus.UnsupportedSignatureTopology,
+                AuthenticodeStatus.Error => AuthenticodePublisherStatus.Error,
+                _ => AuthenticodePublisherStatus.SignatureNotTrusted
+            };
+            return new AuthenticodePublisherVerificationResult(
+                status,
+                lockedFile.Sha256,
+                trust,
+                null,
+                null,
+                trust.Detail);
+        }
+
+        AuthenticodeSignerIdentityResult identity =
+            AuthenticodeSignerIdentityReader.Read(lockedFile.FullPath);
+        if (!identity.Succeeded || identity.Evidence is null)
+        {
+            return new AuthenticodePublisherVerificationResult(
+                AuthenticodePublisherStatus.SignerIdentityUnavailable,
+                lockedFile.Sha256,
+                trust,
+                null,
+                null,
+                identity.Detail);
+        }
+
+        if (!await lockedFile.VerifyHashUnchangedAsync(cancellationToken).ConfigureAwait(false))
+        {
+            return new AuthenticodePublisherVerificationResult(
+                AuthenticodePublisherStatus.FileChangedDuringVerification,
+                null,
+                trust,
+                identity.Evidence,
+                null,
+                "The locked publisher-verification file changed unexpectedly.");
+        }
+
+        PublisherPolicyResult evaluation = policy.Evaluate(identity.Evidence);
+        return new AuthenticodePublisherVerificationResult(
+            evaluation.IsApproved
+                ? AuthenticodePublisherStatus.Approved
+                : AuthenticodePublisherStatus.PublisherNotApproved,
+            lockedFile.Sha256,
+            trust,
+            identity.Evidence,
+            evaluation,
+            evaluation.Detail);
     }
 }

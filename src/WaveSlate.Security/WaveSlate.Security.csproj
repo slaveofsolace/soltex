@@ -6,4 +6,9 @@
     <AssemblyName>WaveSlate.Security</AssemblyName>
     <Description>Lightweight Windows security companion for WaveSlate.</Description>
   </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="WaveSlate.Security.Hardening.Tests" />
+    <InternalsVisibleTo Include="WaveSlate.Update" />
+    <InternalsVisibleTo Include="WaveSlate.Update.Tests" />
+  </ItemGroup>
 </Project>

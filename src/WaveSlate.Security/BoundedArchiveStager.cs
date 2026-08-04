@@ -103,6 +103,19 @@ public sealed class BoundedArchiveStager
             throw new InvalidDataException("The ZIP archive size is outside the accepted bounds.");
         }
 
+        await using FileStream archiveStream = new(
+            safeArchivePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            CopyBufferBytes,
+            FileOptions.Asynchronous | FileOptions.RandomAccess);
+        ZipCentralDirectorySummary directorySummary =
+            await ZipCentralDirectoryPreflight.ValidateAsync(
+                archiveStream,
+                _limits.MaximumEntries,
+                cancellationToken).ConfigureAwait(false);
+
         string safeStagingParent = NormalizeOrCreateStagingParent(stagingParent);
         string stagingRoot = Path.Combine(
             safeStagingParent,
@@ -111,18 +124,11 @@ public sealed class BoundedArchiveStager
 
         try
         {
-            await using FileStream archiveStream = new(
-                safeArchivePath,
-                FileMode.Open,
-                FileAccess.Read,
-                FileShare.Read,
-                CopyBufferBytes,
-                FileOptions.Asynchronous | FileOptions.SequentialScan);
-            using ZipArchive archive = new(archiveStream, ZipArchiveMode.Read, leaveOpen: false);
-            if (archive.Entries.Count is < 1 || archive.Entries.Count > _limits.MaximumEntries)
+            using ZipArchive archive = new(archiveStream, ZipArchiveMode.Read, leaveOpen: true);
+            if (archive.Entries.Count != directorySummary.EntryCount)
             {
                 throw new InvalidDataException(
-                    $"The ZIP archive must contain between 1 and {_limits.MaximumEntries} entries.");
+                    "The ZIP entry count changed between bounded preflight and materialization.");
             }
 
             Dictionary<string, RegisteredArchivePath> registeredPaths =

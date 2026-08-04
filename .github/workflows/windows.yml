@@ -55,6 +55,15 @@ jobs:
             Tee-Object -FilePath .\artifacts\validation\tests-supply-chain.log
           if ($LASTEXITCODE -ne 0) { throw "Supply-chain suite failed with exit code $LASTEXITCODE." }
 
+      - name: Run storage, publisher, ZIP, and workflow hostile suite
+        id: hardening
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\tests\WaveSlate.Security.Hardening.Tests\WaveSlate.Security.Hardening.Tests.csproj --configuration Release --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\tests-security-hardening.log
+          if ($LASTEXITCODE -ne 0) { throw "Security hardening suite failed with exit code $LASTEXITCODE." }
+
       - name: Run 28-check EICAR interoperability suite
         id: eicar
         continue-on-error: true
@@ -115,6 +124,7 @@ jobs:
             build = '${{ steps.build.outcome }}'
             default_tests = '${{ steps.default_tests.outcome }}'
             supply_chain = '${{ steps.supply_chain.outcome }}'
+            hardening = '${{ steps.hardening.outcome }}'
             render_security = '${{ steps.render_security.outcome }}'
             render_remote = '${{ steps.render_remote.outcome }}'
             verify_renders = '${{ steps.verify_renders.outcome }}'
@@ -130,9 +140,9 @@ jobs:
           if ($requiredFailures.Count -gt 0) {
             $classification = 'The repository gate is incomplete: ' + ($requiredFailures -join ', ') + '.'
           } elseif ($outcomes.eicar -eq 'success') {
-            $classification = 'Release build, 27 default checks, the supply-chain suite, native renders, and the 28-check interoperability suite completed.'
+            $classification = 'Release build, required security suites, native renders, and the 28-check interoperability suite completed.'
           } else {
-            $classification = 'Release build, 27 default checks, the supply-chain suite, and native renders completed; the hosted Windows AMSI provider did not block the in-memory EICAR marker, so 28/28 remains pending on an owner-controlled Windows host.'
+            $classification = 'Release build, required security suites, and native renders completed; the hosted Windows AMSI provider did not block the in-memory EICAR marker, so 28/28 remains pending on an owner-controlled Windows host.'
           }
           @(
             $outcomes.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }
