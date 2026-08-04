@@ -318,7 +318,7 @@ public static class UpdateDescriptorVerifier
 
     private sealed class DescriptorValidationException(
         UpdateDescriptorStatus status,
-        string message) : InvalidDataException(message)
+        string message) : Exception(message)
     {
         internal UpdateDescriptorStatus Status { get; } = status;
     }
