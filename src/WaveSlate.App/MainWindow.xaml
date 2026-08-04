@@ -237,7 +237,7 @@
                                        FontSize="11" />
                         </StackPanel>
                     </Border>
-                    <TextBlock Margin="1,14,0,0" Text="Windows-native preview build" Foreground="#66645E" FontFamily="{StaticResource MonoFont}" FontSize="10" />
+                    <TextBlock Margin="1,14,0,0" Text="Windows-native preview" Foreground="#66645E" FontFamily="{StaticResource MonoFont}" FontSize="10" />
                 </StackPanel>
             </Grid>
         </Border>

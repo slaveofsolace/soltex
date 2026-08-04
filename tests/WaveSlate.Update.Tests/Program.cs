@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -27,23 +28,33 @@ List<(string Name, Func<Task> Test)> tests =
 ];
 
 int failed = 0;
+Stopwatch suiteTimer = Stopwatch.StartNew();
 foreach ((string name, Func<Task> test) in tests)
 {
+    Stopwatch testTimer = Stopwatch.StartNew();
     try
     {
         await test();
-        Console.WriteLine($"PASS  {name}");
+        testTimer.Stop();
+        double durationMs = testTimer.Elapsed.TotalMilliseconds;
+        Console.WriteLine($"PASS  {name} ({durationMs:F1} ms)");
+        Console.WriteLine($"MEASURE update_test outcome=pass duration_ms={durationMs:F1} name={name}");
     }
     catch (Exception exception)
     {
+        testTimer.Stop();
+        double durationMs = testTimer.Elapsed.TotalMilliseconds;
         failed++;
-        Console.WriteLine($"FAIL  {name}");
+        Console.WriteLine($"FAIL  {name} ({durationMs:F1} ms)");
+        Console.WriteLine($"MEASURE update_test outcome=fail duration_ms={durationMs:F1} name={name}");
         Console.WriteLine("      " + exception.Message);
     }
 }
 
+suiteTimer.Stop();
 Console.WriteLine();
 Console.WriteLine($"{tests.Count - failed}/{tests.Count} tests passed.");
+Console.WriteLine($"MEASURE update_planner_suite tests={tests.Count} failed={failed} total_ms={suiteTimer.Elapsed.TotalMilliseconds:F1}");
 return failed == 0 ? 0 : 1;
 
 static Task ValidDescriptorVerifiesAsync()
