@@ -55,10 +55,7 @@ internal static class AuthenticatedStateEnvelope
         ArgumentNullException.ThrowIfNull(domain);
         ArgumentNullException.ThrowIfNull(payload);
         ArgumentNullException.ThrowIfNull(key);
-        if (generation == 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(generation));
-        }
+        ArgumentOutOfRangeException.ThrowIfZero(generation);
 
         if (payload.Length is < 1 or > MaximumPayloadBytes)
         {

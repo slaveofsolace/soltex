@@ -15,7 +15,7 @@ internal static class AuthenticatedStateFileIO
             FileShare.Read,
             bufferSize: 64 * 1024,
             FileOptions.Asynchronous | FileOptions.SequentialScan);
-        if (stream.Length is < 1 or > maximumBytes)
+        if (stream.Length < 1 || stream.Length > maximumBytes)
         {
             throw new InvalidDataException(
                 "Authenticated state size is outside the accepted bounds.");

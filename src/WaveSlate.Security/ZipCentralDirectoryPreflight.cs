@@ -27,10 +27,7 @@ internal static class ZipCentralDirectoryPreflight
             throw new InvalidDataException("The ZIP archive stream must be readable and seekable.");
         }
 
-        if (maximumEntries <= 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(maximumEntries));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumEntries);
 
         long archiveLength = stream.Length;
         if (archiveLength < EndOfCentralDirectoryFixedLength)
