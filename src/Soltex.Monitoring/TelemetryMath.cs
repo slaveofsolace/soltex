@@ -57,7 +57,7 @@ internal static class TelemetryMath
             return "Unavailable";
         }
 
-        string safe = new(value
+        string safe = new string(value
             .Where(character => !char.IsControl(character))
             .Take(SystemTelemetryProvider.MaximumProcessNameLength)
             .ToArray()).Trim();

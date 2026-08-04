@@ -220,7 +220,7 @@ public sealed class SystemTelemetryProvider
         return volumes;
     }
 
-    private sealed record ProcessSeed(
+    private readonly record struct ProcessSeed(
         string Name,
         TimeSpan ProcessorTime,
         long WorkingSetBytes,
