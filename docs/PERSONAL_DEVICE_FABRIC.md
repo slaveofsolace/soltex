@@ -4,7 +4,22 @@
 
 WaveSlate can become a private control surface for the user's Windows PCs, Macs, NAS, Google Drive, and a separately governed work Box account. The central design rule is that remote desktop is **remote hands**, not the command architecture. RustDesk remains a visible, consent-based fallback when a person needs to see or control a screen. Small WaveSlate agents execute narrowly typed jobs on each device.
 
-This document is an architecture proposal. None of the device-agent, Tailscale, NAS, Google Drive, Box, or AI orchestration capabilities described below is implemented in the current repository.
+Stage 1 of this direction is implemented as a non-executing policy foundation. The device agent, signed job protocol, Tailscale integration, NAS, Google Drive, Box, and AI orchestration remain proposals and are not implemented in the current repository.
+
+## Implemented Stage 1 boundary
+
+`src/WaveSlate.DeviceFabric` provides immutable device manifests and inventory snapshots plus an exact six-capability catalog:
+
+- `system.health.observe`;
+- `security.protection.observe`;
+- `update.journal.inspect`;
+- `security.defender.quick_scan.request`;
+- `security.defender.intelligence_update.request`;
+- `remote.rustdesk.handoff.prepare`.
+
+Every modeled decision is bound to a structurally valid target manifest. Read-only observations require device-local policy; both Defender requests and RustDesk handoff preparation require visible, per-job consent, and a RustDesk handoff is denied unless the external client remains visible. The model copies and bounds caller-supplied collections, rejects duplicate/unknown capabilities and devices, rejects injectable identifiers and display names, and limits Defender request declarations to Windows.
+
+The focused suite passed 20/20 on the .NET 10 Windows gate in run `30918120029` (37.5 ms diagnostic wall-clock time). It expressly rejects generic shell, arbitrary download-and-execute, and hidden-control identifiers. This is model evidence only: manifest identity and consent booleans are not authenticated by this stage, and there is no collector, network transport, listener, signed envelope, device enrollment, replay store, executor, receipt pipeline, or Device Fabric UI.
 
 ## Proposed runtime shape
 
@@ -101,8 +116,8 @@ AI planning is advisory. It may propose a job, but it cannot mint broader rights
 
 ## Delivery sequence
 
-0. Finish and evidence the current Security V1 and Remote Assist verification gates.
-1. Add a read-only device inventory and capability model with loopback-only tests.
+0. **Completed:** evidence the current Security V1 and Remote Assist verification gates.
+1. **Completed at the model boundary:** add immutable device inventory and exact capability policy with focused non-networked tests.
 2. Implement the Windows agent/controller protocol over loopback, with signed envelopes, replay defense, approvals, cancellation, and receipts.
 3. Add a macOS agent with the same protocol and platform-specific secret storage.
 4. Add optional external Tailscale reachability without modifying ACLs or public ingress.

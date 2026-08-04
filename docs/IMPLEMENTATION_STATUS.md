@@ -16,15 +16,16 @@ A passing narrow test proves only that boundary. It does not establish productio
 
 ## Windows-verified current branch baseline
 
-Implementation commit `252fd9fd5314e5403e7abd060855b19468bc2719` was exercised in pull-request merge preview `e464be421851523f48a512fdf9ce42b75dad750d` by GitHub Actions run `30915008164` on Windows Server 2025 (`10.0.26100`, image `windows-2025-vs2026` `20260728.188.1`) with .NET SDK `10.0.302`.
+Implementation commit `8ca28f8aa1f50de929787fe1c1cbd23b96b3f6e9` was exercised in pull-request merge preview `035de520a6ea346b9aeb08270fa4f72af86d59c0` by GitHub Actions run `30918120029` on Windows Server 2025 (`10.0.26100`, image `windows-2025-vs2026` `20260728.188.1`) with .NET SDK `10.0.302`.
 
 | Gate | Result | Scope |
 |---|---:|---|
-| Release build | 0 warnings, 0 errors | Entire `WaveSlate.sln`, including Security, Remote Assist, Update, and all focused test projects |
+| Release build | 0 warnings, 0 errors | Entire `WaveSlate.sln`, including Security, Remote Assist, Update, Device Fabric, and all focused test projects |
 | Existing focused suite | 27/27 passed | Security companion, monitoring boundaries, Remote Assist regressions |
 | Supply-chain suite | 18/18 passed | Publisher policy, signed release, sequence state including cross-process lock, bounded ZIP staging |
 | Hostile hardening suite | 12/12 passed | Immutable publisher snapshot, authenticated-state recovery, bounded ZIP preflight, pinned workflow policy |
 | Update-planner suite | 17/17 passed | Descriptor quorum/expiry, trust rotation, bounded acquisition cleanup, journal recovery, exact confirmation |
+| Device Fabric policy suite | 20/20 passed | Exact catalog, target-manifest binding, local consent, injection/bounds, immutable snapshots |
 | Opt-in EICAR interoperability | 27/28 | Hosted AMSI provider returned native result `1`; owner-host evidence remains pending |
 | Security native render | Passed | 1044×788 render-smoke output created |
 | Remote Assist native render | Passed | 1044×788 render-smoke output created |
@@ -33,12 +34,12 @@ Implementation commit `252fd9fd5314e5403e7abd060855b19468bc2719` was exercised i
 
 Retained workflow evidence:
 
-- run: `30915008164`;
-- job: `92010795630`;
-- artifact: `soltex-windows-evidence-30915008164-1`;
-- artifact ID: `8894704016`;
-- uploaded artifact ZIP size: 323,145 bytes;
-- GitHub-recorded artifact ZIP SHA-256: `9D90D3E98A4DF9235636DFA1185894B527038EFB242007DEE3ED82E6FEBC376C`;
+- run: `30918120029`;
+- job: `92021363535`;
+- artifact: `soltex-windows-evidence-30918120029-1`;
+- artifact ID: `8895955309`;
+- uploaded artifact ZIP size: 323,473 bytes;
+- GitHub-recorded artifact ZIP SHA-256: `02C121DA84A68988B0D50B1F8CB3CC50C72D299AC3A1CA3D4C7D1C4146ACA31A`;
 - retention configured by the workflow: 30 days.
 
 The hosted Windows Server image did not expose a usable live `wscapi.dll` boundary. The provider-neutral health test therefore proved bounded failure/fallback behavior and an `Unknown` state, not successful provider inventory on that host. Native rendering proves that the Security, Remote Assist, and Updates panels initialize and capture. Pixel inspection at 1044×788 confirmed that the previously recorded Security scan-subtitle and event-detail truncation is corrected; broader viewport/scaling coverage and owner visual acceptance remain pending.
@@ -137,6 +138,14 @@ The 17-case hostile suite completed in 2,602.5 ms on one hosted runner. Individu
 
 It does not embed or link RustDesk AGPL code, store remote passwords, enable unattended access, install services, request elevation, open listeners, hide sessions, or bypass local consent.
 
+## Implemented: Device Fabric Stage 1 policy foundation
+
+`WaveSlate.DeviceFabric` implements an immutable, non-executing device inventory and capability-policy model. Its exact six-capability catalog covers three read-only observations, two supported Defender requests, and one visible RustDesk handoff preparation. Every policy decision requires a structurally valid target manifest; a known capability is denied if the target did not advertise it.
+
+Read-only observations still require device-local policy. Defender requests and the RustDesk handoff require visible, per-job local consent, and remote handoff additionally requires the external client to remain visible. The 20-case hostile suite rejects missing target manifests, unadvertised or unknown capabilities, generic shell, arbitrary download-and-execute, hidden control, identifier/display injection, duplicate capabilities/devices, oversized inventory, and non-Windows Defender declarations. The suite completed in 37.5 ms on one hosted runner; this is a diagnostic observation, not a latency guarantee.
+
+This stage has no device collector, controller, manifest authentication, signed job envelope, replay defense, transport, listener, enrollment, consent authenticator, receipt, capability executor, NAS connector, cloud connector, or UI. Its policy inputs are modeled facts supplied by a future trusted local boundary, not proof that consent or device identity occurred. It cannot perform remote correction.
+
 ## Designed or not implemented
 
 The following remain separate work:
@@ -147,7 +156,7 @@ The following remain separate work:
 - atomic activation, rollback, crash recovery, interrupted-update recovery, and retained installer evidence;
 - optional provider-name inventory without changing Windows Security Center registration;
 - provider registration, minifilter, ELAM, PPL/protected service, MVI participation, cloud reputation, detection research, certification, and efficacy claims;
-- the Audio, Clips, Monitoring, App Control, Privacy, Device Fabric, NAS, Drive, and isolated Box implementation waves described elsewhere.
+- the Audio, Clips, Monitoring, App Control, Privacy, Device Fabric transport/execution, NAS, Drive, and isolated Box implementation waves described elsewhere.
 
 ## Local-host state not verified by this GitHub session
 
@@ -165,9 +174,9 @@ Use the exact commands in [`VALIDATION.md`](VALIDATION.md) before modifying or s
 
 ## Exact next implementation slice
 
-1. Select the production Soltex code-signing, metadata-signing, and release-manifest-signing identities; document custody/recovery; and commit only approved public subject/SPKI/key values.
-2. Configure a real signed trust policy and authenticated descriptor source, then repeat hostile transport, expiration, revocation, partial-I/O, and recovery evidence against release-candidate fixtures without installing them.
-3. Specify the smallest privileged installer boundary, including immutable input handles, exact plan binding, user confirmation, least privilege, atomic activation, rollback, repair, uninstall, reboot, and retained evidence.
-4. Keep remote correction as a separately authorized, consent-visible command vocabulary with no generic shell, hidden desktop, stored remote password, unattended RustDesk mode, or arbitrary download-and-execute path.
+1. Design the Device Fabric Stage 2 loopback-only signed job envelope: target binding, issuer, expiry, nonce, idempotency, policy version, replay store, cancellation, redacted receipt, and explicit approval level. Keep it non-networked and non-executing until hostile parser/state tests are green.
+2. Select the production Soltex code-signing, metadata-signing, and release-manifest-signing identities; document custody/recovery; and commit only approved public subject/SPKI/key values.
+3. Configure a real signed update trust policy and authenticated descriptor source, then repeat hostile transport, expiration, revocation, partial-I/O, and recovery evidence against release-candidate fixtures without installing them.
+4. Specify the smallest privileged installer boundary separately from Device Fabric, including immutable input handles, exact plan binding, user confirmation, least privilege, atomic activation, rollback, repair, uninstall, reboot, and retained evidence.
 
 Do not begin with provider registration, a driver, a service, public ingress, Defender mutations, or automatic execution of staged content.

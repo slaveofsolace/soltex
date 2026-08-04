@@ -268,7 +268,7 @@ The installer phase must then provide transactional activation, rollback, repair
 
 ## 8. Windows-verified test evidence
 
-Implementation commit `252fd9fd5314e5403e7abd060855b19468bc2719` passed the Windows warnings-as-errors build, 27 existing checks, 18 supply-chain checks, 12 hostile hardening checks, and 17 update-planner checks in GitHub Actions run `30915008164`.
+Implementation commit `8ca28f8aa1f50de929787fe1c1cbd23b96b3f6e9` passed the Windows warnings-as-errors build, 27 existing checks, 18 supply-chain checks, 12 hostile hardening checks, 17 update-planner checks, and 20 non-executing Device Fabric policy checks in GitHub Actions run `30918120029`.
 
 The suite covers:
 

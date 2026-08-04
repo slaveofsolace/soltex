@@ -20,13 +20,13 @@ Current solution identifier: `WaveSlate.sln`
 Implementation commit:
 
 ```text
-252fd9fd5314e5403e7abd060855b19468bc2719
+8ca28f8aa1f50de929787fe1c1cbd23b96b3f6e9
 ```
 
 GitHub pull-request merge preview exercised by the run:
 
 ```text
-e464be421851523f48a512fdf9ce42b75dad750d
+035de520a6ea346b9aeb08270fa4f72af86d59c0
 ```
 
 Base `main` commit:
@@ -37,8 +37,8 @@ Base `main` commit:
 
 Environment:
 
-- GitHub Actions run `30915008164`;
-- job `92010795630`;
+- GitHub Actions run `30918120029`;
+- job `92021363535`;
 - Windows Server 2025, build `10.0.26100`;
 - runner image `windows-2025-vs2026`, version `20260728.188.1`;
 - .NET SDK `10.0.302`;
@@ -46,12 +46,12 @@ Environment:
 
 Retained evidence:
 
-- artifact name: `soltex-windows-evidence-30915008164-1`;
-- artifact ID: `8894704016`;
-- uploaded artifact ZIP size: 323,145 bytes;
-- GitHub-recorded artifact ZIP SHA-256: `9D90D3E98A4DF9235636DFA1185894B527038EFB242007DEE3ED82E6FEBC376C`;
+- artifact name: `soltex-windows-evidence-30918120029-1`;
+- artifact ID: `8895955309`;
+- uploaded artifact ZIP size: 323,473 bytes;
+- GitHub-recorded artifact ZIP SHA-256: `02C121DA84A68988B0D50B1F8CB3CC50C72D299AC3A1CA3D4C7D1C4146ACA31A`;
 - configured retention: 30 days;
-- uploaded files: build log, five focused-suite logs, gate classification, Security PNG, Remote Assist PNG, and Updates PNG.
+- uploaded files: build log, six focused-suite logs, gate classification, Security PNG, Remote Assist PNG, and Updates PNG.
 
 ## Commands exercised by the workflow
 
@@ -199,6 +199,26 @@ Hosted-runner wall-clock observations:
 
 These are one-run diagnostic timings for ephemeral RSA fixtures and an in-memory authenticated transport. They are not network, disk, production-feed, installer, startup, or responsiveness guarantees.
 
+### Device Fabric Stage 1 policy suite
+
+```powershell
+dotnet run `
+  --project .\tests\WaveSlate.DeviceFabric.Tests\WaveSlate.DeviceFabric.Tests.csproj `
+  --configuration Release `
+  --no-build
+```
+
+Result:
+
+```text
+20/20 tests passed.
+MEASURE device_fabric_suite tests=20 failed=0 total_ms=37.5
+```
+
+The cases prove the bounded model behavior for exact catalog membership, target-manifest binding, device-local read-only policy, visible per-job consent, visible external-client handoff, immutable caller-input copies, identifier/display/version validation, duplicate rejection, inventory bounds, and Windows-only Defender request declarations. Explicit hostile identifiers for generic shell, arbitrary download-and-execute, and hidden unattended control are denied.
+
+This suite has no device agent, transport, listener, enrollment, signed envelope, replay store, executor, RustDesk session, or real remote action. Its wall-clock duration is one hosted-runner diagnostic, not a cross-device command-latency claim.
+
 ### Opt-in EICAR interoperability
 
 ```powershell
@@ -291,6 +311,9 @@ Get-Content .\docs\IMPLEMENTATION_STATUS.md
 dotnet build .\WaveSlate.sln --configuration Release
 dotnet run --project .\tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj --configuration Release --no-build
 dotnet run --project .\tests\WaveSlate.Security.SupplyChain.Tests\WaveSlate.Security.SupplyChain.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\WaveSlate.Security.Hardening.Tests\WaveSlate.Security.Hardening.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\WaveSlate.Update.Tests\WaveSlate.Update.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\WaveSlate.DeviceFabric.Tests\WaveSlate.DeviceFabric.Tests.csproj --configuration Release --no-build
 
 # Optional provider-interoperability check
 $env:WAVESLATE_RUN_EICAR = '1'
@@ -301,6 +324,7 @@ Remove-Item Env:\WAVESLATE_RUN_EICAR -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force .\artifacts\visual | Out-Null
 dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\security-current-source.png --panel security
 dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\remote-assist-current-source.png --panel remote
+dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\updates-current-source.png --panel update
 ```
 
 Before editing locally, resolve rather than overwrite any dirty files, untracked files, commits not on the remote branch, or running processes that own build outputs. Do not use `git reset --hard`, `git clean`, forced checkout, or force push as a convenience.

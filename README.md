@@ -94,20 +94,21 @@ dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Re
 
 ## Evidence
 
-The implementation code at branch commit `252fd9fd5314e5403e7abd060855b19468bc2719` was exercised by GitHub Actions run `30915008164` on Windows Server 2025 with .NET SDK 10.0.302:
+The implementation code at branch commit `8ca28f8aa1f50de929787fe1c1cbd23b96b3f6e9` was exercised in pull-request merge preview `035de520a6ea346b9aeb08270fa4f72af86d59c0` by GitHub Actions run `30918120029` on Windows Server 2025 with .NET SDK 10.0.302:
 
 - Release build: **passed**, 0 warnings and 0 errors;
 - existing focused suite: **27/27 passed**;
 - supply-chain suite: **18/18 passed**;
 - hostile hardening suite: **12/12 passed**;
 - update-planner suite: **17/17 passed** in 2,602.5 ms on that runner;
+- Device Fabric policy suite: **20/20 passed** in 37.5 ms on that runner;
 - opt-in hosted EICAR suite: **27/28** because the installed hosted-runner AMSI provider returned native result `1` for the in-memory marker;
 - native Security render: **passed**;
 - native Remote Assist render: **passed**;
 - native Updates render: **passed**;
 - render artifact verification: **passed**, with no render-error files.
 
-The retained Actions artifact is `soltex-windows-evidence-30915008164-1` (artifact ID `8894704016`, ZIP SHA-256 `9D90D3E98A4DF9235636DFA1185894B527038EFB242007DEE3ED82E6FEBC376C`). The hosted server did not expose a usable live `wscapi.dll` provider boundary, so this run proves bounded fallback behavior rather than successful live provider enumeration. Native rendering is runtime evidence, not owner visual acceptance. Pixel inspection confirms the two previously recorded Security truncations are corrected at the captured 1044×788 viewport; the broader viewport/scaling/accessibility matrix remains pending.
+The retained Actions artifact is `soltex-windows-evidence-30918120029-1` (artifact ID `8895955309`, ZIP SHA-256 `02C121DA84A68988B0D50B1F8CB3CC50C72D299AC3A1CA3D4C7D1C4146ACA31A`). The hosted server did not expose a usable live `wscapi.dll` provider boundary, so this run proves bounded fallback behavior rather than successful live provider enumeration. Native rendering is runtime evidence, not owner visual acceptance. Pixel inspection confirms the two previously recorded Security truncations are corrected at the captured 1044×788 viewport; the broader viewport/scaling/accessibility matrix remains pending.
 
 Documentation:
 
@@ -117,7 +118,7 @@ Documentation:
 - Security architecture: [`docs/SECURITY_ENGINEERING_HANDOFF.md`](docs/SECURITY_ENGINEERING_HANDOFF.md).
 - Threat model: [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
 - Remote Assist license and trust boundary: [`docs/REMOTE_ASSIST.md`](docs/REMOTE_ASSIST.md).
-- Proposed private device fabric, NAS, Drive, and isolated Box boundaries: [`docs/PERSONAL_DEVICE_FABRIC.md`](docs/PERSONAL_DEVICE_FABRIC.md).
+- Implemented Device Fabric policy foundation plus proposed NAS, Drive, and isolated Box boundaries: [`docs/PERSONAL_DEVICE_FABRIC.md`](docs/PERSONAL_DEVICE_FABRIC.md).
 - Complete built/current/planned systems and visual/coding roadmap: [`docs/MASTER_PROJECT_BLUEPRINT.md`](docs/MASTER_PROJECT_BLUEPRINT.md).
 
 ## Important boundary
