@@ -73,6 +73,15 @@ jobs:
             Tee-Object -FilePath .\artifacts\validation\tests-update-planner.log
           if ($LASTEXITCODE -ne 0) { throw "Update planner suite failed with exit code $LASTEXITCODE." }
 
+      - name: Run device fabric policy suite
+        id: device_fabric_tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\tests\WaveSlate.DeviceFabric.Tests\WaveSlate.DeviceFabric.Tests.csproj --configuration Release --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\tests-device-fabric.log
+          if ($LASTEXITCODE -ne 0) { throw "Device Fabric suite failed with exit code $LASTEXITCODE." }
+
       - name: Run 28-check EICAR interoperability suite
         id: eicar
         continue-on-error: true
@@ -145,6 +154,7 @@ jobs:
             supply_chain = '${{ steps.supply_chain.outcome }}'
             hardening = '${{ steps.hardening.outcome }}'
             update_tests = '${{ steps.update_tests.outcome }}'
+            device_fabric_tests = '${{ steps.device_fabric_tests.outcome }}'
             render_security = '${{ steps.render_security.outcome }}'
             render_remote = '${{ steps.render_remote.outcome }}'
             render_update = '${{ steps.render_update.outcome }}'
