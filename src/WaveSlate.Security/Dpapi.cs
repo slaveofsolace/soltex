@@ -31,7 +31,7 @@ internal static class Dpapi
             {
                 succeeded = NativeMethods.CryptProtectData(
                     ref inputBlob,
-                    "WaveSlate authenticated state",
+                    ProductIdentity.LegacyDpapiDescription,
                     nint.Zero,
                     nint.Zero,
                     nint.Zero,

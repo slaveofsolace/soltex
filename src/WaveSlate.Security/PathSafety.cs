@@ -2,6 +2,40 @@ namespace WaveSlate.Security;
 
 public static class PathSafety
 {
+    public static string NormalizeExistingDirectory(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        string fullPath = Path.GetFullPath(path);
+        DirectoryInfo directory = new(fullPath);
+        if (!directory.Exists)
+        {
+            throw new DirectoryNotFoundException("The directory does not exist.");
+        }
+
+        string? pathRoot = Path.GetPathRoot(fullPath);
+        if (string.IsNullOrWhiteSpace(pathRoot))
+        {
+            throw new InvalidDataException("The directory has no path root.");
+        }
+
+        string relative = Path.GetRelativePath(pathRoot, fullPath);
+        string current = pathRoot;
+        foreach (string segment in relative.Split(
+                     [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
+                     StringSplitOptions.RemoveEmptyEntries))
+        {
+            current = Path.Combine(current, segment);
+            FileAttributes attributes = File.GetAttributes(current);
+            if ((attributes & FileAttributes.ReparsePoint) != 0)
+            {
+                throw new IOException(
+                    "Reparse-point directories are not accepted at this trust boundary.");
+            }
+        }
+
+        return fullPath;
+    }
+
     public static string NormalizeExistingFile(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);

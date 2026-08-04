@@ -9,6 +9,7 @@ public sealed class SecurityRuntime : IDisposable
     private SecurityRuntime(
         string dataRoot,
         string importsPath,
+        ProductDataRootKind dataRootKind,
         IContentScanner scanner,
         PowerShellDefenderClient defender,
         AllowListStore allowList,
@@ -19,6 +20,7 @@ public sealed class SecurityRuntime : IDisposable
     {
         DataRoot = dataRoot;
         ImportsPath = importsPath;
+        DataRootKind = dataRootKind;
         _scanner = scanner;
         Defender = defender;
         AllowList = allowList;
@@ -30,6 +32,7 @@ public sealed class SecurityRuntime : IDisposable
 
     public string DataRoot { get; }
     public string ImportsPath { get; }
+    public ProductDataRootKind DataRootKind { get; }
     public PowerShellDefenderClient Defender { get; }
     public AllowListStore AllowList { get; }
     public QuarantineStore Quarantine { get; }
@@ -38,21 +41,26 @@ public sealed class SecurityRuntime : IDisposable
 
     public static SecurityRuntime CreateDefault(string? dataRoot = null)
     {
-        string root = Path.GetFullPath(dataRoot ?? Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "WaveSlate",
-            "Security"));
+        ProductDataRootResolution? resolution = dataRoot is null
+            ? ProductDataRootResolver.ResolveDefault()
+            : null;
+        string root = dataRoot is null
+            ? Path.Combine(resolution!.ProductRoot, "Security")
+            : Path.GetFullPath(dataRoot);
+        ProductDataRootKind dataRootKind = resolution?.Kind ?? ProductDataRootKind.Explicit;
         string stateRoot = Path.Combine(root, "state");
         string quarantineRoot = Path.Combine(root, "quarantine");
         string importsPath = dataRoot is null
-            ? Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "WaveSlate",
-                "Imports")
+            ? Path.Combine(resolution!.ProductRoot, "Imports")
             : Path.Combine(root, "imports");
         Directory.CreateDirectory(root);
         Directory.CreateDirectory(stateRoot);
+        Directory.CreateDirectory(quarantineRoot);
         Directory.CreateDirectory(importsPath);
+        _ = PathSafety.NormalizeExistingDirectory(root);
+        _ = PathSafety.NormalizeExistingDirectory(stateRoot);
+        _ = PathSafety.NormalizeExistingDirectory(quarantineRoot);
+        _ = PathSafety.NormalizeExistingDirectory(importsPath);
 
         AuthenticatedJsonStore allowStore = new(stateRoot, "allow-list");
         AuthenticatedJsonStore quarantineIndexStore = new(stateRoot, "quarantine-index");
@@ -66,6 +74,7 @@ public sealed class SecurityRuntime : IDisposable
         return new SecurityRuntime(
             root,
             importsPath,
+            dataRootKind,
             scanner,
             new PowerShellDefenderClient(),
             allowList,

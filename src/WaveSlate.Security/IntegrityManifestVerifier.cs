@@ -83,8 +83,10 @@ public static class IntegrityManifestVerifier
             return Failure($"The integrity manifest JSON is invalid: {exception.Message}");
         }
 
-        if (manifest is null || manifest.SchemaVersion != 1 ||
-            !string.Equals(manifest.Product, "WaveSlate", StringComparison.Ordinal))
+        if (manifest is null ||
+            !ProductIdentity.IsSupportedIntegrityManifestProduct(
+                manifest.SchemaVersion,
+                manifest.Product))
         {
             return Failure("The integrity manifest schema or product identifier is unsupported.");
         }

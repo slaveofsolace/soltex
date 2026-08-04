@@ -48,6 +48,10 @@ List<(string Name, Func<Task> Test)> tests =
     ("Allow-list state detects tampering", AllowListDetectsTamperingAsync),
     ("Quarantine round trip preserves bytes", QuarantineRoundTripAsync),
     ("Signed integrity manifest detects content changes", IntegrityManifestDetectsChangesAsync),
+    ("Integrity manifest identity compatibility is versioned", IntegrityManifestIdentityIsVersionedAsync),
+    ("Fresh profiles select the canonical Soltex data root", FreshProfileUsesCanonicalDataRootAsync),
+    ("Existing profiles select the sole legacy data root", ExistingProfileUsesLegacyDataRootAsync),
+    ("Ambiguous or unsafe product data roots fail closed", AmbiguousOrUnsafeDataRootsFailClosedAsync),
     ("Audit log detects mutation", AuditLogDetectsMutationAsync),
     ("Authenticode trusts the signed .NET host", AuthenticodeTrustsDotNetHostAsync),
     ("Authenticode rejects an unsigned WaveSlate assembly", AuthenticodeRejectsUnsignedAssemblyAsync),
@@ -164,7 +168,7 @@ static async Task IntegrityManifestDetectsChangesAsync()
 
         IntegrityManifest manifest = new(
             1,
-            "WaveSlate",
+            ProductIdentity.IntegrityManifestProduct,
             DateTimeOffset.UtcNow,
             [new IntegrityManifestFile("plugin.dll", content.Length, await FileHashing.Sha256Async(contentPath))]);
         byte[] manifestBytes = JsonSerializer.SerializeToUtf8Bytes(
@@ -194,6 +198,126 @@ static async Task IntegrityManifestDetectsChangesAsync()
             signaturePath,
             publicKey);
         True(!invalid.Succeeded, "Changed content should fail integrity verification.");
+    });
+}
+
+static async Task IntegrityManifestIdentityIsVersionedAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        string contentRoot = Path.Combine(root, "content");
+        Directory.CreateDirectory(contentRoot);
+        string contentPath = Path.Combine(contentRoot, "plugin.dll");
+        byte[] content = Encoding.UTF8.GetBytes("identity compatibility fixture");
+        await File.WriteAllBytesAsync(contentPath, content);
+
+        using RSA rsa = RSA.Create(2_048);
+        string publicKey = rsa.ExportSubjectPublicKeyInfoPem();
+        foreach ((string product, bool accepted) in new[]
+                 {
+                     (ProductIdentity.IntegrityManifestProduct, true),
+                     (ProductIdentity.LegacyIntegrityManifestProduct, true),
+                     ("UnrecognizedProduct", false)
+                 })
+        {
+            IntegrityManifest manifest = new(
+                1,
+                product,
+                DateTimeOffset.UtcNow,
+                [new IntegrityManifestFile(
+                    "plugin.dll",
+                    content.Length,
+                    await FileHashing.Sha256Async(contentPath))]);
+            byte[] manifestBytes = JsonSerializer.SerializeToUtf8Bytes(
+                manifest,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true });
+            string token = accepted ? product : "unsupported";
+            string manifestPath = Path.Combine(root, token + ".json");
+            string signaturePath = Path.Combine(root, token + ".sig");
+            await File.WriteAllBytesAsync(manifestPath, manifestBytes);
+            await File.WriteAllBytesAsync(
+                signaturePath,
+                rsa.SignData(manifestBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pss));
+
+            IntegrityVerificationResult result = await IntegrityManifestVerifier.VerifyAsync(
+                contentRoot,
+                manifestPath,
+                signaturePath,
+                publicKey);
+            Equal(accepted, result.Succeeded);
+        }
+    });
+}
+
+static async Task FreshProfileUsesCanonicalDataRootAsync()
+{
+    await WithTempDirectoryAsync(root =>
+    {
+        ProductDataRootResolution resolution = ProductDataRootResolver.Resolve(root);
+        Equal(ProductDataRootKind.Canonical, resolution.Kind);
+        Equal(Path.Combine(root, ProductIdentity.CanonicalStorageDirectoryName), resolution.ProductRoot);
+        True(Directory.Exists(resolution.ProductRoot), "The canonical product root was not created.");
+        True(
+            !Directory.Exists(Path.Combine(root, ProductIdentity.LegacyStorageDirectoryName)),
+            "A fresh profile must not create the legacy root.");
+        return Task.CompletedTask;
+    });
+}
+
+static async Task ExistingProfileUsesLegacyDataRootAsync()
+{
+    await WithTempDirectoryAsync(root =>
+    {
+        string legacyRoot = Path.Combine(root, ProductIdentity.LegacyStorageDirectoryName);
+        Directory.CreateDirectory(legacyRoot);
+        ProductDataRootResolution resolution = ProductDataRootResolver.Resolve(root);
+        Equal(ProductDataRootKind.LegacyCompatibility, resolution.Kind);
+        Equal(legacyRoot, resolution.ProductRoot);
+        True(resolution.UsesLegacyCompatibility, "Legacy selection must be explicit in diagnostics.");
+        True(
+            !Directory.Exists(Path.Combine(root, ProductIdentity.CanonicalStorageDirectoryName)),
+            "Compatibility lookup must not silently create or copy a canonical root.");
+        return Task.CompletedTask;
+    });
+}
+
+static async Task AmbiguousOrUnsafeDataRootsFailClosedAsync()
+{
+    await WithTempDirectoryAsync(root =>
+    {
+        Directory.CreateDirectory(Path.Combine(root, ProductIdentity.CanonicalStorageDirectoryName));
+        Directory.CreateDirectory(Path.Combine(root, ProductIdentity.LegacyStorageDirectoryName));
+        Throws<InvalidDataException>(() => ProductDataRootResolver.Resolve(root));
+        return Task.CompletedTask;
+    });
+
+    await WithTempDirectoryAsync(root =>
+    {
+        await File.WriteAllTextAsync(
+            Path.Combine(root, ProductIdentity.CanonicalStorageDirectoryName),
+            "not a directory");
+        Throws<InvalidDataException>(() => ProductDataRootResolver.Resolve(root));
+    });
+
+    await WithTempDirectoryAsync(root =>
+    {
+        string target = Path.Combine(root, "target");
+        string productLink = Path.Combine(root, ProductIdentity.CanonicalStorageDirectoryName);
+        Directory.CreateDirectory(target);
+        try
+        {
+            Directory.CreateSymbolicLink(productLink, target);
+        }
+        catch (Exception exception) when (
+            exception is UnauthorizedAccessException or
+            IOException or
+            PlatformNotSupportedException)
+        {
+            Console.WriteLine($"      reparse fixture unavailable: {exception.GetType().Name}");
+            return;
+        }
+
+        Throws<IOException>(() => ProductDataRootResolver.Resolve(root));
     });
 }
 
