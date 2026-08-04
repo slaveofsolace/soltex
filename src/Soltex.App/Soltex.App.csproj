@@ -12,5 +12,7 @@
     <ProjectReference Include="..\Soltex.RemoteAssist\Soltex.RemoteAssist.csproj" />
     <ProjectReference Include="..\Soltex.Security\Soltex.Security.csproj" />
     <ProjectReference Include="..\Soltex.Update\Soltex.Update.csproj" />
+    <ProjectReference Include="..\Soltex.Monitoring\Soltex.Monitoring.csproj" />
+    <ProjectReference Include="..\Soltex.DeviceFabric\Soltex.DeviceFabric.csproj" />
   </ItemGroup>
 </Project>

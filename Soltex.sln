@@ -22,6 +22,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.DeviceFabric", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.DeviceFabric.Tests", "tests\Soltex.DeviceFabric.Tests\Soltex.DeviceFabric.Tests.csproj", "{4F3B3F52-CA19-460C-B07C-5ED408E22C2D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.Monitoring", "src\Soltex.Monitoring\Soltex.Monitoring.csproj", "{A7B2C6D4-1E90-4F88-9A31-6D7B25E4C802}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.Monitoring.Tests", "tests\Soltex.Monitoring.Tests\Soltex.Monitoring.Tests.csproj", "{B8C3D7E5-2F01-4A99-8B42-7E8C36F5D913}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -68,5 +72,13 @@ Global
 		{4F3B3F52-CA19-460C-B07C-5ED408E22C2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F3B3F52-CA19-460C-B07C-5ED408E22C2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F3B3F52-CA19-460C-B07C-5ED408E22C2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7B2C6D4-1E90-4F88-9A31-6D7B25E4C802}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7B2C6D4-1E90-4F88-9A31-6D7B25E4C802}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7B2C6D4-1E90-4F88-9A31-6D7B25E4C802}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7B2C6D4-1E90-4F88-9A31-6D7B25E4C802}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8C3D7E5-2F01-4A99-8B42-7E8C36F5D913}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8C3D7E5-2F01-4A99-8B42-7E8C36F5D913}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8C3D7E5-2F01-4A99-8B42-7E8C36F5D913}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8C3D7E5-2F01-4A99-8B42-7E8C36F5D913}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

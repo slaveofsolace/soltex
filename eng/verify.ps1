@@ -21,6 +21,9 @@ if ($RunEicar) {
 
 try {
     & $dotnet run --project (Join-Path $repoRoot 'tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj') --configuration Release --no-build
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    & $dotnet run --project (Join-Path $repoRoot 'tests\Soltex.Monitoring.Tests\Soltex.Monitoring.Tests.csproj') --configuration Release --no-build
     exit $LASTEXITCODE
 }
 finally {
