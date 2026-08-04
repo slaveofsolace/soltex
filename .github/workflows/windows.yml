@@ -64,6 +64,15 @@ jobs:
             Tee-Object -FilePath .\artifacts\validation\tests-security-hardening.log
           if ($LASTEXITCODE -ne 0) { throw "Security hardening suite failed with exit code $LASTEXITCODE." }
 
+      - name: Run update planner hostile suite
+        id: update_tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\tests\WaveSlate.Update.Tests\WaveSlate.Update.Tests.csproj --configuration Release --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\tests-update-planner.log
+          if ($LASTEXITCODE -ne 0) { throw "Update planner suite failed with exit code $LASTEXITCODE." }
+
       - name: Run 28-check EICAR interoperability suite
         id: eicar
         continue-on-error: true
@@ -125,6 +134,7 @@ jobs:
             default_tests = '${{ steps.default_tests.outcome }}'
             supply_chain = '${{ steps.supply_chain.outcome }}'
             hardening = '${{ steps.hardening.outcome }}'
+            update_tests = '${{ steps.update_tests.outcome }}'
             render_security = '${{ steps.render_security.outcome }}'
             render_remote = '${{ steps.render_remote.outcome }}'
             verify_renders = '${{ steps.verify_renders.outcome }}'
