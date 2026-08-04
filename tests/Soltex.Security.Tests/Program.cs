@@ -132,6 +132,7 @@ static async Task AllowListDetectsTamperingAsync()
     await WithTempDirectoryAsync(async root =>
     {
         using SecurityRuntime runtime = SecurityRuntime.CreateDefault(Path.Combine(root, "runtime"));
+        Equal(ProductDataRootKind.Explicit, runtime.DataRootKind);
         string hash = new('A', 64);
         await runtime.AllowList.AddAsync(hash, "Fixture", "Test approval");
         True(await runtime.AllowList.ContainsAsync(hash), "Expected allow-list entry.");

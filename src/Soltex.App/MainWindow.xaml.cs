@@ -59,6 +59,11 @@ public partial class MainWindow : Window
         await RefreshUpdateJournalAsync();
         _protectionMonitor.Start();
         AddActivity("Soltex import guard is active.");
+        if (_runtime.DataRootKind == ProductDataRootKind.LegacyCompatibility)
+        {
+            AddActivity("Soltex is using the existing compatible data location; no files were moved.");
+        }
+
         AddActivity(_protectionMonitor.ChangeNotificationsAvailable
             ? "Windows Security change notifications are active."
             : "Windows Security notifications are unavailable; bounded polling remains active.");
