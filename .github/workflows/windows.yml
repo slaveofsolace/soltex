@@ -33,7 +33,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          dotnet build .\WaveSlate.sln --configuration Release 2>&1 |
+          dotnet build .\Soltex.sln --configuration Release 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\build-release.log
           if ($LASTEXITCODE -ne 0) { throw "Release build failed with exit code $LASTEXITCODE." }
 
@@ -42,7 +42,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          dotnet run --project .\tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj --configuration Release --no-build 2>&1 |
+          dotnet run --project .\tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj --configuration Release --no-build 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\tests-default.log
           if ($LASTEXITCODE -ne 0) { throw "Default suite failed with exit code $LASTEXITCODE." }
 
@@ -51,7 +51,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          dotnet run --project .\tests\WaveSlate.Security.SupplyChain.Tests\WaveSlate.Security.SupplyChain.Tests.csproj --configuration Release --no-build 2>&1 |
+          dotnet run --project .\tests\Soltex.Security.SupplyChain.Tests\Soltex.Security.SupplyChain.Tests.csproj --configuration Release --no-build 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\tests-supply-chain.log
           if ($LASTEXITCODE -ne 0) { throw "Supply-chain suite failed with exit code $LASTEXITCODE." }
 
@@ -60,7 +60,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          dotnet run --project .\tests\WaveSlate.Security.Hardening.Tests\WaveSlate.Security.Hardening.Tests.csproj --configuration Release --no-build 2>&1 |
+          dotnet run --project .\tests\Soltex.Security.Hardening.Tests\Soltex.Security.Hardening.Tests.csproj --configuration Release --no-build 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\tests-security-hardening.log
           if ($LASTEXITCODE -ne 0) { throw "Security hardening suite failed with exit code $LASTEXITCODE." }
 
@@ -69,7 +69,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          dotnet run --project .\tests\WaveSlate.Update.Tests\WaveSlate.Update.Tests.csproj --configuration Release --no-build 2>&1 |
+          dotnet run --project .\tests\Soltex.Update.Tests\Soltex.Update.Tests.csproj --configuration Release --no-build 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\tests-update-planner.log
           if ($LASTEXITCODE -ne 0) { throw "Update planner suite failed with exit code $LASTEXITCODE." }
 
@@ -78,7 +78,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          dotnet run --project .\tests\WaveSlate.DeviceFabric.Tests\WaveSlate.DeviceFabric.Tests.csproj --configuration Release --no-build 2>&1 |
+          dotnet run --project .\tests\Soltex.DeviceFabric.Tests\Soltex.DeviceFabric.Tests.csproj --configuration Release --no-build 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\tests-device-fabric.log
           if ($LASTEXITCODE -ne 0) { throw "Device Fabric suite failed with exit code $LASTEXITCODE." }
 
@@ -88,8 +88,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $env:WAVESLATE_RUN_EICAR = '1'
-          dotnet run --project .\tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj --configuration Release --no-build 2>&1 |
+          $env:SOLTEX_RUN_EICAR = '1'
+          dotnet run --project .\tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj --configuration Release --no-build 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\tests-eicar.log
           if ($LASTEXITCODE -ne 0) { throw "EICAR interoperability suite failed with exit code $LASTEXITCODE." }
 
@@ -98,7 +98,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\security-current-source.png --panel security 2>&1 |
+          dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\security-current-source.png --panel security 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\render-security.log
           if ($LASTEXITCODE -ne 0) { throw "Security render failed with exit code $LASTEXITCODE." }
 
@@ -107,7 +107,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\remote-assist-current-source.png --panel remote 2>&1 |
+          dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\remote-assist-current-source.png --panel remote 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\render-remote-assist.log
           if ($LASTEXITCODE -ne 0) { throw "Remote Assist render failed with exit code $LASTEXITCODE." }
 
@@ -116,7 +116,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          dotnet run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\updates-current-source.png --panel update 2>&1 |
+          dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\updates-current-source.png --panel update 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\render-updates.log
           if ($LASTEXITCODE -ne 0) { throw "Updates render failed with exit code $LASTEXITCODE." }
 
