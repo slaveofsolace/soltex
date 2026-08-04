@@ -4,7 +4,7 @@ using System.Security;
 
 namespace Soltex.Monitoring;
 
-public sealed class SystemTelemetryProvider
+public static class SystemTelemetryProvider
 {
     public const int MaximumProcessCount = 32;
     public const int MaximumProcessNameLength = 80;
@@ -14,7 +14,7 @@ public sealed class SystemTelemetryProvider
     private static readonly TimeSpan MinimumSampleWindow = TimeSpan.FromMilliseconds(100);
     private static readonly TimeSpan MaximumSampleWindow = TimeSpan.FromSeconds(2);
 
-    public async Task<SystemTelemetrySnapshot> CaptureAsync(
+    public static async Task<SystemTelemetrySnapshot> CaptureAsync(
         TimeSpan? sampleWindow = null,
         CancellationToken cancellationToken = default)
     {
@@ -143,7 +143,7 @@ public sealed class SystemTelemetryProvider
         return snapshots;
     }
 
-    private static IReadOnlyList<ProcessTelemetry> CalculateProcessTelemetry(
+    private static ProcessTelemetry[] CalculateProcessTelemetry(
         IReadOnlyDictionary<int, ProcessSeed> first,
         IReadOnlyDictionary<int, ProcessSeed> second,
         TimeSpan elapsed)
@@ -174,7 +174,7 @@ public sealed class SystemTelemetryProvider
             .ToArray();
     }
 
-    private static IReadOnlyList<StorageVolumeTelemetry> CaptureVolumes(out string? limitation)
+    private static List<StorageVolumeTelemetry> CaptureVolumes(out string? limitation)
     {
         limitation = null;
         List<StorageVolumeTelemetry> volumes = [];

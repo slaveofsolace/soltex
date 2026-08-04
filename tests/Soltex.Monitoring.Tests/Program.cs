@@ -78,18 +78,16 @@ static Task ProcessNamesAreSanitizedAsync()
 
 static Task SampleWindowsAreBoundedAsync()
 {
-    SystemTelemetryProvider provider = new();
-    Throws<ArgumentOutOfRangeException>(() => provider.CaptureAsync(TimeSpan.FromMilliseconds(20)).GetAwaiter().GetResult());
-    Throws<ArgumentOutOfRangeException>(() => provider.CaptureAsync(TimeSpan.FromSeconds(3)).GetAwaiter().GetResult());
+    Throws<ArgumentOutOfRangeException>(() => SystemTelemetryProvider.CaptureAsync(TimeSpan.FromMilliseconds(20)).GetAwaiter().GetResult());
+    Throws<ArgumentOutOfRangeException>(() => SystemTelemetryProvider.CaptureAsync(TimeSpan.FromSeconds(3)).GetAwaiter().GetResult());
     return Task.CompletedTask;
 }
 
 static async Task PendingSampleCanBeCancelledAsync()
 {
-    SystemTelemetryProvider provider = new();
     using CancellationTokenSource cancellation = new();
     cancellation.Cancel();
-    await ThrowsAsync<OperationCanceledException>(() => provider.CaptureAsync(cancellationToken: cancellation.Token));
+    await ThrowsAsync<OperationCanceledException>(() => SystemTelemetryProvider.CaptureAsync(cancellationToken: cancellation.Token));
 }
 
 static async Task LiveCaptureIsBoundedAsync()
@@ -158,9 +156,8 @@ static async Task<SystemTelemetrySnapshot> CaptureAsync()
         throw new PlatformNotSupportedException("The live monitoring suite requires Windows.");
     }
 
-    SystemTelemetryProvider provider = new();
     using CancellationTokenSource timeout = new(TimeSpan.FromSeconds(5));
-    return await provider.CaptureAsync(TimeSpan.FromMilliseconds(150), timeout.Token);
+    return await SystemTelemetryProvider.CaptureAsync(TimeSpan.FromMilliseconds(150), timeout.Token);
 }
 
 static void Equal<T>(T expected, T actual)

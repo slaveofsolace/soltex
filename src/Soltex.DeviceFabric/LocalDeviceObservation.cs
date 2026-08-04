@@ -91,7 +91,7 @@ public static class LocalDeviceObservationProvider
         Func<string> read,
         string fallback,
         string limitation,
-        ICollection<string> limitations)
+        List<string> limitations)
     {
         try
         {
