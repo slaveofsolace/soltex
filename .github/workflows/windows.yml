@@ -90,7 +90,7 @@ jobs:
             Tee-Object -FilePath .\artifacts\validation\tests-device-fabric.log
           if ($LASTEXITCODE -ne 0) { throw "Device Fabric suite failed with exit code $LASTEXITCODE." }
 
-      - name: Run 28-check EICAR interoperability suite
+      - name: Run opt-in EICAR interoperability suite
         id: eicar
         continue-on-error: true
         shell: pwsh
@@ -180,9 +180,9 @@ jobs:
           if ($requiredFailures.Count -gt 0) {
             $classification = 'The repository gate is incomplete: ' + ($requiredFailures -join ', ') + '.'
           } elseif ($outcomes.eicar -eq 'success') {
-            $classification = 'Release build, required security suites, native renders, and the 28-check interoperability suite completed.'
+            $classification = 'Release build, required security suites, native renders, and the opt-in EICAR interoperability suite completed.'
           } else {
-            $classification = 'Release build, required security suites, and native renders completed; the hosted Windows AMSI provider did not block the in-memory EICAR marker, so 28/28 remains pending on an owner-controlled Windows host.'
+            $classification = 'Release build, required security suites, and native renders completed; the hosted Windows AMSI provider did not block the in-memory EICAR marker, so provider-interoperability confirmation remains pending on an owner-controlled Windows host.'
           }
           @(
             $outcomes.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }

@@ -258,7 +258,7 @@ static async Task IntegrityManifestIdentityIsVersionedAsync()
 
 static async Task FreshProfileUsesCanonicalDataRootAsync()
 {
-    await WithTempDirectoryAsync(async root =>
+    await WithTempDirectoryAsync(root =>
     {
         ProductDataRootResolution resolution = ProductDataRootResolver.Resolve(root);
         Equal(ProductDataRootKind.Canonical, resolution.Kind);
