@@ -74,7 +74,7 @@ public static class SystemTelemetryProvider
             limitations.Add(volumeLimitation);
         }
 
-        TelemetryObservationState state = cpuPercent is not null || memory is not null || processes.Count > 0
+        TelemetryObservationState state = cpuPercent is not null || memory is not null || processes.Length > 0
             ? limitations.Count == 0 ? TelemetryObservationState.Current : TelemetryObservationState.Partial
             : TelemetryObservationState.Unavailable;
         capture.Stop();
