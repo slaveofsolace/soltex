@@ -638,12 +638,12 @@ sealed class UpdateFixture : IDisposable
                 Artifact("package", payloads["package"])
             ]);
 
-    internal byte[] Serialize<T>(T value) =>
+    internal static byte[] Serialize<T>(T value) =>
         JsonSerializer.SerializeToUtf8Bytes(
             value,
             StrictJson.CreateSerializerOptions());
 
-    internal UpdateDetachedSignature Sign(string keyId, RSA key, byte[] bytes) =>
+    internal static UpdateDetachedSignature Sign(string keyId, RSA key, byte[] bytes) =>
         new(
             keyId,
             Convert.ToBase64String(key.SignData(
