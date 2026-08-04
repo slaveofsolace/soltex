@@ -48,8 +48,8 @@ public static class SystemTelemetryProvider
             : null;
 
         _ = NativeTelemetry.TryReadMemory(out MemoryTelemetry? memory);
-        IReadOnlyList<StorageVolumeTelemetry> volumes = CaptureVolumes(out string? volumeLimitation);
-        IReadOnlyList<ProcessTelemetry> processes = CalculateProcessTelemetry(
+        List<StorageVolumeTelemetry> volumes = CaptureVolumes(out string? volumeLimitation);
+        ProcessTelemetry[] processes = CalculateProcessTelemetry(
             firstProcesses,
             secondProcesses,
             sample.Elapsed);
