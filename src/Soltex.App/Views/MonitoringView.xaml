@@ -66,7 +66,7 @@
                                             Stroke="{StaticResource AccentBrush}"
                                             Fill="#173D2B27"
                                             StrokeThickness="2.2" />
-                        <TextBlock Grid.Row="3" Text="0 — 100% · last 72 samples" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
+                        <TextBlock Grid.Row="3" Text="0 — 100% · history window up to 72 samples" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
                     </Grid>
                 </Border>
 

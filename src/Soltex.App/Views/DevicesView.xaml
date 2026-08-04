@@ -95,7 +95,11 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <StackPanel Margin="13,11">
                                 <TextBlock Text="Private mesh" FontWeight="SemiBold" />
-                                <TextBlock Margin="0,3,0,0" Text="Tailscale-compatible transport is a documented future boundary." Foreground="{StaticResource MutedBrush}" FontSize="10" />
+                                <TextBlock Margin="0,3,0,0"
+                                           Text="Tailscale-compatible transport is a documented future boundary."
+                                           Foreground="{StaticResource MutedBrush}"
+                                           FontSize="10"
+                                           TextWrapping="Wrap" />
                             </StackPanel>
                             <TextBlock Grid.Column="1" Margin="13" Text="NOT CONFIGURED" Foreground="{StaticResource MutedBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" VerticalAlignment="Center" />
                         </Grid>
