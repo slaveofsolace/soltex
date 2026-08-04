@@ -49,22 +49,48 @@ public sealed class ReleaseSequenceStore : IDisposable
         _store = new AuthenticatedJsonStore(safeStateRoot, "release-sequences");
     }
 
-    public async Task<ReleaseSequenceDecision> AcceptVerifiedAsync(
+    public Task<ReleaseSequenceDecision> AcceptVerifiedAsync(
         SignedReleaseVerificationResult verification,
+        CancellationToken cancellationToken = default) =>
+        EvaluateOrAcceptAsync(verification, mutateState: true, cancellationToken);
+
+    public Task<ReleaseSequenceDecision> EvaluateVerifiedAsync(
+        SignedReleaseVerificationResult verification,
+        CancellationToken cancellationToken = default) =>
+        EvaluateOrAcceptAsync(verification, mutateState: false, cancellationToken);
+
+    public async Task<IReadOnlyList<AcceptedReleaseSequence>> ListAsync(
         CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentNullException.ThrowIfNull(verification);
-        if (!verification.Succeeded ||
-            verification.Manifest is null ||
-            !IsSha256(verification.ManifestSha256))
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            return new ReleaseSequenceDecision(
-                ReleaseSequenceDisposition.RejectedUnverified,
-                verification.Manifest?.Channel ?? "unknown",
-                verification.Manifest?.Sequence ?? 0,
-                null,
-                "Only a successfully verified signed release may update anti-rollback state.");
+            await using FileStream processLock = await AcquireProcessLockAsync(cancellationToken)
+                .ConfigureAwait(false);
+            ReleaseSequenceState state = await LoadValidatedStateAsync(cancellationToken)
+                .ConfigureAwait(false);
+            return state.Channels
+                .OrderBy(item => item.Channel, StringComparer.Ordinal)
+                .ToArray();
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private async Task<ReleaseSequenceDecision> EvaluateOrAcceptAsync(
+        SignedReleaseVerificationResult verification,
+        bool mutateState,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(verification);
+        ReleaseSequenceDecision? rejected = RejectUnverified(verification, mutateState);
+        if (rejected is not null)
+        {
+            return rejected;
         }
 
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -72,12 +98,9 @@ public sealed class ReleaseSequenceStore : IDisposable
         {
             await using FileStream processLock = await AcquireProcessLockAsync(cancellationToken)
                 .ConfigureAwait(false);
-            ReleaseSequenceState state = await _store.LoadAsync(
-                static () => new ReleaseSequenceState(StateSchemaVersion, []),
-                cancellationToken).ConfigureAwait(false);
-            ValidateState(state);
-
-            SignedReleaseManifest manifest = verification.Manifest;
+            ReleaseSequenceState state = await LoadValidatedStateAsync(cancellationToken)
+                .ConfigureAwait(false);
+            SignedReleaseManifest manifest = verification.Manifest!;
             AcceptedReleaseSequence? current = state.Channels.SingleOrDefault(item =>
                 string.Equals(item.Channel, manifest.Channel, StringComparison.Ordinal));
             if (current is null)
@@ -88,19 +111,20 @@ public sealed class ReleaseSequenceStore : IDisposable
                         "The anti-rollback state contains too many release channels.");
                 }
 
-                state.Channels.Add(new AcceptedReleaseSequence(
-                    manifest.Channel,
-                    manifest.Sequence,
-                    manifest.Version,
-                    verification.ManifestSha256!,
-                    DateTimeOffset.UtcNow));
-                await _store.SaveAsync(state, cancellationToken).ConfigureAwait(false);
+                if (mutateState)
+                {
+                    state.Channels.Add(CreateAccepted(manifest, verification.ManifestSha256!));
+                    await _store.SaveAsync(state, cancellationToken).ConfigureAwait(false);
+                }
+
                 return new ReleaseSequenceDecision(
                     ReleaseSequenceDisposition.AcceptedFirstRelease,
                     manifest.Channel,
                     manifest.Sequence,
                     null,
-                    "The first verified release for this channel was accepted.");
+                    mutateState
+                        ? "The first verified release for this channel was accepted."
+                        : "The first verified release for this channel would be accepted; state was not changed.");
             }
 
             if (manifest.Sequence < current.Sequence)
@@ -127,24 +151,27 @@ public sealed class ReleaseSequenceStore : IDisposable
                     manifest.Sequence,
                     current.Sequence,
                     sameManifest
-                        ? "The same verified release was already accepted."
+                        ? mutateState
+                            ? "The same verified release was already accepted."
+                            : "The same verified release is already accepted; state was not changed."
                         : "A different signed manifest reused an already accepted release sequence.");
             }
 
-            int index = state.Channels.IndexOf(current);
-            state.Channels[index] = new AcceptedReleaseSequence(
-                manifest.Channel,
-                manifest.Sequence,
-                manifest.Version,
-                verification.ManifestSha256!,
-                DateTimeOffset.UtcNow);
-            await _store.SaveAsync(state, cancellationToken).ConfigureAwait(false);
+            if (mutateState)
+            {
+                int index = state.Channels.IndexOf(current);
+                state.Channels[index] = CreateAccepted(manifest, verification.ManifestSha256!);
+                await _store.SaveAsync(state, cancellationToken).ConfigureAwait(false);
+            }
+
             return new ReleaseSequenceDecision(
                 ReleaseSequenceDisposition.AcceptedUpgrade,
                 manifest.Channel,
                 manifest.Sequence,
                 current.Sequence,
-                "The verified release advanced the accepted sequence.");
+                mutateState
+                    ? "The verified release advanced the accepted sequence."
+                    : "The verified release would advance the accepted sequence; state was not changed.");
         }
         finally
         {
@@ -152,27 +179,45 @@ public sealed class ReleaseSequenceStore : IDisposable
         }
     }
 
-    public async Task<IReadOnlyList<AcceptedReleaseSequence>> ListAsync(
-        CancellationToken cancellationToken = default)
+    private static ReleaseSequenceDecision? RejectUnverified(
+        SignedReleaseVerificationResult verification,
+        bool mutateState)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
+        if (verification.Succeeded &&
+            verification.Manifest is not null &&
+            IsSha256(verification.ManifestSha256))
         {
-            await using FileStream processLock = await AcquireProcessLockAsync(cancellationToken)
-                .ConfigureAwait(false);
-            ReleaseSequenceState state = await _store.LoadAsync(
-                static () => new ReleaseSequenceState(StateSchemaVersion, []),
-                cancellationToken).ConfigureAwait(false);
-            ValidateState(state);
-            return state.Channels
-                .OrderBy(item => item.Channel, StringComparer.Ordinal)
-                .ToArray();
+            return null;
         }
-        finally
-        {
-            _gate.Release();
-        }
+
+        return new ReleaseSequenceDecision(
+            ReleaseSequenceDisposition.RejectedUnverified,
+            verification.Manifest?.Channel ?? "unknown",
+            verification.Manifest?.Sequence ?? 0,
+            null,
+            mutateState
+                ? "Only a successfully verified signed release may update anti-rollback state."
+                : "Only a successfully verified signed release may be evaluated against anti-rollback state.");
+    }
+
+    private static AcceptedReleaseSequence CreateAccepted(
+        SignedReleaseManifest manifest,
+        string manifestSha256) =>
+        new(
+            manifest.Channel,
+            manifest.Sequence,
+            manifest.Version,
+            manifestSha256,
+            DateTimeOffset.UtcNow);
+
+    private async Task<ReleaseSequenceState> LoadValidatedStateAsync(
+        CancellationToken cancellationToken)
+    {
+        ReleaseSequenceState state = await _store.LoadAsync(
+            static () => new ReleaseSequenceState(StateSchemaVersion, []),
+            cancellationToken).ConfigureAwait(false);
+        ValidateState(state);
+        return state;
     }
 
     private async Task<FileStream> AcquireProcessLockAsync(
@@ -259,6 +304,45 @@ public sealed class ReleaseSequenceStore : IDisposable
         }
     }
 
+    private static string NormalizeOrCreateStateRoot(string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        string fullPath = Path.GetFullPath(path);
+        EnsureExistingDirectoryPathHasNoReparsePoints(fullPath);
+        Directory.CreateDirectory(fullPath);
+        EnsureExistingDirectoryPathHasNoReparsePoints(fullPath);
+        return fullPath;
+    }
+
+    private static void EnsureExistingDirectoryPathHasNoReparsePoints(string fullPath)
+    {
+        string? pathRoot = Path.GetPathRoot(fullPath);
+        if (string.IsNullOrWhiteSpace(pathRoot))
+        {
+            throw new InvalidDataException(
+                "The anti-rollback state directory has no path root.");
+        }
+
+        string relative = Path.GetRelativePath(pathRoot, fullPath);
+        string current = pathRoot;
+        foreach (string segment in relative.Split(
+                     [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
+                     StringSplitOptions.RemoveEmptyEntries))
+        {
+            current = Path.Combine(current, segment);
+            if (!Directory.Exists(current))
+            {
+                continue;
+            }
+
+            if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0)
+            {
+                throw new IOException(
+                    "Reparse-point state directories are not accepted at this trust boundary.");
+            }
+        }
+    }
+
     private static bool IsValidChannel(string? channel) =>
         !string.IsNullOrWhiteSpace(channel) &&
         channel.Length <= 32 &&
@@ -282,45 +366,6 @@ public sealed class ReleaseSequenceStore : IDisposable
             character is >= '0' and <= '9' or
             >= 'A' and <= 'F' or
             >= 'a' and <= 'f');
-
-    private static string NormalizeOrCreateStateRoot(string path)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        string fullPath = Path.GetFullPath(path);
-        EnsureExistingDirectoryPathHasNoReparsePoints(fullPath);
-        Directory.CreateDirectory(fullPath);
-        EnsureExistingDirectoryPathHasNoReparsePoints(fullPath);
-        return fullPath;
-    }
-
-    private static void EnsureExistingDirectoryPathHasNoReparsePoints(string fullPath)
-    {
-        string? pathRoot = Path.GetPathRoot(fullPath);
-        if (string.IsNullOrWhiteSpace(pathRoot))
-        {
-            throw new InvalidDataException("The anti-rollback state directory has no path root.");
-        }
-
-        string relative = Path.GetRelativePath(pathRoot, fullPath);
-        string current = pathRoot;
-        foreach (string segment in relative.Split(
-                     [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
-                     StringSplitOptions.RemoveEmptyEntries))
-        {
-            current = Path.Combine(current, segment);
-            if (!Directory.Exists(current))
-            {
-                continue;
-            }
-
-            FileAttributes attributes = File.GetAttributes(current);
-            if ((attributes & FileAttributes.ReparsePoint) != 0)
-            {
-                throw new IOException(
-                    "Reparse-point state directories are not accepted at this trust boundary.");
-            }
-        }
-    }
 
     public void Dispose()
     {
