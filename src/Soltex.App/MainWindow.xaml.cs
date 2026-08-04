@@ -120,6 +120,7 @@ public partial class MainWindow : Window
     {
         int consecutiveFailures = 0;
         bool recoveryNoticeRequired = false;
+        bool hasSuccessfulSample = false;
         while (!cancellationToken.IsCancellationRequested)
         {
             try
@@ -139,6 +140,7 @@ public partial class MainWindow : Window
                 });
                 consecutiveFailures = 0;
                 recoveryNoticeRequired = false;
+                hasSuccessfulSample = true;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -150,8 +152,16 @@ public partial class MainWindow : Window
                 recoveryNoticeRequired = true;
                 await Dispatcher.InvokeAsync(() =>
                 {
-                    HomePanel.ShowUnavailable(_localDevice);
-                    MonitoringPanel.ShowUnavailable();
+                    if (hasSuccessfulSample && consecutiveFailures <= 2)
+                    {
+                        HomePanel.ShowStale();
+                        MonitoringPanel.ShowStale();
+                    }
+                    else
+                    {
+                        HomePanel.ShowUnavailable(_localDevice);
+                        MonitoringPanel.ShowUnavailable();
+                    }
                     if (consecutiveFailures == 1)
                     {
                         AddActivity("Windows telemetry was unavailable; a bounded retry is scheduled.");

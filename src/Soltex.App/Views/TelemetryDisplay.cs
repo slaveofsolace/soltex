@@ -16,6 +16,7 @@ internal static class TelemetryDisplay
     {
         TelemetryObservationState.Current => "CURRENT",
         TelemetryObservationState.Partial => "PARTIAL",
+        TelemetryObservationState.Stale => "STALE",
         _ => "UNAVAILABLE"
     };
 

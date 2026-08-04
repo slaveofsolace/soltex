@@ -8,8 +8,7 @@ namespace Soltex.App.Views;
 
 public partial class HomeView : UserControl
 {
-    private const int MaximumHistoryCount = 48;
-    private readonly Queue<double> _cpuHistory = [];
+    private readonly BoundedTelemetryHistory _cpuHistory = new(48);
 
     public HomeView()
     {
@@ -20,11 +19,11 @@ public partial class HomeView : UserControl
     {
         if (snapshot.CpuPercent is double cpu)
         {
-            AddHistory(cpu);
+            CpuSparkline.Values = _cpuHistory.Add(cpu);
         }
 
         CpuHeroValue.Text = TelemetryDisplay.Percent(snapshot.CpuPercent);
-        CpuSparkline.Values = _cpuHistory.ToArray();
+        CpuSparkline.Values ??= _cpuHistory.CreateSnapshot();
         HomeCapturedText.Text =
             $"{snapshot.Provenance} · {snapshot.CaptureDuration.TotalMilliseconds:F0} ms · {snapshot.CapturedAtUtc.ToLocalTime():t}";
 
@@ -49,7 +48,7 @@ public partial class HomeView : UserControl
             MemoryText.Text = "Unavailable";
         }
 
-        StorageVolumeTelemetry? volume = snapshot.Volumes.FirstOrDefault();
+        StorageVolumeTelemetry? volume = snapshot.Volumes.Count > 0 ? snapshot.Volumes[0] : null;
         if (volume is not null)
         {
             StorageNameText.Text = volume.Name;
@@ -63,7 +62,7 @@ public partial class HomeView : UserControl
             StorageText.Text = "Unavailable";
         }
 
-        ProcessTelemetry? topProcess = snapshot.Processes.FirstOrDefault();
+        ProcessTelemetry? topProcess = snapshot.Processes.Count > 0 ? snapshot.Processes[0] : null;
         TopProcessNameText.Text = topProcess?.Name ?? "No process sample available";
         TopProcessValueText.Text = topProcess is null
             ? "—"
@@ -80,12 +79,11 @@ public partial class HomeView : UserControl
         MachineOsText.Text = $"{device.OperatingSystem} · {device.OperatingSystemArchitecture}";
     }
 
-    private void AddHistory(double value)
+    public void ShowStale()
     {
-        _cpuHistory.Enqueue(Math.Clamp(value, 0, 100));
-        while (_cpuHistory.Count > MaximumHistoryCount)
-        {
-            _cpuHistory.Dequeue();
-        }
+        HomeStateDot.Fill = (Brush)FindResource("WarningBrush");
+        HomeStateText.Foreground = (Brush)FindResource("WarningBrush");
+        HomeStateText.Text = TelemetryDisplay.State(TelemetryObservationState.Stale);
+        HomeCapturedText.Text = "Last confirmed values retained while the bounded provider retries.";
     }
 }

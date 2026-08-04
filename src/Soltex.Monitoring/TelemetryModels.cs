@@ -6,6 +6,7 @@ public enum TelemetryObservationState
 {
     Current,
     Partial,
+    Stale,
     Unavailable
 }
 

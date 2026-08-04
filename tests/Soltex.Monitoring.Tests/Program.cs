@@ -7,6 +7,9 @@ List<(string Name, Func<Task> Test)> tests =
     ("System CPU math rejects regressing counters", SystemCpuMathRejectsRegressionAsync),
     ("Process CPU math respects machine capacity", ProcessCpuMathRespectsCapacityAsync),
     ("Process names remove control characters and enforce bounds", ProcessNamesAreSanitizedAsync),
+    ("Telemetry history validates capacity and samples", TelemetryHistoryValidatesInputAsync),
+    ("Telemetry history is bounded and snapshots are immutable", TelemetryHistoryIsBoundedAsync),
+    ("Telemetry history clamps percentages", TelemetryHistoryClampsAsync),
     ("Sample windows reject unsafe bounds", SampleWindowsAreBoundedAsync),
     ("Cancellation stops a pending sample", PendingSampleCanBeCancelledAsync),
     ("Live Windows capture is bounded and provenance-labeled", LiveCaptureIsBoundedAsync),
@@ -73,6 +76,40 @@ static Task ProcessNamesAreSanitizedAsync()
     string longName = new('A', SystemTelemetryProvider.MaximumProcessNameLength + 20);
     Equal(SystemTelemetryProvider.MaximumProcessNameLength, TelemetryMath.SanitizeProcessName(longName).Length);
     Equal("Unavailable", TelemetryMath.SanitizeProcessName("\r\n"));
+    return Task.CompletedTask;
+}
+
+static Task TelemetryHistoryValidatesInputAsync()
+{
+    Throws<ArgumentOutOfRangeException>(() => _ = new BoundedTelemetryHistory(1));
+    Throws<ArgumentOutOfRangeException>(() => _ = new BoundedTelemetryHistory(BoundedTelemetryHistory.MaximumCapacity + 1));
+    BoundedTelemetryHistory history = new(4);
+    Throws<ArgumentOutOfRangeException>(() => history.Add(double.NaN));
+    Throws<ArgumentOutOfRangeException>(() => history.Add(double.PositiveInfinity));
+    return Task.CompletedTask;
+}
+
+static Task TelemetryHistoryIsBoundedAsync()
+{
+    BoundedTelemetryHistory history = new(3);
+    var firstSnapshot = history.Add(10);
+    _ = history.Add(20);
+    _ = history.Add(30);
+    var bounded = history.Add(40);
+    Equal(1, firstSnapshot.Count);
+    Equal(10d, firstSnapshot[0]);
+    Equal(3, bounded.Count);
+    Equal("20|30|40", string.Join('|', bounded));
+    return Task.CompletedTask;
+}
+
+static Task TelemetryHistoryClampsAsync()
+{
+    BoundedTelemetryHistory history = new(3);
+    _ = history.Add(-4);
+    var snapshot = history.Add(104);
+    Equal(0d, snapshot[0]);
+    Equal(100d, snapshot[1]);
     return Task.CompletedTask;
 }
 

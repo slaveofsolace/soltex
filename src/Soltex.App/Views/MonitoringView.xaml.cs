@@ -7,9 +7,8 @@ namespace Soltex.App.Views;
 
 public partial class MonitoringView : UserControl
 {
-    private const int MaximumHistoryCount = 72;
-    private readonly Queue<double> _cpuHistory = [];
-    private readonly Queue<double> _memoryHistory = [];
+    private readonly BoundedTelemetryHistory _cpuHistory = new(72);
+    private readonly BoundedTelemetryHistory _memoryHistory = new(72);
 
     public MonitoringView()
     {
@@ -20,12 +19,12 @@ public partial class MonitoringView : UserControl
     {
         if (snapshot.CpuPercent is double cpu)
         {
-            AddHistory(_cpuHistory, cpu);
+            CpuHistoryChart.Values = _cpuHistory.Add(cpu);
         }
 
         if (snapshot.Memory is MemoryTelemetry memory)
         {
-            AddHistory(_memoryHistory, memory.UsedPercent);
+            MemoryHistoryChart.Values = _memoryHistory.Add(memory.UsedPercent);
             MemoryValueText.Text = TelemetryDisplay.Percent(memory.UsedPercent);
             MemoryCapacityText.Text =
                 $"{TelemetryDisplay.Bytes(memory.UsedBytes)} used · {TelemetryDisplay.Bytes(memory.TotalBytes)} physical";
@@ -37,8 +36,8 @@ public partial class MonitoringView : UserControl
         }
 
         CpuValueText.Text = TelemetryDisplay.Percent(snapshot.CpuPercent);
-        CpuHistoryChart.Values = _cpuHistory.ToArray();
-        MemoryHistoryChart.Values = _memoryHistory.ToArray();
+        CpuHistoryChart.Values ??= _cpuHistory.CreateSnapshot();
+        MemoryHistoryChart.Values ??= _memoryHistory.CreateSnapshot();
 
         Brush stateBrush = (Brush)FindResource(snapshot.State == TelemetryObservationState.Current
             ? "SignalBrush"
@@ -74,13 +73,14 @@ public partial class MonitoringView : UserControl
             "The bounded Windows telemetry provider could not complete a sample. No values were synthesized.";
     }
 
-    private static void AddHistory(Queue<double> history, double value)
+    public void ShowStale()
     {
-        history.Enqueue(Math.Clamp(value, 0, 100));
-        while (history.Count > MaximumHistoryCount)
-        {
-            history.Dequeue();
-        }
+        Brush warning = (Brush)FindResource("WarningBrush");
+        MonitorStateDot.Fill = warning;
+        MonitorStateText.Foreground = warning;
+        MonitorStateText.Text = TelemetryDisplay.State(TelemetryObservationState.Stale);
+        MonitoringProvenanceText.Text =
+            "Last confirmed values are retained while the bounded provider retries; no new values were synthesized.";
     }
 
     private sealed class VolumeRow(StorageVolumeTelemetry volume)
