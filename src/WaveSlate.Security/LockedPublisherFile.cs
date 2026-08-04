@@ -44,49 +44,66 @@ internal sealed class LockedPublisherFile : IAsyncDisposable, IDisposable
         Directory.CreateDirectory(snapshotRoot);
         RejectReparseDirectory(snapshotRoot);
         string snapshotPath = Path.Combine(snapshotRoot, "candidate.exe");
-        FileStream? snapshotStream = null;
+        FileStream? lockedStream = null;
         try
         {
-            await using FileStream source = new(
-                originalPath,
+            long length;
+            string sha256;
+            await using (FileStream source = new(
+                             originalPath,
+                             FileMode.Open,
+                             FileAccess.Read,
+                             FileShare.Read,
+                             CopyBufferBytes,
+                             FileOptions.Asynchronous | FileOptions.SequentialScan))
+            {
+                if ((File.GetAttributes(originalPath) & FileAttributes.ReparsePoint) != 0)
+                {
+                    throw new IOException(
+                        "Reparse-point files are not accepted for publisher authorization.");
+                }
+
+                await using FileStream writer = new(
+                    snapshotPath,
+                    FileMode.CreateNew,
+                    FileAccess.Write,
+                    FileShare.None,
+                    CopyBufferBytes,
+                    FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough);
+                (length, sha256) = await CopyAndHashAsync(
+                    source,
+                    writer,
+                    cancellationToken).ConfigureAwait(false);
+                await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                writer.Flush(flushToDisk: true);
+            }
+
+            lockedStream = new FileStream(
+                snapshotPath,
                 FileMode.Open,
                 FileAccess.Read,
                 FileShare.Read,
                 CopyBufferBytes,
                 FileOptions.Asynchronous | FileOptions.SequentialScan);
-            if ((File.GetAttributes(originalPath) & FileAttributes.ReparsePoint) != 0)
+            if (lockedStream.Length != length)
             {
                 throw new IOException(
-                    "Reparse-point files are not accepted for publisher authorization.");
+                    "The immutable publisher snapshot length changed before it was locked.");
             }
 
-            snapshotStream = new FileStream(
-                snapshotPath,
-                FileMode.CreateNew,
-                FileAccess.ReadWrite,
-                FileShare.Read,
-                CopyBufferBytes,
-                FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.WriteThrough);
-            (long length, string sha256) = await CopyAndHashAsync(
-                source,
-                snapshotStream,
-                cancellationToken).ConfigureAwait(false);
-            await snapshotStream.FlushAsync(cancellationToken).ConfigureAwait(false);
-            snapshotStream.Flush(flushToDisk: true);
-            snapshotStream.Position = 0;
             return new LockedPublisherFile(
                 originalPath,
                 snapshotPath,
                 snapshotRoot,
-                snapshotStream,
+                lockedStream,
                 length,
                 sha256);
         }
         catch
         {
-            if (snapshotStream is not null)
+            if (lockedStream is not null)
             {
-                await snapshotStream.DisposeAsync().ConfigureAwait(false);
+                await lockedStream.DisposeAsync().ConfigureAwait(false);
             }
 
             TryDeleteSnapshot(snapshotRoot);
