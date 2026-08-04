@@ -25,7 +25,7 @@ public partial class App : Application
             if (!window.TrySelectRenderSmokePanel(panelName))
             {
                 throw new ArgumentException(
-                    "The render-smoke panel must be one of: security, remote, update, mixer, clips.");
+                    "The render-smoke panel must be one of: home, monitoring, devices, security, remote, update, mixer, clips.");
             }
 
             RenderSmokeSnapshot(window, panelOutputPath);

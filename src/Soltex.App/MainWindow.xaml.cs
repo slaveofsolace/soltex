@@ -6,7 +6,10 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using Microsoft.Win32;
+using Soltex.DeviceFabric;
+using Soltex.Monitoring;
 using Soltex.RemoteAssist;
 using Soltex.Security;
 using Soltex.Update;
@@ -25,7 +28,10 @@ public partial class MainWindow : Window
     private readonly ObservableCollection<UpdateJournalRow> _updateJournalRows = [];
     private readonly UpdatePlanningJournal _updateJournal;
     private readonly string _updateStagingRoot;
+    private readonly LocalDeviceObservation _localDevice = LocalDeviceObservationProvider.Capture();
     private CancellationTokenSource? _operationCancellation;
+    private CancellationTokenSource? _telemetryCancellation;
+    private Task? _telemetryLoopTask;
     private ImportFolderMonitor? _importMonitor;
     private ProtectionMonitor? _protectionMonitor;
     private ProtectionMonitorState? _lastMonitorState;
@@ -43,10 +49,18 @@ public partial class MainWindow : Window
         CurrentBuildText.Text = typeof(MainWindow).Assembly.GetName().Version?.ToString() ?? "development";
         RemotePeerIdInput.TextChanged += RemotePeerId_TextChanged;
         SetRemoteAssistExecutable(RemoteAssistExecutableLocator.FindInstalled());
+        DevicesPanel.UpdateObservation(_localDevice);
+        DevicesPanel.RemoteAssistRequested += (_, _) => ShowPanel(RemotePanel, RemoteNavButton);
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        if (_telemetryCancellation is null)
+        {
+            _telemetryCancellation = new CancellationTokenSource();
+            _telemetryLoopTask = RunTelemetryLoopAsync(_telemetryCancellation.Token);
+        }
+
         _importMonitor = new ImportFolderMonitor(
             _runtime.ImportsPath,
             _runtime.Assessor,
@@ -72,6 +86,19 @@ public partial class MainWindow : Window
     private async void Window_Closed(object? sender, EventArgs e)
     {
         _operationCancellation?.Cancel();
+        _telemetryCancellation?.Cancel();
+        if (_telemetryLoopTask is not null)
+        {
+            try
+            {
+                await _telemetryLoopTask;
+            }
+            catch (OperationCanceledException)
+            {
+                // Normal bounded shutdown.
+            }
+        }
+
         if (_importMonitor is not null)
         {
             await _importMonitor.DisposeAsync();
@@ -84,9 +111,63 @@ public partial class MainWindow : Window
         }
 
         _operationCancellation?.Dispose();
+        _telemetryCancellation?.Dispose();
         _updateJournal.Dispose();
         _runtime.Dispose();
     }
+
+    private async Task RunTelemetryLoopAsync(CancellationToken cancellationToken)
+    {
+        int consecutiveFailures = 0;
+        bool recoveryNoticeRequired = false;
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                SystemTelemetrySnapshot snapshot = await SystemTelemetryProvider.CaptureAsync(
+                    TimeSpan.FromMilliseconds(300),
+                    cancellationToken).ConfigureAwait(false);
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    HomePanel.UpdateSnapshot(snapshot, _localDevice);
+                    MonitoringPanel.UpdateSnapshot(snapshot);
+                    DevicesPanel.UpdateObservation(_localDevice);
+                    if (recoveryNoticeRequired)
+                    {
+                        AddActivity("Windows telemetry recovered after a bounded retry.");
+                    }
+                });
+                consecutiveFailures = 0;
+                recoveryNoticeRequired = false;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (Exception exception) when (IsExpectedTelemetryFailure(exception))
+            {
+                consecutiveFailures++;
+                recoveryNoticeRequired = true;
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    HomePanel.ShowUnavailable(_localDevice);
+                    MonitoringPanel.ShowUnavailable();
+                    if (consecutiveFailures == 1)
+                    {
+                        AddActivity("Windows telemetry was unavailable; a bounded retry is scheduled.");
+                    }
+                });
+            }
+
+            TimeSpan retryDelay = TimeSpan.FromSeconds(Math.Min(10, 2 + consecutiveFailures * 2));
+            await Task.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private static bool IsExpectedTelemetryFailure(Exception exception) =>
+        exception is InvalidOperationException or IOException or UnauthorizedAccessException or
+            System.ComponentModel.Win32Exception or NotSupportedException or
+            DllNotFoundException or EntryPointNotFoundException;
 
     private async Task RefreshAllAsync()
     {
@@ -759,6 +840,12 @@ public partial class MainWindow : Window
         }
     }
 
+    private void HomeNav_Click(object sender, RoutedEventArgs e) => ShowPanel(HomePanel, HomeNavButton);
+
+    private void MonitoringNav_Click(object sender, RoutedEventArgs e) => ShowPanel(MonitoringPanel, MonitoringNavButton);
+
+    private void DevicesNav_Click(object sender, RoutedEventArgs e) => ShowPanel(DevicesPanel, DevicesNavButton);
+
     private void MixerNav_Click(object sender, RoutedEventArgs e) => ShowPanel(MixerPanel, MixerNavButton);
 
     private void ClipsNav_Click(object sender, RoutedEventArgs e) => ShowPanel(ClipsPanel, ClipsNavButton);
@@ -772,6 +859,26 @@ public partial class MainWindow : Window
     internal bool TrySelectRenderSmokePanel(string panelName)
     {
         string normalized = panelName.Trim();
+        if (string.Equals(normalized, "home", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(HomePanel, HomeNavButton);
+            return true;
+        }
+
+        if (string.Equals(normalized, "monitoring", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(normalized, "monitor", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(MonitoringPanel, MonitoringNavButton);
+            return true;
+        }
+
+        if (string.Equals(normalized, "devices", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(normalized, "device", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(DevicesPanel, DevicesNavButton);
+            return true;
+        }
+
         if (string.Equals(normalized, "security", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(SecurityPanel, SecurityNavButton);
@@ -808,6 +915,9 @@ public partial class MainWindow : Window
 
     private void ShowPanel(UIElement panel, System.Windows.Controls.Button selectedButton)
     {
+        HomePanel.Visibility = panel == HomePanel ? Visibility.Visible : Visibility.Collapsed;
+        MonitoringPanel.Visibility = panel == MonitoringPanel ? Visibility.Visible : Visibility.Collapsed;
+        DevicesPanel.Visibility = panel == DevicesPanel ? Visibility.Visible : Visibility.Collapsed;
         MixerPanel.Visibility = panel == MixerPanel ? Visibility.Visible : Visibility.Collapsed;
         ClipsPanel.Visibility = panel == ClipsPanel ? Visibility.Visible : Visibility.Collapsed;
         SecurityPanel.Visibility = panel == SecurityPanel ? Visibility.Visible : Visibility.Collapsed;
@@ -815,6 +925,9 @@ public partial class MainWindow : Window
         UpdatePanel.Visibility = panel == UpdatePanel ? Visibility.Visible : Visibility.Collapsed;
         foreach (System.Windows.Controls.Button button in new[]
                  {
+                     HomeNavButton,
+                     MonitoringNavButton,
+                     DevicesNavButton,
                      MixerNavButton,
                      ClipsNavButton,
                      SecurityNavButton,
@@ -826,6 +939,18 @@ public partial class MainWindow : Window
             button.Foreground = button == selectedButton
                 ? (Brush)FindResource("AccentBrush")
                 : (Brush)FindResource("MutedBrush");
+        }
+
+        panel.BeginAnimation(OpacityProperty, null);
+        panel.Opacity = 1;
+        if (SystemParameters.ClientAreaAnimation)
+        {
+            panel.BeginAnimation(
+                OpacityProperty,
+                new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(160))
+                {
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                });
         }
     }
 
