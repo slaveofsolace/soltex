@@ -116,7 +116,7 @@ public static class UpdateDescriptorVerifier
         {
             if (detached is null ||
                 !seen.Add(detached.KeyId) ||
-                !keys.TryGetValue(detached.KeyId, out UpdateRsaTrustKey key) ||
+                !keys.TryGetValue(detached.KeyId, out UpdateRsaTrustKey? key) ||
                 excludedKeyIds?.Contains(detached.KeyId) == true ||
                 !UpdateTrustPolicyValidator.IsEligibleForVerification(key, nowUtc))
             {
@@ -224,7 +224,7 @@ public static class UpdateDescriptorVerifier
                 "The update descriptor has expired.");
         }
 
-        if (!policy.ReleaseKeys.TryGetValue(descriptor.ReleaseKeyId, out UpdateRsaTrustKey releaseKey) ||
+        if (!policy.ReleaseKeys.TryGetValue(descriptor.ReleaseKeyId, out UpdateRsaTrustKey? releaseKey) ||
             !UpdateTrustPolicyValidator.IsEligibleForVerification(releaseKey, nowUtc))
         {
             throw new InvalidDataException("The update descriptor selects an unavailable release key.");

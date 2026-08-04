@@ -90,7 +90,7 @@ public sealed class BoundedHttpsAcquirer
             cancellationToken.ThrowIfCancellationRequested();
             string origin = UpdateUri.NormalizeOrigin(currentUri);
             if (!verified.AllowedOrigins.Contains(origin) ||
-                !policy.ActiveTlsPins.TryGetValue(origin, out IReadOnlySet<string> pins))
+                !policy.ActiveTlsPins.TryGetValue(origin, out IReadOnlySet<string>? pins))
             {
                 throw new InvalidDataException(
                     "An update redirect left the signed origin and pin allowlist.");

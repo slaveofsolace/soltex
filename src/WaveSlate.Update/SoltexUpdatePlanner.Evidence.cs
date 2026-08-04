@@ -211,7 +211,7 @@ public sealed partial class SoltexUpdatePlanner
         List<UpdateFileChange> changes = [];
         foreach (IntegrityManifestFile targetFile in manifest.Files.OrderBy(item => item.Path, StringComparer.Ordinal))
         {
-            if (!current.TryGetValue(targetFile.Path, out InstallFileEvidence existing))
+            if (!current.TryGetValue(targetFile.Path, out InstallFileEvidence? existing))
             {
                 changes.Add(new UpdateFileChange(
                     targetFile.Path,

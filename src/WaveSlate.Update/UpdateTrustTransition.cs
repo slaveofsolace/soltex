@@ -171,7 +171,7 @@ public static class UpdateTrustTransitionEvaluator
             UpdateTrustPolicyValidator.IsEligibleForVerification(currentKey, nowUtc) &&
             proposed.MetadataKeys.TryGetValue(
                 currentKey.KeyId,
-                out UpdateRsaTrustKey proposedKey) &&
+                out UpdateRsaTrustKey? proposedKey) &&
             SameKey(currentKey, proposedKey) &&
             UpdateTrustPolicyValidator.IsEligibleForVerification(
                 proposedKey,
@@ -190,7 +190,7 @@ public static class UpdateTrustTransitionEvaluator
             UpdateTrustPolicyValidator.IsEligibleForVerification(currentKey, nowUtc) &&
             proposed.ReleaseKeys.TryGetValue(
                 currentKey.KeyId,
-                out UpdateRsaTrustKey proposedKey) &&
+                out UpdateRsaTrustKey? proposedKey) &&
             SameKey(currentKey, proposedKey) &&
             UpdateTrustPolicyValidator.IsEligibleForVerification(
                 proposedKey,
@@ -231,7 +231,7 @@ public static class UpdateTrustTransitionEvaluator
     {
         foreach ((string keyId, UpdateRsaTrustKey currentKey) in currentKeys)
         {
-            if (!proposedKeys.TryGetValue(keyId, out UpdateRsaTrustKey proposedKey))
+            if (!proposedKeys.TryGetValue(keyId, out UpdateRsaTrustKey? proposedKey))
             {
                 if (RequiresPlannedContinuity(currentKey, proposed.EvaluationTimeUtc))
                 {

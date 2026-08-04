@@ -178,8 +178,8 @@ public sealed class AcquiredUpdateBundle : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (!Artifacts.TryGetValue(name, out AcquiredUpdateArtifact artifact) ||
-            !_locks.TryGetValue(name, out FileStream lockedStream))
+        if (!Artifacts.TryGetValue(name, out AcquiredUpdateArtifact? artifact) ||
+            !_locks.TryGetValue(name, out FileStream? lockedStream))
         {
             throw new InvalidDataException(
                 "The requested acquired update artifact is unavailable.");
