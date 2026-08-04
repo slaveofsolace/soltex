@@ -288,9 +288,9 @@ The suite covers:
 - expanded-size limit;
 - compression-ratio limit.
 
-The update-planner suite additionally covers signed descriptor validity/expiry/quorum, unauthorized redirects, trust replay/rollback/equivocation/overlap/key replacement, exact locked acquisition bytes, rejection/cancellation cleanup, journal sanitization/recovery cleanup, and exact expiring confirmation. It completed in 2,602.5 ms on the recorded hosted run; that diagnostic timing is not a performance guarantee.
+The update-planner suite additionally covers signed descriptor validity/expiry/quorum, unauthorized redirects, trust replay/rollback/equivocation/overlap/key replacement, exact locked acquisition bytes, rejection/cancellation cleanup, journal sanitization/recovery cleanup, and exact expiring confirmation. It completed in 2,895.6 ms on current Windows run `30925606488`; that diagnostic timing is not a performance guarantee.
 
-The hosted EICAR interoperability run remained 27/28 because the installed hosted AMSI provider returned native result `1`. Security, Remote Assist, and Updates rendered natively and produced the expected artifacts. Pixel inspection confirms the two previously recorded Security truncations are corrected at the captured viewport; broader visual/accessibility acceptance remains open. See [`VALIDATION.md`](VALIDATION.md) for exact commands, environment, logs, and artifact identity.
+The hosted EICAR interoperability run remained 31/32 because the installed hosted AMSI provider returned native result `1`. Home, Monitoring, Devices, Security, Remote Assist, and Updates rendered natively and produced the expected artifacts. Current-capture inspection found no gross layout blocker after the final corrections; broader visual/accessibility and owner acceptance remain open. See [`VALIDATION.md`](VALIDATION.md) for exact commands, environment, logs, and artifact identity.
 
 ## 9. Explicit nonclaims
 

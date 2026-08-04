@@ -1,0 +1,1206 @@
+{
+  "schema_version": "2.0.0",
+  "ledger_id": "soltex_immersive_wave_b",
+  "created_at": "2026-08-04T15:58:43.009Z",
+  "depth": "STANDARD",
+  "iteration": 3,
+  "root": {
+    "kind": "DECISION",
+    "node_id": "root_slice",
+    "statement": "Close the first real Soltex Home, Monitoring, and Devices slice as a lightweight, truthful, recoverable draft candidate while preserving security, ownership, clean-room, and human-acceptance boundaries.",
+    "source_state": "Soltex had identity, security, update, remote-assist, and Device Fabric policy foundations but no verified immersive local system workspace.",
+    "target_state": "A frozen implementation commit provides real bounded Windows data, honest unavailable states, coherent native WPF surfaces, retained evidence, and a reviewable stacked draft PR.",
+    "conditions": [
+      "Work only in the task-owned worktree.",
+      "Do not weaken Windows security or embed third-party remote-control code.",
+      "Do not claim human acceptance or unsupported telemetry."
+    ],
+    "boundary": "The isolated Soltex branch, its GitHub draft PR, supported unelevated Windows interfaces, and retained Windows CI artifacts; no production deployment or owner-host mutation.",
+    "objective_claim_id": "claim_objective",
+    "invariant_ids": [
+      "inv_owner_work",
+      "inv_truthful_data",
+      "inv_security",
+      "inv_clean_room",
+      "inv_human_gate"
+    ],
+    "uncertainty_changes_decision": false
+  },
+  "project_model": {
+    "status": "PARTIAL",
+    "facets": {
+      "intent": {
+        "summary": "Deliver a visually strong but lightweight Soltex workspace backed by real bounded system state and explicit capability gaps.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_objective"
+        ],
+        "unknown_disposition": "Owner taste remains a separate acceptance decision and does not expand the implemented scope."
+      },
+      "decision": {
+        "summary": "Determine whether implementation commit 2a0699b is sufficiently evidenced for a stacked draft handoff without making production or human-acceptance claims.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_gate",
+          "claim_visual"
+        ],
+        "unknown_disposition": "Keep the PR draft until the owner completes the bounded visual/accessibility review."
+      },
+      "acceptance_contract": {
+        "summary": "Require a green Windows build and focused suites, six native renders, honest unsupported states, clean-room provenance, preserved owner work, and explicit nonclaims.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_gate",
+          "claim_invariants",
+          "claim_provenance",
+          "claim_owner_acceptance"
+        ],
+        "unknown_disposition": "Human visual acceptance and owner-host provider behavior stay open."
+      },
+      "mechanism": {
+        "summary": "One sequential WPF sampling loop consumes bounded immutable snapshots from GetSystemTimes, GlobalMemoryStatusEx, Process, and DriveInfo, maintains copied finite histories, and renders shared Home, Monitoring, and Devices views.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_implementation",
+          "claim_recovery"
+        ],
+        "unknown_disposition": "GPU and network providers are not implemented and remain visibly unavailable."
+      },
+      "current_state_history": {
+        "summary": "The exact implementation head, Windows run, artifact digest, test logs, and six screenshot hashes are frozen; earlier layout defects were corrected before the final artifact.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_gate",
+          "claim_visual",
+          "claim_owner_work"
+        ],
+        "unknown_disposition": "The final documentation-only head will be verified separately and will not replace the implementation evidence identity."
+      },
+      "people_incentives": {
+        "summary": "The user owns product direction and subjective acceptance; maintainers need reproducible evidence and protected-checkout isolation; future remote targets retain local consent authority.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_owner_acceptance",
+          "claim_owner_work"
+        ],
+        "unknown_disposition": "No other human acceptance or production authority is inferred."
+      },
+      "lifecycle_recovery": {
+        "summary": "Telemetry degrades through stale to unavailable and recovers on a later success; window shutdown cancels and awaits sampling; branch changes remain reviewable and revertible before merge.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_recovery",
+          "claim_invariants"
+        ],
+        "unknown_disposition": "Production installer, activation, rollback, and remote-job recovery remain out of scope."
+      }
+    },
+    "invariants": [
+      {
+        "id": "inv_owner_work",
+        "statement": "Do not discard, overwrite, clean, stash, merge, or build into the protected owner checkout.",
+        "owner": "User",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": [
+          "ev_owner_state"
+        ]
+      },
+      {
+        "id": "inv_truthful_data",
+        "statement": "Render only observed bounded values and explicit unavailable, partial, stale, or unenrolled states.",
+        "owner": "Soltex implementation",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": [
+          "ev_tests",
+          "ev_renders"
+        ]
+      },
+      {
+        "id": "inv_security",
+        "statement": "Do not weaken Windows security, create exclusions, claim antivirus efficacy, or add hidden or unattended remote control.",
+        "owner": "User and Soltex security boundary",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": [
+          "ev_tests",
+          "ev_gate_classification"
+        ]
+      },
+      {
+        "id": "inv_clean_room",
+        "statement": "Use Zen and RustDesk only within the documented clean-room and external-program boundaries.",
+        "owner": "Soltex maintainers",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": [
+          "ev_provenance"
+        ]
+      },
+      {
+        "id": "inv_human_gate",
+        "statement": "Reserve subjective visual acceptance and residual-risk approval for the user.",
+        "owner": "User",
+        "status": "UNKNOWN",
+        "hard_gate": true,
+        "evidence_ids": []
+      }
+    ],
+    "dependencies": [
+      {
+        "id": "dep_windows",
+        "name": "Supported Windows user-mode interfaces",
+        "role": "Provide bounded CPU, memory, process, volume, security, rendering, and cancellation behavior.",
+        "claim_ids": [
+          "claim_implementation",
+          "claim_gate"
+        ]
+      },
+      {
+        "id": "dep_github",
+        "name": "GitHub Actions and draft pull request",
+        "role": "Exercise the frozen implementation on Windows and retain reviewable evidence without deployment.",
+        "claim_ids": [
+          "claim_gate"
+        ]
+      },
+      {
+        "id": "dep_rustdesk",
+        "name": "Separately installed RustDesk client",
+        "role": "Own remote-session capture, transport, authentication, consent, and termination outside Soltex.",
+        "claim_ids": [
+          "claim_provenance",
+          "claim_invariants"
+        ]
+      }
+    ],
+    "stakeholders": [
+      {
+        "id": "stake_user",
+        "name": "Soltex owner",
+        "role": "Product, human-acceptance, account, residual-risk, and production decision owner.",
+        "claim_ids": [
+          "claim_owner_acceptance",
+          "claim_owner_work"
+        ]
+      },
+      {
+        "id": "stake_maintainer",
+        "name": "Soltex maintainer",
+        "role": "Preserve bounds, provenance, evidence, recovery, and draft-branch reviewability.",
+        "claim_ids": [
+          "claim_invariants",
+          "claim_gate"
+        ]
+      }
+    ]
+  },
+  "authority": {
+    "scope": "Implement, test, document, commit, push, and update the user-authorized Soltex draft branch and PR while preserving the protected checkout and all security/nonclaim boundaries.",
+    "decision_owner": "User",
+    "authorized_actions": [
+      "Edit the task-owned Soltex worktree.",
+      "Run bounded build, tests, native render-smoke, and evidence checks.",
+      "Commit and push the isolated feature branch.",
+      "Update the existing stacked draft pull request."
+    ],
+    "forbidden_actions": [
+      "Reset, clean, stash, overwrite, merge, or build into the protected owner checkout.",
+      "Disable security protections, add exclusions, or register Soltex as antivirus software.",
+      "Embed RustDesk source/runtime or enable unattended hidden control.",
+      "Deploy, merge, release, or claim production readiness."
+    ],
+    "human_reserved_decisions": [
+      "Subjective visual and experiential acceptance.",
+      "Accessibility acceptance.",
+      "Merge, release, production signing, provider efficacy, and residual-risk approval."
+    ],
+    "external_state_allowed": true,
+    "hard_gates": [
+      {
+        "id": "gate_authority",
+        "category": "AUTHORITY",
+        "status": "CLEAR",
+        "rationale": "The user explicitly authorized Soltex implementation, GitHub commit/push, and handoff work on the isolated branch.",
+        "claim_ids": [
+          "claim_objective"
+        ]
+      },
+      {
+        "id": "gate_safety",
+        "category": "SAFETY",
+        "status": "CLEAR",
+        "rationale": "The slice is unelevated, bounded, cancellation-aware, and makes no security-setting or production mutation.",
+        "claim_ids": [
+          "claim_invariants",
+          "claim_recovery"
+        ]
+      },
+      {
+        "id": "gate_privacy",
+        "category": "PRIVACY_SECURITY_LEGAL",
+        "status": "CLEAR",
+        "rationale": "Process paths are never requested, local identifiers are sanitized/bounded, security protections remain intact, and third-party references stay clean-room or external.",
+        "claim_ids": [
+          "claim_invariants",
+          "claim_provenance"
+        ]
+      },
+      {
+        "id": "gate_external",
+        "category": "IRREVERSIBLE_EXTERNAL_STATE",
+        "status": "CLEAR",
+        "rationale": "Only the authorized review branch and draft PR are mutated; no production, account, device, or remote-session state changes.",
+        "claim_ids": [
+          "claim_gate"
+        ]
+      },
+      {
+        "id": "gate_production",
+        "category": "DESTRUCTIVE_PRODUCTION",
+        "status": "NOT_APPLICABLE",
+        "rationale": "No destructive, merge, release, deployment, installer, or production action is in this slice.",
+        "claim_ids": [
+          "claim_invariants"
+        ]
+      },
+      {
+        "id": "gate_human",
+        "category": "HUMAN_RESERVED",
+        "status": "UNRESOLVED",
+        "rationale": "The owner has not yet recorded final visual or accessibility acceptance; the PR therefore remains draft.",
+        "claim_ids": [
+          "claim_owner_acceptance"
+        ]
+      },
+      {
+        "id": "gate_rollback",
+        "category": "ROLLBACK_FAILURE",
+        "status": "CLEAR",
+        "rationale": "Runtime degradation/recovery is tested and isolated branch commits can be reverted before merge; no production state requires compensating recovery.",
+        "claim_ids": [
+          "claim_recovery",
+          "claim_owner_work"
+        ]
+      }
+    ]
+  },
+  "companion_findings": {
+    "lead_skill": "HUMAN_CORTEX",
+    "applicable_domains": [
+      "VISUAL",
+      "UI",
+      "RUNTIME_EXPERIENCE",
+      "ACCESSIBILITY_COMFORT"
+    ],
+    "observation_input": "CURRENT_CAPTURE",
+    "cold_eye_status": "COMPLETED",
+    "cold_eye_before_source_inspection": false,
+    "findings": [
+      {
+        "id": "eye_visual_keep",
+        "source_skill": "HUMAN_EYE",
+        "domain": "VISUAL",
+        "label": "OBSERVED",
+        "verdict": "KEEP",
+        "statement": "The six frozen 1044 by 788 captures have coherent hierarchy, typography, color roles, and product identity, with no gross clipping blocker after final correction.",
+        "evidence_ids": [
+          "ev_renders",
+          "ev_visual_review"
+        ]
+      },
+      {
+        "id": "eye_ui_keep",
+        "source_skill": "HUMAN_EYE",
+        "domain": "UI",
+        "label": "OBSERVED",
+        "verdict": "KEEP",
+        "statement": "Home, Monitoring, and Devices expose provenance, unavailable states, local-only boundaries, and the current task hierarchy without visually implying unsupported capability.",
+        "evidence_ids": [
+          "ev_renders",
+          "ev_tests"
+        ]
+      },
+      {
+        "id": "eye_runtime_keep",
+        "source_skill": "HUMAN_EYE",
+        "domain": "RUNTIME_EXPERIENCE",
+        "label": "MEASURED",
+        "verdict": "KEEP",
+        "statement": "All six native WPF render commands and their artifact-verification step succeeded on the exact implementation commit.",
+        "evidence_ids": [
+          "ev_gate_classification",
+          "ev_renders"
+        ]
+      },
+      {
+        "id": "eye_access_unknown",
+        "source_skill": "HUMAN_EYE",
+        "domain": "ACCESSIBILITY_COMFORT",
+        "label": "UNKNOWN",
+        "verdict": "UNKNOWN",
+        "statement": "Representative scaling, contrast, high-contrast mode, keyboard order, screen-reader behavior, and owner comfort have not been exercised.",
+        "evidence_ids": []
+      }
+    ],
+    "completion_axes": {
+      "functional_implementation": {
+        "status": "PASS",
+        "signal": "Real bounded providers, pages, state transitions, and focused tests exist at the frozen implementation commit.",
+        "evidence_ids": [
+          "ev_tests",
+          "ev_git_state"
+        ],
+        "rationale": "The implementation mechanism and its declared bounds were exercised on Windows."
+      },
+      "runtime_integration": {
+        "status": "PASS",
+        "signal": "Six native WPF panels initialized and rendered at 1044 by 788.",
+        "evidence_ids": [
+          "ev_renders",
+          "ev_gate_classification"
+        ],
+        "rationale": "Native rendering covers representative initialization for this slice, not all machines or states."
+      },
+      "player_eye_presentation": {
+        "status": "PASS",
+        "signal": "Human Eye current-capture review returned KEEP for all six surfaces without a gross blocker.",
+        "evidence_ids": [
+          "ev_visual_review",
+          "ev_renders"
+        ],
+        "rationale": "Pass is limited to one frozen viewport and is not source-naive or owner acceptance."
+      },
+      "evidence_regression_coverage": {
+        "status": "PASS",
+        "signal": "Artifact digest, logs, screenshot hashes, provider/control tests, and failure classifications are retained.",
+        "evidence_ids": [
+          "ev_ci_artifact",
+          "ev_tests",
+          "ev_renders"
+        ],
+        "rationale": "The packet binds claims to the exact implementation commit and artifact bytes."
+      },
+      "human_acceptance": {
+        "status": "UNKNOWN",
+        "signal": "No explicit owner visual or accessibility verdict is recorded.",
+        "evidence_ids": [],
+        "rationale": "Subjective acceptance remains human-reserved and keeps the pull request draft."
+      }
+    }
+  },
+  "claims": [
+    {
+      "id": "claim_objective",
+      "label": "OBSERVED",
+      "statement": "The authorized objective is to implement and evidence the first immersive Soltex local-system workspace while preserving security, clean-room, and ownership constraints.",
+      "evidence_ids": [
+        "ev_goal"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "The user supplied the product/visual steer, authorized repository changes, and requested continuation."
+      }
+    },
+    {
+      "id": "claim_implementation",
+      "label": "OBSERVED",
+      "statement": "Commit 2a0699b implements bounded monitoring, honest local-device observation, shared WPF design primitives, and Home, Monitoring, and Devices pages without synthetic GPU, network, or peer data.",
+      "evidence_ids": [
+        "ev_git_state",
+        "ev_tests"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Current source identity, project graph, focused tests, and native renders were inspected."
+      }
+    },
+    {
+      "id": "claim_gate",
+      "label": "MEASURED",
+      "statement": "Run 30925606488 passed the identity, build, seven required test suites, six native renders, and render verification for the exact implementation checkpoint.",
+      "evidence_ids": [
+        "ev_ci_artifact",
+        "ev_tests",
+        "ev_gate_classification",
+        "ev_renders"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Retained workflow logs and independently re-hashed artifact bytes agree."
+      }
+    },
+    {
+      "id": "claim_visual",
+      "label": "OBSERVED",
+      "statement": "The frozen captures show a coherent Soltex visual hierarchy without a gross clipping or identity blocker after the final corrections.",
+      "evidence_ids": [
+        "ev_renders",
+        "ev_visual_review"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "MEDIUM",
+        "basis": "Direct current-capture inspection covers six surfaces at one viewport but was not source-naive and is not owner review."
+      }
+    },
+    {
+      "id": "claim_provenance",
+      "label": "OBSERVED",
+      "statement": "Zen and RustDesk are retained as documented reference-only or external-program boundaries; no third-party UI or runtime payload was acquired for this slice.",
+      "evidence_ids": [
+        "ev_provenance",
+        "ev_git_state"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Official reference pages and the task worktree were inspected; the implementation links no RustDesk runtime."
+      }
+    },
+    {
+      "id": "claim_recovery",
+      "label": "MEASURED",
+      "statement": "The slice exercises cancellation, bounded history, inaccessible-process handling, stale-to-unavailable behavior, recovery signaling, and awaited sampler shutdown.",
+      "evidence_ids": [
+        "ev_tests",
+        "ev_source_recovery"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Focused tests and current source cover the stated failure and recovery mechanisms."
+      }
+    },
+    {
+      "id": "claim_invariants",
+      "label": "MEASURED",
+      "statement": "Required repository-correctness gates passed while hosted EICAR remained explicitly failed and no production, security-setting, remote-session, or owner-checkout mutation occurred.",
+      "evidence_ids": [
+        "ev_gate_classification",
+        "ev_owner_state",
+        "ev_tests"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "The classification log preserves the EICAR failure, and current local Git/process ownership was re-observed."
+      }
+    },
+    {
+      "id": "claim_owner_work",
+      "label": "OBSERVED",
+      "statement": "The protected owner checkout remains at main commit bf2662de with pre-existing dirty/untracked legacy-named work outside this task; implementation work is isolated in the Soltex feature worktree.",
+      "evidence_ids": [
+        "ev_owner_state"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Both worktrees, branches, heads, and short status were re-read immediately before closeout."
+      }
+    },
+    {
+      "id": "claim_owner_acceptance",
+      "label": "UNKNOWN",
+      "statement": "The owner has not yet recorded final visual, scaling, keyboard, screen-reader, or accessibility acceptance for the immersive workspace.",
+      "evidence_ids": [],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "LOW",
+        "basis": "No human acceptance record exists in the current evidence packet."
+      }
+    },
+    {
+      "id": "claim_owner_eicar",
+      "label": "UNKNOWN",
+      "statement": "AMSI/EICAR interoperability on the owner-controlled Windows host remains unverified.",
+      "evidence_ids": [
+        "ev_gate_classification"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "LOW",
+        "basis": "Only the hosted-runner provider result is retained, and it cannot establish owner-host behavior."
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev_goal",
+      "kind": "SOURCE",
+      "access": "INSPECTED_CURRENT",
+      "locator": "User continuation goal and attached Soltex product/identity steers in the current Codex task.",
+      "captured_at": "2026-08-04T15:58:43.009Z",
+      "integrity": "Conversation-scoped source; not a repository artifact.",
+      "supports_claim_ids": [
+        "claim_objective"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_git_state",
+      "kind": "SOURCE",
+      "access": "INSPECTED_CURRENT",
+      "locator": "C:\\Users\\suhai\\Documents\\soltex-immersive-workspace at implementation commit 2a0699b2ca77b30fa636279b1d5ecab603a8bde9",
+      "captured_at": "2026-08-04T15:58:43.009Z",
+      "integrity": "Git branch feat/soltex-immersive-workspace-v1; implementation checkpoint pushed before documentation closeout.",
+      "supports_claim_ids": [
+        "claim_implementation",
+        "claim_provenance"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_ci_artifact",
+      "kind": "ARTIFACT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "GitHub Actions artifact 8899014386 from run 30925606488, job 92046999983",
+      "captured_at": "2026-08-04T15:58:43.009Z",
+      "integrity": "626093 bytes; GitHub and independent SHA-256 71905016B3A67F8CE340D90C2E404DEBFB185C3DAE8A973F21B80F1B8A94515",
+      "supports_claim_ids": [
+        "claim_gate"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_tests",
+      "kind": "TEST_RESULT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "Artifact validation logs: build-release, tests-default, tests-supply-chain, tests-security-hardening, tests-update-planner, tests-device-fabric, tests-monitoring, tests-app-controls",
+      "captured_at": "2026-08-04T15:58:43.009Z",
+      "integrity": "Contained in artifact SHA-256 71905016B3A67F8CE340D90C2E404DEBFB185C3DAE8A973F21B80F1B8A94515",
+      "supports_claim_ids": [
+        "claim_implementation",
+        "claim_gate",
+        "claim_recovery",
+        "claim_invariants"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_gate_classification",
+      "kind": "TEST_RESULT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "Artifact validation/gate-classification.log",
+      "captured_at": "2026-08-04T15:58:43.009Z",
+      "integrity": "Required gates success; eicar=failure preserved in artifact SHA-256 71905016B3A67F8CE340D90C2E404DEBFB185C3DAE8A973F21B80F1B8A94515",
+      "supports_claim_ids": [
+        "claim_gate",
+        "claim_invariants",
+        "claim_owner_eicar"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_renders",
+      "kind": "ARTIFACT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "Artifact visual directory with six 1044 by 788 native WPF PNGs; exact per-panel hashes in WINDOWS_GATE.md",
+      "captured_at": "2026-08-04T15:58:43.009Z",
+      "integrity": "Files contained in independently re-hashed artifact; individual SHA-256 values frozen in the evidence packet.",
+      "supports_claim_ids": [
+        "claim_gate",
+        "claim_visual"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_visual_review",
+      "kind": "SOURCE",
+      "access": "GENERATED_CURRENT",
+      "locator": "docs/evidence/2026-08-04-immersive-workspace/VISUAL_REVIEW.md",
+      "captured_at": "2026-08-04T15:58:43.009Z",
+      "integrity": "Human Eye current-capture review bound to the artifact and screenshot hashes; no human acceptance is recorded.",
+      "supports_claim_ids": [
+        "claim_visual"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_provenance",
+      "kind": "SOURCE",
+      "access": "GENERATED_CURRENT",
+      "locator": "docs/evidence/2026-08-04-immersive-workspace/RESOURCE_PROVENANCE.md plus official Zen, RustDesk, and Microsoft pages checked 2026-08-04",
+      "captured_at": "2026-08-04T15:58:43.009Z",
+      "integrity": "Reference-only disposition; no third-party payload acquired into the task worktree.",
+      "supports_claim_ids": [
+        "claim_provenance"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_source_recovery",
+      "kind": "SOURCE",
+      "access": "INSPECTED_CURRENT",
+      "locator": "Current Soltex telemetry loop, BoundedTelemetryHistory, monitoring provider, and WPF shutdown source at implementation commit 2a0699b",
+      "captured_at": "2026-08-04T15:58:43.009Z",
+      "integrity": "Bound to Git commit 2a0699b2ca77b30fa636279b1d5ecab603a8bde9.",
+      "supports_claim_ids": [
+        "claim_recovery"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_owner_state",
+      "kind": "SOURCE",
+      "access": "INSPECTED_CURRENT",
+      "locator": "Local Git/process checkpoint for C:\\Users\\suhai\\Documents\\SOL Tools and the isolated Soltex worktree",
+      "captured_at": "2026-08-04T15:58:43.009Z",
+      "integrity": "Owner checkout main at bf2662de with pre-existing dirty/untracked work; isolated branch at 2a0699b before docs; no Soltex/dotnet process observed.",
+      "supports_claim_ids": [
+        "claim_owner_work",
+        "claim_invariants"
+      ],
+      "contradicts_claim_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "tests": [
+    {
+      "id": "test_windows_gate",
+      "question": "Does the exact implementation commit build, pass its bounded suites, render all six pages, and preserve explicit provider gaps on Windows?",
+      "kind": "EXPERIMENT",
+      "discriminates_hypothesis_ids": [],
+      "predicted_outcomes": [],
+      "expected_decision_value": "HIGH",
+      "cost": "MEDIUM",
+      "risk": "LOW",
+      "authorization_status": "AUTHORIZED",
+      "status": "PASS",
+      "evidence_ids": [
+        "ev_ci_artifact",
+        "ev_tests",
+        "ev_gate_classification",
+        "ev_renders"
+      ],
+      "changes_decision_if": "Any required gate or render fails, a path leaks, a value is synthesized, or the artifact cannot be bound to the implementation commit."
+    },
+    {
+      "id": "test_current_capture",
+      "question": "Do the frozen captures retain a coherent hierarchy and honest state without a gross clipping or identity blocker?",
+      "kind": "INSPECTION",
+      "discriminates_hypothesis_ids": [],
+      "predicted_outcomes": [],
+      "expected_decision_value": "HIGH",
+      "cost": "LOW",
+      "risk": "LOW",
+      "authorization_status": "AUTHORIZED",
+      "status": "PASS",
+      "evidence_ids": [
+        "ev_renders",
+        "ev_visual_review"
+      ],
+      "changes_decision_if": "A gross visual blocker changes a surface verdict to REVISE, REJECT, or BLOCKED and requires another implementation artifact."
+    },
+    {
+      "id": "test_provenance",
+      "question": "Are the external references constrained to cited principles or a visible external-process boundary without acquired third-party payload?",
+      "kind": "INSPECTION",
+      "discriminates_hypothesis_ids": [],
+      "predicted_outcomes": [],
+      "expected_decision_value": "HIGH",
+      "cost": "LOW",
+      "risk": "LOW",
+      "authorization_status": "AUTHORIZED",
+      "status": "PASS",
+      "evidence_ids": [
+        "ev_provenance",
+        "ev_git_state"
+      ],
+      "changes_decision_if": "Any copied or bundled third-party payload changes the clean-room decision and blocks the proprietary draft until exact rights and dependencies are resolved."
+    },
+    {
+      "id": "test_owner_acceptance",
+      "question": "Does the owner accept the current UI at representative scaling and accessibility settings?",
+      "kind": "HUMAN_REVIEW",
+      "discriminates_hypothesis_ids": [],
+      "predicted_outcomes": [],
+      "expected_decision_value": "HIGH",
+      "cost": "LOW",
+      "risk": "LOW",
+      "authorization_status": "REQUIRES_AUTHORITY",
+      "status": "PROPOSED",
+      "evidence_ids": [],
+      "changes_decision_if": "An owner REVISE, REJECT, accessibility failure, or scaling defect keeps the PR draft and opens a bounded correction batch."
+    }
+  ],
+  "trace": {
+    "bounds": {
+      "max_depth": 4,
+      "max_nodes": 30,
+      "stop_rule": "Stop when the bounded draft slice is frozen, all required repository/runtime gates pass, material invariants are preserved, and human-reserved unknowns are explicitly owned without a production claim."
+    },
+    "nodes": [
+      {
+        "id": "root_slice",
+        "kind": "ROOT",
+        "statement": "Move Soltex from planning-only local workspaces to a truthful, evidenced immersive draft slice.",
+        "claim_id": "claim_objective",
+        "depth": 0,
+        "terminal": false,
+        "closure_reason": "EXPANDED"
+      },
+      {
+        "id": "node_implementation",
+        "kind": "STATE",
+        "statement": "Bounded providers, histories, local observation, shared WPF design, and three real pages exist at a frozen commit.",
+        "claim_id": "claim_implementation",
+        "depth": 1,
+        "terminal": false,
+        "closure_reason": "EXPANDED"
+      },
+      {
+        "id": "node_gate",
+        "kind": "CONSEQUENCE",
+        "statement": "The exact implementation has a green required Windows gate and retained artifact.",
+        "claim_id": "claim_gate",
+        "depth": 2,
+        "terminal": true,
+        "closure_reason": "BOUNDED"
+      },
+      {
+        "id": "node_visual",
+        "kind": "CONSEQUENCE",
+        "statement": "All six frozen surfaces retain a coherent visual system without a gross current-capture blocker.",
+        "claim_id": "claim_visual",
+        "depth": 2,
+        "terminal": false,
+        "closure_reason": "EXPANDED"
+      },
+      {
+        "id": "node_human",
+        "kind": "CONSEQUENCE",
+        "statement": "Final visual and accessibility acceptance remains reserved for the owner.",
+        "claim_id": "claim_owner_acceptance",
+        "depth": 3,
+        "terminal": true,
+        "closure_reason": "UNKNOWN_ESCALATED"
+      },
+      {
+        "id": "node_provenance",
+        "kind": "MITIGATION",
+        "statement": "Reference-only and external-program boundaries prevent source/UI copying from becoming an implicit proprietary dependency.",
+        "claim_id": "claim_provenance",
+        "depth": 1,
+        "terminal": true,
+        "closure_reason": "BOUNDED"
+      },
+      {
+        "id": "node_recovery",
+        "kind": "RECOVERY",
+        "statement": "Bounded stale/unavailable/recovered states and cancellation preserve truthful behavior during provider failure and shutdown.",
+        "claim_id": "claim_recovery",
+        "depth": 2,
+        "terminal": true,
+        "closure_reason": "MONITORED"
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_build_slice",
+        "relation": "FORWARD",
+        "source_node_id": "root_slice",
+        "target_node_id": "node_implementation",
+        "source_delta": "The requested local workspace changes from plans/placeholders to bounded implemented providers and pages.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "The isolated branch adds typed monitoring/device boundaries, immutable histories, shared WPF resources, and real page bindings.",
+        "conditions": [
+          "Only supported unelevated Windows interfaces are used.",
+          "Unsupported metrics remain unavailable."
+        ],
+        "lag": "Immediate after build and application initialization.",
+        "target_delta": "Home, Monitoring, and Devices become functional current-source surfaces.",
+        "affected_refs": [
+          "inv_truthful_data",
+          "dep_windows",
+          "stake_user"
+        ],
+        "supporting_claim_ids": [
+          "claim_implementation"
+        ],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Current source/project graph plus focused provider/control tests.",
+          "latency": "During build/test and first rendered sample.",
+          "failure_to_detect": "Untested owner-specific drivers, scaling, or long-run provider transitions could remain unseen."
+        },
+        "falsifier": "Missing provider/page source, synthetic data, path exposure, unbounded collections, or failed focused tests.",
+        "confidence": {
+          "level": "HIGH",
+          "basis": "Source and exact-commit Windows evidence are direct."
+        }
+      },
+      {
+        "id": "edge_verify_slice",
+        "relation": "FORWARD",
+        "source_node_id": "node_implementation",
+        "target_node_id": "node_gate",
+        "source_delta": "Implemented code is submitted to the required Windows workflow.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "The workflow builds the full solution, runs seven suites, executes six native renders, classifies EICAR separately, and uploads evidence.",
+        "conditions": [
+          "Artifact bytes match the recorded digest.",
+          "The workflow checks out the exact implementation head."
+        ],
+        "lag": "One workflow run.",
+        "target_delta": "A frozen auditable draft candidate exists.",
+        "affected_refs": [
+          "dep_github",
+          "inv_security",
+          "stake_maintainer"
+        ],
+        "supporting_claim_ids": [
+          "claim_gate",
+          "claim_invariants"
+        ],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Run 30925606488 logs, gate classification, artifact digest, and screenshots.",
+          "latency": "At workflow completion and artifact inspection.",
+          "failure_to_detect": "The hosted environment cannot prove owner-host provider behavior or all hardware/viewport states."
+        },
+        "falsifier": "Any required gate failure, digest mismatch, missing render, or hidden EICAR classification.",
+        "confidence": {
+          "level": "HIGH",
+          "basis": "The workflow logs and independent artifact hash are current and mutually consistent."
+        }
+      },
+      {
+        "id": "edge_render_review",
+        "relation": "FORWARD",
+        "source_node_id": "node_implementation",
+        "target_node_id": "node_visual",
+        "source_delta": "The native pages are frozen into six representative captures.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "Human Eye current-capture inspection checks hierarchy, coherence, readability, clipping, proportions, and first-impression trust.",
+        "conditions": [
+          "Review is limited to 1044 by 788 captures.",
+          "Prior source context prevents a strictly source-naive classification."
+        ],
+        "lag": "During current artifact inspection.",
+        "target_delta": "Gross visual blockers are either corrected or exposed before handoff.",
+        "affected_refs": [
+          "inv_human_gate",
+          "stake_user"
+        ],
+        "supporting_claim_ids": [
+          "claim_visual"
+        ],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Per-surface KEEP/REVISE/REJECT/BLOCKED verdicts and exact screenshot hashes.",
+          "latency": "Immediate during capture review.",
+          "failure_to_detect": "Scaling, assistive-technology, motion, long-string, and owner-taste defects can remain unseen."
+        },
+        "falsifier": "A visible hierarchy, clipping, coherence, or trust blocker in a frozen capture.",
+        "confidence": {
+          "level": "MEDIUM",
+          "basis": "Direct observation is current but limited to one viewport and an agent reviewer."
+        }
+      },
+      {
+        "id": "edge_human_gate",
+        "relation": "FORWARD",
+        "source_node_id": "node_visual",
+        "target_node_id": "node_human",
+        "source_delta": "Agent inspection finds a technically presentable current-capture result.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "Subjective acceptance remains a distinct decision that only the owner can record after representative use.",
+        "conditions": [
+          "The PR remains draft.",
+          "Unknown accessibility and scaling states are not counted as passes."
+        ],
+        "lag": "Until owner review occurs.",
+        "target_delta": "The implementation can be handed off without falsely closing human acceptance.",
+        "affected_refs": [
+          "inv_human_gate",
+          "stake_user"
+        ],
+        "supporting_claim_ids": [
+          "claim_owner_acceptance"
+        ],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "A named owner verdict with representative scaling/accessibility notes.",
+          "latency": "Owner-controlled.",
+          "failure_to_detect": "Treating agent screenshots or tests as human acceptance would erase the decision boundary."
+        },
+        "falsifier": "A current explicit owner acceptance record covering the named open review matrix.",
+        "confidence": {
+          "level": "LOW",
+          "basis": "The owner-controlled outcome is intentionally unresolved and has no current human-decision evidence."
+        }
+      },
+      {
+        "id": "edge_clean_room",
+        "relation": "FORWARD",
+        "source_node_id": "root_slice",
+        "target_node_id": "node_provenance",
+        "source_delta": "External products are considered as potential visual or remote-control references.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "Resource Pilfer records general principles and official metadata while prohibiting acquisition, copying, or embedded RustDesk runtime use in this slice.",
+        "conditions": [
+          "Only official public pages are inspected.",
+          "No third-party payload enters the worktree."
+        ],
+        "lag": "At design and evidence review.",
+        "target_delta": "Soltex retains an auditable clean-room and external-client boundary.",
+        "affected_refs": [
+          "inv_clean_room",
+          "dep_rustdesk",
+          "stake_maintainer"
+        ],
+        "supporting_claim_ids": [
+          "claim_provenance"
+        ],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Provenance record, project references, and worktree inventory.",
+          "latency": "Before handoff and again before any future acquisition.",
+          "failure_to_detect": "Untracked external payload or a future dependency change could invalidate the disposition."
+        },
+        "falsifier": "A copied asset/source/runtime, missing license boundary, or embedded RustDesk dependency."
+        ,"confidence": {
+          "level": "HIGH",
+          "basis": "Official metadata and current worktree boundaries were inspected."
+        }
+      },
+      {
+        "id": "edge_recovery",
+        "relation": "FORWARD",
+        "source_node_id": "node_implementation",
+        "target_node_id": "node_recovery",
+        "source_delta": "A telemetry provider fails, access is denied, history input is invalid, or the window closes.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "Bounded validation, cancellation, stale retry count, unavailable transition, later-success replacement, and awaited shutdown constrain failure behavior.",
+        "conditions": [
+          "The sampler remains sequential and non-overlapping.",
+          "Only the last confirmed immutable snapshot may be retained."
+        ],
+        "lag": "Immediate for validation/cancellation; two failed retries before unavailable; next success for recovery.",
+        "target_delta": "The UI degrades explicitly and can recover without invented state or orphaned sampling work.",
+        "affected_refs": [
+          "inv_truthful_data",
+          "dep_windows",
+          "stake_user"
+        ],
+        "supporting_claim_ids": [
+          "claim_recovery"
+        ],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Focused cancellation/history/provider tests and visible stale/unavailable/recovered states.",
+          "latency": "Within the configured sample/retry cadence.",
+          "failure_to_detect": "Long-running owner-specific provider faults have not been soaked."
+        },
+        "falsifier": "Overlapping samplers, unbounded retention, synthetic fallback values, uncancelled shutdown, or failure to replace stale data after success.",
+        "confidence": {
+          "level": "HIGH",
+          "basis": "Mechanism code and focused tests directly support the transition."
+        }
+      }
+    ],
+    "feedback_loops": [],
+    "thresholds": [
+      {
+        "id": "threshold_sample",
+        "variable": "Monitoring sample window",
+        "boundary": "100 milliseconds through 2 seconds; UI uses 300 milliseconds",
+        "direction": "Reject values outside the inclusive safe interval.",
+        "evidence_or_test_ids": [
+          "ev_tests",
+          "test_windows_gate"
+        ]
+      },
+      {
+        "id": "threshold_history",
+        "variable": "Telemetry history capacity",
+        "boundary": "2 through 120 values; current pages use 48 and 72",
+        "direction": "Reject invalid capacity/input and evict the oldest value at capacity.",
+        "evidence_or_test_ids": [
+          "ev_tests",
+          "test_windows_gate"
+        ]
+      }
+    ]
+  },
+  "decision": {
+    "iteration_choice": "STOP",
+    "recommendation": "Close the implementation/documentation wave as a bounded stacked draft candidate, retain commit 2a0699b as the runtime-evidence identity, and route the next decision to owner visual/accessibility review before merge or feature expansion.",
+    "selected_action_ids": [
+      "action_implement",
+      "action_evidence"
+    ],
+    "rejected_options": [
+      "Do not equate green tests or native renders with owner acceptance.",
+      "Do not repeat the full Windows gate without a relevant source/workflow change.",
+      "Do not embed RustDesk or imitate Zen's distinctive expression.",
+      "Do not add a generic remote shell or autonomous correction in this wave."
+    ],
+    "decision_claim_ids": [
+      "claim_implementation",
+      "claim_gate",
+      "claim_visual",
+      "claim_provenance",
+      "claim_invariants"
+    ],
+    "remaining_unknown_claim_ids": [
+      "claim_owner_acceptance",
+      "claim_owner_eicar"
+    ],
+    "human_owner": "User",
+    "consecutive_stable_checks": 2,
+    "reopen_trigger": "Reopen after an implementation/workflow change, artifact contradiction, owner REVISE/REJECT verdict, scaling/accessibility failure, or new third-party acquisition/integration proposal."
+  },
+  "actions": [
+    {
+      "id": "action_implement",
+      "description": "Implement the bounded monitoring/local-device/shared-WPF slice in the isolated Soltex feature worktree and push the review branch.",
+      "status": "VERIFIED",
+      "authorization_status": "AUTHORIZED",
+      "authority_basis": "The user explicitly authorized Soltex development and GitHub commit/push work.",
+      "destructive": false,
+      "production": false,
+      "external_state_change": true,
+      "irreversible": false,
+      "monitoring": "Git status/HEAD, Windows workflow gates, retained artifact digest, draft PR, and protected-owner-checkout checkpoint.",
+      "rollback": {
+        "kind": "TRUE_ROLLBACK",
+        "procedure": "Before merge, revert the feature-branch commits with new reviewable revert commits or close the draft PR; never reset or clean the owner checkout.",
+        "preconditions": [
+          "Identify exact feature commits and confirm no production merge/deployment occurred.",
+          "Preserve the evidence packet and owner checkout."
+        ],
+        "verification": "The branch diff no longer contains the reverted slice and the protected checkout remains unchanged.",
+        "evidence_ids": [
+          "ev_git_state",
+          "ev_owner_state"
+        ],
+        "irreversible_residue": "Pushed commits and pull-request history remain visible on GitHub even after a revert or PR closure."
+      },
+      "recovery": {
+        "procedure": "Re-apply or correct the isolated commits, rerun only invalidated gates, and publish a new exact artifact identity.",
+        "owner": "Soltex maintainer with user approval for changed scope",
+        "evidence_ids": [
+          "ev_ci_artifact",
+          "ev_tests"
+        ]
+      },
+      "mitigation_consequence_node_ids": [
+        "node_provenance",
+        "node_recovery"
+      ]
+    },
+    {
+      "id": "action_evidence",
+      "description": "Freeze the exact Windows gate, screenshot hashes, Human Eye review, Resource Pilfer disposition, status docs, and continuation handoff.",
+      "status": "VERIFIED",
+      "authorization_status": "AUTHORIZED",
+      "authority_basis": "Evidence reconciliation and handoff are required by the active Soltex continuation goal.",
+      "destructive": false,
+      "production": false,
+      "external_state_change": true,
+      "irreversible": false,
+      "monitoring": "Schema validation, Markdown/link/search checks, Git diff review, final docs-only CI, and PR metadata inspection.",
+      "rollback": {
+        "kind": "TRUE_ROLLBACK",
+        "procedure": "Revert only the documentation commit on the isolated branch if the packet is factually wrong, preserving the implementation artifact and historical evidence.",
+        "preconditions": [
+          "Identify the documentation-only commit.",
+          "Do not alter append-only historical evidence or the protected owner checkout."
+        ],
+        "verification": "The isolated branch returns to the previous documented state and no implementation commit changes.",
+        "evidence_ids": [
+          "ev_git_state"
+        ],
+        "irreversible_residue": "The reverted documentation commit and PR discussion remain in GitHub history."
+      },
+      "recovery": {
+        "procedure": "Correct the factual record with a new documentation commit and link it to the unchanged implementation artifact.",
+        "owner": "Soltex maintainer",
+        "evidence_ids": [
+          "ev_ci_artifact",
+          "ev_gate_classification"
+        ]
+      },
+      "mitigation_consequence_node_ids": [
+        "node_human",
+        "node_provenance"
+      ]
+    }
+  ],
+  "verification": {
+    "mechanism": {
+      "status": "PASS",
+      "signal": "Provider, history, state, cancellation, local-observation, shared-control, and real-binding suites passed on Windows.",
+      "evidence_ids": [
+        "ev_tests",
+        "ev_source_recovery"
+      ],
+      "rationale": "The intended bounded mechanisms were exercised directly."
+    },
+    "endpoint": {
+      "status": "PASS",
+      "signal": "Home, Monitoring, and Devices are real coherent native WPF surfaces at the frozen implementation commit and all six pages render.",
+      "evidence_ids": [
+        "ev_renders",
+        "ev_visual_review",
+        "ev_gate_classification"
+      ],
+      "rationale": "This passes the bounded draft-slice endpoint, not owner acceptance or production readiness."
+    },
+    "guardrails": {
+      "status": "PASS",
+      "signal": "The protected checkout, honest-state, security, clean-room, and draft-only boundaries are preserved; hosted EICAR remains explicitly failed.",
+      "evidence_ids": [
+        "ev_owner_state",
+        "ev_gate_classification",
+        "ev_provenance"
+      ],
+      "rationale": "The evidence does not hide the provider gap or convert external references into dependencies."
+    },
+    "recovery": {
+      "status": "PASS",
+      "signal": "Cancellation, bounded stale/unavailable/recovered behavior, and awaited shutdown are exercised; feature-branch rollback remains available before merge.",
+      "evidence_ids": [
+        "ev_tests",
+        "ev_source_recovery",
+        "ev_git_state"
+      ],
+      "rationale": "Runtime recovery is tested; production installer/update recovery remains explicitly out of scope."
+    }
+  },
+  "closure": {
+    "status": "BOUNDED",
+    "summary": "The first immersive Soltex local-workspace implementation and evidence wave is complete as a reviewable stacked draft candidate; human acceptance and owner-host provider interoperability remain separately owned open gates.",
+    "residual_risks": [
+      "Owner visual and accessibility acceptance is not recorded.",
+      "Only one 1044 by 788 hosted viewport is frozen.",
+      "Owner-host AMSI and Windows Security Center provider behavior is unknown.",
+      "Long-running telemetry soak and diverse hardware behavior are untested.",
+      "Future remote execution, connectors, audio, clips, installer, and production security work remain outside this slice."
+    ],
+    "human_acceptance_required": true,
+    "accepted_by": "",
+    "acceptance_evidence_ids": [],
+    "nonclaims": [
+      "This ledger contains auditable claims and decisions, not hidden chain-of-thought.",
+      "Green build, tests, and renders do not grant owner visual or accessibility acceptance.",
+      "Soltex is not a production antivirus, remote-control engine, autonomous correction system, installer, or release service.",
+      "The hosted EICAR result does not prove owner-host behavior or antivirus efficacy.",
+      "Reference-only use does not imply affiliation, endorsement, copied expression, or legal approval."
+    ]
+  }
+}

@@ -5,6 +5,16 @@
 ```text
 Soltex.App (WPF, unelevated)
     |
+    +-- Soltex.Monitoring
+    |     +-- GetSystemTimes CPU observation
+    |     +-- GlobalMemoryStatusEx physical-memory observation
+    |     +-- bounded Process name/PID/CPU/memory/thread snapshots
+    |     +-- bounded fixed-volume observation
+    |     +-- immutable snapshots and copied bounded histories
+    +-- Soltex.DeviceFabric
+    |     +-- sanitized local machine/runtime observation
+    |     +-- explicit NotEnrolled state
+    |     +-- exact six-capability non-executing policy model
     +-- Windows Security Center health (wscapi.dll)
     +-- Windows Security Center change signal (WscRegisterForChanges)
     +-- Defender status/scans/updates (fixed PowerShell commands)
@@ -41,6 +51,8 @@ Soltex installs no Windows service, background tray process, kernel driver, brow
 - **Windows provider boundary:** `WindowsSecurityCenter` reads aggregate antivirus health. Explicit WSC `Good`, `Poor`, `Snoozed`, and `NotMonitored` states are authoritative. Defender detail flags are a fallback only when WSC is unavailable and Defender reports `Normal` with antivirus and real-time protection active. `PowerShellDefenderClient` launches the System32 Windows PowerShell host in its executable directory, imports Defender, Diagnostics, and Utility manifests through direct `$PSHOME` paths, module-qualifies every security cmdlet, invokes only fixed supported commands, and replaces raw error output with a bounded exit-code diagnostic before it reaches audit-facing models.
 - **Native loading boundary:** the security assembly constrains its Windows P/Invoke resolution to System32. AMSI, WSC, WinTrust, Crypt32, and Kernel32 imports cannot be satisfied from the application or current directory.
 - **Monitoring boundary:** `WindowsSecurityChangeMonitor` receives only a WSC change signal. `ProtectionMonitor` serializes refreshes, coalesces signals through a one-slot channel, uses one timeout-cancelled channel wait per cycle, polls at one-minute intervals, retries nonfatal failures with bounded exponential backoff, keeps the last successful observation, emits an explicit recovered state, and isolates subscriber failures so one UI observer cannot stop monitoring.
+- **System-telemetry boundary:** `SystemTelemetryProvider` reads CPU timing from `GetSystemTimes`, physical memory from `GlobalMemoryStatusEx`, process summaries from `System.Diagnostics.Process`, and fixed-volume capacity from `DriveInfo`. One sample observes at most 2,048 processes, exposes at most 32 rows and eight volumes, limits names to 80 sanitized characters, and never reads executable paths. GPU and network readings are explicitly unavailable in this slice. The UI runs one sequential sample loop, cancels on shutdown, retains copied histories of at most 48/72 samples, marks retained values stale during two bounded retries, then becomes unavailable rather than fabricating a value.
+- **Local-device boundary:** `LocalDeviceObservationProvider` reads only the bounded machine name and runtime/OS architecture descriptions. It reports `NotEnrolled`; it does not authenticate a device, discover peers, create an agent identity, listen on a socket, or turn the six-capability policy catalog into execution. The Devices surface routes Remote Assist requests to the existing visible external-client flow.
 - **Event boundary:** the Defender Operational reader asks Windows for at most 24 recent allow-listed event IDs in the app and 100 at the library boundary, with a 512 KiB stdout byte ceiling enforced while the child stream is read. It treats only a no-matching-events condition as an empty result, surfaces other provider/access failures, and re-enforces the requested count after deserialization. `DefenderEventLogParser` constructs descriptions from an allow-list of fields and never exposes file, process, or scan-resource paths.
 - **Content-intake boundary:** `FileAssessmentService` normalizes existing non-reparse files, hashes them, checks the exact-hash allow list, and sends at most 16 MiB to AMSI.
 - **Release boundary:** `IntegrityManifestVerifier` verifies exact manifest bytes with RSA-PSS/SHA-256 before validating bounded relative paths, lengths, and hashes. `AuthenticodeVerifier` asks Windows to validate an individual signed file.
@@ -60,6 +72,7 @@ Soltex installs no Windows service, background tray process, kernel driver, brow
 - AMSI in-memory limit: 16 MiB; larger content is delegated to a Defender custom scan.
 - Audit rotation: 4 MiB plus one prior segment.
 - Security operations run asynchronously and are not shared with future audio/capture threads.
+- System telemetry uses one 300 ms sampling window followed by a two-second delay. Failures retry sequentially with a bounded delay up to ten seconds; no overlapping sampler, whole-disk walk, executable-path query, GPU poller, or network poller is created.
 - Remote Assist has no polling loop or resident network component. File hashing and Authenticode checks occur only when a client is selected or a user confirms a launch.
 - Update planning has no scheduler or resident downloader. It runs only from explicit input, applies declared byte/time/count ceilings, holds inert artifacts in private staging, and deletes them when the prepared preview is disposed.
 
@@ -67,5 +80,5 @@ Soltex installs no Windows service, background tray process, kernel driver, brow
 
 - Audio requires WASAPI/MMDevice work and, for stable system-wide virtual endpoints, a signed SysVAD/APO-derived package or another documented routing architecture.
 - Clips requires Windows Graphics Capture, D3D11, Media Foundation hardware encoding, a bounded segment ring, and a separate click-through/no-activate overlay.
-- The proposed personal device fabric requires capability-bounded Windows/macOS agents, a signed and replay-resistant job protocol, device-local approval policy, OS-backed secret storage, and connector isolation. Tailscale, RustDesk, the NAS, Google Drive, and Box remain separate trust domains. See `docs/PERSONAL_DEVICE_FABRIC.md`.
+- Device Fabric Stage 1 now has a local observation and UI, but a future multi-device fabric still requires capability-bounded Windows/macOS agents, a signed and replay-resistant job protocol, device-local approval policy, OS-backed secret storage, and connector isolation. Tailscale, RustDesk, the NAS, Google Drive, and Box remain separate trust domains. See `docs/PERSONAL_DEVICE_FABRIC.md`.
 - A true antivirus provider is a separate product program, not an extension of the current WPF process.

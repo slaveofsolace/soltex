@@ -4,11 +4,11 @@
 
 Soltex can become a private control surface for the user's Windows PCs, Macs, NAS, Google Drive, and a separately governed work Box account. The central design rule is that remote desktop is **remote hands**, not the command architecture. RustDesk remains a visible, consent-based fallback when a person needs to see or control a screen. Small Soltex agents execute narrowly typed jobs on each device.
 
-Stage 1 of this direction is implemented as a non-executing policy foundation. The device agent, signed job protocol, Tailscale integration, NAS, Google Drive, Box, and AI orchestration remain proposals and are not implemented in the current repository.
+Stage 1 of this direction is implemented as a non-executing policy foundation plus a bounded local-machine observation and Devices UI. The device agent, enrollment, signed job protocol, Tailscale integration, NAS, Google Drive, Box, and AI orchestration remain proposals and are not implemented in the current repository.
 
 ## Implemented Stage 1 boundary
 
-`src/Soltex.DeviceFabric` provides immutable device manifests and inventory snapshots plus an exact six-capability catalog:
+`src/Soltex.DeviceFabric` provides immutable device manifests and inventory snapshots, a sanitized local machine/runtime observation that is always marked `NotEnrolled`, and an exact six-capability catalog:
 
 - `system.health.observe`;
 - `security.protection.observe`;
@@ -19,7 +19,7 @@ Stage 1 of this direction is implemented as a non-executing policy foundation. T
 
 Every modeled decision is bound to a structurally valid target manifest. Read-only observations require device-local policy; both Defender requests and RustDesk handoff preparation require visible, per-job consent, and a RustDesk handoff is denied unless the external client remains visible. The model copies and bounds caller-supplied collections, rejects duplicate/unknown capabilities and devices, rejects injectable identifiers and display names, and limits Defender request declarations to Windows.
 
-The focused suite passed 20/20 on the .NET 10 Windows gate in run `30918120029` (37.5 ms diagnostic wall-clock time). It expressly rejects generic shell, arbitrary download-and-execute, and hidden-control identifiers. This is model evidence only: manifest identity and consent booleans are not authenticated by this stage, and there is no collector, network transport, listener, signed envelope, device enrollment, replay store, executor, receipt pipeline, or Device Fabric UI.
+The expanded focused suite covers 24 cases. It expressly rejects generic shell, arbitrary download-and-execute, and hidden-control identifiers and checks local-field bounds, sanitization, provenance, and the explicit unenrolled state. This is model/local-observation evidence only: manifest identity and consent booleans are not authenticated by this stage, and there is no enrolled collector, network transport, listener, signed envelope, enrollment flow, replay store, executor, or receipt pipeline. The Devices UI renders these boundaries; it does not make them executable.
 
 ## Proposed runtime shape
 
@@ -117,7 +117,7 @@ AI planning is advisory. It may propose a job, but it cannot mint broader rights
 ## Delivery sequence
 
 0. **Completed:** evidence the current Security V1 and Remote Assist verification gates.
-1. **Completed at the model boundary:** add immutable device inventory and exact capability policy with focused non-networked tests.
+1. **Completed at the model/UI boundary:** add immutable device inventory, exact capability policy, bounded local observation, honest unenrolled UI, and focused non-networked tests.
 2. Implement the Windows agent/controller protocol over loopback, with signed envelopes, replay defense, approvals, cancellation, and receipts.
 3. Add a macOS agent with the same protocol and platform-specific secret storage.
 4. Add optional external Tailscale reachability without modifying ACLs or public ingress.

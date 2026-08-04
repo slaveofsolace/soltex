@@ -20,38 +20,40 @@ Current solution identifier: `Soltex.sln`
 Implementation commit:
 
 ```text
-42f10865fcbcd31f7b26dbb98446d09cfc69285d
+2a0699b2ca77b30fa636279b1d5ecab603a8bde9
 ```
 
-GitHub pull-request merge preview exercised by the run:
+Stacked branch and pull request:
 
 ```text
-54c160942a0f2b0837afaa87ccdd4f7b9aa301d8
+feat/soltex-immersive-workspace-v1
+https://github.com/slaveofsolace/soltex/pull/5
 ```
 
-Stacked base commit (`feat/soltex-update-planner-v1`):
+Stacked identity base and pull request:
 
 ```text
-40c7e73452dc6c11fcd1f5711ec6360210595a44
+refactor/soltex-identity-and-repo-coherence
+57607a35da14968c0d729795a857fd250b6566d9
+https://github.com/slaveofsolace/soltex/pull/4
 ```
 
 Environment:
 
-- GitHub Actions run `30921441649`;
-- job `92032791166`;
-- Windows Server 2025, build `10.0.26100`;
-- runner image `windows-2025-vs2026`, version `20260728.188.1`;
-- .NET SDK `10.0.302`;
+- GitHub Actions run `30925606488`;
+- job `92046999983`;
+- GitHub-hosted Windows runner;
 - checkout directory `D:\a\soltex\soltex`.
 
 Retained evidence:
 
-- artifact name: `soltex-windows-evidence-30921441649-1`;
-- artifact ID: `8897293182`;
-- uploaded artifact ZIP size: 323,918 bytes;
-- GitHub-recorded artifact ZIP SHA-256: `EA7781B0296147362D4546ABE5076EC0282F0F15F30256EBB3F5D4961F5F6195`;
+- artifact name: `soltex-windows-evidence-30925606488-1`;
+- artifact ID: `8899014386`;
+- uploaded artifact ZIP size: 626,093 bytes;
+- GitHub-recorded artifact ZIP SHA-256: `71905016B3A67F8CE340D90C2E404DEBFB185C3DAE8A973F21B80F1B8A94515`;
+- independently downloaded artifact ZIP SHA-256: `71905016B3A67F8CE340D90C2E404DEBFB185C3DAE8A973F21B80F1B8A94515`;
 - configured retention: 30 days;
-- uploaded files: identity/build logs, six focused-suite logs, gate classification, Security PNG, Remote Assist PNG, and Updates PNG.
+- uploaded files: build and seven focused-suite logs, EICAR log, gate classification, and native Home, Monitoring, Devices, Security, Remote Assist, and Updates PNGs.
 
 ## Commands exercised by the workflow
 
@@ -91,21 +93,21 @@ Hosted-runner observations from this suite:
 ```text
 Windows Security change registration:
   registered=False
-  duration=8.6 ms
+  duration=10.3 ms
   detail=Unable to load DLL 'wscapi.dll' ... 0x8007007E
 
 Windows protection health:
   WSC=Unknown
   mode=Normal
-  bounded duration=5121.1 ms
+  bounded duration=6427.5 ms
 
 Defender Operational events:
   16 events
-  duration=740.5 ms
+  duration=815.8 ms
 
 Observation means:
-  WSC read=0.152 ms
-  AMSI 4 KiB call=0.326 ms
+  WSC read=0.235 ms
+  AMSI 4 KiB call=0.358 ms
 ```
 
 These measurements describe one hosted run and are not performance guarantees. The `wscapi.dll` result means this host proves bounded degradation, not successful live provider enumeration.
@@ -178,7 +180,7 @@ Result:
 
 ```text
 17/17 tests passed.
-MEASURE update_planner_suite tests=17 failed=0 total_ms=2602.5
+MEASURE update_planner_suite tests=17 failed=0 total_ms=2895.6
 ```
 
 The cases cover valid signed descriptors, duplicate properties, expiry classification, signature quorum, unsigned redirect origins, exact trust replay, trust rollback/equivocation, overlap-preserving trust upgrade, same-key-ID replacement, exact locked acquisition bytes, redirect/truncation/cancellation cleanup, journal sanitization, private-artifact recovery, and exact expiring confirmation.
@@ -187,15 +189,15 @@ Hosted-runner wall-clock observations:
 
 | Observation | Duration |
 |---|---:|
-| Complete 17-case suite | 2,602.5 ms |
-| Slowest case: descriptor quorum | 260.4 ms |
-| Exact locked acquisition and cleanup | 237.8 ms |
-| Unauthorized redirect rejection and cleanup | 107.8 ms |
-| Truncated body rejection and cleanup | 127.0 ms |
-| Cancellation cleanup | 136.0 ms |
-| Journal sanitization | 78.4 ms |
-| Recovery inspection and private cleanup | 81.3 ms |
-| Exact confirmation semantics | 1.0 ms |
+| Complete 17-case suite | 2,895.6 ms |
+| Slowest case: descriptor quorum | 333.4 ms |
+| Exact locked acquisition and cleanup | 291.9 ms |
+| Unauthorized redirect rejection and cleanup | 175.5 ms |
+| Truncated body rejection and cleanup | 133.0 ms |
+| Cancellation cleanup | 143.4 ms |
+| Journal sanitization | 105.5 ms |
+| Recovery inspection and private cleanup | 96.9 ms |
+| Exact confirmation semantics | 0.9 ms |
 
 These are one-run diagnostic timings for ephemeral RSA fixtures and an in-memory authenticated transport. They are not network, disk, production-feed, installer, startup, or responsiveness guarantees.
 
@@ -211,13 +213,50 @@ dotnet run `
 Result:
 
 ```text
-20/20 tests passed.
-MEASURE device_fabric_suite tests=20 failed=0 total_ms=37.5
+24/24 tests passed.
+MEASURE device_fabric_suite tests=24 failed=0 total_ms=47.7
 ```
 
-The cases prove the bounded model behavior for exact catalog membership, target-manifest binding, device-local read-only policy, visible per-job consent, visible external-client handoff, immutable caller-input copies, identifier/display/version validation, duplicate rejection, inventory bounds, and Windows-only Defender request declarations. Explicit hostile identifiers for generic shell, arbitrary download-and-execute, and hidden unattended control are denied.
+The cases prove the bounded model behavior for exact catalog membership, target-manifest binding, device-local read-only policy, visible per-job consent, visible external-client handoff, immutable caller-input copies, identifier/display/version validation, duplicate rejection, inventory bounds, and Windows-only Defender request declarations. They also prove bounded/sanitized local machine fields, explicit provenance, and the `NotEnrolled` state. Explicit hostile identifiers for generic shell, arbitrary download-and-execute, and hidden unattended control are denied.
 
 This suite has no device agent, transport, listener, enrollment, signed envelope, replay store, executor, RustDesk session, or real remote action. Its wall-clock duration is one hosted-runner diagnostic, not a cross-device command-latency claim.
+
+### Bounded Windows monitoring suite
+
+```powershell
+dotnet run `
+  --project .\tests\Soltex.Monitoring.Tests\Soltex.Monitoring.Tests.csproj `
+  --configuration Release `
+  --no-build
+```
+
+Result:
+
+```text
+13/13 tests passed.
+MEASURE monitoring_suite tests=13 failed=0 total_ms=765.9
+state=Partial; processes=32; volumes=2; inaccessible=2; provider_ms=166.6; wall_ms=167.1
+```
+
+The suite covers aggregate CPU/process math, sanitization, history validation and immutable copies, safe sample-window bounds, cancellation, live Windows bounds/provenance, path omission, percentage bounds, and measured capture overhead. The representative live capture is one hosted-runner diagnostic, not a responsiveness or throughput guarantee.
+
+### WPF control and real-binding suite
+
+```powershell
+dotnet run `
+  --project .\tests\Soltex.App.Tests\Soltex.App.Tests.csproj `
+  --configuration Release `
+  --no-build
+```
+
+Result:
+
+```text
+5/5 tests passed.
+MEASURE app_control_suite tests=5 failed=0 total_ms=1704.3
+```
+
+The STA suite checks shared controls including the slider, a pixel-rendered bounded sparkline, Home with a real telemetry snapshot, Monitoring provenance and bounded rows, Devices with exactly six modeled capabilities and `NotEnrolled`, and hero/card layout bounds. These tests do not grant subjective visual or accessibility acceptance.
 
 ### Opt-in EICAR interoperability
 
@@ -238,7 +277,49 @@ FAIL AMSI detects the safe EICAR test marker
 Installed AMSI provider did not block EICAR (result 1).
 ```
 
-The marker was submitted to AMSI in memory only. No malware sample or file-system AV-evasion action was used. The workflow deliberately classifies this as a hosted-provider interoperability gap while preserving a green repository-correctness result for build, required tests, and renders. Run this check on the owner-controlled Windows machine before claiming 28/28.
+The marker was submitted to AMSI in memory only. No malware sample or file-system AV-evasion action was used. The workflow deliberately classifies this as a hosted-provider interoperability gap while preserving a green repository-correctness result for build, required tests, and renders. Run this check on the owner-controlled Windows machine before claiming 32/32.
+
+### Native Home render
+
+```powershell
+dotnet run `
+  --project .\src\Soltex.App\Soltex.App.csproj `
+  --configuration Release `
+  --no-build `
+  -- `
+  --render-smoke .\artifacts\visual\home-current-source.png `
+  --panel home
+```
+
+Result: command succeeded and the expected 1044×788 PNG was present. Current-capture inspection found a balanced editorial hero, visible machine profile, real CPU/memory/storage/process state, and explicit GPU/network/peer gaps without gross clipping.
+
+### Native Monitoring render
+
+```powershell
+dotnet run `
+  --project .\src\Soltex.App\Soltex.App.csproj `
+  --configuration Release `
+  --no-build `
+  -- `
+  --render-smoke .\artifacts\visual\monitoring-current-source.png `
+  --panel monitoring
+```
+
+Result: command succeeded and the expected 1044×788 PNG was present. Current-capture inspection confirmed readable CPU/memory, fixed-volume, provider-coverage, and process regions plus the explicit 72-sample history wording.
+
+### Native Devices render
+
+```powershell
+dotnet run `
+  --project .\src\Soltex.App\Soltex.App.csproj `
+  --configuration Release `
+  --no-build `
+  -- `
+  --render-smoke .\artifacts\visual\devices-current-source.png `
+  --panel devices
+```
+
+Result: command succeeded and the expected 1044×788 PNG was present. Current-capture inspection confirmed the local profile, explicit unenrolled state, visible external-client handoff, wrapped private-mesh copy, and six modeled capability cards.
 
 ### Native Security render
 
@@ -282,14 +363,25 @@ dotnet run `
 
 Result: command succeeded and the expected 1044×788 PNG was present. Pixel inspection confirmed the Soltex branding, selected Updates navigation state, honest disabled planning control, authenticated-journal empty state, and explicit non-installing/recovery boundaries without visible truncation in the captured viewport.
 
-The verification step found all three PNGs and no `*.error.txt` render output. These captures are current native initialization evidence at one viewport. They do not cover 1366×768, 1440p, 4K, 100/125/150/200-percent scaling, reduced motion, a full keyboard/screen-reader audit, or owner visual approval.
+The verification step found all six PNGs and no `*.error.txt` render output. Frozen screenshot hashes:
+
+| Panel | SHA-256 |
+|---|---|
+| Home | `4732077CA3053349DC359117ECE032B0A5E75313384F61A536C6932887DAB1FC` |
+| Monitoring | `F6F6D9C989B0538EA9472B26615CA5CD7A7EAC5CBBC5515D7B907DBBAA326473` |
+| Devices | `8B8F9AE4147267D2455B93311CE38004D8F68E59813CEB7D6384FF6A3AD47084` |
+| Security | `BD2D700B6DCE5588968A06AF6F54C3B47985DF0E4D32530C625372AAFD70DBBC` |
+| Remote Assist | `3F403752B64EE24755B00AB9BDBB1C1787B8FB0A10368A3604D4544950C27E70` |
+| Updates | `124F4835984FB0283D0A73312AB43BDE63283B5BACBEA4A55170319EDB9717CC` |
+
+These captures are current native initialization evidence at one viewport. Human Eye verdict for this bounded capture set is `KEEP`, with no gross layout blocker observed after final correction. The review was not source-naive, and it does not cover 1366×768, 1440p, 4K, 100/125/150/200-percent scaling, reduced motion, contrast thresholds, a full keyboard/screen-reader audit, or owner visual approval.
 
 ## Owner-controlled Windows gate
 
 Run from an ordinary unelevated PowerShell session unless a separately documented step explicitly requires elevation:
 
 ```powershell
-Set-Location 'C:\Users\suhai\Documents\SOL Tools'
+Set-Location 'C:\Users\suhai\Documents\soltex-immersive-workspace'
 
 # Local identity and preservation checks
 git remote -v
@@ -308,12 +400,15 @@ Get-Process Soltex,dotnet -ErrorAction SilentlyContinue |
 Get-Content .\docs\IMPLEMENTATION_STATUS.md
 
 # Required build and tests
+.\eng\verify-identity.ps1
 dotnet build .\Soltex.sln --configuration Release
 dotnet run --project .\tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj --configuration Release --no-build
 dotnet run --project .\tests\Soltex.Security.SupplyChain.Tests\Soltex.Security.SupplyChain.Tests.csproj --configuration Release --no-build
 dotnet run --project .\tests\Soltex.Security.Hardening.Tests\Soltex.Security.Hardening.Tests.csproj --configuration Release --no-build
 dotnet run --project .\tests\Soltex.Update.Tests\Soltex.Update.Tests.csproj --configuration Release --no-build
 dotnet run --project .\tests\Soltex.DeviceFabric.Tests\Soltex.DeviceFabric.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\Soltex.Monitoring.Tests\Soltex.Monitoring.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\Soltex.App.Tests\Soltex.App.Tests.csproj --configuration Release --no-build
 
 # Optional provider-interoperability check
 $env:SOLTEX_RUN_EICAR = '1'
@@ -322,6 +417,9 @@ Remove-Item Env:\SOLTEX_RUN_EICAR -ErrorAction SilentlyContinue
 
 # Current native renders
 New-Item -ItemType Directory -Force .\artifacts\visual | Out-Null
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\home-current-source.png --panel home
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\monitoring-current-source.png --panel monitoring
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\devices-current-source.png --panel devices
 dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\security-current-source.png --panel security
 dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\remote-assist-current-source.png --panel remote
 dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\updates-current-source.png --panel update

@@ -1,8 +1,8 @@
 # Soltex master project blueprint
 
-Snapshot: 2026-08-03  
+Snapshot: 2026-08-04
 Repository target: `slaveofsolace/soltex` (private)  
-Canonical local source at snapshot: `C:\Users\suhai\Documents\SOL Tools`
+Current isolated source at snapshot: `C:\Users\suhai\Documents\soltex-immersive-workspace`
 
 Product identity: **Soltex**. The solution, projects, assemblies, namespaces, current documentation, and handoff use that identity. Installed state remains compatible through the focused, fail-closed rules in `NAMING_AND_COMPATIBILITY.md`; historical evidence is not rewritten.
 
@@ -27,7 +27,7 @@ Passing a narrow integration test proves only that integration. It does not prov
 
 ### 3.1 Windows-verified baseline
 
-The last executed baseline is a .NET 10 WPF application centered on a lightweight Windows Security companion. The executed baseline passed a Release build with zero warnings/errors and 16 focused tests. It included:
+The current frozen implementation is commit `2a0699b2ca77b30fa636279b1d5ecab603a8bde9`. GitHub Actions run `30925606488` passed the Release build with zero warnings/errors, all seven focused suites, six native renders, and render verification. It includes:
 
 - Windows Security Center aggregate antivirus health;
 - Defender health and operating-mode details;
@@ -40,13 +40,13 @@ The last executed baseline is a .NET 10 WPF application centered on a lightweigh
 - an HMAC-chained local audit log with hashed paths;
 - bounded, path-redacted Defender Operational event parsing;
 - prior performance measurements for WSC, Defender status/events, and a 4 KiB AMSI call;
-- an earlier native WPF Security render.
+- native WPF Home, Monitoring, Devices, Security, Remote Assist, and Updates renders;
+- bounded CPU, physical-memory, process, and fixed-volume observation;
+- copied finite telemetry histories and explicit current/partial/stale/unavailable/recovered state;
+- a sanitized local-device profile that is explicitly `NotEnrolled`;
+- one shared warm graphite/parchment/coral WPF design system.
 
-That baseline remains useful evidence, but it predates all current-source hardening and UI/Remote Assist additions.
-
-### 3.2 Current source, verification pending
-
-Current source adds:
+Current source also includes:
 
 - polling-wait cancellation that does not abandon channel readers;
 - byte-bounded PowerShell stdout/stderr capture while streams are read;
@@ -64,10 +64,10 @@ Current source adds:
 - Authenticode checks at selection and immediately before launch;
 - a constrained peer-ID type and fixed shell-free `--connect` launch plan;
 - explicit local confirmation and peer-ID-free audit events;
-- a Zen-inspired, independently authored visual refresh and Remote Assist page;
-- panel-selectable native render-smoke support.
+- a Zen-informed, independently authored visual refresh and Remote Assist page;
+- six-panel native render-smoke support.
 
-Current source defines **27 default tests** and **28 checks** when the optional in-memory EICAR interoperability test is enabled. The current 27/28 checks, Release build, and redesigned Security/Remote native renders are pending fresh execution. Do not report them as passed until new evidence exists.
+Current evidence totals are Security 31/31, supply chain 18/18, hardening 12/12, update 17/17, Device Fabric 24/24, monitoring 13/13, and WPF controls 5/5. The optional in-memory EICAR run is 31/32 because the hosted AMSI provider returned native result `1`; owner-host interoperability remains open. Exact evidence is in `VALIDATION.md` and `evidence/2026-08-04-immersive-workspace/`.
 
 ## 4. Systems and principles being followed
 
@@ -211,7 +211,7 @@ Required UI quality:
 - Windows scaling checks at 100%, 125%, 150%, and 200%; representative 1366×768, 1440p, and 4K captures;
 - tables remain readable and virtualized; charts expose text equivalents;
 - no glass-on-glass, gradient headline text, generic rounded-card carpet, micro-label overload, emoji navigation, or placeholder success metrics;
-- current UI quality remains **unaccepted** until fresh native renders and owner review exist.
+- current UI has six fresh native renders and a bounded Human Eye `KEEP` review, but remains **owner-unaccepted** until the user completes representative scaling/accessibility review.
 
 ## 8. Coding direction
 
@@ -231,18 +231,13 @@ Required UI quality:
 
 ### Gate 0 — establish the current truth
 
-1. Build Release.
-2. Run 27/27 default tests.
-3. Run 28/28 with the opt-in in-memory EICAR interoperability check.
-4. Render Security and Remote Assist natively.
-5. Inspect output, reconcile the evidence ledger, and obtain owner visual review.
+Completed for implementation commit `2a0699b`: Release build, identity policy, seven focused suites, six native renders, artifact verification, independent artifact re-hash, and current-capture evidence reconciliation. Hosted EICAR and owner visual acceptance remain explicitly separate open gates.
 
 ### Wave 1 — immersive shell and read-only observability
 
-- finish the navigation shell, command/search surface, design tokens, component states, and responsive/scaling behavior;
-- add typed read-only process/system metric providers and a dense Task Manager page;
-- add a device inventory model with loopback-only fixtures;
-- add no mutating process action, network listener, cloud OAuth, or stress benchmark yet.
+- **Completed bounded slice:** shared navigation/design tokens/component states, real Home/Monitoring/Devices surfaces, typed read-only CPU/memory/process/volume providers, bounded histories, sanitized local observation, and an exact non-executing capability model.
+- **Still open in Wave 1:** command/search surface, broader responsive/scaling/accessibility evidence, and owner visual acceptance.
+- No mutating process action, network listener, cloud OAuth, or stress benchmark was added.
 
 ### Wave 2 — controlled local actions
 
@@ -281,4 +276,4 @@ For each wave retain:
 
 ## 11. Immediate next action
 
-Do not begin with OAuth, remote command execution, a driver, or decorative dashboard expansion. First make the current 27/28 security and Remote Assist source build and pass, capture both native panels, and reconcile the evidence. The first safe scaffold after that gate is the immersive shell plus read-only process/system monitoring interfaces and a loopback-only device inventory.
+Run the bounded owner UI gate at 100 and 150 percent scaling with one keyboard/high-contrast/screen-reader pass, then record `KEEP`, `REVISE`, or `REJECT`. If accepted, begin Device Fabric Stage 2 with a loopback-only signed envelope/replay/receipt model that remains non-networked and non-executing until hostile state/parser tests pass. Do not begin with OAuth, a generic remote command executor, a driver, public ingress, unattended control, or decorative dashboard expansion.

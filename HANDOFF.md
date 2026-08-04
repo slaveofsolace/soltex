@@ -6,74 +6,81 @@ This is the only current continuation handoff for Soltex. Files under `docs/arch
 
 - Repository: `https://github.com/slaveofsolace/soltex`
 - Protected owner checkout: `C:\Users\suhai\Documents\SOL Tools`
-- Task-owned worktree: `C:\Users\suhai\Documents\soltex-identity-migration`
-- Branch: `refactor/soltex-identity-and-repo-coherence`
-- Draft PR: `https://github.com/slaveofsolace/soltex/pull/4`
-- Stacked base: `feat/soltex-update-planner-v1`
-- Exact base commit: `40c7e73452dc6c11fcd1f5711ec6360210595a44`
-- Verified identity implementation checkpoint: `42f10865fcbcd31f7b26dbb98446d09cfc69285d`
+- Task-owned worktree: `C:\Users\suhai\Documents\soltex-immersive-workspace`
+- Current branch: `feat/soltex-immersive-workspace-v1`
+- Draft stacked PR: `https://github.com/slaveofsolace/soltex/pull/5`
+- Stacked base branch: `refactor/soltex-identity-and-repo-coherence`
+- Identity base head: `57607a35da14968c0d729795a857fd250b6566d9`
+- Identity draft PR: `https://github.com/slaveofsolace/soltex/pull/4`
+- Frozen immersive implementation checkpoint: `2a0699b2ca77b30fa636279b1d5ecab603a8bde9`
 
-Do not reset, clean, stash, merge, rebase, or overwrite the protected owner checkout. Continue in the task-owned worktree and re-check branch, HEAD, status, remotes, PR base, and running-process ownership before changing anything.
+The protected owner checkout was re-observed at `main`, commit `bf2662de80992cfed761625642f084d3caaa0f04`, with extensive pre-existing legacy-named dirty and untracked work owned outside this task. Do not reset, clean, stash, merge, rebase, overwrite, or use it as a build-output target. Continue in the task-owned worktree and re-check branch, HEAD, status, remotes, PR base, and process ownership before changing anything.
 
-## Product and implementation state
+## What is built
 
-Soltex is a proprietary, unelevated .NET 10 WPF workspace. Current source has five production projects and five focused executable test projects under the `Soltex.*` identity:
+Soltex is a proprietary, unelevated .NET 10 WPF workspace with six production projects and seven focused executable test projects:
 
-- `Soltex.App`: the WPF shell and native render-smoke entrypoint;
+- `Soltex.App`: shared WPF shell, Home/Monitoring/Devices workspaces, existing Security/Remote Assist/Updates surfaces, and six-panel native render-smoke;
+- `Soltex.Monitoring`: bounded Windows CPU, physical-memory, process, and fixed-volume observation plus immutable finite histories;
 - `Soltex.Security`: supported Windows Security Center observation, bounded Defender requests, AMSI intake checks, authenticated allow-list/quarantine/audit state, and signed-manifest verification;
-- `Soltex.RemoteAssist`: a narrow, visible, shell-free adapter for a separately installed RustDesk client;
-- `Soltex.Update`: signed descriptor/release verification and a non-installing update preview planner;
-- `Soltex.DeviceFabric`: immutable device manifests, inventory snapshots, and a non-executing six-capability authorization model.
+- `Soltex.RemoteAssist`: narrow visible shell-free adapter for a separately installed RustDesk client;
+- `Soltex.Update`: signed descriptor/release verification and a non-installing update-preview planner;
+- `Soltex.DeviceFabric`: immutable manifests/inventory, exact non-executing six-capability policy, and sanitized local observation that is explicitly `NotEnrolled`.
 
-Audio and Clips remain visible product foundations rather than working DSP/capture engines. There is no embedded RustDesk transport, generic command executor, public listener, cloud connector, installer, autonomous repair agent, antivirus engine, or production update activator.
+Home is the default page. Home, Monitoring, and Devices use one warm graphite/parchment/coral design system with shared cards, controls, focus, progress, table, scrollbar, and bounded sparkline primitives. One sequential sampler publishes immutable snapshots and copied 48/72-sample histories, cancels and awaits shutdown, preserves last confirmed values briefly as stale, then becomes unavailable rather than fabricating data. GPU and network telemetry remain explicitly unavailable.
 
-## Identity and installed-state contract
+Audio and Clips remain visible product foundations rather than working DSP/capture engines. There is no embedded RustDesk transport, generic command executor, enrolled device agent, public listener, cloud connector, installer, autonomous repair agent, antivirus engine, or production update activator.
 
-Current UI, solution, projects, assemblies, namespaces, scripts, workflow paths, and canonical docs use `Soltex`. `Directory.Build.props` and `ProductIdentity.cs` hold current metadata.
+## Clean-room and trust boundaries
 
-Installed authenticated state is preserved through lookup rather than an unreviewed copy:
+- Zen Browser is `REFERENCE ONLY`: general calm-workspace, compact-navigation, focus, and balance principles were observed; no Zen source, asset, screenshot, layout measurement, icon, trademark, or design token was copied.
+- RustDesk remains a separately installed AGPL-3.0 external program. No repository payload or runtime is linked, bundled, disguised, or imported into Soltex.
+- Soltex never passes RustDesk passwords, enables unattended access, installs its service, requests elevation, hides the client, or treats a remote session as authorization for an AI job.
+- Do not disable or weaken Defender, Malwarebytes, Windows Security Center, SmartScreen, firewall policy, or tamper protection. Do not add exclusions or register Soltex as an antivirus provider.
+- Keep future remote jobs typed, capability-scoped, replay-resistant, and bound to a validated target manifest. There is no executor in the current Device Fabric.
+- Keep personal Google Drive and work Box credentials, indices, audit streams, and transfer policies separate. Neither connector is implemented.
+- Do not introduce a generic shell, arbitrary script runner, public ingress, hidden persistence, silent elevation, or destructive autonomous correction.
 
-- a fresh profile creates `%LocalAppData%\Soltex`;
-- a sole existing legacy product root is selected in place and reported as compatibility mode;
-- two product roots, a non-directory collision, or a reparse product root fail closed;
-- state is never automatically merged, copied, deleted, or selected by timestamp;
-- the legacy DPAPI description remains stable so existing protected keys remain decryptable;
-- schema-1 import manifests accept only the current product or the one versioned legacy product value;
-- schema-2 signed release manifests remain strictly `Soltex`.
+## Frozen verification
 
-The full contract and removal gates are in `docs/NAMING_AND_COMPATIBILITY.md`. `eng/verify-identity.ps1` rejects legacy identity outside a reasoned allowlist covering compatibility code, append-only evidence, archived prompts, and the factual external RustDesk research-cache path.
+Exact implementation commit `2a0699b2ca77b30fa636279b1d5ecab603a8bde9` passed GitHub Actions run `30925606488`, job `92046999983`:
 
-## Security invariants
+- identity policy passed;
+- Release build passed in 41.59 seconds with 0 warnings and 0 errors;
+- Security 31/31, supply chain 18/18, hardening 12/12, update 17/17, Device Fabric 24/24, monitoring 13/13, and WPF controls 5/5 passed;
+- native Home, Monitoring, Devices, Security, Remote Assist, and Updates renders passed at 1044×788;
+- render verification found all six PNGs and no render-error file;
+- opt-in hosted EICAR was 31/32 because the installed AMSI provider returned native result `1`; this is an interoperability gap, not an independent antivirus result.
 
-- Do not disable or weaken Defender, Malwarebytes, Windows Security Center, SmartScreen, firewall policy, or tamper protection.
-- Do not add exclusions, register Soltex as an antivirus provider, or claim that an AMSI result proves file safety.
-- Do not copy, link, bundle, or disguise RustDesk AGPL code in the proprietary executable.
-- Do not enable unattended RustDesk access, pass credentials, install its service, hide its UI, or treat a remote session as authorization for an AI job.
-- Keep remote jobs typed, capability-scoped, replay-resistant, and bound to a validated target manifest. There is no executor in the current Device Fabric.
-- Keep Google Drive and work Box credentials, indices, audit streams, and transfer policies separate. No connector is implemented yet.
-- Do not introduce a generic shell, arbitrary script runner, public ingress, hidden persistence, silent elevation, or destructive autonomous repair.
+Artifact `soltex-windows-evidence-30925606488-1`, ID `8899014386`, is 626,093 bytes. GitHub and an independent downloaded-byte check agree on SHA-256 `71905016B3A67F8CE340D90C2E404DEBFB185C3DAE8A973F21B80F1B8A94515`.
 
-## Verification
+A Human Eye current-capture review found no gross hierarchy, clipping, or identity blocker after the final visual corrections. It was not source-naive and does not grant owner visual acceptance, accessibility conformance, or broader viewport/scaling acceptance. The exact hashes, measurements, provenance, and nonclaims are in `docs/evidence/2026-08-04-immersive-workspace/` and `docs/VALIDATION.md`.
 
-Identity implementation commit `42f10865fcbcd31f7b26dbb98446d09cfc69285d` passed Windows run `30921441649` on merge preview `54c160942a0f2b0837afaa87ccdd4f7b9aa301d8`: identity policy, Release build at 0 warnings/0 errors, every required suite, and native Security/Remote Assist/Updates renders. Its artifact is `soltex-windows-evidence-30921441649-1`, digest `sha256:ea7781b0296147362d4546abe5076ec0282f0f15f30256ebb3f5d4961f5f6195`. The hosted EICAR interop check recorded 31/32 because the available AMSI provider returned native result 1; this does not justify an independent antivirus claim.
+## Exact resume gate
 
-Run the current gate from the worktree with:
+From the task worktree:
 
 ```powershell
-.\eng\verify-identity.ps1
-dotnet build .\Soltex.sln --configuration Release
-.\eng\verify.ps1 -RunEicar
+Set-Location 'C:\Users\suhai\Documents\soltex-immersive-workspace'
+git branch --show-current
+git rev-parse HEAD
+git status --short --branch
+git remote -v
+Get-Process Soltex,dotnet -ErrorAction SilentlyContinue |
+  Select-Object Id, ProcessName, Path, StartTime
 ```
 
-Then run every focused suite and the three native render-smoke panels exactly as listed in `docs/VALIDATION.md`. Retain logs, screenshots, commit/merge-preview identities, toolchain version, elapsed measurements, and artifact SHA-256. A green render command is runtime evidence, not owner visual acceptance.
+Read `docs/IMPLEMENTATION_STATUS.md`, `docs/VALIDATION.md`, and the current evidence packet before mutation. Reuse the frozen artifact instead of repeating the full runtime gate unless code, build policy, or an assumption covered by that gate changes.
 
-## Ordered continuation
+## Remaining ordered product stages
 
-1. Make PR #4 fully green on its exact merge preview and reconcile its evidence into `IMPLEMENTATION_STATUS.md`, `VALIDATION.md`, and the PR body.
-2. Confirm identity policy rejects an intentionally injected current-source legacy token, then remove the fixture and rerun green.
-3. Review naming/compatibility code for conflict, reparse, torn-state, tampering, and downgrade behavior. Do not add automatic file moves in this wave.
-4. Finish canonical-doc consistency and keep historical evidence unchanged.
-5. Only after PR #4 is green, create stacked branch `feat/soltex-immersive-workspace-v1` targeting this identity branch.
-6. In that UI branch, implement the first real Home, Monitoring, and Devices slice using a shared WPF design system and real bounded providers. Never display invented telemetry; surface loading, stale, partial, unavailable, denied, and recovery states with provenance.
+1. Owner visual review plus a representative viewport/scaling, keyboard, contrast, and screen-reader pass for the current UI.
+2. Device Fabric Stage 2: loopback-only signed envelope, target/issuer binding, expiry, nonce, idempotency, policy version, replay store, cancellation, approval level, and redacted receipts. Keep it non-networked and non-executing until hostile parser/state tests pass.
+3. Read-only Applications inventory and a separately authorized, bounded process-action model; no arbitrary shell or silent task termination.
+4. Supported audio endpoint/session inventory before routing, EQ, microphone processing, or virtual-device claims.
+5. Privacy adapters and local/NAS search with explicit roots, provenance, quotas, cancellation, and recovery.
+6. Personal Google Drive read-write connector, then a separately governed work Box connector with explicit cross-domain transfer policy.
+7. Optional Tailscale-local status and enrolled multi-device transport only after signed job/receipt semantics are proven.
+8. Production signing identities, authenticated update source, installer, atomic activation, rollback, recovery, and uninstall as a separate release program.
 
-Later product slices may add supported audio inventory/control, app inventory, storage/search, clips capability probing, privacy adapters, Google Drive, separately governed Box, Tailscale-local status, and additional peripherals. Each requires its own typed boundary, threat model, tests, failure behavior, performance evidence, and honest nonclaims.
+Do not begin the next stage with provider registration, a driver, a service, public ingress, Defender mutations, unattended remote control, or automatic execution of staged content.

@@ -16,34 +16,40 @@ A passing narrow test proves only that boundary. It does not establish productio
 
 ## Windows-verified current branch baseline
 
-Implementation commit `42f10865fcbcd31f7b26dbb98446d09cfc69285d` was exercised in pull-request merge preview `54c160942a0f2b0837afaa87ccdd4f7b9aa301d8` by GitHub Actions run `30921441649` on Windows Server 2025 (`10.0.26100`, image `windows-2025-vs2026` `20260728.188.1`) with .NET SDK `10.0.302`.
+Immersive-workspace implementation commit `2a0699b2ca77b30fa636279b1d5ecab603a8bde9` was exercised by GitHub Actions run `30925606488`, job `92046999983`, on a hosted Windows runner. This is the frozen implementation identity; later documentation-only commits do not replace it as the source of the runtime evidence below.
 
 | Gate | Result | Scope |
 |---|---:|---|
-| Identity policy | Passed | 106 tracked text files; 9 reasoned compatibility/historical allowlist entries |
-| Release build | 0 warnings, 0 errors | Entire `Soltex.sln`, including Security, Remote Assist, Update, Device Fabric, and all focused test projects |
+| Identity policy | Passed | Current-source naming and reasoned compatibility/historical allowlist policy |
+| Release build | 0 warnings, 0 errors; 41.59 s | Entire 13-project `Soltex.sln`: six production and seven focused test projects |
 | Existing focused suite | 31/31 passed | Security companion, identity/root compatibility, monitoring boundaries, Remote Assist regressions |
 | Supply-chain suite | 18/18 passed | Publisher policy, signed release, sequence state including cross-process lock, bounded ZIP staging |
 | Hostile hardening suite | 12/12 passed | Immutable publisher snapshot, authenticated-state recovery, bounded ZIP preflight, pinned workflow policy |
-| Update-planner suite | 17/17 passed | Descriptor quorum/expiry, trust rotation, bounded acquisition cleanup, journal recovery, exact confirmation |
-| Device Fabric policy suite | 20/20 passed | Exact catalog, target-manifest binding, local consent, injection/bounds, immutable snapshots |
+| Update-planner suite | 17/17 passed; 2,895.6 ms | Descriptor quorum/expiry, trust rotation, bounded acquisition cleanup, journal recovery, exact confirmation |
+| Device Fabric suite | 24/24 passed; 47.7 ms | Exact catalog, target-manifest binding, local consent, immutable snapshots, bounded local observation |
+| Monitoring suite | 13/13 passed; 765.9 ms | CPU/memory math, process/path bounds, cancellation, immutable history, live bounded capture and measurement |
+| WPF control/render suite | 5/5 passed; 1,704.3 ms | Shared controls, sparkline pixels, real Home/Monitoring bindings, Devices contract, layout bounds |
 | Opt-in EICAR interoperability | 31/32 | Hosted AMSI provider returned native result `1`; owner-host evidence remains pending |
+| Home native render | Passed | 1044×788 render-smoke output created |
+| Monitoring native render | Passed | 1044×788 render-smoke output created |
+| Devices native render | Passed | 1044×788 render-smoke output created |
 | Security native render | Passed | 1044×788 render-smoke output created |
 | Remote Assist native render | Passed | 1044×788 render-smoke output created |
 | Updates native render | Passed | 1044×788 render-smoke output created |
-| Render artifact check | Passed | All three PNGs present; no `*.error.txt` output |
+| Render artifact check | Passed | All six PNGs present; no `*.error.txt` output |
 
 Retained workflow evidence:
 
-- run: `30921441649`;
-- job: `92032791166`;
-- artifact: `soltex-windows-evidence-30921441649-1`;
-- artifact ID: `8897293182`;
-- uploaded artifact ZIP size: 323,918 bytes;
-- GitHub-recorded artifact ZIP SHA-256: `EA7781B0296147362D4546ABE5076EC0282F0F15F30256EBB3F5D4961F5F6195`;
+- run: `30925606488`;
+- job: `92046999983`;
+- artifact: `soltex-windows-evidence-30925606488-1`;
+- artifact ID: `8899014386`;
+- uploaded artifact ZIP size: 626,093 bytes;
+- GitHub-recorded artifact ZIP SHA-256: `71905016B3A67F8CE340D90C2E404DEBFB185C3DAE8A973F21B80F1B8A94515`;
+- independently downloaded artifact ZIP SHA-256: `71905016B3A67F8CE340D90C2E404DEBFB185C3DAE8A973F21B80F1B8A94515`;
 - retention configured by the workflow: 30 days.
 
-The hosted Windows Server image did not expose a usable live `wscapi.dll` boundary. The provider-neutral health test therefore proved bounded failure/fallback behavior and an `Unknown` state, not successful provider inventory on that host. Native rendering proves that the Security, Remote Assist, and Updates panels initialize and capture under the Soltex identity. The three 1044×788 PNGs were visually inspected for gross identity/layout regressions; broader viewport/scaling coverage, accessibility review, and owner visual acceptance remain pending.
+The hosted Windows image did not expose a usable live `wscapi.dll` boundary. The provider-neutral health test therefore proved bounded failure/fallback behavior and an `Unknown` state, not successful provider inventory on that host. Native rendering proves that all six panels initialize and capture under the Soltex identity. A current-capture Human Eye review found no gross hierarchy, clipping, or identity blocker after the final corrections. That review was not source-naive and does not grant owner visual acceptance. Broader viewport/scaling, accessibility, keyboard/screen-reader, and owner-review coverage remain pending.
 
 The identity wave also adds a fail-closed local-data-root resolver. Fresh profiles use the canonical root; a sole existing compatible root remains in place; dual roots, file collisions, and reparse paths are rejected. No automatic state move is claimed. See `NAMING_AND_COMPATIBILITY.md` and the retained identity-migration security review.
 
@@ -59,7 +65,7 @@ The current Windows application remains an unelevated, user-mode security compan
 - detached RSA-PSS/SHA-256 integrity-manifest verification;
 - authenticated quarantine and HMAC-chained audit state;
 - bounded import-folder observation;
-- cancellation, byte limits, timeouts, path redaction, module pinning, System32-only native imports, and monitoring fault isolation covered by the existing 27 checks.
+- cancellation, byte limits, timeouts, path redaction, module pinning, System32-only native imports, and monitoring fault isolation covered by focused regression checks.
 
 It does not disable Defender, add exclusions, change another provider's registration, automate Windows Security settings, or register Soltex as antivirus software.
 
@@ -133,7 +139,7 @@ The source does not call `ExtractToDirectory` for this untrusted boundary.
 
 The planner stops at `PreparedSoltexUpdate`. Disposal removes its inert private artifacts. It does not execute, install, elevate, activate, repair, uninstall, reboot, mutate Windows security, or silently clean an interrupted attempt.
 
-The 17-case hostile suite completed in 2,602.5 ms on one hosted runner. Individual cases ranged from 1.0 ms for exact confirmation semantics to 260.4 ms for the descriptor-quorum case. These are diagnostic wall-clock observations, not throughput or latency guarantees.
+The 17-case hostile suite completed in 2,895.6 ms on the current hosted runner. Individual cases ranged from 0.9 ms for exact confirmation semantics to 333.4 ms for the descriptor-quorum case. These are diagnostic wall-clock observations, not throughput or latency guarantees.
 
 ## Implemented: Remote Assist boundary
 
@@ -141,13 +147,25 @@ The 17-case hostile suite completed in 2,602.5 ms on one hosted runner. Individu
 
 It does not embed or link RustDesk AGPL code, store remote passwords, enable unattended access, install services, request elevation, open listeners, hide sessions, or bypass local consent.
 
-## Implemented: Device Fabric Stage 1 policy foundation
+## Implemented: bounded local Windows monitoring
+
+`Soltex.Monitoring` captures immutable, bounded snapshots from supported Windows interfaces: aggregate CPU timing from `GetSystemTimes`, physical memory from `GlobalMemoryStatusEx`, a sanitized process summary from `System.Diagnostics.Process`, and ready fixed-volume capacity from `DriveInfo`. It observes at most 2,048 processes, returns at most 32 rows and eight volumes, exposes no executable path, and records capture time, duration, provenance, inaccessible-process count, and limitations.
+
+The WPF host runs one sequential 300 ms sample followed by a two-second delay. Histories return copied read-only snapshots, accept only finite percentages, and evict oldest samples at their configured 48/72 bounds. A failed sample retains confirmed values as stale for two bounded retries, then becomes unavailable; a subsequent success replaces the values and records recovery. GPU and network telemetry remain explicitly unavailable.
+
+## Implemented: immersive local workspace
+
+Home, Monitoring, and Devices are real default/navigation surfaces under one shared WPF resource dictionary. The visual system provides the warm graphite/coral palette, editorial/UI/mono type roles, cards, buttons, progress, slider, focus, table, scrollbar, and sparkline primitives. Panel opacity motion is enabled only when Windows client-area animation is enabled. Five WPF control/render checks cover theme resources, chart output, real Home/Monitoring data binding, bounded rows/provenance, the local unenrolled profile, and hero-width/height regressions.
+
+Native render-smoke now targets Home, Monitoring, Devices, Security, Remote Assist, and Updates. A render pass is runtime initialization evidence only; visual acceptance, multi-scale coverage, keyboard/screen-reader review, and accessibility conformance remain separate.
+
+## Implemented: Device Fabric Stage 1 policy and local observation
 
 `Soltex.DeviceFabric` implements an immutable, non-executing device inventory and capability-policy model. Its exact six-capability catalog covers three read-only observations, two supported Defender requests, and one visible RustDesk handoff preparation. Every policy decision requires a structurally valid target manifest; a known capability is denied if the target did not advertise it.
 
-Read-only observations still require device-local policy. Defender requests and the RustDesk handoff require visible, per-job local consent, and remote handoff additionally requires the external client to remain visible. The 20-case hostile suite rejects missing target manifests, unadvertised or unknown capabilities, generic shell, arbitrary download-and-execute, hidden control, identifier/display injection, duplicate capabilities/devices, oversized inventory, and non-Windows Defender declarations. The suite completed in 37.5 ms on one hosted runner; this is a diagnostic observation, not a latency guarantee.
+Read-only observations still require device-local policy. Defender requests and the RustDesk handoff require visible, per-job local consent, and remote handoff additionally requires the external client to remain visible. The expanded 24-case suite also proves that local machine/runtime fields are bounded and sanitized and that the observation is explicitly `NotEnrolled`. The suite rejects missing target manifests, unadvertised or unknown capabilities, generic shell, arbitrary download-and-execute, hidden control, identifier/display injection, duplicate capabilities/devices, oversized inventory, and non-Windows Defender declarations.
 
-This stage has no device collector, controller, manifest authentication, signed job envelope, replay defense, transport, listener, enrollment, consent authenticator, receipt, capability executor, NAS connector, cloud connector, or UI. Its policy inputs are modeled facts supplied by a future trusted local boundary, not proof that consent or device identity occurred. It cannot perform remote correction.
+This stage has a local profile/UI but no enrolled device agent, controller, manifest authentication, signed job envelope, replay defense, transport, listener, enrollment flow, consent authenticator, receipt, capability executor, NAS connector, or cloud connector. Its policy inputs are modeled facts supplied by a future trusted local boundary, not proof that consent or device identity occurred. It cannot perform remote correction.
 
 ## Designed or not implemented
 
@@ -159,21 +177,13 @@ The following remain separate work:
 - atomic activation, rollback, crash recovery, interrupted-update recovery, and retained installer evidence;
 - optional provider-name inventory without changing Windows Security Center registration;
 - provider registration, minifilter, ELAM, PPL/protected service, MVI participation, cloud reputation, detection research, certification, and efficacy claims;
-- the Audio, Clips, Monitoring, App Control, Privacy, Device Fabric transport/execution, NAS, Drive, and isolated Box implementation waves described elsewhere.
+- the Audio, Clips, Applications/App Control, Privacy, Device Fabric transport/execution, NAS, Drive, and isolated Box implementation waves described elsewhere.
 
-## Local-host state not verified by this GitHub session
+## Current local ownership checkpoint
 
-The connector cannot establish the state of `C:\Users\suhai\Documents\SOL Tools`. The following remain local preflight facts, not inferred claims:
+The implementation and closeout are isolated in `C:\Users\suhai\Documents\soltex-immersive-workspace` on branch `feat/soltex-immersive-workspace-v1`. The protected owner checkout `C:\Users\suhai\Documents\SOL Tools` was re-observed on 2026-08-04 at `main`, commit `bf2662de80992cfed761625642f084d3caaa0f04`, with extensive pre-existing legacy-named dirty and untracked work owned outside this task. It was not reset, cleaned, stashed, merged, or overwritten. No local `Soltex.exe` or `dotnet.exe` process was observed owning the task worktree at the checkpoint.
 
-- current working directory;
-- local branch and HEAD;
-- local dirty/untracked state;
-- whether local `Soltex` or related `dotnet` processes are running;
-- whether the local checkout contains commits or files not present in the private remote;
-- owner-host EICAR behavior;
-- owner visual acceptance.
-
-Use the exact commands in [`VALIDATION.md`](VALIDATION.md) before modifying or synchronizing the local checkout.
+Owner-host EICAR behavior and owner visual acceptance remain unverified. Re-run the exact preflight in [`VALIDATION.md`](VALIDATION.md) before a future local mutation because checkout and process state can drift.
 
 ## Exact next implementation slice
 
