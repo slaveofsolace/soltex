@@ -11,7 +11,7 @@ This is the only current continuation handoff for Soltex. Files under `docs/arch
 - Draft PR: `https://github.com/slaveofsolace/soltex/pull/4`
 - Stacked base: `feat/soltex-update-planner-v1`
 - Exact base commit: `40c7e73452dc6c11fcd1f5711ec6360210595a44`
-- Identity implementation checkpoint: `d0d0f770255338117c80651b5dab3bd4a292e5a9`
+- Verified identity implementation checkpoint: `42f10865fcbcd31f7b26dbb98446d09cfc69285d`
 
 Do not reset, clean, stash, merge, rebase, or overwrite the protected owner checkout. Continue in the task-owned worktree and re-check branch, HEAD, status, remotes, PR base, and running-process ownership before changing anything.
 
@@ -55,7 +55,7 @@ The full contract and removal gates are in `docs/NAMING_AND_COMPATIBILITY.md`. `
 
 ## Verification
 
-The stacked base passed Windows run `30918555568` with a Release build at 0 warnings/0 errors, all required suites, and native Security/Remote Assist/Updates renders. Its artifact is `soltex-windows-evidence-30918555568-1`, digest `sha256:01a8d3923249fad5cf9c48605fa3cf95c119579da4a89686a977ac74089f8384`. The hosted EICAR interop check recorded the available AMSI provider response and did not justify an independent antivirus claim.
+Identity implementation commit `42f10865fcbcd31f7b26dbb98446d09cfc69285d` passed Windows run `30921441649` on merge preview `54c160942a0f2b0837afaa87ccdd4f7b9aa301d8`: identity policy, Release build at 0 warnings/0 errors, every required suite, and native Security/Remote Assist/Updates renders. Its artifact is `soltex-windows-evidence-30921441649-1`, digest `sha256:ea7781b0296147362d4546abe5076ec0282f0f15f30256ebb3f5d4961f5f6195`. The hosted EICAR interop check recorded 31/32 because the available AMSI provider returned native result 1; this does not justify an independent antivirus claim.
 
 Run the current gate from the worktree with:
 

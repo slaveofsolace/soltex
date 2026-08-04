@@ -31,7 +31,7 @@ Soltex.App (WPF, unelevated)
           +-- exact-hash allow list
           +-- authenticated quarantine
           +-- HMAC-chained local audit log
-          +-- bounded Soltex Imports watcher
+          +-- bounded selected-product-root Imports watcher
 ```
 
 Soltex installs no Windows service, background tray process, kernel driver, browser extension, network proxy, or cloud backend in this release. A user-approved RustDesk process is external to Soltex and retains its own runtime behavior.
@@ -45,7 +45,7 @@ Soltex installs no Windows service, background tray process, kernel driver, brow
 - **Content-intake boundary:** `FileAssessmentService` normalizes existing non-reparse files, hashes them, checks the exact-hash allow list, and sends at most 16 MiB to AMSI.
 - **Release boundary:** `IntegrityManifestVerifier` verifies exact manifest bytes with RSA-PSS/SHA-256 before validating bounded relative paths, lengths, and hashes. `AuthenticodeVerifier` asks Windows to validate an individual signed file.
 - **Update-planning boundary:** `UpdateDescriptorVerifier` requires exact signed descriptor bytes and metadata-key quorum before any network operation. `PinnedHttpsTransport` accepts only HTTPS with an active signed TLS SPKI pin; `BoundedHttpsAcquirer` constrains origins, redirects, time, lengths, hashes, and private reparse-free staging. `SoltexUpdatePlanner` composes signed-manifest, archive, publisher, and disk-impact evidence into one deterministic preview and exact expiring confirmation, then stops without installation or elevation.
-- **Local-state boundary:** DPAPI protects a per-user HMAC key. Allow-list and quarantine indexes are authenticated. Quarantined payloads are re-hashed before restoration.
+- **Local-state boundary:** `ProductDataRootResolver` selects exactly one canonical or compatible product root, rejects dual roots, non-directory collisions, and reparse paths, and performs no implicit merge or copy. DPAPI protects a per-user HMAC key using the retained compatibility descriptor. Allow-list and quarantine indexes are authenticated. Quarantined payloads are re-hashed before restoration.
 - **Privacy boundary:** audit records store an HMAC of a full path rather than the raw path. Update-journal detail is sanitized and the Updates page displays neither release URLs nor raw local paths. The local logs are authenticated/chained, though a same-user attacker can still truncate or delete local state.
 - **Remote-assistance boundary:** Soltex never embeds the AGPL RustDesk runtime. It accepts only an explicit existing `RustDesk.exe`, rejects a reparse-point file, records a SHA-256 approval fingerprint, requires cached Windows Authenticode trust, and revalidates the bytes and signature at launch. Sharing uses no arguments; control passes only `--connect` and one constrained peer ID through `ProcessStartInfo.ArgumentList` with `UseShellExecute=false`. RustDesk owns transport, authentication, consent, elevation behavior, updates, and session termination. Soltex does not provide passwords, unattended access, elevation flags, service installation, or a hidden session.
 
@@ -54,7 +54,7 @@ Soltex installs no Windows service, background tray process, kernel driver, brow
 - No periodic whole-disk scan.
 - One aggregate protection query per minute, plus debounced refreshes after WSC change signals. Failed observations retry from five seconds up to a five-minute ceiling.
 - Defender Operational history is queried only at Security-page startup/manual refresh, with a seven-day/24-event UI bound, ten-second timeout, and 512 KiB captured-output ceiling; excess bytes are drained and discarded before the result is rejected.
-- One `FileSystemWatcher`, limited to `%LOCALAPPDATA%\Soltex\Imports`.
+- One `FileSystemWatcher`, limited to `Imports` beneath the selected product root (`%LOCALAPPDATA%\Soltex` for a fresh profile, or the sole existing compatible root).
 - Bounded queue: 128 paths, oldest entry dropped under overload.
 - Debounce window: 750 ms; one sequential assessment worker.
 - AMSI in-memory limit: 16 MiB; larger content is delegated to a Defender custom scan.

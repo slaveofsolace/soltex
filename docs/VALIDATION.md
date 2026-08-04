@@ -20,25 +20,25 @@ Current solution identifier: `Soltex.sln`
 Implementation commit:
 
 ```text
-8ca28f8aa1f50de929787fe1c1cbd23b96b3f6e9
+42f10865fcbcd31f7b26dbb98446d09cfc69285d
 ```
 
 GitHub pull-request merge preview exercised by the run:
 
 ```text
-035de520a6ea346b9aeb08270fa4f72af86d59c0
+54c160942a0f2b0837afaa87ccdd4f7b9aa301d8
 ```
 
-Base `main` commit:
+Stacked base commit (`feat/soltex-update-planner-v1`):
 
 ```text
-39eaf628f6add6c89963a81b7c1971c2f74f02a1
+40c7e73452dc6c11fcd1f5711ec6360210595a44
 ```
 
 Environment:
 
-- GitHub Actions run `30918120029`;
-- job `92021363535`;
+- GitHub Actions run `30921441649`;
+- job `92032791166`;
 - Windows Server 2025, build `10.0.26100`;
 - runner image `windows-2025-vs2026`, version `20260728.188.1`;
 - .NET SDK `10.0.302`;
@@ -46,12 +46,12 @@ Environment:
 
 Retained evidence:
 
-- artifact name: `soltex-windows-evidence-30918120029-1`;
-- artifact ID: `8895955309`;
-- uploaded artifact ZIP size: 323,473 bytes;
-- GitHub-recorded artifact ZIP SHA-256: `02C121DA84A68988B0D50B1F8CB3CC50C72D299AC3A1CA3D4C7D1C4146ACA31A`;
+- artifact name: `soltex-windows-evidence-30921441649-1`;
+- artifact ID: `8897293182`;
+- uploaded artifact ZIP size: 323,918 bytes;
+- GitHub-recorded artifact ZIP SHA-256: `EA7781B0296147362D4546ABE5076EC0282F0F15F30256EBB3F5D4961F5F6195`;
 - configured retention: 30 days;
-- uploaded files: build log, six focused-suite logs, gate classification, Security PNG, Remote Assist PNG, and Updates PNG.
+- uploaded files: identity/build logs, six focused-suite logs, gate classification, Security PNG, Remote Assist PNG, and Updates PNG.
 
 ## Commands exercised by the workflow
 
@@ -81,7 +81,7 @@ dotnet run `
 Result:
 
 ```text
-27/27 tests passed.
+31/31 tests passed.
 ```
 
 The executed cases include hashing, path containment, allow-state tamper detection, quarantine, signed integrity manifest mutation, audit mutation, Authenticode trusted/unsigned fixtures, benign AMSI, Defender event redaction, monitor outage/backoff/recovery, provider/subscriber fault isolation, shutdown and timed-wait regressions, Windows Security Center precedence, System32-only imports, PowerShell module pinning, bounded live/fallback observations, child-output limits, event-count ceilings, observation measurements, and the three Remote Assist boundary regressions.
@@ -233,7 +233,7 @@ Remove-Item Env:\SOLTEX_RUN_EICAR -ErrorAction SilentlyContinue
 Result:
 
 ```text
-27/28 tests passed.
+31/32 tests passed.
 FAIL AMSI detects the safe EICAR test marker
 Installed AMSI provider did not block EICAR (result 1).
 ```

@@ -94,24 +94,27 @@ dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release
 
 ## Evidence
 
-The implementation code at branch commit `8ca28f8aa1f50de929787fe1c1cbd23b96b3f6e9` was exercised in pull-request merge preview `035de520a6ea346b9aeb08270fa4f72af86d59c0` by GitHub Actions run `30918120029` on Windows Server 2025 with .NET SDK 10.0.302:
+The identity-migration implementation at branch commit `42f10865fcbcd31f7b26dbb98446d09cfc69285d` was exercised in pull-request merge preview `54c160942a0f2b0837afaa87ccdd4f7b9aa301d8` by GitHub Actions run `30921441649` on Windows Server 2025 with .NET SDK 10.0.302:
 
 - Release build: **passed**, 0 warnings and 0 errors;
-- existing focused suite: **27/27 passed**;
+- identity policy: **passed** across 106 tracked text files and 9 reasoned allowlist entries;
+- existing focused suite: **31/31 passed**;
 - supply-chain suite: **18/18 passed**;
 - hostile hardening suite: **12/12 passed**;
-- update-planner suite: **17/17 passed** in 2,602.5 ms on that runner;
-- Device Fabric policy suite: **20/20 passed** in 37.5 ms on that runner;
-- opt-in hosted EICAR suite: **27/28** because the installed hosted-runner AMSI provider returned native result `1` for the in-memory marker;
+- update-planner suite: **17/17 passed** in 2,816.4 ms on that runner;
+- Device Fabric policy suite: **20/20 passed** in 41.8 ms on that runner;
+- opt-in hosted EICAR suite: **31/32** because the installed hosted-runner AMSI provider returned native result `1` for the in-memory marker;
 - native Security render: **passed**;
 - native Remote Assist render: **passed**;
 - native Updates render: **passed**;
 - render artifact verification: **passed**, with no render-error files.
 
-The retained Actions artifact is `soltex-windows-evidence-30918120029-1` (artifact ID `8895955309`, ZIP SHA-256 `02C121DA84A68988B0D50B1F8CB3CC50C72D299AC3A1CA3D4C7D1C4146ACA31A`). The hosted server did not expose a usable live `wscapi.dll` provider boundary, so this run proves bounded fallback behavior rather than successful live provider enumeration. Native rendering is runtime evidence, not owner visual acceptance. Pixel inspection confirms the two previously recorded Security truncations are corrected at the captured 1044×788 viewport; the broader viewport/scaling/accessibility matrix remains pending.
+The retained Actions artifact is `soltex-windows-evidence-30921441649-1` (artifact ID `8897293182`, ZIP SHA-256 `EA7781B0296147362D4546ABE5076EC0282F0F15F30256EBB3F5D4961F5F6195`). The hosted server did not expose a usable live `wscapi.dll` provider boundary, so this run proves bounded fallback behavior rather than successful live provider enumeration. Native rendering is runtime evidence, not owner visual acceptance. The three captured 1044×788 panels were inspected for gross identity/layout regressions; the broader viewport/scaling/accessibility matrix remains pending.
 
 Documentation:
 
+- Current continuation handoff: [`HANDOFF.md`](HANDOFF.md).
+- Documentation map: [`docs/INDEX.md`](docs/INDEX.md).
 - Current status and nonclaims: [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md).
 - Exact commands and evidence ledger: [`docs/VALIDATION.md`](docs/VALIDATION.md).
 - Publisher, signed-release, anti-rollback, and archive boundaries: [`docs/SUPPLY_CHAIN_SECURITY.md`](docs/SUPPLY_CHAIN_SECURITY.md).
@@ -120,6 +123,7 @@ Documentation:
 - Remote Assist license and trust boundary: [`docs/REMOTE_ASSIST.md`](docs/REMOTE_ASSIST.md).
 - Implemented Device Fabric policy foundation plus proposed NAS, Drive, and isolated Box boundaries: [`docs/PERSONAL_DEVICE_FABRIC.md`](docs/PERSONAL_DEVICE_FABRIC.md).
 - Complete built/current/planned systems and visual/coding roadmap: [`docs/MASTER_PROJECT_BLUEPRINT.md`](docs/MASTER_PROJECT_BLUEPRINT.md).
+- Product identity and installed-state compatibility contract: [`docs/NAMING_AND_COMPATIBILITY.md`](docs/NAMING_AND_COMPATIBILITY.md).
 
 ## Important boundary
 

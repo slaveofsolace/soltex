@@ -16,17 +16,18 @@ A passing narrow test proves only that boundary. It does not establish productio
 
 ## Windows-verified current branch baseline
 
-Implementation commit `8ca28f8aa1f50de929787fe1c1cbd23b96b3f6e9` was exercised in pull-request merge preview `035de520a6ea346b9aeb08270fa4f72af86d59c0` by GitHub Actions run `30918120029` on Windows Server 2025 (`10.0.26100`, image `windows-2025-vs2026` `20260728.188.1`) with .NET SDK `10.0.302`.
+Implementation commit `42f10865fcbcd31f7b26dbb98446d09cfc69285d` was exercised in pull-request merge preview `54c160942a0f2b0837afaa87ccdd4f7b9aa301d8` by GitHub Actions run `30921441649` on Windows Server 2025 (`10.0.26100`, image `windows-2025-vs2026` `20260728.188.1`) with .NET SDK `10.0.302`.
 
 | Gate | Result | Scope |
 |---|---:|---|
+| Identity policy | Passed | 106 tracked text files; 9 reasoned compatibility/historical allowlist entries |
 | Release build | 0 warnings, 0 errors | Entire `Soltex.sln`, including Security, Remote Assist, Update, Device Fabric, and all focused test projects |
-| Existing focused suite | 27/27 passed | Security companion, monitoring boundaries, Remote Assist regressions |
+| Existing focused suite | 31/31 passed | Security companion, identity/root compatibility, monitoring boundaries, Remote Assist regressions |
 | Supply-chain suite | 18/18 passed | Publisher policy, signed release, sequence state including cross-process lock, bounded ZIP staging |
 | Hostile hardening suite | 12/12 passed | Immutable publisher snapshot, authenticated-state recovery, bounded ZIP preflight, pinned workflow policy |
 | Update-planner suite | 17/17 passed | Descriptor quorum/expiry, trust rotation, bounded acquisition cleanup, journal recovery, exact confirmation |
 | Device Fabric policy suite | 20/20 passed | Exact catalog, target-manifest binding, local consent, injection/bounds, immutable snapshots |
-| Opt-in EICAR interoperability | 27/28 | Hosted AMSI provider returned native result `1`; owner-host evidence remains pending |
+| Opt-in EICAR interoperability | 31/32 | Hosted AMSI provider returned native result `1`; owner-host evidence remains pending |
 | Security native render | Passed | 1044×788 render-smoke output created |
 | Remote Assist native render | Passed | 1044×788 render-smoke output created |
 | Updates native render | Passed | 1044×788 render-smoke output created |
@@ -34,15 +35,17 @@ Implementation commit `8ca28f8aa1f50de929787fe1c1cbd23b96b3f6e9` was exercised i
 
 Retained workflow evidence:
 
-- run: `30918120029`;
-- job: `92021363535`;
-- artifact: `soltex-windows-evidence-30918120029-1`;
-- artifact ID: `8895955309`;
-- uploaded artifact ZIP size: 323,473 bytes;
-- GitHub-recorded artifact ZIP SHA-256: `02C121DA84A68988B0D50B1F8CB3CC50C72D299AC3A1CA3D4C7D1C4146ACA31A`;
+- run: `30921441649`;
+- job: `92032791166`;
+- artifact: `soltex-windows-evidence-30921441649-1`;
+- artifact ID: `8897293182`;
+- uploaded artifact ZIP size: 323,918 bytes;
+- GitHub-recorded artifact ZIP SHA-256: `EA7781B0296147362D4546ABE5076EC0282F0F15F30256EBB3F5D4961F5F6195`;
 - retention configured by the workflow: 30 days.
 
-The hosted Windows Server image did not expose a usable live `wscapi.dll` boundary. The provider-neutral health test therefore proved bounded failure/fallback behavior and an `Unknown` state, not successful provider inventory on that host. Native rendering proves that the Security, Remote Assist, and Updates panels initialize and capture. Pixel inspection at 1044×788 confirmed that the previously recorded Security scan-subtitle and event-detail truncation is corrected; broader viewport/scaling coverage and owner visual acceptance remain pending.
+The hosted Windows Server image did not expose a usable live `wscapi.dll` boundary. The provider-neutral health test therefore proved bounded failure/fallback behavior and an `Unknown` state, not successful provider inventory on that host. Native rendering proves that the Security, Remote Assist, and Updates panels initialize and capture under the Soltex identity. The three 1044×788 PNGs were visually inspected for gross identity/layout regressions; broader viewport/scaling coverage, accessibility review, and owner visual acceptance remain pending.
+
+The identity wave also adds a fail-closed local-data-root resolver. Fresh profiles use the canonical root; a sole existing compatible root remains in place; dual roots, file collisions, and reparse paths are rejected. No automatic state move is claimed. See `NAMING_AND_COMPATIBILITY.md` and the retained identity-migration security review.
 
 ## Implemented: Security companion
 
