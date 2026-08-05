@@ -4,6 +4,9 @@
     <Product>$(SoltexProductName)</Product>
     <RepositoryUrl>https://github.com/slaveofsolace/soltex</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <!-- No legal publisher has been selected, so Company stays the product name. -->
+    <Company>$(SoltexProductName)</Company>
+    <Copyright>Copyright © 2026. All rights reserved.</Copyright>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>

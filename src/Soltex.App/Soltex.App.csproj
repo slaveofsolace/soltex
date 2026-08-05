@@ -7,6 +7,7 @@
     <RootNamespace>Soltex.App</RootNamespace>
     <AssemblyName>Soltex</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Soltex.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Soltex.RemoteAssist\Soltex.RemoteAssist.csproj" />
