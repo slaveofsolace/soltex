@@ -5,22 +5,30 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
+& (Join-Path $PSScriptRoot 'verify-identity.ps1')
+
 $dotnet = Join-Path $repoRoot '.dotnet\dotnet.exe'
 if (-not (Test-Path $dotnet)) {
     $dotnet = (Get-Command dotnet -ErrorAction Stop).Source
 }
 
-& $dotnet build (Join-Path $repoRoot 'WaveSlate.sln') --configuration Release
+& $dotnet build (Join-Path $repoRoot 'Soltex.sln') --configuration Release
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 if ($RunEicar) {
-    $env:WAVESLATE_RUN_EICAR = '1'
+    $env:SOLTEX_RUN_EICAR = '1'
 }
 
 try {
-    & $dotnet run --project (Join-Path $repoRoot 'tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj') --configuration Release --no-build
+    & $dotnet run --project (Join-Path $repoRoot 'tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj') --configuration Release --no-build
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    & $dotnet run --project (Join-Path $repoRoot 'tests\Soltex.Monitoring.Tests\Soltex.Monitoring.Tests.csproj') --configuration Release --no-build
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    & $dotnet run --project (Join-Path $repoRoot 'tests\Soltex.App.Tests\Soltex.App.Tests.csproj') --configuration Release --no-build
     exit $LASTEXITCODE
 }
 finally {
-    Remove-Item Env:WAVESLATE_RUN_EICAR -ErrorAction SilentlyContinue
+    Remove-Item Env:SOLTEX_RUN_EICAR -ErrorAction SilentlyContinue
 }

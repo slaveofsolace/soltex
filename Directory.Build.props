@@ -1,5 +1,9 @@
 <Project>
   <PropertyGroup>
+    <SoltexProductName>Soltex</SoltexProductName>
+    <Product>$(SoltexProductName)</Product>
+    <RepositoryUrl>https://github.com/slaveofsolace/soltex</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>

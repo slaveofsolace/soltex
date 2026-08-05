@@ -1,0 +1,90 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.Security", "src\Soltex.Security\Soltex.Security.csproj", "{7B692591-DA09-4A75-8293-0C365FB19BF8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.App", "src\Soltex.App\Soltex.App.csproj", "{1EA7DF59-7714-4454-9AEF-7C56371609CB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.RemoteAssist", "src\Soltex.RemoteAssist\Soltex.RemoteAssist.csproj", "{F3C4B2D1-83A5-4C6D-9E7F-1029384756AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.Security.Tests", "tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj", "{43D8F0B8-5D44-4A38-AE4E-7D92DF6080E3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.Security.SupplyChain.Tests", "tests\Soltex.Security.SupplyChain.Tests\Soltex.Security.SupplyChain.Tests.csproj", "{AB66E472-D502-4C9C-8651-FD30420D0459}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.Security.Hardening.Tests", "tests\Soltex.Security.Hardening.Tests\Soltex.Security.Hardening.Tests.csproj", "{E1A2B3C4-D5E6-47F8-90AB-1234567890CD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.Update", "src\Soltex.Update\Soltex.Update.csproj", "{BADC0FFE-1234-4BEE-9A01-112233445566}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.Update.Tests", "tests\Soltex.Update.Tests\Soltex.Update.Tests.csproj", "{C0DEC0DE-5EED-4A11-9E57-778899AABBCC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.DeviceFabric", "src\Soltex.DeviceFabric\Soltex.DeviceFabric.csproj", "{D3F1A3C0-604A-4BE7-9ED6-3CBEA4D33E07}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.DeviceFabric.Tests", "tests\Soltex.DeviceFabric.Tests\Soltex.DeviceFabric.Tests.csproj", "{4F3B3F52-CA19-460C-B07C-5ED408E22C2D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.Monitoring", "src\Soltex.Monitoring\Soltex.Monitoring.csproj", "{A7B2C6D4-1E90-4F88-9A31-6D7B25E4C802}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.Monitoring.Tests", "tests\Soltex.Monitoring.Tests\Soltex.Monitoring.Tests.csproj", "{B8C3D7E5-2F01-4A99-8B42-7E8C36F5D913}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Soltex.App.Tests", "tests\Soltex.App.Tests\Soltex.App.Tests.csproj", "{C9D4E8F6-3A12-4BAA-9C53-8F9D47A6E024}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7B692591-DA09-4A75-8293-0C365FB19BF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B692591-DA09-4A75-8293-0C365FB19BF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B692591-DA09-4A75-8293-0C365FB19BF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B692591-DA09-4A75-8293-0C365FB19BF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1EA7DF59-7714-4454-9AEF-7C56371609CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EA7DF59-7714-4454-9AEF-7C56371609CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EA7DF59-7714-4454-9AEF-7C56371609CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EA7DF59-7714-4454-9AEF-7C56371609CB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3C4B2D1-83A5-4C6D-9E7F-1029384756AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3C4B2D1-83A5-4C6D-9E7F-1029384756AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3C4B2D1-83A5-4C6D-9E7F-1029384756AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3C4B2D1-83A5-4C6D-9E7F-1029384756AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43D8F0B8-5D44-4A38-AE4E-7D92DF6080E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43D8F0B8-5D44-4A38-AE4E-7D92DF6080E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43D8F0B8-5D44-4A38-AE4E-7D92DF6080E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43D8F0B8-5D44-4A38-AE4E-7D92DF6080E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB66E472-D502-4C9C-8651-FD30420D0459}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB66E472-D502-4C9C-8651-FD30420D0459}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB66E472-D502-4C9C-8651-FD30420D0459}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB66E472-D502-4C9C-8651-FD30420D0459}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1A2B3C4-D5E6-47F8-90AB-1234567890CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1A2B3C4-D5E6-47F8-90AB-1234567890CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1A2B3C4-D5E6-47F8-90AB-1234567890CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1A2B3C4-D5E6-47F8-90AB-1234567890CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BADC0FFE-1234-4BEE-9A01-112233445566}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BADC0FFE-1234-4BEE-9A01-112233445566}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BADC0FFE-1234-4BEE-9A01-112233445566}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BADC0FFE-1234-4BEE-9A01-112233445566}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C0DEC0DE-5EED-4A11-9E57-778899AABBCC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C0DEC0DE-5EED-4A11-9E57-778899AABBCC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C0DEC0DE-5EED-4A11-9E57-778899AABBCC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C0DEC0DE-5EED-4A11-9E57-778899AABBCC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3F1A3C0-604A-4BE7-9ED6-3CBEA4D33E07}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3F1A3C0-604A-4BE7-9ED6-3CBEA4D33E07}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3F1A3C0-604A-4BE7-9ED6-3CBEA4D33E07}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3F1A3C0-604A-4BE7-9ED6-3CBEA4D33E07}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F3B3F52-CA19-460C-B07C-5ED408E22C2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F3B3F52-CA19-460C-B07C-5ED408E22C2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F3B3F52-CA19-460C-B07C-5ED408E22C2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F3B3F52-CA19-460C-B07C-5ED408E22C2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7B2C6D4-1E90-4F88-9A31-6D7B25E4C802}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7B2C6D4-1E90-4F88-9A31-6D7B25E4C802}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7B2C6D4-1E90-4F88-9A31-6D7B25E4C802}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7B2C6D4-1E90-4F88-9A31-6D7B25E4C802}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8C3D7E5-2F01-4A99-8B42-7E8C36F5D913}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8C3D7E5-2F01-4A99-8B42-7E8C36F5D913}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8C3D7E5-2F01-4A99-8B42-7E8C36F5D913}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8C3D7E5-2F01-4A99-8B42-7E8C36F5D913}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9D4E8F6-3A12-4BAA-9C53-8F9D47A6E024}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9D4E8F6-3A12-4BAA-9C53-8F9D47A6E024}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9D4E8F6-3A12-4BAA-9C53-8F9D47A6E024}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9D4E8F6-3A12-4BAA-9C53-8F9D47A6E024}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -1,10 +1,10 @@
 # Soltex master project blueprint
 
-Snapshot: 2026-08-03  
+Snapshot: 2026-08-04
 Repository target: `slaveofsolace/soltex` (private)  
-Canonical local source at snapshot: `C:\Users\suhai\Documents\SOL Tools`
+Current isolated source at snapshot: `C:\Users\suhai\Documents\soltex-immersive-workspace`
 
-Product identity: **Soltex**. The existing solution, assemblies, namespaces, and some handoff filenames retain `WaveSlate` as a legacy implementation identifier. Do not perform a bulk rename until the current source passes its build/test/render gate and the rename has a focused compatibility plan.
+Product identity: **Soltex**. The solution, projects, assemblies, namespaces, current documentation, and handoff use that identity. Installed state remains compatible through the focused, fail-closed rules in `NAMING_AND_COMPATIBILITY.md`; historical evidence is not rewritten.
 
 ## 1. Product vision
 
@@ -27,12 +27,12 @@ Passing a narrow integration test proves only that integration. It does not prov
 
 ### 3.1 Windows-verified baseline
 
-The last executed baseline is a .NET 10 WPF application centered on a lightweight Windows Security companion. The executed baseline passed a Release build with zero warnings/errors and 16 focused tests. It included:
+The current frozen implementation is commit `2a0699b2ca77b30fa636279b1d5ecab603a8bde9`. GitHub Actions run `30925606488` passed the Release build with zero warnings/errors, all seven focused suites, six native renders, and render verification. It includes:
 
 - Windows Security Center aggregate antivirus health;
 - Defender health and operating-mode details;
 - quick/custom Defender scan and intelligence-update requests using fixed supported commands;
-- AMSI scanning at WaveSlate's bounded content-intake boundary;
+- AMSI scanning at Soltex's bounded content-intake boundary;
 - SHA-256 assessment and exact-hash allow decisions;
 - Authenticode and detached RSA-PSS/SHA-256 manifest verification;
 - authenticated, recoverable quarantine;
@@ -40,13 +40,13 @@ The last executed baseline is a .NET 10 WPF application centered on a lightweigh
 - an HMAC-chained local audit log with hashed paths;
 - bounded, path-redacted Defender Operational event parsing;
 - prior performance measurements for WSC, Defender status/events, and a 4 KiB AMSI call;
-- an earlier native WPF Security render.
+- native WPF Home, Monitoring, Devices, Security, Remote Assist, and Updates renders;
+- bounded CPU, physical-memory, process, and fixed-volume observation;
+- copied finite telemetry histories and explicit current/partial/stale/unavailable/recovered state;
+- a sanitized local-device profile that is explicitly `NotEnrolled`;
+- one shared warm graphite/parchment/coral WPF design system.
 
-That baseline remains useful evidence, but it predates all current-source hardening and UI/Remote Assist additions.
-
-### 3.2 Current source, verification pending
-
-Current source adds:
+Current source also includes:
 
 - polling-wait cancellation that does not abandon channel readers;
 - byte-bounded PowerShell stdout/stderr capture while streams are read;
@@ -59,15 +59,15 @@ Current source adds:
 - Defender event queries that distinguish an empty log result from provider/access failure;
 - enforcement of the requested event-count ceiling after JSON crosses the child boundary;
 - three additional focused regressions for those later monitoring/process/event boundaries;
-- `WaveSlate.RemoteAssist`, a narrow adapter for a separately installed RustDesk client;
+- `Soltex.RemoteAssist`, a narrow adapter for a separately installed RustDesk client;
 - executable discovery/selection, reparse rejection, SHA-256 approval and revalidation;
 - Authenticode checks at selection and immediately before launch;
 - a constrained peer-ID type and fixed shell-free `--connect` launch plan;
 - explicit local confirmation and peer-ID-free audit events;
-- a Zen-inspired, independently authored visual refresh and Remote Assist page;
-- panel-selectable native render-smoke support.
+- a Zen-informed, independently authored visual refresh and Remote Assist page;
+- six-panel native render-smoke support.
 
-Current source defines **27 default tests** and **28 checks** when the optional in-memory EICAR interoperability test is enabled. The current 27/28 checks, Release build, and redesigned Security/Remote native renders are pending fresh execution. Do not report them as passed until new evidence exists.
+Current evidence totals are Security 31/31, supply chain 18/18, hardening 12/12, update 17/17, Device Fabric 24/24, monitoring 13/13, and WPF controls 5/5. The optional in-memory EICAR run is 31/32 because the hosted AMSI provider returned native result `1`; owner-host interoperability remains open. Exact evidence is in `VALIDATION.md` and `evidence/2026-08-04-immersive-workspace/`.
 
 ## 4. Systems and principles being followed
 
@@ -75,8 +75,8 @@ Current source defines **27 default tests** and **28 checks** when the optional 
 
 - Windows Security Center is the provider-neutral source of aggregate antivirus health.
 - Microsoft Defender supplies details and supported operations when available.
-- AMSI protects WaveSlate's own bounded content-intake boundary.
-- WaveSlate never disables a provider, adds Defender exclusions, changes Malwarebytes registration, or claims to be a registered antivirus provider.
+- AMSI protects Soltex's own bounded content-intake boundary.
+- Soltex never disables a provider, adds Defender exclusions, changes Malwarebytes registration, or claims to be a registered antivirus provider.
 - Defender/Malwarebytes lessons are interoperability and UX lessons only: visible layer health, explicit scans, bounded history, recovery, quarantine, and deliberate exceptions.
 - A true antivirus engine, minifilter, ELAM/PPL program, WSC registration, cloud reputation service, and measured detection organization remain a separate product program.
 
@@ -84,8 +84,10 @@ Current source defines **27 default tests** and **28 checks** when the optional 
 
 - Public behavior and first-party documentation may inform independently written requirements.
 - Do not copy SteelSeries, NZXT, Zen Browser, AppControl, Malwarebytes, RustDesk, or other products' proprietary source, private protocols, assets, branding, signatures, or layouts.
-- RustDesk is AGPL-3.0 and remains a separate installed program. WaveSlate's current boundary is an external process, not embedded or linked code.
+- RustDesk is AGPL-3.0 and remains a separate installed program. Soltex's current boundary is an external process, not embedded or linked code.
 - Similarity goals mean capability coverage and interaction quality, never a deceptive 1:1 visual clone.
+
+The verified public-source comparison, rights disposition, derived AppControl requirements, and ordered clean-room implementation stages are maintained in `REFERENCE_SYSTEMS.md`. AppControl's proprietary desktop application remains `REFERENCE ONLY`; its separate MIT read-only MCP repository was reviewed as architecture metadata but was not cloned or imported.
 
 ### 4.3 Isolation and least authority
 
@@ -107,9 +109,9 @@ Current source defines **27 default tests** and **28 checks** when the optional 
 
 The owner's cross-device conversation resolves into these concrete decisions:
 
-1. **RustDesk is remote hands, not the brain.** It is used when a person needs to see or control a screen. Automation goes through narrow WaveSlate device agents.
+1. **RustDesk is remote hands, not the brain.** It is used when a person needs to see or control a screen. Automation goes through narrow Soltex device agents.
 2. **Each computer has a small capability agent.** Voice/text intent becomes a typed, previewed, short-lived job for one target and one capability. There is no generic remote shell.
-3. **Tailscale is the optional private mesh.** It provides separately managed private reachability, normally direct peer-to-peer with relay fallback where needed. Tailnet membership is not WaveSlate authorization, and WaveSlate does not open public ingress or weaken ACLs.
+3. **Tailscale is the optional private mesh.** It provides separately managed private reachability, normally direct peer-to-peer with relay fallback where needed. Tailnet membership is not Soltex authorization, and Soltex does not open public ingress or weaken ACLs.
 4. **The NAS holds data and evidence, not permissions.** It may store shared files, indexes, backups, and permitted redacted receipts. It does not hold device private keys, OAuth refresh tokens, approval policy, or the authoritative command queue.
 5. **Unified search spans approved domains.** Local files, NAS files, notes, and Google Drive can appear in one search experience while provenance and account boundaries stay visible.
 6. **Google Drive is personal and read-write.** Planned operations include search, upload, download, folder creation, move, rename, trash/restore, a `Solace Inbox`, and bounded directional sync rules.
@@ -131,6 +133,8 @@ The full device-fabric protocol, failure model, delivery sequence, and nonclaims
 ### 6.2 Performance, Task Manager, and App Control
 
 Clean-room behavior references: Windows Task Manager, NZXT CAM, and public AppControl workflows.
+
+The differentiator to retain from AppControl is historical causality: a shared time range that correlates bounded resource samples with process, security, install, and privacy events while clearly separating temporal overlap from proven cause. The differentiator is not a 1:1 layout or a broad kill/disable feature.
 
 Planned capabilities:
 
@@ -156,7 +160,7 @@ Planned capabilities:
 - integrate the future Privacy Tool work as a separate page/profile only after its actual repository/chat requirements are imported and reviewed;
 - show Windows privacy permissions, startup exposure, trusted publishers, connector permissions, local audit integrity, quarantine, and account boundaries;
 - keep remediation reversible and separate informational state from mutating actions;
-- never present privacy toggles or Defender/Malwarebytes state that WaveSlate did not actually query.
+- never present privacy toggles or Defender/Malwarebytes state that Soltex did not actually query.
 
 ### 6.5 Remote Assist and personal device fabric
 
@@ -211,13 +215,13 @@ Required UI quality:
 - Windows scaling checks at 100%, 125%, 150%, and 200%; representative 1366×768, 1440p, and 4K captures;
 - tables remain readable and virtualized; charts expose text equivalents;
 - no glass-on-glass, gradient headline text, generic rounded-card carpet, micro-label overload, emoji navigation, or placeholder success metrics;
-- current UI quality remains **unaccepted** until fresh native renders and owner review exist.
+- current UI has six fresh native renders and a bounded Human Eye `KEEP` review, but remains **owner-unaccepted** until the user completes representative scaling/accessibility review.
 
 ## 8. Coding direction
 
 - Keep .NET 10 WPF as the Windows shell for the current product track.
-- Preserve `WaveSlate.Security` and `WaveSlate.RemoteAssist` boundaries.
-- Introduce projects by capability, for example `WaveSlate.Monitoring`, `WaveSlate.AppControl`, `WaveSlate.Benchmarks`, `WaveSlate.Audio`, `WaveSlate.Clips`, `WaveSlate.Privacy`, `WaveSlate.DeviceFabric`, and connector-specific assemblies only when real code justifies them.
+- Preserve `Soltex.Security` and `Soltex.RemoteAssist` boundaries.
+- Introduce projects by capability, for example `Soltex.Monitoring`, `Soltex.AppControl`, `Soltex.Benchmarks`, `Soltex.Audio`, `Soltex.Clips`, `Soltex.Privacy`, `Soltex.DeviceFabric`, and connector-specific assemblies only when real code justifies them.
 - Define small provider interfaces and typed immutable models before binding UI.
 - Prefer supported Windows APIs: WSC, AMSI, Authenticode/WinTrust, DPAPI, Event Log, ETW/PDH/Performance Counters, WMI/CIM where appropriate, WASAPI/MMDevice, Windows Graphics Capture, D3D11, and Media Foundation.
 - Treat every external executable, plugin, archive, update, and connector as an explicit trust boundary.
@@ -231,18 +235,13 @@ Required UI quality:
 
 ### Gate 0 — establish the current truth
 
-1. Build Release.
-2. Run 27/27 default tests.
-3. Run 28/28 with the opt-in in-memory EICAR interoperability check.
-4. Render Security and Remote Assist natively.
-5. Inspect output, reconcile the evidence ledger, and obtain owner visual review.
+Completed for implementation commit `2a0699b`: Release build, identity policy, seven focused suites, six native renders, artifact verification, independent artifact re-hash, and current-capture evidence reconciliation. Hosted EICAR and owner visual acceptance remain explicitly separate open gates.
 
 ### Wave 1 — immersive shell and read-only observability
 
-- finish the navigation shell, command/search surface, design tokens, component states, and responsive/scaling behavior;
-- add typed read-only process/system metric providers and a dense Task Manager page;
-- add a device inventory model with loopback-only fixtures;
-- add no mutating process action, network listener, cloud OAuth, or stress benchmark yet.
+- **Completed bounded slice:** shared navigation/design tokens/component states, real Home/Monitoring/Devices surfaces, typed read-only CPU/memory/process/volume providers, bounded histories, sanitized local observation, and an exact non-executing capability model.
+- **Still open in Wave 1:** command/search surface, broader responsive/scaling/accessibility evidence, and owner visual acceptance.
+- No mutating process action, network listener, cloud OAuth, or stress benchmark was added.
 
 ### Wave 2 — controlled local actions
 
@@ -281,4 +280,4 @@ For each wave retain:
 
 ## 11. Immediate next action
 
-Do not begin with OAuth, remote command execution, a driver, or decorative dashboard expansion. First make the current 27/28 security and Remote Assist source build and pass, capture both native panels, and reconcile the evidence. The first safe scaffold after that gate is the immersive shell plus read-only process/system monitoring interfaces and a loopback-only device inventory.
+Run the bounded owner UI gate at 100 and 150 percent scaling with one keyboard/high-contrast/screen-reader pass, then record `KEEP`, `REVISE`, or `REJECT`. If accepted, begin Device Fabric Stage 2 with a loopback-only signed envelope/replay/receipt model that remains non-networked and non-executing until hostile state/parser tests pass. Do not begin with OAuth, a generic remote command executor, a driver, public ingress, unattended control, or decorative dashboard expansion.

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <RootNamespace>Soltex.Security.Tests</RootNamespace>
+    <AssemblyName>Soltex.Security.Tests</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Soltex.RemoteAssist\Soltex.RemoteAssist.csproj" />
+    <ProjectReference Include="..\..\src\Soltex.Security\Soltex.Security.csproj" />
+  </ItemGroup>
+</Project>

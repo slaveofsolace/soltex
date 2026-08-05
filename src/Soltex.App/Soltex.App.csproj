@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Soltex.App</RootNamespace>
+    <AssemblyName>Soltex</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Soltex.RemoteAssist\Soltex.RemoteAssist.csproj" />
+    <ProjectReference Include="..\Soltex.Security\Soltex.Security.csproj" />
+    <ProjectReference Include="..\Soltex.Update\Soltex.Update.csproj" />
+    <ProjectReference Include="..\Soltex.Monitoring\Soltex.Monitoring.csproj" />
+    <ProjectReference Include="..\Soltex.DeviceFabric\Soltex.DeviceFabric.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Soltex.App.Tests" />
+  </ItemGroup>
+</Project>

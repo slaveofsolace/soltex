@@ -1,59 +1,461 @@
-# Validation record
+# Validation and evidence
+
+Snapshot: 2026-08-04
+Repository: `slaveofsolace/soltex`  
+Canonical product: Soltex  
+Current solution identifier: `Soltex.sln`
+
+## Evidence rules
+
+- A successful build is not a runtime test.
+- A passed focused test proves only its stated boundary.
+- A hosted-runner fallback test is not evidence that the same live Windows provider was available.
+- A generated PNG is not native WPF evidence; the render-smoke output below is produced by the WPF application itself.
+- Successful native rendering is not owner visual acceptance or accessibility conformance.
+- The optional EICAR check is provider interoperability evidence, not a Soltex detection-rate test.
+- Local checkout state must be observed locally; it cannot be inferred from the private remote.
+
+## Current Windows evidence
+
+Implementation commit:
+
+```text
+2a0699b2ca77b30fa636279b1d5ecab603a8bde9
+```
+
+Stacked branch and pull request:
+
+```text
+feat/soltex-immersive-workspace-v1
+https://github.com/slaveofsolace/soltex/pull/5
+```
+
+Stacked identity base and pull request:
+
+```text
+refactor/soltex-identity-and-repo-coherence
+57607a35da14968c0d729795a857fd250b6566d9
+https://github.com/slaveofsolace/soltex/pull/4
+```
 
 Environment:
 
-- Windows build 10.0.26200, x64.
-- Project-local .NET SDK 10.0.302.
-- .NET Windows Desktop runtime 10.0.10.
-- Windows Security Center reported `Good` during the current default test runs.
-- Defender reported `AMRunningMode=Normal` during the current run.
+- GitHub Actions run `30925606488`;
+- job `92046999983`;
+- GitHub-hosted Windows runner;
+- checkout directory `D:\a\soltex\soltex`.
 
-Commands executed for the last pre-correction baseline:
+Retained evidence:
 
-```powershell
-.\.dotnet\dotnet.exe build .\WaveSlate.sln --configuration Release
-.\.dotnet\dotnet.exe run --project .\tests\WaveSlate.Security.Tests\WaveSlate.Security.Tests.csproj --configuration Release --no-build
-```
+- artifact name: `soltex-windows-evidence-30925606488-1`;
+- artifact ID: `8899014386`;
+- uploaded artifact ZIP size: 626,093 bytes;
+- GitHub-recorded artifact ZIP SHA-256: `71905016B3A67F8CE340D90C2E404DEBFB185C3DAE8A973F21B80F1B8A94515`;
+- independently downloaded artifact ZIP SHA-256: `71905016B3A67F8CE340D90C2E404DEBFB185C3DAE8A973F21B80F1B8A94515`;
+- configured retention: 30 days;
+- uploaded files: build and seven focused-suite logs, EICAR log, gate classification, and native Home, Monitoring, Devices, Security, Remote Assist, and Updates PNGs.
 
-Deferred post-baseline command:
+## Commands exercised by the workflow
 
-```powershell
-.\eng\verify.ps1 -RunEicar
-```
-
-Deferred current-source native renders:
+### Release build
 
 ```powershell
-.\.dotnet\dotnet.exe run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\security-monitoring-v1.png
-.\.dotnet\dotnet.exe run --project .\src\WaveSlate.App\WaveSlate.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\remote-assist-v1.png --panel remote
+dotnet build .\Soltex.sln --configuration Release
 ```
 
-Observed results:
+Result:
 
-- Build: 0 warnings, 0 errors.
-- Hash/path/state/quarantine/manifest/audit tests: passed.
-- Authenticode trusted Microsoft .NET host and rejected unsigned development assembly: passed.
-- Benign AMSI: passed.
-- Defender/WSC bounded live status: passed.
-- WSC callback registration and disposal: passed.
-- Protection monitor simulated outage/backoff/recovery and shutdown-race regression: passed.
-- Protection monitor prompt-refresh-after-multiple-polls regression: added after static inspection; current-source execution pending command-startup recovery.
-- Defender child-process output overflow regression: added after replacing post-read truncation with a bounded byte-stream reader; current-source execution pending command-startup recovery.
-- Provider-neutral health precedence regression: added to prove explicit WSC warning states cannot be overwritten by Defender detail flags and passive Defender cannot substitute for unknown aggregate health; current-source execution pending command-startup recovery.
-- Native import policy regression: added to prove the security assembly resolves its AMSI, WSC, Authenticode, DPAPI, and kernel P/Invokes only from System32; current-source execution pending command-startup recovery.
-- PowerShell module provenance regression: added to prove fixed security scripts import Defender, Diagnostics, and Utility manifests by direct `$PSHOME` paths and module-qualify every invoked security cmdlet; current-source execution pending command-startup recovery.
-- Protection fault-isolation regression: added to prove a nonfatal provider exception becomes a redacted degraded observation, recovery remains possible, and a failed update subscriber cannot stop later observations; current-source execution pending command-startup recovery.
-- PowerShell child-boundary regression: added to prove the child starts in its executable directory and raw stderr containing a private path is replaced by a bounded exit-code diagnostic before reaching health/audit output; current-source execution pending command-startup recovery.
-- Defender event-envelope regression: added to prove JSON returning more events than requested is rejected. The fixed script now treats only the no-match error as an empty result and propagates other provider/access failures; current-source execution pending command-startup recovery.
-- Remote Assist peer-ID regression: added to prove spaces, quoting, shell metacharacters, and argument-like input cannot cross the peer-ID value boundary; current-source execution pending command-startup recovery.
-- Remote Assist launch-plan regression: added to prove sharing has no arguments, control has exactly `--connect` plus one peer ID, `UseShellExecute` is false, unattended/elevation/service controls are absent, and an approved executable is blocked after its bytes change; current-source execution pending command-startup recovery.
-- Remote Assist discovery regression: added to prove automatic lookup is bounded to at most two Program Files candidates and other executable names are rejected; current-source execution pending command-startup recovery.
-- Current XAML received a direct structural check: tag stack balanced, 41 `x:Name` values were unique, and every new Remote Assist code-behind control reference resolved. This is static evidence only, not a WPF compile or render result.
-- Render-smoke now has a fixed `--panel` selector so Security and Remote Assist can be captured independently without opening a session. The Remote Assist capture command has not run.
-- Defender Operational query and privacy-redacting parser: passed.
-- In-memory harmless EICAR marker: blocked as expected on the prior baseline; the current expanded opt-in run is pending because the PowerShell command path times out during startup.
-- Last executed default suite: 16/16 passed before the latest source-only corrections. Current source defines 27 default tests: eight security-focused regressions and three Remote Assist boundary regressions are new and unexecuted. The required expanded gate is 28/28 when the opt-in in-memory EICAR interoperability test is included. Both current-source results remain open until command startup responds or the supplied manual validation command returns evidence.
-- Latest measured timings: callback registration 5.4 ms; Defender health 607.4 ms; 16-event query 422.0 ms; WSC mean 0.336 ms across 250 reads; AMSI 4 KiB mean 1.033 ms across 32 reads.
-- Native WPF health-and-event render: passed; see `artifacts/visual/security-monitoring-v1.png`.
+```text
+Build succeeded.
+0 Warning(s)
+0 Error(s)
+```
 
-These checks establish build/runtime integration. They do not establish malware detection rate, WCAG conformance, visual acceptance by a human owner, driver readiness, or production deployment approval.
+### Existing focused suite
+
+```powershell
+dotnet run `
+  --project .\tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj `
+  --configuration Release `
+  --no-build
+```
+
+Result:
+
+```text
+31/31 tests passed.
+```
+
+The executed cases include hashing, path containment, allow-state tamper detection, quarantine, signed integrity manifest mutation, audit mutation, Authenticode trusted/unsigned fixtures, benign AMSI, Defender event redaction, monitor outage/backoff/recovery, provider/subscriber fault isolation, shutdown and timed-wait regressions, Windows Security Center precedence, System32-only imports, PowerShell module pinning, bounded live/fallback observations, child-output limits, event-count ceilings, observation measurements, and the three Remote Assist boundary regressions.
+
+Hosted-runner observations from this suite:
+
+```text
+Windows Security change registration:
+  registered=False
+  duration=10.3 ms
+  detail=Unable to load DLL 'wscapi.dll' ... 0x8007007E
+
+Windows protection health:
+  WSC=Unknown
+  mode=Normal
+  bounded duration=6427.5 ms
+
+Defender Operational events:
+  16 events
+  duration=815.8 ms
+
+Observation means:
+  WSC read=0.235 ms
+  AMSI 4 KiB call=0.358 ms
+```
+
+These measurements describe one hosted run and are not performance guarantees. The `wscapi.dll` result means this host proves bounded degradation, not successful live provider enumeration.
+
+### Supply-chain hardening suite
+
+```powershell
+dotnet run `
+  --project .\tests\Soltex.Security.SupplyChain.Tests\Soltex.Security.SupplyChain.Tests.csproj `
+  --configuration Release `
+  --no-build
+```
+
+Result:
+
+```text
+18/18 tests passed.
+```
+
+Executed cases:
+
+1. exact code-signing publisher identity accepted;
+2. same subject with another public key rejected;
+3. missing code-signing EKU rejected;
+4. trusted `.NET` host accepted only through the explicitly requested primary signature and zero-secondary-signature boundary;
+5. first release and monotonic upgrade accepted;
+6. rollback rejected;
+7. identical signed release accepted idempotently;
+8. same-sequence/different-manifest equivocation rejected;
+9. local authenticated sequence state detects mutation;
+10. a separately held process lock causes bounded cancellation, then the same sequence-store instance recovers after release;
+11. signed noncanonical `./plugin.dll` alias rejected;
+12. signed non-UTC publication time rejected;
+13. benign ZIP bytes and SHA-256 preserved;
+14. traversal rejected and private staging cleaned;
+15. case-colliding archive paths rejected;
+16. symbolic-link entry rejected;
+17. expanded-size ceiling enforced;
+18. compression-ratio ceiling enforced.
+
+The test certificate and key material are ephemeral fixtures. They are not Soltex production signing material and are not committed.
+
+### Storage, publisher, ZIP, and workflow hostile suite
+
+```powershell
+dotnet run `
+  --project .\tests\Soltex.Security.Hardening.Tests\Soltex.Security.Hardening.Tests.csproj `
+  --configuration Release `
+  --no-build
+```
+
+Result:
+
+```text
+12/12 tests passed.
+```
+
+The cases cover immutable publisher-snapshot binding, source mutation after snapshot, authenticated current/last-known-good state recovery and equivocation, strict duplicate-property JSON, bounded ZIP central-directory preflight, ZIP64/multi-disk rejection, and immutable GitHub Actions SHA/permission policy.
+
+### Non-installing update-planner hostile suite
+
+```powershell
+dotnet run `
+  --project .\tests\Soltex.Update.Tests\Soltex.Update.Tests.csproj `
+  --configuration Release `
+  --no-build
+```
+
+Result:
+
+```text
+17/17 tests passed.
+MEASURE update_planner_suite tests=17 failed=0 total_ms=2895.6
+```
+
+The cases cover valid signed descriptors, duplicate properties, expiry classification, signature quorum, unsigned redirect origins, exact trust replay, trust rollback/equivocation, overlap-preserving trust upgrade, same-key-ID replacement, exact locked acquisition bytes, redirect/truncation/cancellation cleanup, journal sanitization, private-artifact recovery, and exact expiring confirmation.
+
+Hosted-runner wall-clock observations:
+
+| Observation | Duration |
+|---|---:|
+| Complete 17-case suite | 2,895.6 ms |
+| Slowest case: descriptor quorum | 333.4 ms |
+| Exact locked acquisition and cleanup | 291.9 ms |
+| Unauthorized redirect rejection and cleanup | 175.5 ms |
+| Truncated body rejection and cleanup | 133.0 ms |
+| Cancellation cleanup | 143.4 ms |
+| Journal sanitization | 105.5 ms |
+| Recovery inspection and private cleanup | 96.9 ms |
+| Exact confirmation semantics | 0.9 ms |
+
+These are one-run diagnostic timings for ephemeral RSA fixtures and an in-memory authenticated transport. They are not network, disk, production-feed, installer, startup, or responsiveness guarantees.
+
+### Device Fabric Stage 1 policy suite
+
+```powershell
+dotnet run `
+  --project .\tests\Soltex.DeviceFabric.Tests\Soltex.DeviceFabric.Tests.csproj `
+  --configuration Release `
+  --no-build
+```
+
+Result:
+
+```text
+24/24 tests passed.
+MEASURE device_fabric_suite tests=24 failed=0 total_ms=47.7
+```
+
+The cases prove the bounded model behavior for exact catalog membership, target-manifest binding, device-local read-only policy, visible per-job consent, visible external-client handoff, immutable caller-input copies, identifier/display/version validation, duplicate rejection, inventory bounds, and Windows-only Defender request declarations. They also prove bounded/sanitized local machine fields, explicit provenance, and the `NotEnrolled` state. Explicit hostile identifiers for generic shell, arbitrary download-and-execute, and hidden unattended control are denied.
+
+This suite has no device agent, transport, listener, enrollment, signed envelope, replay store, executor, RustDesk session, or real remote action. Its wall-clock duration is one hosted-runner diagnostic, not a cross-device command-latency claim.
+
+### Bounded Windows monitoring suite
+
+```powershell
+dotnet run `
+  --project .\tests\Soltex.Monitoring.Tests\Soltex.Monitoring.Tests.csproj `
+  --configuration Release `
+  --no-build
+```
+
+Result:
+
+```text
+13/13 tests passed.
+MEASURE monitoring_suite tests=13 failed=0 total_ms=765.9
+state=Partial; processes=32; volumes=2; inaccessible=2; provider_ms=166.6; wall_ms=167.1
+```
+
+The suite covers aggregate CPU/process math, sanitization, history validation and immutable copies, safe sample-window bounds, cancellation, live Windows bounds/provenance, path omission, percentage bounds, and measured capture overhead. The representative live capture is one hosted-runner diagnostic, not a responsiveness or throughput guarantee.
+
+### WPF control and real-binding suite
+
+```powershell
+dotnet run `
+  --project .\tests\Soltex.App.Tests\Soltex.App.Tests.csproj `
+  --configuration Release `
+  --no-build
+```
+
+Result:
+
+```text
+5/5 tests passed.
+MEASURE app_control_suite tests=5 failed=0 total_ms=1704.3
+```
+
+The STA suite checks shared controls including the slider, a pixel-rendered bounded sparkline, Home with a real telemetry snapshot, Monitoring provenance and bounded rows, Devices with exactly six modeled capabilities and `NotEnrolled`, and hero/card layout bounds. These tests do not grant subjective visual or accessibility acceptance.
+
+### Opt-in EICAR interoperability
+
+```powershell
+$env:SOLTEX_RUN_EICAR = '1'
+dotnet run `
+  --project .\tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj `
+  --configuration Release `
+  --no-build
+Remove-Item Env:\SOLTEX_RUN_EICAR -ErrorAction SilentlyContinue
+```
+
+Result:
+
+```text
+31/32 tests passed.
+FAIL AMSI detects the safe EICAR test marker
+Installed AMSI provider did not block EICAR (result 1).
+```
+
+The marker was submitted to AMSI in memory only. No malware sample or file-system AV-evasion action was used. The workflow deliberately classifies this as a hosted-provider interoperability gap while preserving a green repository-correctness result for build, required tests, and renders. Run this check on the owner-controlled Windows machine before claiming 32/32.
+
+### Native Home render
+
+```powershell
+dotnet run `
+  --project .\src\Soltex.App\Soltex.App.csproj `
+  --configuration Release `
+  --no-build `
+  -- `
+  --render-smoke .\artifacts\visual\home-current-source.png `
+  --panel home
+```
+
+Result: command succeeded and the expected 1044×788 PNG was present. Current-capture inspection found a balanced editorial hero, visible machine profile, real CPU/memory/storage/process state, and explicit GPU/network/peer gaps without gross clipping.
+
+### Native Monitoring render
+
+```powershell
+dotnet run `
+  --project .\src\Soltex.App\Soltex.App.csproj `
+  --configuration Release `
+  --no-build `
+  -- `
+  --render-smoke .\artifacts\visual\monitoring-current-source.png `
+  --panel monitoring
+```
+
+Result: command succeeded and the expected 1044×788 PNG was present. Current-capture inspection confirmed readable CPU/memory, fixed-volume, provider-coverage, and process regions plus the explicit 72-sample history wording.
+
+### Native Devices render
+
+```powershell
+dotnet run `
+  --project .\src\Soltex.App\Soltex.App.csproj `
+  --configuration Release `
+  --no-build `
+  -- `
+  --render-smoke .\artifacts\visual\devices-current-source.png `
+  --panel devices
+```
+
+Result: command succeeded and the expected 1044×788 PNG was present. Current-capture inspection confirmed the local profile, explicit unenrolled state, visible external-client handoff, wrapped private-mesh copy, and six modeled capability cards.
+
+### Native Security render
+
+```powershell
+dotnet run `
+  --project .\src\Soltex.App\Soltex.App.csproj `
+  --configuration Release `
+  --no-build `
+  -- `
+  --render-smoke .\artifacts\visual\security-current-source.png `
+  --panel security
+```
+
+Result: command succeeded and the expected 1044×788 PNG was present. Pixel inspection confirmed that the scan subtitle is fully visible and Defender event details wrap with tooltips instead of being truncated.
+
+### Native Remote Assist render
+
+```powershell
+dotnet run `
+  --project .\src\Soltex.App\Soltex.App.csproj `
+  --configuration Release `
+  --no-build `
+  -- `
+  --render-smoke .\artifacts\visual\remote-assist-current-source.png `
+  --panel remote
+```
+
+Result: command succeeded and the expected 1044×788 PNG was present.
+
+### Native Updates render
+
+```powershell
+dotnet run `
+  --project .\src\Soltex.App\Soltex.App.csproj `
+  --configuration Release `
+  --no-build `
+  -- `
+  --render-smoke .\artifacts\visual\updates-current-source.png `
+  --panel update
+```
+
+Result: command succeeded and the expected 1044×788 PNG was present. Pixel inspection confirmed the Soltex branding, selected Updates navigation state, honest disabled planning control, authenticated-journal empty state, and explicit non-installing/recovery boundaries without visible truncation in the captured viewport.
+
+The verification step found all six PNGs and no `*.error.txt` render output. Frozen screenshot hashes:
+
+| Panel | SHA-256 |
+|---|---|
+| Home | `4732077CA3053349DC359117ECE032B0A5E75313384F61A536C6932887DAB1FC` |
+| Monitoring | `F6F6D9C989B0538EA9472B26615CA5CD7A7EAC5CBBC5515D7B907DBBAA326473` |
+| Devices | `8B8F9AE4147267D2455B93311CE38004D8F68E59813CEB7D6384FF6A3AD47084` |
+| Security | `BD2D700B6DCE5588968A06AF6F54C3B47985DF0E4D32530C625372AAFD70DBBC` |
+| Remote Assist | `3F403752B64EE24755B00AB9BDBB1C1787B8FB0A10368A3604D4544950C27E70` |
+| Updates | `124F4835984FB0283D0A73312AB43BDE63283B5BACBEA4A55170319EDB9717CC` |
+
+These captures are current native initialization evidence at one viewport. Human Eye verdict for this bounded capture set is `KEEP`, with no gross layout blocker observed after final correction. The review was not source-naive, and it does not cover 1366×768, 1440p, 4K, 100/125/150/200-percent scaling, reduced motion, contrast thresholds, a full keyboard/screen-reader audit, or owner visual approval.
+
+## Owner-controlled Windows gate
+
+Run from an ordinary unelevated PowerShell session unless a separately documented step explicitly requires elevation:
+
+```powershell
+Set-Location 'C:\Users\suhai\Documents\soltex-immersive-workspace'
+
+# Local identity and preservation checks
+git remote -v
+git fetch origin main
+git branch --show-current
+git rev-parse HEAD
+git log --oneline -1 origin/main
+git status --short --branch
+git diff --stat origin/main...HEAD
+
+# Running-process ownership check
+Get-Process Soltex,dotnet -ErrorAction SilentlyContinue |
+  Select-Object Id, ProcessName, Path, StartTime
+
+# Read the current evidence ledger before mutation
+Get-Content .\docs\IMPLEMENTATION_STATUS.md
+
+# Required build and tests
+.\eng\verify-identity.ps1
+dotnet build .\Soltex.sln --configuration Release
+dotnet run --project .\tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\Soltex.Security.SupplyChain.Tests\Soltex.Security.SupplyChain.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\Soltex.Security.Hardening.Tests\Soltex.Security.Hardening.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\Soltex.Update.Tests\Soltex.Update.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\Soltex.DeviceFabric.Tests\Soltex.DeviceFabric.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\Soltex.Monitoring.Tests\Soltex.Monitoring.Tests.csproj --configuration Release --no-build
+dotnet run --project .\tests\Soltex.App.Tests\Soltex.App.Tests.csproj --configuration Release --no-build
+
+# Optional provider-interoperability check
+$env:SOLTEX_RUN_EICAR = '1'
+dotnet run --project .\tests\Soltex.Security.Tests\Soltex.Security.Tests.csproj --configuration Release --no-build
+Remove-Item Env:\SOLTEX_RUN_EICAR -ErrorAction SilentlyContinue
+
+# Current native renders
+New-Item -ItemType Directory -Force .\artifacts\visual | Out-Null
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\home-current-source.png --panel home
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\monitoring-current-source.png --panel monitoring
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\devices-current-source.png --panel devices
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\security-current-source.png --panel security
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\remote-assist-current-source.png --panel remote
+dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\updates-current-source.png --panel update
+```
+
+Before editing locally, resolve rather than overwrite any dirty files, untracked files, commits not on the remote branch, or running processes that own build outputs. Do not use `git reset --hard`, `git clean`, forced checkout, or force push as a convenience.
+
+## Supply-chain hostile-fixture policy
+
+Permitted test material:
+
+- ephemeral self-signed test certificates and keys created in memory;
+- Microsoft-signed `.NET` host already installed on the runner;
+- benign random/text payloads;
+- a locally held lock-file handle representing another Soltex process;
+- ZIP metadata fixtures representing traversal, case collision, symbolic link, size, and ratio boundaries;
+- the standardized harmless EICAR marker submitted to AMSI in memory only.
+
+Not used or permitted in this gate:
+
+- live malware;
+- antivirus exclusions or security-setting changes;
+- signature harvesting from third-party products;
+- unsigned executable launch from staging;
+- archive exploitation outside the private staging root;
+- remote credentials, unattended access, elevation, service installation, hidden sessions, or public listeners.
+
+## Pending release evidence
+
+The following must exist before any signed installer/update claim:
+
+- selected production code-signing and manifest-signing identities;
+- documented key custody, backup, loss, revocation, and recovery procedures;
+- committed public metadata/release keys, TLS/publisher pins, and a signed trust-policy rollout using the implemented overlap/retirement rules;
+- a production authenticated descriptor source and release-candidate evidence using real public release identities;
+- signed installer package and deterministic uninstall evidence;
+- atomic activation and interrupted-update rollback/recovery tests;
+- installer-bound tampered package, concurrent process, lock timeout, pin mismatch, expired/revoked certificate, partial I/O, disk-full, locked-file, reboot, downgrade, and cancellation evidence;
+- retained hashes, signatures, logs, and exact reproduction commands for a release candidate.

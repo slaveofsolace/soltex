@@ -1,0 +1,649 @@
+{
+  "schema_version": "2.0.0",
+  "ledger_id": "ledger_soltex_device_fabric_stage1",
+  "created_at": "2026-08-04T14:10:30.674Z",
+  "depth": "STANDARD",
+  "iteration": 2,
+  "root": {
+    "kind": "DECISION",
+    "node_id": "root_device_fabric",
+    "statement": "Determine and verify the smallest safe implementation slice toward Soltex cross-device correction.",
+    "source_state": "Remote Assist is a visible external-client boundary and the personal device fabric is documented but has no typed device inventory implementation.",
+    "target_state": "A fail-closed, target-bound, immutable capability and inventory model exists without creating a network listener or execution endpoint.",
+    "conditions": [
+      "No generic shell, script, arbitrary download-and-execute, hidden control, credentials, elevation, service, driver, or public ingress.",
+      "Read-only observations require device-local policy and every state-changing request requires visible per-job local consent.",
+      "The protected dirty checkout remains untouched."
+    ],
+    "boundary": "Only the isolated PR 3 continuation worktree, its feature branch, focused models, tests, workflow gate, documentation, and evidence ledger.",
+    "objective_claim_id": "claim_objective",
+    "invariant_ids": [
+      "inv_typed_only",
+      "inv_local_consent",
+      "inv_checkout_isolation"
+    ],
+    "uncertainty_changes_decision": false
+  },
+  "project_model": {
+    "status": "READY",
+    "facets": {
+      "intent": {
+        "summary": "Advance remote correction only through a typed, consent-bounded foundation.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_objective"
+        ],
+        "unknown_disposition": "No unresolved load-bearing gap remains for this bounded Stage 1 decision."
+      },
+      "decision": {
+        "summary": "Implement Stage 1 inventory and policy models, then stop before transport or execution.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_scope"
+        ],
+        "unknown_disposition": "No unresolved load-bearing gap remains for this bounded Stage 1 decision."
+      },
+      "acceptance_contract": {
+        "summary": "Reject unknown, unadvertised, hidden, or non-consensual capabilities and retain accurate nonclaims.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_guardrails"
+        ],
+        "unknown_disposition": "No unresolved load-bearing gap remains for this bounded Stage 1 decision."
+      },
+      "mechanism": {
+      "summary": "An exact catalog, structurally valid manifest, immutable snapshot, and target-bound policy mediate every modeled authorization decision.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_implementation"
+        ],
+        "unknown_disposition": "No unresolved load-bearing gap remains for this bounded Stage 1 decision."
+      },
+      "current_state_history": {
+        "summary": "PR 3 remains stacked on the security hardening base; prior update and UI gates are retained.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_current_state"
+        ],
+        "unknown_disposition": "No unresolved load-bearing gap remains for this bounded Stage 1 decision."
+      },
+      "people_incentives": {
+        "summary": "The user owns product direction while device-local users retain consent for state changes and remote hands.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_guardrails"
+        ],
+        "unknown_disposition": "No unresolved load-bearing gap remains for this bounded Stage 1 decision."
+      },
+      "lifecycle_recovery": {
+        "summary": "The slice performs no device action; code changes can be reverted and denied decisions have no execution residue.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": [
+          "claim_scope"
+        ],
+        "unknown_disposition": "No unresolved load-bearing gap remains for this bounded Stage 1 decision."
+      }
+    },
+    "invariants": [
+      {
+        "id": "inv_typed_only",
+        "statement": "Only exact catalog capabilities can reach a policy decision.",
+        "owner": "Soltex security boundary",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": [
+          "evidence_source"
+        ]
+      },
+      {
+        "id": "inv_local_consent",
+        "statement": "State-changing and external-client requests require visible per-job consent on the target device.",
+        "owner": "Target device user",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": [
+          "evidence_source",
+          "evidence_local_tests"
+        ]
+      },
+      {
+        "id": "inv_checkout_isolation",
+        "statement": "The original dirty SOL Tools checkout is not modified by this continuation.",
+        "owner": "User",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": [
+          "evidence_git_state"
+        ]
+      }
+    ],
+    "dependencies": [],
+    "stakeholders": []
+  },
+  "authority": {
+    "scope": "Implement, test, document, commit, and push the bounded Device Fabric Stage 1 slice on the isolated PR branch.",
+    "decision_owner": "User",
+    "authorized_actions": [
+      "Edit the isolated continuation worktree.",
+      "Run bounded local compatibility tests and GitHub Actions.",
+      "Commit and push to the existing PR branch."
+    ],
+    "forbidden_actions": [
+      "Modify or clean the protected dirty checkout.",
+      "Add unattended control, generic execution, credentials, elevation, services, drivers, public ingress, or protection weakening."
+    ],
+    "human_reserved_decisions": [
+      "Owner visual acceptance.",
+      "Future enrollment and per-device trust establishment.",
+      "Approval of any state-changing device job."
+    ],
+    "external_state_allowed": true,
+    "hard_gates": [
+      {
+        "id": "gate_authority",
+        "category": "AUTHORITY",
+        "status": "CLEAR",
+        "rationale": "The user explicitly authorized resuming Soltex development and integrating the goal.",
+        "claim_ids": [
+          "claim_objective"
+        ]
+      },
+      {
+        "id": "gate_safety",
+        "category": "SAFETY",
+        "status": "CLEAR",
+        "rationale": "Stage 1 contains pure models and policy decisions with no executor, listener, or mutation endpoint.",
+        "claim_ids": [
+          "claim_scope"
+        ]
+      },
+      {
+        "id": "gate_privacy",
+        "category": "PRIVACY_SECURITY_LEGAL",
+        "status": "CLEAR",
+        "rationale": "No credentials, third-party source, personal data, or work data enter this slice.",
+        "claim_ids": [
+          "claim_guardrails"
+        ]
+      },
+      {
+        "id": "gate_external",
+        "category": "IRREVERSIBLE_EXTERNAL_STATE",
+        "status": "CLEAR",
+        "rationale": "The only external change is a normal commit on the existing draft PR branch; it can be superseded or reverted.",
+        "claim_ids": [
+          "claim_current_state"
+        ]
+      },
+      {
+        "id": "gate_production",
+        "category": "DESTRUCTIVE_PRODUCTION",
+        "status": "NOT_APPLICABLE",
+        "rationale": "No production device, deployment, installation, or destructive action is performed.",
+        "claim_ids": [
+          "claim_scope"
+        ]
+      },
+      {
+        "id": "gate_human",
+        "category": "HUMAN_RESERVED",
+        "status": "CLEAR",
+        "rationale": "The model reserves local per-job consent and makes no human acceptance claim.",
+        "claim_ids": [
+          "claim_guardrails"
+        ]
+      },
+      {
+        "id": "gate_rollback",
+        "category": "ROLLBACK_FAILURE",
+        "status": "CLEAR",
+        "rationale": "Denied policy paths have no residue; source changes can be reverted with a follow-up commit.",
+        "claim_ids": [
+          "claim_scope"
+        ]
+      }
+    ]
+  },
+  "companion_findings": {
+    "lead_skill": "HUMAN_CORTEX",
+    "applicable_domains": [],
+    "observation_input": "NONE",
+    "cold_eye_status": "NOT_APPLICABLE",
+    "cold_eye_before_source_inspection": false,
+    "findings": [],
+    "completion_axes": {
+      "functional_implementation": {
+        "status": "PASS",
+        "signal": "Typed catalog, manifest, inventory, and target-bound policy are implemented.",
+        "evidence_ids": [
+          "evidence_source",
+          "evidence_local_tests"
+        ],
+        "rationale": "The bounded Stage 1 endpoint exists and focused tests exercise its exact allow and deny paths."
+      },
+      "runtime_integration": {
+        "status": "NOT_APPLICABLE",
+        "signal": "Stage 1 intentionally has no device agent runtime, transport, listener, or executor.",
+        "evidence_ids": [],
+        "rationale": "Runtime integration begins only in a later separately authorized stage."
+      },
+      "player_eye_presentation": {
+        "status": "NOT_APPLICABLE",
+        "signal": "No UI is changed in this slice.",
+        "evidence_ids": [],
+        "rationale": "There is no new player-facing surface."
+      },
+      "evidence_regression_coverage": {
+        "status": "PASS",
+        "signal": "Twenty focused local compatibility tests cover target binding, consent, injection, bounds, and immutability.",
+        "evidence_ids": [
+          "evidence_local_tests"
+        ],
+        "rationale": "The implemented model has focused regression coverage; the .NET 10 Windows gate remains a separate evidence item until complete."
+      },
+      "human_acceptance": {
+        "status": "NOT_APPLICABLE",
+        "signal": "No subjective UI or device action is presented for acceptance.",
+        "evidence_ids": [],
+        "rationale": "Future UI and real device enrollment remain human-reserved."
+      }
+    }
+  },
+  "claims": [
+    {
+      "id": "claim_objective",
+      "label": "PROPOSED",
+      "statement": "The smallest safe next step is a typed inventory and authorization model that stops before networking or execution.",
+      "evidence_ids": [
+        "evidence_architecture"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "The architecture delivery sequence explicitly places read-only inventory and capability modeling before agent transport."
+      }
+    },
+    {
+      "id": "claim_scope",
+      "label": "OBSERVED",
+      "statement": "The Stage 1 source contains no listener, transport, executor, credential store, installer, elevation, service, driver, or arbitrary command boundary.",
+      "evidence_ids": [
+        "evidence_source"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Current source inspection is bounded to the newly added Device Fabric project."
+      }
+    },
+    {
+      "id": "claim_implementation",
+      "label": "OBSERVED",
+      "statement": "Policy evaluation is exact-catalog and structurally target-manifest bound, with modeled device-local policy for observations and modeled visible local consent for mutations.",
+      "evidence_ids": [
+        "evidence_source"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "The current source directly implements these branches."
+      }
+    },
+    {
+      "id": "claim_guardrails",
+      "label": "MEASURED",
+      "statement": "Focused tests reject generic shell, arbitrary download-execute, hidden control, unknown and unadvertised capabilities, injection, duplicates, and platform-confused Defender requests.",
+      "evidence_ids": [
+        "evidence_local_tests"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "All twenty current local compatibility tests passed."
+      }
+    },
+    {
+      "id": "claim_current_state",
+      "label": "OBSERVED",
+      "statement": "The implementation is committed on the isolated PR 3 continuation branch and the original dirty checkout remains separately owned.",
+      "evidence_ids": [
+        "evidence_git_state"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "Current Git identity and status were re-read from the isolated worktree."
+      }
+    },
+    {
+      "id": "claim_windows_ci",
+      "label": "MEASURED",
+      "statement": "The complete .NET 10 Windows workflow built with zero warnings and errors and the Device Fabric policy suite passed 20 of 20 tests.",
+      "evidence_ids": [
+        "evidence_windows_ci"
+      ],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "GitHub Actions run 30918120029 completed successfully and its decoded job log records the exact build and test outcomes."
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence_architecture",
+      "kind": "SOURCE",
+      "access": "INSPECTED_CURRENT",
+      "locator": "docs/PERSONAL_DEVICE_FABRIC.md reconciled against implementation commit 8ca28f8aa1f50de929787fe1c1cbd23b96b3f6e9",
+      "captured_at": "2026-08-04T14:10:30.674Z",
+      "integrity": "Inspected from the isolated continuation worktree.",
+      "supports_claim_ids": [
+        "claim_objective"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_source",
+      "kind": "SOURCE",
+      "access": "INSPECTED_CURRENT",
+      "locator": "src/WaveSlate.DeviceFabric and tests/WaveSlate.DeviceFabric.Tests at 8ca28f8aa1f50de929787fe1c1cbd23b96b3f6e9",
+      "captured_at": "2026-08-04T14:10:30.674Z",
+      "integrity": "Committed source on the existing draft PR branch.",
+      "supports_claim_ids": [
+        "claim_scope",
+        "claim_implementation"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_local_tests",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "Local net9 compatibility compile and WaveSlate.DeviceFabric.Tests output: 20/20 passed, total_ms=19.9",
+      "captured_at": "2026-08-04T14:10:30.674Z",
+      "integrity": "Executed from source through a temporary uncommitted compatibility project that was removed after the run.",
+      "supports_claim_ids": [
+        "claim_guardrails"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_git_state",
+      "kind": "LOG",
+      "access": "GENERATED_CURRENT",
+      "locator": "git status and rev-parse in C:/Users/suhai/Documents/soltex-pr3-continuation; implementation HEAD 8ca28f8aa1f50de929787fe1c1cbd23b96b3f6e9",
+      "captured_at": "2026-08-04T14:10:30.674Z",
+      "integrity": "Task-owned isolated worktree; no force push or protected-checkout mutation.",
+      "supports_claim_ids": [
+        "claim_current_state"
+      ],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_windows_ci",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "GitHub Actions run 30918120029, job 92021363535, merge preview 035de520a6ea346b9aeb08270fa4f72af86d59c0, artifact 8895955309",
+      "captured_at": "2026-08-04T14:18:39Z",
+      "integrity": "Artifact digest sha256:02c121da84a68988b0d50b1f8cb3cc50c72d299ac3a1ca3d4c7d1c4146aca31a; decoded job log inspected through the authenticated GitHub connector.",
+      "supports_claim_ids": [
+        "claim_windows_ci"
+      ],
+      "contradicts_claim_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "tests": [
+    {
+      "id": "test_local_policy",
+      "question": "Do the exact Stage 1 allow, deny, validation, bound, and immutability paths behave as specified?",
+      "kind": "EXPERIMENT",
+      "discriminates_hypothesis_ids": [],
+      "predicted_outcomes": [],
+      "expected_decision_value": "HIGH",
+      "cost": "LOW",
+      "risk": "LOW",
+      "authorization_status": "AUTHORIZED",
+      "status": "PASS",
+      "evidence_ids": [
+        "evidence_local_tests"
+      ],
+      "changes_decision_if": "Any failure blocks push and requires a source correction."
+    },
+    {
+      "id": "test_windows_ci",
+      "question": "Does the complete solution compile and pass the Device Fabric suite under the repository .NET 10 Windows gate?",
+      "kind": "EXPERIMENT",
+      "discriminates_hypothesis_ids": [],
+      "predicted_outcomes": [],
+      "expected_decision_value": "HIGH",
+      "cost": "LOW",
+      "risk": "LOW",
+      "authorization_status": "AUTHORIZED",
+      "status": "PASS",
+      "evidence_ids": [
+        "evidence_windows_ci"
+      ],
+      "changes_decision_if": "A workflow failure keeps the stage open and determines the next fix."
+    }
+  ],
+  "trace": {
+    "bounds": {
+      "max_depth": 2,
+      "max_nodes": 6,
+      "stop_rule": "Stop after the model is target-bound, hostile policy tests pass, and no execution or transport is introduced."
+    },
+    "nodes": [
+      {
+        "id": "root_device_fabric",
+        "kind": "ROOT",
+        "statement": "Add the smallest safe Device Fabric foundation.",
+        "claim_id": "claim_objective",
+        "depth": 0,
+        "terminal": false,
+        "closure_reason": "EXPANDED"
+      },
+      {
+        "id": "node_typed_policy",
+        "kind": "MITIGATION",
+        "statement": "Exact target-bound capabilities mediate modeled authorization.",
+        "claim_id": "claim_implementation",
+        "depth": 1,
+        "terminal": true,
+        "closure_reason": "BOUNDED"
+      },
+      {
+        "id": "node_no_execution",
+        "kind": "STATE",
+        "statement": "Transport and execution remain absent from Stage 1.",
+        "claim_id": "claim_scope",
+        "depth": 1,
+        "terminal": true,
+        "closure_reason": "BOUNDED"
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_policy",
+        "relation": "FORWARD",
+        "source_node_id": "root_device_fabric",
+        "target_node_id": "node_typed_policy",
+        "source_delta": "A device-fabric architecture gains executable source models.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "The exact catalog and validated target manifest jointly gate every policy decision.",
+        "conditions": [
+          "Only catalog identifiers are accepted.",
+          "The target manifest must advertise the exact capability."
+        ],
+        "lag": "Immediate during policy evaluation.",
+        "target_delta": "Unknown or unadvertised capability requests are denied.",
+        "affected_refs": [
+          "inv_typed_only",
+          "inv_local_consent"
+        ],
+        "supporting_claim_ids": [
+          "claim_implementation",
+          "claim_guardrails"
+        ],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Focused allow and deny test results.",
+          "latency": "During every test and policy evaluation.",
+          "failure_to_detect": "Untested future executor integration could bypass this pure model."
+        },
+        "falsifier": "A focused test permits an unknown, unadvertised, or non-consensual request.",
+        "confidence": {
+          "level": "HIGH",
+          "basis": "Current source and passing focused tests support the mechanism."
+        }
+      },
+      {
+        "id": "edge_scope",
+        "relation": "FORWARD",
+        "source_node_id": "root_device_fabric",
+        "target_node_id": "node_no_execution",
+        "source_delta": "The architecture receives a bounded first implementation stage.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "The new project exposes immutable models and policy decisions but no I/O execution primitive.",
+        "conditions": [
+          "No network or process API is introduced."
+        ],
+        "lag": "At compile-time source boundary.",
+        "target_delta": "No device action can be performed by this slice.",
+        "affected_refs": [
+          "inv_typed_only",
+          "inv_checkout_isolation"
+        ],
+        "supporting_claim_ids": [
+          "claim_scope"
+        ],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Current-source inspection and project dependency review.",
+          "latency": "At each diff review.",
+          "failure_to_detect": "A later project could add an executor without preserving this boundary."
+        },
+        "falsifier": "The Stage 1 diff contains a listener, transport, process launch, file mutation, or credential operation.",
+        "confidence": {
+          "level": "HIGH",
+          "basis": "The bounded current source was inspected."
+        }
+      }
+    ],
+    "feedback_loops": [],
+    "thresholds": []
+  },
+  "decision": {
+    "iteration_choice": "STOP",
+    "recommendation": "Bound Stage 1 as verified and stop before transport or execution; reopen only for the separately designed signed-envelope stage.",
+    "selected_action_ids": [],
+    "rejected_options": [
+      "Do not implement generic shell or arbitrary script execution.",
+      "Do not enable unattended RustDesk or hidden remote control.",
+      "Do not begin a listener, service, elevation, or public ingress in Stage 1."
+    ],
+    "decision_claim_ids": [
+      "claim_objective",
+      "claim_scope",
+      "claim_implementation",
+      "claim_guardrails",
+      "claim_current_state"
+    ],
+    "remaining_unknown_claim_ids": [],
+    "human_owner": "User",
+    "consecutive_stable_checks": 2,
+    "reopen_trigger": "Reopen on a workflow failure, catalog expansion, transport design, executor integration, or changed consent requirements."
+  },
+  "actions": [
+    {
+      "id": "action_stage1",
+      "description": "Implement and push the typed Device Fabric Stage 1 model and tests.",
+      "status": "VERIFIED",
+      "authorization_status": "AUTHORIZED",
+      "authority_basis": "The user explicitly requested Soltex goal resumption and approved repository development.",
+      "destructive": false,
+      "production": false,
+      "external_state_change": true,
+      "irreversible": false,
+      "monitoring": "Git status, focused tests, and the existing GitHub Windows workflow.",
+      "rollback": {
+        "kind": "COMPENSATING_ACTION",
+        "procedure": "Create a reviewed revert commit on the PR branch if the slice is rejected.",
+        "preconditions": [
+          "Preserve later commits and avoid rewriting shared history."
+        ],
+        "verification": "The revert diff removes only Stage 1 additions and the Windows gate returns green.",
+        "evidence_ids": [],
+        "irreversible_residue": "The historical commit remains visible in Git history."
+      },
+      "recovery": {
+        "procedure": "Fix forward on the isolated PR branch and rerun focused and complete Windows gates.",
+        "owner": "Soltex maintainer",
+        "evidence_ids": []
+      },
+      "mitigation_consequence_node_ids": [
+        "node_typed_policy",
+        "node_no_execution"
+      ]
+    }
+  ],
+  "verification": {
+    "mechanism": {
+      "status": "PASS",
+      "signal": "Twenty focused tests exercise exact capability, target binding, consent, injection, platform, duplicate, bound, and immutability behavior.",
+      "evidence_ids": [
+        "evidence_local_tests",
+        "evidence_windows_ci"
+      ],
+      "rationale": "The pure Stage 1 mechanism passed both its local compatibility suite and the repository .NET 10 Windows gate."
+    },
+    "endpoint": {
+      "status": "PASS",
+      "signal": "The bounded source model exists on the isolated branch.",
+      "evidence_ids": [
+        "evidence_source"
+      ],
+      "rationale": "Stage 1 ends at immutable inventory and authorization decisions."
+    },
+    "guardrails": {
+      "status": "PASS",
+      "signal": "Current source contains no execution or transport and hostile requests fail closed.",
+      "evidence_ids": [
+        "evidence_source",
+        "evidence_local_tests"
+      ],
+      "rationale": "The implemented slice preserves the documented no-generic-execution and consent boundaries."
+    },
+    "recovery": {
+      "status": "NOT_APPLICABLE",
+      "signal": "The pure model performs no device action and denied decisions leave no runtime residue.",
+      "evidence_ids": [],
+      "rationale": "Repository changes use normal reviewed fix-forward or revert commits."
+    }
+  },
+  "closure": {
+      "status": "BOUNDED",
+      "summary": "Stage 1 is bounded at immutable, target-bound inventory and authorization models after local and .NET 10 Windows verification; no transport or executor was introduced.",
+    "residual_risks": [
+      "No signed envelope, replay defense, transport, enrollment, device agent, receipt, or cross-device runtime exists.",
+      "Manifest identity, device-local policy, consent, and external-client visibility are modeled inputs rather than authenticated evidence in Stage 1.",
+      "No owner-host or cross-platform device evidence exists."
+    ],
+    "human_acceptance_required": false,
+    "accepted_by": "",
+    "acceptance_evidence_ids": [],
+    "nonclaims": [
+      "This is not full or unsupervised remote correction.",
+      "This stage does not execute any capability.",
+      "This stage does not establish device trust, network security, remote-access security, or production readiness.",
+      "This ledger contains no hidden chain-of-thought and does not grant human acceptance."
+    ]
+  }
+}
