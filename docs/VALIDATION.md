@@ -447,6 +447,62 @@ Not used or permitted in this gate:
 - archive exploitation outside the private staging root;
 - remote credentials, unattended access, elevation, service installation, hidden sessions, or public listeners.
 
+## Owner-host gate
+
+Integration head `767a64abd7e1a9c0a3c73bbc8d2b4cb510539a20`, run on the owner Windows machine rather than a hosted runner.
+
+Environment:
+
+- Windows 10.0.26200, x64;
+- .NET SDK 10.0.302;
+- ordinary unelevated PowerShell session;
+- a registered antivirus provider active, so `wscapi.dll` and the AMSI provider were both reachable.
+
+| Gate | Result |
+|---|---|
+| Release build | passed, 0 warnings, 0 errors |
+| Security | 31/31 |
+| Supply chain | 18/18 |
+| Hardening | 12/12 |
+| Update planner | 17/17 |
+| Device Fabric | 24/24 |
+| Monitoring | 13/13 |
+| WPF controls | 5/5 |
+| Opt-in EICAR | **32/32** |
+| Native renders | six PNGs, no render-error file |
+
+The EICAR lane passed here because this host's registered AMSI provider blocked the in-memory marker, where the hosted runner returned native result `1` and capped the lane at 31/32. That difference is the documented provider-interoperability gap closing on a machine with a working provider. It is evidence about this host's AMSI integration only — not a Soltex detection rate, efficacy measurement, or antivirus-product claim — and it does not transfer to hosts with a different or absent provider.
+
+## Desktop release build
+
+`eng\publish-release.ps1` regenerates the application icon, publishes a self-contained single-file `win-x64` build, and compiles the per-user installer:
+
+```powershell
+.\eng\publish-release.ps1 -Version 1.0.0
+```
+
+Version 1.0.0 was produced from merge commit `ac7eef304b956012ba21929d8b7afba9c9b9dd1c`. The published executable carries `ProductVersion 1.0.0+ac7eef304b956012ba21929d8b7afba9c9b9dd1c`, so a shipped binary identifies its exact source commit.
+
+Installer behavior verified on the owner host:
+
+| Check | Result |
+|---|---|
+| Silent install exit code | 0, no elevation prompt |
+| Install location | `%LocalAppData%\Programs\Soltex` |
+| Add/Remove Programs record | `Soltex 1.0.0`, publisher `Soltex` |
+| Start Menu shortcuts | `Soltex.lnk` and `Uninstall Soltex.lnk`, correct targets |
+| Installed binary render-smoke | Security panel PNG produced |
+| Interactive launch | real WPF window titled `Soltex` |
+| Clean shutdown | window closed, process exited |
+| Silent uninstall | exit 0, program directory and ARP record removed, no leftovers |
+
+Boundaries for this build:
+
+- the installer is **not code-signed**, so SmartScreen warns on first run and the publisher shows as unknown;
+- installation is per-user by design, matching the `asInvoker` manifest; there is no machine-wide, service, or scheduled-task component;
+- uninstall removes program files and shortcuts only. Per-user Soltex state is deliberately retained so an accidental uninstall cannot destroy authenticated quarantine, audit-chain, release-sequence, or planning-journal history;
+- this is a first-install package. It is not the signed, self-updating release path, and the update planner still cannot install, activate, or roll back anything.
+
 ## Pending release evidence
 
 The following must exist before any signed installer/update claim:
@@ -455,7 +511,7 @@ The following must exist before any signed installer/update claim:
 - documented key custody, backup, loss, revocation, and recovery procedures;
 - committed public metadata/release keys, TLS/publisher pins, and a signed trust-policy rollout using the implemented overlap/retirement rules;
 - a production authenticated descriptor source and release-candidate evidence using real public release identities;
-- signed installer package and deterministic uninstall evidence;
+- a **signed** installer package; the unsigned package and its deterministic install/uninstall evidence are recorded above, but no code-signing identity is applied;
 - atomic activation and interrupted-update rollback/recovery tests;
 - installer-bound tampered package, concurrent process, lock timeout, pin mismatch, expired/revoked certificate, partial I/O, disk-full, locked-file, reboot, downgrade, and cancellation evidence;
 - retained hashes, signatures, logs, and exact reproduction commands for a release candidate.

@@ -53,6 +53,22 @@ The current Remote Assist source provides explicit RustDesk executable selection
 
 System-wide real-time scanning, behavior monitoring, cloud intelligence, and remediation come from Microsoft Defender or another antivirus provider registered with Windows. Soltex does not disable or replace that provider.
 
+## Install
+
+`Soltex-1.0.0-win-x64-setup.exe` installs the workspace for the current user only. It writes to `%LocalAppData%\Programs\Soltex`, adds Start Menu entries and an Add/Remove Programs record, and never requests administrator rights — the application manifest requests `asInvoker` and the workspace is designed to run unelevated.
+
+Requirements: Windows 10 version 2004 (build 19041) or newer, x64. The .NET runtime is bundled, so no separate runtime install is needed.
+
+The installer is **not code-signed**. No production Soltex code-signing identity has been selected, so Windows SmartScreen will warn on first run and the publisher will show as unknown. Verify the download against its published SHA-256 before running it. Code signing is tracked with the rest of the release program in [`docs/VALIDATION.md`](docs/VALIDATION.md).
+
+Uninstalling removes the installed program files and shortcuts. Local Soltex state — quarantine, the HMAC-chained audit log, release-sequence state, and planning journals — lives under your user profile and is deliberately left in place so an accidental uninstall cannot destroy authenticated history. Remove it by hand if that is what you want.
+
+To build the installer from source, publish the app and compile the script with [Inno Setup](https://jrsoftware.org/isinfo.php) 6:
+
+```powershell
+.\eng\publish-release.ps1
+```
+
 ## Build and verify
 
 Requirements:

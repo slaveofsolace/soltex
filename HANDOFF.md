@@ -5,18 +5,24 @@ This is the only current continuation handoff for Soltex. Files under `docs/arch
 ## Repository anchor
 
 - Repository: `https://github.com/slaveofsolace/soltex`
+- Current branch: `main`
+- Integration merge commit: `ac7eef304b956012ba21929d8b7afba9c9b9dd1c`
 - Protected owner checkout: `C:\Users\suhai\Documents\SOL Tools`
-- Task-owned worktree: `C:\Users\suhai\Documents\soltex-immersive-workspace`
-- Current branch: `feat/soltex-immersive-workspace-v1`
-- Draft stacked PR: `https://github.com/slaveofsolace/soltex/pull/5`
-- Stacked base branch: `refactor/soltex-identity-and-repo-coherence`
-- Identity base head: `57607a35da14968c0d729795a857fd250b6566d9`
-- Identity draft PR: `https://github.com/slaveofsolace/soltex/pull/4`
-- Frozen immersive implementation checkpoint: `2a0699b2ca77b30fa636279b1d5ecab603a8bde9`
+- Release build checkout: `C:\Users\suhai\Documents\soltex-release-build`
 
-The GitHub stack and eventual cleanup contract are recorded in `docs/GITHUB_CONSOLIDATION.md`. The selected path is one `release/soltex-v1-foundation` draft PR to `main` after this branch's final docs commit is green. Do not merge, close stacked PRs, or delete branches until the integration head, merge preview, ancestry proof, and post-merge Windows workflow all pass.
+The V1 stack has landed. PR #6 merged `release/soltex-v1-foundation` into `main` as a merge commit, so every evidence-linked ancestor tip stays reachable:
 
-The protected owner checkout was re-observed at `main`, commit `bf2662de80992cfed761625642f084d3caaa0f04`, with extensive pre-existing legacy-named dirty and untracked work owned outside this task. Do not reset, clean, stash, merge, rebase, overwrite, or use it as a build-output target. Continue in the task-owned worktree and re-check branch, HEAD, status, remotes, PR base, and process ownership before changing anything.
+| Source | Tip | Reachable from `main` |
+|---|---|---|
+| PR #2 supply-chain hardening | `39eaf628f6add6c89963a81b7c1971c2f74f02a1` | yes |
+| PR #3 update planner | `40c7e73452dc6c11fcd1f5711ec6360210595a44` | yes |
+| PR #4 identity coherence | `57607a35da14968c0d729795a857fd250b6566d9` | yes |
+| PR #5 immersive workspace | `767a64abd7e1a9c0a3c73bbc8d2b4cb510539a20` | yes |
+| Frozen implementation checkpoint | `2a0699b2ca77b30fa636279b1d5ecab603a8bde9` | yes |
+
+PRs #2 through #6 are closed. The stacked branches remain on the remote as recovery references and can be deleted once their commits are no longer needed for evidence lookup; nothing is lost when they go, because all five tips are ancestors of `main`.
+
+The protected owner checkout was last observed at `main`, commit `bf2662de80992cfed761625642f084d3caaa0f04`, with extensive pre-existing legacy-named dirty and untracked work owned outside this task. Do not reset, clean, stash, merge, rebase, overwrite, or use it as a build-output target. Re-check branch, HEAD, status, remotes, and process ownership before changing anything.
 
 ## What is built
 
@@ -60,12 +66,35 @@ Artifact `soltex-windows-evidence-30925606488-1`, ID `8899014386`, is 626,093 by
 
 A Human Eye current-capture review found no gross hierarchy, clipping, or identity blocker after the final visual corrections. It was not source-naive and does not grant owner visual acceptance, accessibility conformance, or broader viewport/scaling acceptance. The exact hashes, measurements, provenance, and nonclaims are in `docs/evidence/2026-08-04-immersive-workspace/` and `docs/VALIDATION.md`.
 
+## Owner-host verification
+
+Integration head `767a64abd7e1a9c0a3c73bbc8d2b4cb510539a20` was exercised on the owner Windows host (Windows 10.0.26200, .NET SDK 10.0.302) before the merge:
+
+- Release build: 0 warnings, 0 errors;
+- Security 31/31, supply chain 18/18, hardening 12/12, update 17/17, Device Fabric 24/24, monitoring 13/13, WPF controls 5/5;
+- opt-in EICAR: **32/32** — the owner host's registered AMSI provider blocked the in-memory marker, closing the hosted-runner interoperability gap that had capped that lane at 31/32;
+- all six native renders produced PNGs with no render-error file.
+
+The 32/32 result is provider-interoperability evidence for this one machine. It is not a detection-rate, efficacy, or antivirus-product claim, and it does not transfer to hosts with a different registered provider.
+
+## Desktop release
+
+`eng\publish-release.ps1` produces the self-contained `win-x64` build and the per-user installer from a single command. Version 1.0.0 was built from the merge commit and verified on the owner host:
+
+- installed silently to `%LocalAppData%\Programs\Soltex` with no elevation prompt;
+- Start Menu and uninstall shortcuts created with correct targets;
+- installed binary rendered the Security panel and launched a real WPF window titled `Soltex`;
+- uninstall removed the program directory and the Add/Remove Programs record with no leftovers.
+
+The installer is not code-signed, so SmartScreen warns on first run and the publisher shows as unknown. Uninstall deliberately preserves per-user Soltex state so authenticated quarantine, audit, release-sequence, and journal history survive an accidental removal.
+
 ## Exact resume gate
 
 From the task worktree:
 
 ```powershell
-Set-Location 'C:\Users\suhai\Documents\soltex-immersive-workspace'
+Set-Location 'C:\Users\suhai\Documents\soltex-release-build'
+git fetch origin main
 git branch --show-current
 git rev-parse HEAD
 git status --short --branch
@@ -86,6 +115,6 @@ Read `docs/IMPLEMENTATION_STATUS.md`, `docs/VALIDATION.md`, and the current evid
 6. Privacy adapters and local/NAS search with explicit roots, provenance, quotas, cancellation, and recovery.
 7. Personal Google Drive read-write connector, then a separately governed work Box connector with explicit cross-domain transfer policy.
 8. Optional Tailscale-local status and enrolled multi-device transport only after signed job/receipt semantics are proven.
-9. Production signing identities, authenticated update source, installer, atomic activation, rollback, recovery, and uninstall as a separate release program.
+9. Production signing identities and an authenticated update source, then code signing for the shipped installer, atomic activation, rollback, and recovery as a separate release program. The unsigned per-user installer and its deterministic uninstall already exist; what remains is the signed, self-updating path.
 
 Do not begin the next stage with provider registration, a driver, a service, public ingress, Defender mutations, unattended remote control, or automatic execution of staged content.
