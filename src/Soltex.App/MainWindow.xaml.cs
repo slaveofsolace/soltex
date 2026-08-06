@@ -3,11 +3,13 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Microsoft.Win32;
+using Soltex.Audio;
 using Soltex.DeviceFabric;
 using Soltex.Monitoring;
 using Soltex.RemoteAssist;
@@ -60,6 +62,8 @@ public partial class MainWindow : Window
             _telemetryCancellation = new CancellationTokenSource();
             _telemetryLoopTask = RunTelemetryLoopAsync(_telemetryCancellation.Token);
         }
+
+        _ = RefreshAudioAsync();
 
         _importMonitor = new ImportFolderMonitor(
             _runtime.ImportsPath,
@@ -246,6 +250,19 @@ public partial class MainWindow : Window
         {
             SignatureStatus.Text = "Current";
             SignatureStatus.Foreground = good;
+        }
+    }
+
+    private async Task RefreshAudioAsync()
+    {
+        try
+        {
+            AudioEndpointSnapshot snapshot = await AudioEndpointProvider.CaptureAsync();
+            MixerPanel.UpdateSnapshot(snapshot);
+        }
+        catch (Exception exception) when (exception is COMException or InvalidOperationException or ExternalException)
+        {
+            MixerPanel.ShowUnavailable();
         }
     }
 
@@ -856,7 +873,11 @@ public partial class MainWindow : Window
 
     private void DevicesNav_Click(object sender, RoutedEventArgs e) => ShowPanel(DevicesPanel, DevicesNavButton);
 
-    private void MixerNav_Click(object sender, RoutedEventArgs e) => ShowPanel(MixerPanel, MixerNavButton);
+    private async void MixerNav_Click(object sender, RoutedEventArgs e)
+    {
+        ShowPanel(MixerPanel, MixerNavButton);
+        await RefreshAudioAsync();
+    }
 
     private void ClipsNav_Click(object sender, RoutedEventArgs e) => ShowPanel(ClipsPanel, ClipsNavButton);
 

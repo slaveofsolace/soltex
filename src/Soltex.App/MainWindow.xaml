@@ -913,16 +913,7 @@
                 </ScrollViewer>
             </Grid>
 
-            <Grid x:Name="MixerPanel" Visibility="Collapsed">
-                <Border Style="{StaticResource CardStyle}" VerticalAlignment="Top">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="04 / AUDIO ROUTING" />
-                        <TextBlock Margin="0,7,0,0" Text="Mixer" FontFamily="{StaticResource DisplayFont}" FontSize="38" />
-                        <TextBlock Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
-                                   Text="Audio routing and parametric EQ remain a documented scaffold boundary in this reconstruction. The Security module is the implemented focus of this handoff." />
-                    </StackPanel>
-                </Border>
-            </Grid>
+            <views:MixerView x:Name="MixerPanel" Visibility="Collapsed" />
 
             <Grid x:Name="ClipsPanel" Visibility="Collapsed">
                 <Border Style="{StaticResource CardStyle}" VerticalAlignment="Top">
