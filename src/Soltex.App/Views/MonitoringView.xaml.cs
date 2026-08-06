@@ -19,7 +19,19 @@ public partial class MonitoringView : UserControl
     public MonitoringView()
     {
         InitializeComponent();
+
+        // Percentage charts label their bounds directly; throughput needs the
+        // byte formatter so an autoscaled axis stays readable.
+        CpuHistoryChart.ScaleLabelFormatter = FormatPercentBound;
+        MemoryHistoryChart.ScaleLabelFormatter = FormatPercentBound;
+        NetworkHistoryChart.ScaleLabelFormatter = FormatRateBound;
     }
+
+    private static string FormatPercentBound(double value) =>
+        value.ToString("F0", CultureInfo.CurrentCulture) + "%";
+
+    private static string FormatRateBound(double value) =>
+        TelemetryDisplay.BytesPerSecond((long)Math.Clamp(value, 0, long.MaxValue));
 
     public void UpdateSnapshot(SystemTelemetrySnapshot snapshot)
     {

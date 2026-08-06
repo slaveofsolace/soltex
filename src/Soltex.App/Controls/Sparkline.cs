@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 
@@ -87,6 +88,26 @@ public sealed class Sparkline : FrameworkElement
         typeof(Sparkline),
         new FrameworkPropertyMetadata(Brushes.SteelBlue, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    /// <summary>Draws the resolved upper and lower bounds on the plot so the chart states its own scale.</summary>
+    public static readonly DependencyProperty ShowScaleLabelsProperty = DependencyProperty.Register(
+        nameof(ShowScaleLabels),
+        typeof(bool),
+        typeof(Sparkline),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    /// <summary>Formats a scale bound for display. Defaults to a whole number.</summary>
+    public static readonly DependencyProperty ScaleLabelFormatterProperty = DependencyProperty.Register(
+        nameof(ScaleLabelFormatter),
+        typeof(Func<double, string>),
+        typeof(Sparkline),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty ScaleLabelBrushProperty = DependencyProperty.Register(
+        nameof(ScaleLabelBrush),
+        typeof(Brush),
+        typeof(Sparkline),
+        new FrameworkPropertyMetadata(Brushes.Gray, FrameworkPropertyMetadataOptions.AffectsRender));
+
     public IEnumerable<double>? Values
     {
         get => (IEnumerable<double>?)GetValue(ValuesProperty);
@@ -159,6 +180,24 @@ public sealed class Sparkline : FrameworkElement
         set => SetValue(ComparisonStrokeProperty, value);
     }
 
+    public bool ShowScaleLabels
+    {
+        get => (bool)GetValue(ShowScaleLabelsProperty);
+        set => SetValue(ShowScaleLabelsProperty, value);
+    }
+
+    public Func<double, string>? ScaleLabelFormatter
+    {
+        get => (Func<double, string>?)GetValue(ScaleLabelFormatterProperty);
+        set => SetValue(ScaleLabelFormatterProperty, value);
+    }
+
+    public Brush ScaleLabelBrush
+    {
+        get => (Brush)GetValue(ScaleLabelBrushProperty);
+        set => SetValue(ScaleLabelBrushProperty, value);
+    }
+
     protected override void OnRender(DrawingContext drawingContext)
     {
         base.OnRender(drawingContext);
@@ -192,7 +231,43 @@ public sealed class Sparkline : FrameworkElement
             double radius = Math.Max(2.5, StrokeThickness + 0.8);
             drawingContext.DrawEllipse(Stroke, null, points[^1], radius, radius);
         }
+
+        DrawScaleLabels(drawingContext, minimum, maximum);
     }
+
+    private void DrawScaleLabels(DrawingContext drawingContext, double minimum, double maximum)
+    {
+        if (!ShowScaleLabels || ActualHeight < 28)
+        {
+            return;
+        }
+
+        Func<double, string> formatter = ScaleLabelFormatter ??
+            (value => value.ToString("F0", CultureInfo.CurrentCulture));
+        DrawScaleLabel(drawingContext, formatter(maximum), top: true);
+        DrawScaleLabel(drawingContext, formatter(minimum), top: false);
+    }
+
+    private void DrawScaleLabel(DrawingContext drawingContext, string text, bool top)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return;
+        }
+
+        FormattedText formatted = new(
+            text,
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            ScaleLabelTypeface,
+            9,
+            ScaleLabelBrush,
+            VisualTreeHelper.GetDpi(this).PixelsPerDip);
+        double y = top ? 1 : ActualHeight - formatted.Height - 1;
+        drawingContext.DrawText(formatted, new Point(ActualWidth - formatted.Width - 1, y));
+    }
+
+    private static readonly Typeface ScaleLabelTypeface = new("Cascadia Mono, Consolas");
 
     private static double[] ReadSamples(IEnumerable<double>? values)
     {

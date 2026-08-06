@@ -95,6 +95,8 @@
                                             GridLineCount="3"
                                             ShowLastPoint="True"
                                             StrokeThickness="2.2"
+                                            ShowScaleLabels="True"
+                                            ScaleLabelBrush="{StaticResource QuietTextBrush}"
                                             AutomationProperties.Name="Recent CPU utilization" />
 
                         <Grid Grid.Row="3" Margin="0,0,0,6">
@@ -102,10 +104,6 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="0 — 100%"
-                                       Foreground="{StaticResource QuietTextBrush}"
-                                       FontFamily="{StaticResource MonoFont}"
-                                       FontSize="{StaticResource FontMicro}" />
                             <TextBlock x:Name="CpuStatsText"
                                        Grid.Column="1"
                                        Text="awaiting samples"
@@ -170,6 +168,8 @@
                                             GridLineCount="3"
                                             ShowLastPoint="True"
                                             StrokeThickness="2.2"
+                                            ShowScaleLabels="True"
+                                            ScaleLabelBrush="{StaticResource QuietTextBrush}"
                                             AutomationProperties.Name="Recent physical memory utilization" />
 
                         <Grid Grid.Row="3" Margin="0,0,0,6">
@@ -311,6 +311,8 @@
                                             GridLineCount="3"
                                             ShowLastPoint="True"
                                             StrokeThickness="2.2"
+                                            ShowScaleLabels="True"
+                                            ScaleLabelBrush="{StaticResource QuietTextBrush}"
                                             AutomationProperties.Name="Recent network receive and send throughput" />
 
                         <TextBlock x:Name="NetworkScaleText"
