@@ -10,12 +10,29 @@ public enum TelemetryObservationState
     Unavailable
 }
 
+/// <summary>
+/// Physical memory plus the system commit charge. Commit is reported separately
+/// because it counts reserved backing store, not resident pages, and can exceed
+/// installed RAM.
+/// </summary>
 public sealed record MemoryTelemetry(
     ulong TotalBytes,
     ulong AvailableBytes,
-    double UsedPercent)
+    double UsedPercent,
+    ulong CommitLimitBytes = 0,
+    ulong CommitAvailableBytes = 0)
 {
     public ulong UsedBytes => TotalBytes >= AvailableBytes ? TotalBytes - AvailableBytes : 0;
+
+    public bool HasCommitCharge => CommitLimitBytes > 0;
+
+    public ulong CommitUsedBytes => CommitLimitBytes >= CommitAvailableBytes
+        ? CommitLimitBytes - CommitAvailableBytes
+        : 0;
+
+    public double CommitUsedPercent => CommitLimitBytes == 0
+        ? 0
+        : Math.Clamp((double)CommitUsedBytes / CommitLimitBytes * 100, 0, 100);
 }
 
 public sealed record StorageVolumeTelemetry(
