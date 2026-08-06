@@ -24,11 +24,12 @@ internal static class Program
         List<(string Name, Action Test)> tests =
         [
             ("Shared theme exposes required control resources", ThemeResourcesAreAvailable),
+            ("Telemetry runs only in visible live workspaces", TelemetryRunsOnlyInLiveWorkspaces),
             ("Sparkline renders bounded percentage values", SparklineRenders),
             ("Sparkline auto-scales unbounded throughput values", SparklineAutoScales),
             ("Home view renders a live snapshot", () => HomeViewRenders(snapshot, device)),
             ("Monitoring view renders provenance and bounded rows", () => MonitoringViewRenders(snapshot)),
-            ("Devices view renders an explicit unenrolled profile", () => DevicesViewRenders(device))
+            ("Devices view renders an explicit unnrolled profile", () => DevicesViewRenders(device))
         ];
 
         int failed = 0;
@@ -40,7 +41,7 @@ internal static class Program
             {
                 test();
                 testTimer.Stop();
-                Console.WriteLine($"PASS  {name} ({testTimer.Elapsed.TotalMilliseconds:F1} ms)");
+                Console.WriteLine($"PASP {name} ({testTimer.Elapsed.TotalMilliseconds:F1} ms)");
             }
             catch (Exception exception)
             {
@@ -64,6 +65,45 @@ internal static class Program
         True(resources.Contains("AccentBrush"), "The shared accent brush is missing.");
         True(resources.Contains("HeroCardStyle"), "The shared hero-card style is missing.");
         True(resources.Contains("SoltexSliderStyle"), "The shared slider style is missing.");
+    }
+
+    private static void TelemetryRunsOnlyInLiveWorkspaces()
+    {
+        True(TelemetryActivityPolicy.ShouldRun(
+            isLoaded: true,
+            isClosing: false,
+            WindowState.Normal,
+            homeVisible: true,
+            monitoringVisible: false),
+            "Home should keep telemetry active.");
+        True(TelemetryActivityPolicy.ShouldRun(
+            isLoaded: true,
+            isClosing: false,
+            WindowState.Maximized,
+            homeVisible: false,
+            monitoringVisible: true),
+            "Monitoring should keep telemetry active.");
+        True(!TelemetryActivityPolicy.ShouldRun(
+            isLoaded: true,
+            isClosing: false,
+            WindowState.Normal,
+            homeVisible: false,
+            monitoringVisible: false),
+            "Hidden live workspaces must suspend telemetry.");
+        True(!TelemetryActivityPolicy.ShouldRun(
+            isLoaded: true,
+            isClosing: false,
+            WindowState.Minimized,
+            homeVisible: true,
+            monitoringVisible: false),
+            "A minimized window must suspend telemetry.");
+        True(!TelemetryActivityPolicy.ShouldRun(
+            isLoaded: true,
+            isClosing: true,
+            WindowState.Normal,
+            homeVisible: true,
+            monitoringVisible: false),
+            "Closing must prevent telemetry restart.");
     }
 
     private static void SparklineRenders()

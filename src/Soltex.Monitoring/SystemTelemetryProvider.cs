@@ -1,6 +1,8 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Security;
 
 namespace Soltex.Monitoring;
@@ -192,6 +194,11 @@ public static class SystemTelemetryProvider
 
             try
             {
+                if (!HasUsableUnicastAddress(networkInterface))
+                {
+                    continue;
+                }
+
                 IPv4InterfaceStatistics statistics = networkInterface.GetIPv4Statistics();
                 if (statistics.BytesReceived < 0 || statistics.BytesSent < 0)
                 {
@@ -221,6 +228,15 @@ public static class SystemTelemetryProvider
         }
 
         return snapshots;
+    }
+
+    private static bool HasUsableUnicastAddress(NetworkInterface networkInterface)
+    {
+        IPInterfaceProperties properties = networkInterface.GetIPProperties();
+        return properties.UnicastAddresses.Any(addressInformation =>
+            addressInformation.Address.AddressFamily is
+                AddressFamily.InterNetwork or AddressFamily.InterNetworkV6 &&
+            !IPAddress.IsLoopback(addressInformation.Address));
     }
 
     private static NetworkTelemetry? CalculateNetworkTelemetry(
