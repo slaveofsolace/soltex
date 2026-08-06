@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <RootNamespace>Soltex.Audio</RootNamespace>
+    <AssemblyName>Soltex.Audio</AssemblyName>
+    <Description>Read-only Windows Core Audio endpoint observation for the Soltex workspace.</Description>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Soltex.Audio.Tests" />
+  </ItemGroup>
+</Project>
