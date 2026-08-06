@@ -36,6 +36,14 @@ jobs:
           .\eng\verify-identity.ps1 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\identity-policy.log
 
+      - name: Verify Soltex design tokens
+        id: design_tokens
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\eng\verify-design-tokens.ps1 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\design-tokens.log
+
       - name: Build Release
         id: build
         shell: pwsh
@@ -206,6 +214,7 @@ jobs:
         run: |
           $outcomes = [ordered]@{
             identity = '${{ steps.identity.outcome }}'
+            design_tokens = '${{ steps.design_tokens.outcome }}'
             build = '${{ steps.build.outcome }}'
             default_tests = '${{ steps.default_tests.outcome }}'
             supply_chain = '${{ steps.supply_chain.outcome }}'

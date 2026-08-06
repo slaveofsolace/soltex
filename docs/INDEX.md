@@ -8,8 +8,9 @@ Start here:
 - [V1 audit](AUDIT.md) — architecture, security, performance, UX, release, and roadmap findings.
 - [Handoff](../HANDOFF.md) — exact branch, commits, evidence, and resume step.
 
-Architecture and trust boundaries:
+Design and architecture:
 
+- [Design system](DESIGN_SYSTEM.md) — tokens, components, and the enforced visual language.
 - [Architecture](ARCHITECTURE.md)
 - [Threat model](THREAT_MODEL.md)
 - [Supply-chain security](SUPPLY_CHAIN_SECURITY.md)
