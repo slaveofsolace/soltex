@@ -1,0 +1,201 @@
+<!--
+    Soltex design tokens — the single source of truth for the visual language.
+
+    This is the ONLY file permitted to contain raw #RRGGBB / #AARRGGBB literals.
+    eng/verify-design-tokens.ps1 fails the build if a raw hex value appears in any
+    other XAML file, so every surface, control, and future feature resolves its
+    colour, radius, spacing, type, and motion through the tokens defined here.
+
+    Layers, in dependency order:
+      1. Colours   — raw palette primitives (the only literals).
+      2. Brushes    — semantic roles that reference the colour primitives.
+      3. Radii      — corner-radius scale.
+      4. Spacing    — numeric gap scale and common padding thicknesses.
+      5. Type       — font families and the size scale.
+      6. Motion     — animation durations.
+
+    Palette intent: a warm, near-black graphite ground with parchment text, one
+    coral interaction accent, green reserved for confirmed-good state, amber for
+    attention, and red for danger. See docs/DESIGN_SYSTEM.md for the full rationale
+    and usage rules.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <!-- ============================================================ -->
+    <!-- 1. Colour primitives                                          -->
+    <!-- ============================================================ -->
+
+    <!-- Graphite ground, darkest to lightest. -->
+    <Color x:Key="SidebarColor">#181816</Color>
+    <Color x:Key="FieldColor">#1B1B19</Color>
+    <Color x:Key="InsetColor">#1D1D1A</Color>
+    <Color x:Key="CanvasColor">#1F1F1F</Color>
+    <Color x:Key="QuietColor">#21211E</Color>
+    <Color x:Key="SurfaceColor">#252522</Color>
+    <Color x:Key="RaisedColor">#2B2B27</Color>
+    <Color x:Key="ElevatedColor">#302B27</Color>
+    <Color x:Key="HeroBaseColor">#292622</Color>
+    <Color x:Key="HeroEdgeColor">#22221F</Color>
+    <Color x:Key="TrackColor">#34332E</Color>
+    <Color x:Key="ScrollTrackColor">#242421</Color>
+    <Color x:Key="ScrollThumbColor">#5B5850</Color>
+
+    <!-- Edges. -->
+    <Color x:Key="BorderColor">#3B3A34</Color>
+    <Color x:Key="BorderStrongColor">#4A4840</Color>
+    <Color x:Key="HeroBorderColor">#514239</Color>
+
+    <!-- Parchment text, brightest to quietest. -->
+    <Color x:Key="TextBrightColor">#E7E3D6</Color>
+    <Color x:Key="TextColor">#D8D5C8</Color>
+    <Color x:Key="TextSecondaryColor">#BDBAAF</Color>
+    <Color x:Key="MutedColor">#96938A</Color>
+    <Color x:Key="QuietTextColor">#716F68</Color>
+
+    <!-- Coral interaction accent. -->
+    <Color x:Key="AccentColor">#F76F53</Color>
+    <Color x:Key="AccentFocusColor">#F9A08D</Color>
+    <Color x:Key="AccentDimColor">#8E5A4E</Color>
+    <Color x:Key="AccentQuietColor">#3A2925</Color>
+    <Color x:Key="OnAccentColor">#211714</Color>
+
+    <!-- Green: confirmed-good only. -->
+    <Color x:Key="SignalColor">#7ED0A7</Color>
+    <Color x:Key="SignalTextColor">#B8C4B9</Color>
+    <Color x:Key="SignalSurfaceColor">#20251F</Color>
+    <Color x:Key="SignalQuietColor">#202B25</Color>
+    <Color x:Key="SignalBorderColor">#3D4C42</Color>
+
+    <!-- Amber attention, red danger. -->
+    <Color x:Key="WarningColor">#E6B866</Color>
+    <Color x:Key="DangerColor">#F18279</Color>
+    <Color x:Key="DangerTextColor">#FF9BA2</Color>
+
+    <!-- Navigation selection tint. -->
+    <Color x:Key="NavSelectedColor">#372925</Color>
+
+    <!-- Translucent fills for chart areas and text selection (#AARRGGBB). -->
+    <Color x:Key="AccentAreaColor">#183F302A</Color>
+    <Color x:Key="SignalAreaColor">#1422381F</Color>
+    <Color x:Key="SelectionColor">#8058453F</Color>
+
+    <!-- ============================================================ -->
+    <!-- 2. Semantic brushes                                           -->
+    <!-- ============================================================ -->
+
+    <!-- Surfaces. -->
+    <SolidColorBrush x:Key="CanvasBrush" Color="{StaticResource CanvasColor}" />
+    <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource SidebarColor}" />
+    <SolidColorBrush x:Key="FieldBrush" Color="{StaticResource FieldColor}" />
+    <SolidColorBrush x:Key="InsetBrush" Color="{StaticResource InsetColor}" />
+    <SolidColorBrush x:Key="QuietBrush" Color="{StaticResource QuietColor}" />
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+    <SolidColorBrush x:Key="RaisedBrush" Color="{StaticResource RaisedColor}" />
+    <SolidColorBrush x:Key="ElevatedBrush" Color="{StaticResource ElevatedColor}" />
+    <SolidColorBrush x:Key="TrackBrush" Color="{StaticResource TrackColor}" />
+    <SolidColorBrush x:Key="ScrollTrackBrush" Color="{StaticResource ScrollTrackColor}" />
+    <SolidColorBrush x:Key="ScrollThumbBrush" Color="{StaticResource ScrollThumbColor}" />
+
+    <LinearGradientBrush x:Key="HeroSurfaceBrush" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="{StaticResource ElevatedColor}" Offset="0" />
+        <GradientStop Color="{StaticResource SurfaceColor}" Offset="0.56" />
+        <GradientStop Color="{StaticResource HeroEdgeColor}" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="HeroPanelBrush" Color="{StaticResource HeroBaseColor}" />
+
+    <!-- Edges. -->
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+    <SolidColorBrush x:Key="StrongBorderBrush" Color="{StaticResource BorderStrongColor}" />
+    <SolidColorBrush x:Key="HeroBorderBrush" Color="{StaticResource HeroBorderColor}" />
+
+    <!-- Text. -->
+    <SolidColorBrush x:Key="TextBrightBrush" Color="{StaticResource TextBrightColor}" />
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}" />
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+    <SolidColorBrush x:Key="MutedBrush" Color="{StaticResource MutedColor}" />
+    <SolidColorBrush x:Key="QuietTextBrush" Color="{StaticResource QuietTextColor}" />
+
+    <!-- Accent. -->
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="AccentFocusBrush" Color="{StaticResource AccentFocusColor}" />
+    <SolidColorBrush x:Key="AccentDimBrush" Color="{StaticResource AccentDimColor}" />
+    <SolidColorBrush x:Key="AccentQuietBrush" Color="{StaticResource AccentQuietColor}" />
+    <SolidColorBrush x:Key="OnAccentBrush" Color="{StaticResource OnAccentColor}" />
+
+    <!-- Status. -->
+    <SolidColorBrush x:Key="SignalBrush" Color="{StaticResource SignalColor}" />
+    <SolidColorBrush x:Key="SignalTextBrush" Color="{StaticResource SignalTextColor}" />
+    <SolidColorBrush x:Key="SignalSurfaceBrush" Color="{StaticResource SignalSurfaceColor}" />
+    <SolidColorBrush x:Key="SignalQuietBrush" Color="{StaticResource SignalQuietColor}" />
+    <SolidColorBrush x:Key="SignalBorderBrush" Color="{StaticResource SignalBorderColor}" />
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
+    <SolidColorBrush x:Key="DangerTextBrush" Color="{StaticResource DangerTextColor}" />
+
+    <!-- Navigation. -->
+    <SolidColorBrush x:Key="SelectedNavBrush" Color="{StaticResource NavSelectedColor}" />
+    <SolidColorBrush x:Key="NavRestBrush" Color="Transparent" />
+
+    <!-- Chart area fills and text selection. -->
+    <SolidColorBrush x:Key="AccentAreaBrush" Color="{StaticResource AccentAreaColor}" />
+    <SolidColorBrush x:Key="SignalAreaBrush" Color="{StaticResource SignalAreaColor}" />
+    <SolidColorBrush x:Key="SelectionBrush" Color="{StaticResource SelectionColor}" />
+
+    <!-- ============================================================ -->
+    <!-- 3. Corner-radius scale                                        -->
+    <!-- ============================================================ -->
+    <CornerRadius x:Key="RadiusXs">4</CornerRadius>
+    <CornerRadius x:Key="RadiusSm">8</CornerRadius>
+    <CornerRadius x:Key="RadiusMd">10</CornerRadius>
+    <CornerRadius x:Key="RadiusLg">12</CornerRadius>
+    <CornerRadius x:Key="RadiusCard">14</CornerRadius>
+    <CornerRadius x:Key="RadiusHero">18</CornerRadius>
+    <CornerRadius x:Key="RadiusHeroXl">24</CornerRadius>
+
+    <!-- ============================================================ -->
+    <!-- 4. Spacing scale and common paddings                          -->
+    <!-- ============================================================ -->
+    <sys:Double x:Key="Space2xs">4</sys:Double>
+    <sys:Double x:Key="SpaceXs">6</sys:Double>
+    <sys:Double x:Key="SpaceSm">8</sys:Double>
+    <sys:Double x:Key="SpaceMd">12</sys:Double>
+    <sys:Double x:Key="SpaceLg">16</sys:Double>
+    <sys:Double x:Key="SpaceXl">20</sys:Double>
+    <sys:Double x:Key="Space2xl">24</sys:Double>
+    <sys:Double x:Key="Space3xl">28</sys:Double>
+
+    <Thickness x:Key="PadCard">22</Thickness>
+    <Thickness x:Key="PadHero">26</Thickness>
+    <Thickness x:Key="PadCompact">15</Thickness>
+    <Thickness x:Key="PadPill">10,6</Thickness>
+    <Thickness x:Key="PadField">14,11</Thickness>
+    <Thickness x:Key="PadButton">16,10</Thickness>
+
+    <!-- ============================================================ -->
+    <!-- 5. Type: families and size scale                              -->
+    <!-- ============================================================ -->
+    <FontFamily x:Key="UiFont">Segoe UI Variable, Segoe UI</FontFamily>
+    <FontFamily x:Key="DisplayFont">Georgia</FontFamily>
+    <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
+
+    <sys:Double x:Key="FontMicro">9</sys:Double>
+    <sys:Double x:Key="FontMono">10</sys:Double>
+    <sys:Double x:Key="FontCaption">11</sys:Double>
+    <sys:Double x:Key="FontSmall">12</sys:Double>
+    <sys:Double x:Key="FontLabel">13</sys:Double>
+    <sys:Double x:Key="FontBody">14</sys:Double>
+    <sys:Double x:Key="FontSection">17</sys:Double>
+    <sys:Double x:Key="FontTitle">22</sys:Double>
+    <sys:Double x:Key="FontDisplaySm">24</sys:Double>
+    <sys:Double x:Key="FontMetric">36</sys:Double>
+    <sys:Double x:Key="FontDisplay">38</sys:Double>
+
+    <!-- ============================================================ -->
+    <!-- 6. Motion durations (Swiss-quiet: 140–220 ms)                 -->
+    <!-- ============================================================ -->
+    <Duration x:Key="MotionFast">0:0:0.14</Duration>
+    <Duration x:Key="MotionBase">0:0:0.18</Duration>
+    <Duration x:Key="MotionSlow">0:0:0.22</Duration>
+</ResourceDictionary>
