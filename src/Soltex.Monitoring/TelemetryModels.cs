@@ -30,6 +30,42 @@ public sealed record StorageVolumeTelemetry(
         : Math.Clamp((double)UsedBytes / TotalBytes * 100, 0, 100);
 }
 
+public sealed record NetworkInterfaceTelemetry(
+    string Name,
+    string InterfaceType,
+    long ReceiveBytesPerSecond,
+    long SendBytesPerSecond)
+{
+    public long TotalBytesPerSecond => SaturatingAdd(ReceiveBytesPerSecond, SendBytesPerSecond);
+
+    private static long SaturatingAdd(long left, long right) =>
+        left > long.MaxValue - right ? long.MaxValue : left + right;
+}
+
+public sealed class NetworkTelemetry
+{
+    internal NetworkTelemetry(
+        long receiveBytesPerSecond,
+        long sendBytesPerSecond,
+        IReadOnlyList<NetworkInterfaceTelemetry> interfaces)
+    {
+        ReceiveBytesPerSecond = Math.Max(0, receiveBytesPerSecond);
+        SendBytesPerSecond = Math.Max(0, sendBytesPerSecond);
+        Interfaces = new ReadOnlyCollection<NetworkInterfaceTelemetry>(interfaces.ToArray());
+    }
+
+    public long ReceiveBytesPerSecond { get; }
+
+    public long SendBytesPerSecond { get; }
+
+    public long TotalBytesPerSecond =>
+        ReceiveBytesPerSecond > long.MaxValue - SendBytesPerSecond
+            ? long.MaxValue
+            : ReceiveBytesPerSecond + SendBytesPerSecond;
+
+    public IReadOnlyList<NetworkInterfaceTelemetry> Interfaces { get; }
+}
+
 public sealed record ProcessTelemetry(
     int ProcessId,
     string Name,
@@ -46,6 +82,7 @@ public sealed class SystemTelemetrySnapshot
         double? cpuPercent,
         MemoryTelemetry? memory,
         IReadOnlyList<StorageVolumeTelemetry> volumes,
+        NetworkTelemetry? network,
         IReadOnlyList<ProcessTelemetry> processes,
         int inaccessibleProcessCount,
         string provenance,
@@ -57,6 +94,7 @@ public sealed class SystemTelemetrySnapshot
         CpuPercent = cpuPercent;
         Memory = memory;
         Volumes = new ReadOnlyCollection<StorageVolumeTelemetry>(volumes.ToArray());
+        Network = network;
         Processes = new ReadOnlyCollection<ProcessTelemetry>(processes.ToArray());
         InaccessibleProcessCount = inaccessibleProcessCount;
         Provenance = provenance;
@@ -74,6 +112,8 @@ public sealed class SystemTelemetrySnapshot
     public MemoryTelemetry? Memory { get; }
 
     public IReadOnlyList<StorageVolumeTelemetry> Volumes { get; }
+
+    public NetworkTelemetry? Network { get; }
 
     public IReadOnlyList<ProcessTelemetry> Processes { get; }
 

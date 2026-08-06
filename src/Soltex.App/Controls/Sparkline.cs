@@ -29,6 +29,24 @@ public sealed class Sparkline : FrameworkElement
         typeof(Sparkline),
         new FrameworkPropertyMetadata(2d, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty MinimumProperty = DependencyProperty.Register(
+        nameof(Minimum),
+        typeof(double),
+        typeof(Sparkline),
+        new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty MaximumProperty = DependencyProperty.Register(
+        nameof(Maximum),
+        typeof(double),
+        typeof(Sparkline),
+        new FrameworkPropertyMetadata(100d, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty AutoScaleProperty = DependencyProperty.Register(
+        nameof(AutoScale),
+        typeof(bool),
+        typeof(Sparkline),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
     public IEnumerable<double>? Values
     {
         get => (IEnumerable<double>?)GetValue(ValuesProperty);
@@ -53,13 +71,30 @@ public sealed class Sparkline : FrameworkElement
         set => SetValue(StrokeThicknessProperty, value);
     }
 
+    public double Minimum
+    {
+        get => (double)GetValue(MinimumProperty);
+        set => SetValue(MinimumProperty, value);
+    }
+
+    public double Maximum
+    {
+        get => (double)GetValue(MaximumProperty);
+        set => SetValue(MaximumProperty, value);
+    }
+
+    public bool AutoScale
+    {
+        get => (bool)GetValue(AutoScaleProperty);
+        set => SetValue(AutoScaleProperty, value);
+    }
+
     protected override void OnRender(DrawingContext drawingContext)
     {
         base.OnRender(drawingContext);
         double[] samples = Values?
             .Where(double.IsFinite)
             .TakeLast(120)
-            .Select(value => Math.Clamp(value, 0, 100))
             .ToArray() ?? [];
         if (samples.Length == 1)
         {
@@ -71,11 +106,14 @@ public sealed class Sparkline : FrameworkElement
             return;
         }
 
+        (double minimum, double maximum) = ResolveScale(samples);
+        double range = maximum - minimum;
         Point[] points = new Point[samples.Length];
         for (int index = 0; index < samples.Length; index++)
         {
             double x = index * ActualWidth / (samples.Length - 1);
-            double y = ActualHeight - samples[index] / 100d * ActualHeight;
+            double normalized = (Math.Clamp(samples[index], minimum, maximum) - minimum) / range;
+            double y = ActualHeight - normalized * ActualHeight;
             points[index] = new Point(x, y);
         }
 
@@ -103,5 +141,26 @@ public sealed class Sparkline : FrameworkElement
         };
         drawingContext.DrawGeometry(Fill, null, fillGeometry);
         drawingContext.DrawGeometry(null, pen, strokeGeometry);
+    }
+
+    private (double Minimum, double Maximum) ResolveScale(IReadOnlyList<double> samples)
+    {
+        if (AutoScale)
+        {
+            double minimum = Math.Min(0, samples.Min());
+            double maximum = samples.Max();
+            if (maximum <= minimum)
+            {
+                maximum = minimum + 1;
+            }
+
+            return (minimum, maximum);
+        }
+
+        double configuredMinimum = double.IsFinite(Minimum) ? Minimum : 0;
+        double configuredMaximum = double.IsFinite(Maximum) ? Maximum : 100;
+        return configuredMaximum > configuredMinimum
+            ? (configuredMinimum, configuredMaximum)
+            : (0, 100);
     }
 }

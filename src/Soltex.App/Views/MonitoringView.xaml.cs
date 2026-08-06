@@ -9,6 +9,7 @@ public partial class MonitoringView : UserControl
 {
     private readonly BoundedTelemetryHistory _cpuHistory = new(72);
     private readonly BoundedTelemetryHistory _memoryHistory = new(72);
+    private readonly BoundedTelemetryHistory _networkHistory = new(72, 0, double.MaxValue);
 
     public MonitoringView()
     {
@@ -38,6 +39,7 @@ public partial class MonitoringView : UserControl
         CpuValueText.Text = TelemetryDisplay.Percent(snapshot.CpuPercent);
         CpuHistoryChart.Values ??= _cpuHistory.CreateSnapshot();
         MemoryHistoryChart.Values ??= _memoryHistory.CreateSnapshot();
+        RenderNetwork(snapshot.Network);
 
         Brush stateBrush = (Brush)FindResource(snapshot.State == TelemetryObservationState.Current
             ? "SignalBrush"
@@ -69,6 +71,8 @@ public partial class MonitoringView : UserControl
         MonitorStateDot.Fill = danger;
         MonitorStateText.Foreground = danger;
         MonitorStateText.Text = "UNAVAILABLE";
+        NetworkCoverageText.Text = "UNAVAILABLE";
+        NetworkCoverageText.Foreground = danger;
         MonitoringProvenanceText.Text =
             "The bounded Windows telemetry provider could not complete a sample. No values were synthesized.";
     }
@@ -79,8 +83,40 @@ public partial class MonitoringView : UserControl
         MonitorStateDot.Fill = warning;
         MonitorStateText.Foreground = warning;
         MonitorStateText.Text = TelemetryDisplay.State(TelemetryObservationState.Stale);
+        NetworkCoverageText.Text = "STALE";
+        NetworkCoverageText.Foreground = warning;
         MonitoringProvenanceText.Text =
             "Last confirmed values are retained while the bounded provider retries; no new values were synthesized.";
+    }
+
+    private void RenderNetwork(NetworkTelemetry? network)
+    {
+        if (network is null)
+        {
+            NetworkTotalText.Text = "—";
+            NetworkReceiveText.Text = "Receive unavailable";
+            NetworkSendText.Text = "Send unavailable";
+            NetworkInterfaceCountText.Text = "0 stable interfaces";
+            NetworkInterfaceItems.ItemsSource = Array.Empty<NetworkInterfaceRow>();
+            NetworkHistoryChart.Values ??= _networkHistory.CreateSnapshot();
+            NetworkCoverageText.Text = "UNAVAILABLE";
+            NetworkCoverageText.Foreground = (Brush)FindResource("WarningBrush");
+            return;
+        }
+
+        NetworkHistoryChart.Values = _networkHistory.Add(network.TotalBytesPerSecond);
+        NetworkTotalText.Text = TelemetryDisplay.BytesPerSecond(network.TotalBytesPerSecond);
+        NetworkReceiveText.Text = "↓ " + TelemetryDisplay.BytesPerSecond(network.ReceiveBytesPerSecond);
+        NetworkSendText.Text = "↑ " + TelemetryDisplay.BytesPerSecond(network.SendBytesPerSecond);
+        NetworkInterfaceCountText.Text = network.Interfaces.Count == 1
+            ? "1 active interface"
+            : $"{network.Interfaces.Count} active interfaces";
+        NetworkInterfaceItems.ItemsSource = network.Interfaces
+            .Take(4)
+            .Select(item => new NetworkInterfaceRow(item))
+            .ToArray();
+        NetworkCoverageText.Text = "SAMPLED";
+        NetworkCoverageText.Foreground = (Brush)FindResource("SignalBrush");
     }
 
     private sealed class VolumeRow(StorageVolumeTelemetry volume)
@@ -91,6 +127,15 @@ public partial class MonitoringView : UserControl
 
         public string Detail =>
             $"{TelemetryDisplay.Bytes(volume.UsedBytes)} / {TelemetryDisplay.Bytes(volume.TotalBytes)}";
+    }
+
+    private sealed class NetworkInterfaceRow(NetworkInterfaceTelemetry networkInterface)
+    {
+        public string Name => networkInterface.Name;
+
+        public string Type => networkInterface.InterfaceType;
+
+        public string Rate => TelemetryDisplay.BytesPerSecond(networkInterface.TotalBytesPerSecond);
     }
 
     private sealed class ProcessRow(ProcessTelemetry process)

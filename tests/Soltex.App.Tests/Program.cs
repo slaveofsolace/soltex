@@ -24,7 +24,8 @@ internal static class Program
         List<(string Name, Action Test)> tests =
         [
             ("Shared theme exposes required control resources", ThemeResourcesAreAvailable),
-            ("Sparkline renders bounded values", SparklineRenders),
+            ("Sparkline renders bounded percentage values", SparklineRenders),
+            ("Sparkline auto-scales unbounded throughput values", SparklineAutoScales),
             ("Home view renders a live snapshot", () => HomeViewRenders(snapshot, device)),
             ("Monitoring view renders provenance and bounded rows", () => MonitoringViewRenders(snapshot)),
             ("Devices view renders an explicit unenrolled profile", () => DevicesViewRenders(device))
@@ -78,6 +79,20 @@ internal static class Program
         True(CountVisiblePixels(pixels) > 50, "The sparkline render did not produce visible pixels.");
     }
 
+    private static void SparklineAutoScales()
+    {
+        Sparkline sparkline = new()
+        {
+            Values = [0, 4_096, 2_048, 16_384, 8_192],
+            AutoScale = true,
+            Stroke = Brushes.LightGreen,
+            Fill = new SolidColorBrush(Color.FromArgb(32, 126, 208, 167)),
+            StrokeThickness = 2
+        };
+        byte[] pixels = Render(sparkline, 320, 90);
+        True(CountVisiblePixels(pixels) > 50, "The auto-scaled sparkline did not produce visible pixels.");
+    }
+
     private static void HomeViewRenders(SystemTelemetrySnapshot snapshot, LocalDeviceObservation device)
     {
         HomeView view = new();
@@ -86,6 +101,7 @@ internal static class Program
         True(CountVisiblePixels(pixels) > 5_000, "The Home view render was unexpectedly empty.");
         True(view.HomeStateText.Text.Length > 0, "Home did not expose a telemetry state.");
         True(view.MachineNameText.Text == device.DisplayName, "Home did not render the observed local device.");
+        True(view.NetworkStatusText.Text is "LIVE" or "UNAVAILABLE", "Home did not expose the network observation state.");
         True(view.HomeHeroCard.ActualHeight <= 266, "The Home hero exceeded its bounded viewport height.");
         True(view.MachineProfileCard.ActualWidth >= 220, "The Home machine profile collapsed below its usable width.");
     }
@@ -99,6 +115,7 @@ internal static class Program
         True(view.ProcessGrid.Items.Count <= SystemTelemetryProvider.MaximumProcessCount, "Monitoring exceeded the process-row bound.");
         True(view.MonitoringProvenanceText.Text.Contains("GetSystemTimes", StringComparison.Ordinal), "Monitoring omitted provider provenance.");
         True(view.MonitoringProvenanceText.Text.Contains("GPU", StringComparison.Ordinal), "Monitoring omitted the GPU limitation.");
+        True(view.NetworkCoverageText.Text is "SAMPLED" or "UNAVAILABLE", "Monitoring did not expose the network provider state.");
     }
 
     private static void DevicesViewRenders(LocalDeviceObservation device)
