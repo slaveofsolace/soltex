@@ -1,166 +1,90 @@
 # Soltex handoff
 
-Snapshot: 2026-08-05 (America/Chicago)
+Snapshot: 2026-08-09 (America/Chicago)
 
 ## Repository state
 
 ```text
 repository: slaveofsolace/soltex
-base branch: main
-base commit: 8a7b4a76ec4fd262216d78a055d72ff48f1c3da2
-feature branch: audit/soltex-v1-quality-pass
-current head: a2ac7718fd207364c9a74199585a9720ae53821f
-pull request: https://github.com/slaveofsolace/soltex/pull/7
-PR state: draft, open, not merged
+merged baseline: main at 61639bfe7ea3a7191fcb6c70ea1f2a699aa77248 (PR #9)
+continuation branch: sol/soltex-ui-evidence-matrix
+isolated worktree: C:\Users\suhai\Documents\soltex-ui-evidence-matrix
+owner checkout: C:\Users\suhai\Documents\SOL Tools (dirty work preserved and untouched)
+publication: pending exact-head commit, push, PR, and CI
 ```
 
-No rebase, force push, merge, service, driver, privilege expansion, Defender mutation, antivirus exclusion, generic shell, or proprietary security reverse engineering was used.
+No rebase, force push, reset, clean, stash, security-provider mutation, antivirus exclusion, generic shell, proprietary reverse engineering, or owner-checkout overwrite was used.
 
-## Commits
+## Current bounded slice
 
-```text
-c60174a736febdad2b50cb96963471555208ca64  feat: add bounded live network telemetry
-229b3acbcfc9c06b6394d16de120699cbea81fcb  perf: suspend telemetry outside live workspaces
-a2ac7718fd207364c9a74199585a9720ae53821f  ci: add portable package smoke evidence
-```
+This continuation closes the native UI evidence gap without changing the product interface:
 
-## Implemented
+- adds `eng/capture-ui-evidence.ps1` as the canonical 11-state renderer;
+- covers all eight default workspaces and three expanded disclosure states;
+- rejects stale evidence, error sidecars, empty/missing PNGs, wrong dimensions, and ambiguous commit identity;
+- records per-file byte lengths and SHA-256 digests;
+- separates `source_head_sha` from `tested_commit_sha` in render and package evidence;
+- records package identity through a reusable fail-closed script;
+- binds the retained package render by dimensions, length, and SHA-256;
+- captures the published GUI process's explicit waited exit code;
+- uses a nonactivating, borderless popup Window so its 1280x820 capture is not clamped to hosted work-area geometry;
+- clips workspace drawing to its column and binds navigation labels directly to their owning buttons;
+- gives GitHub checkouts enough ancestry depth to verify a pull-request merge checkout;
+- uploads the complete visual directory instead of a six-file allowlist;
+- records factual validation and clean-room SteelSeries reference boundaries.
 
-### Network telemetry
+## Local evidence
 
-The existing Monitoring sample now observes active Windows network-interface counters before and after the same bounded sample window already used for CPU/process deltas.
-
-It provides:
-
-- receive, send, and total bytes per second;
-- bounded per-interface rows;
-- control-character and length sanitization;
-- aggregate Home and Monitoring sparklines;
-- explicit unavailable/partial states;
-- no packet contents, destinations, connection history, extra timer, service, package, or privilege.
-
-Non-routable/filter-only interfaces are excluded by requiring an active non-loopback unicast IPv4/IPv6 address.
-
-### Telemetry lifecycle
-
-The existing sampling loop now runs only when:
-
-- the window is loaded;
-- the window is not closing;
-- the window is not minimized;
-- Home or Monitoring is visible.
-
-Transitions are coalesced through the dispatcher and serialized. Hidden workspaces and minimized windows cancel and dispose the loop.
-
-### Package smoke
-
-A second workflow now:
-
-- publishes the self-contained single-file `win-x64` executable;
-- launches the published artifact;
-- produces a native Home render;
-- records SHA-256 and Authenticode status;
-- uploads the executable and evidence.
-
-The current package is explicitly recorded as unsigned.
-
-## Files changed
+Environment: owner-controlled Windows host; .NET SDK 10.0.302; Release configuration.
 
 ```text
-.github/workflows/package-smoke.yml
-src/Soltex.App/Controls/Sparkline.cs
-src/Soltex.App/MainWindow.TelemetryLifecycle.cs
-src/Soltex.App/TelemetryActivityPolicy.cs
-src/Soltex.App/Views/HomeView.xaml
-src/Soltex.App/Views/HomeView.xaml.cs
-src/Soltex.App/Views/MonitoringView.xaml
-src/Soltex.App/Views/MonitoringView.xaml.cs
-src/Soltex.App/Views/TelemetryDisplay.cs
-src/Soltex.Monitoring/BoundedTelemetryHistory.cs
-src/Soltex.Monitoring/SystemTelemetryProvider.cs
-src/Soltex.Monitoring/TelemetryMath.cs
-src/Soltex.Monitoring/TelemetryModels.cs
-tests/Soltex.App.Tests/Program.cs
-tests/Soltex.Monitoring.Tests/Program.cs
-docs/AUDIT.md
-docs/IMPLEMENTATION_STATUS.md
-docs/INDEX.md
-docs/VALIDATION.md
-HANDOFF.md
-```
-
-## Final evidence
-
-Source gate:
-
-```text
-run: 31065075683
-job: 92500998931
-artifact: soltex-windows-evidence-31065075683-1
-artifact ID: 8953553034
-digest: sha256:850946fd3fc57e7a318565ca26428627cb3caa6a822409fd2112f5a14af9d4ff
-```
-
-Results:
-
-```text
-build: 0 warnings, 0 errors
+build: passed, 0 warnings, 0 errors
+identity policy: passed
+design-token policy: passed
 Security/Remote: 31/31
 Supply chain: 18/18
 Hardening: 12/12
 Update: 17/17
 Device Fabric: 24/24
 Monitoring: 15/15
-WPF application: 7/7
-hosted EICAR/AMSI: 31/32
-native renders: Home, Monitoring, Devices, Security, Remote, Updates passed
+Core Audio: 10/10
+WPF application: 10/10
+total required tests: 137/137
+native renders: 11/11 at 1280x820
+stale-output recovery: rejected before capture
+mismatched tested commit: rejected before capture
+self-contained package: published and rendered; process exit code 0
+package identity: schema 2; Authenticode NotSigned
+package stale/identity recovery: rejected before evidence write
 ```
 
-Package gate:
+The first PR run correctly rejected a 1044x788 hosted capture. The root cause was the normal-chrome window inheriting the runner work-area constraint. The recovery configures render-smoke as a nonactivating, borderless, nonresizable popup fixed to 1280x820 and captures the complete native Window visual. A focused regression starts from a 1044x788 request, exercises that real off-screen popup path, and proves the canonical bitmap plus bottom-right content.
 
-```text
-run: 31065075715
-job: 92498644583
-artifact: soltex-package-smoke-31065075715-1
-artifact ID: 8953553036
-digest: sha256:c48026fc3b2bb011b42563c2cd7b32eb5795bb9dbf111d7bc4324d0c14523088
-```
+Generated images and their manifest remain under ignored `artifacts/` paths. All eleven images were directly inspected. This is render evidence, not owner visual acceptance or accessibility conformance.
 
-Published executable:
+## Reference-only observation
 
-```text
-file: Soltex.exe
-length: 71485765 bytes
-sha256: E3AE863B30A16EB091EF8C73EB6985EEC9C15760EBC5114F775FB44333A5F2F5
-Authenticode: NotSigned
-launch/render: passed
-```
+The user authorized a visual-only observation of an already-running SteelSeries GG/Sonar window. Only general hierarchy lessons were retained. No screenshot, binary, asset, text, preset, DSP behavior, setting, or private protocol entered Soltex. An unrelated authentication overlay was left untouched.
 
-The repository owner-host record separately reports 32/32 EICAR. Do not replace the hosted 31/32 result with it.
+## Required publication checks
 
-## Highest-priority remaining work
+Before merge:
 
-1. **Trusted distribution:** select the publisher identity, protect the signing key, sign and timestamp executable/installer, verify exact hashes/signatures, and test install/repair/uninstall.
-2. **Accessibility:** complete keyboard/UI Automation, high-contrast, reduced-motion, viewport/scaling, and owner visual checks.
-3. **Resource evidence:** 30-minute working-set/CPU soak, minimize/restore, suspend/resume, and repeated navigation.
-4. **Next lightweight feature:** read-only installed-application/startup inventory through documented registry/startup locations. Do not use `Win32_Product`, silently uninstall, or add a cleanup/optimizer action.
-5. **Audio foundation:** supported Core Audio endpoint/session enumeration; no live EQ/routing claim before a tested processing path.
-6. **Release automation:** only after signing and installer evidence, create immutable GitHub Release automation and provenance/SBOM evidence.
+1. commit only task-owned files in the isolated worktree;
+2. rerun the render matrix against that exact committed HEAD into fresh evidence directories;
+3. push `sol/soltex-ui-evidence-matrix` and open a PR to `main`;
+4. require Windows and package-smoke success on the exact PR head;
+5. inspect `render-matrix.json` and `package-smoke.json` for correct source/tested identities;
+6. keep hosted EICAR/provider interoperability separate from the existing owner-host 32/32 result;
+7. merge with history preserved, then verify `origin/main` contains the merge.
 
-## Security and product nonclaims
+## Remaining product work after this slice
 
-Soltex is not:
+1. Trusted signed distribution and installer lifecycle evidence.
+2. Bounded durable monitoring history and a read-only Applications/startup inventory.
+3. Accessibility, scaling, keyboard, reduced-motion, high-contrast, and owner visual acceptance.
+4. GPU/thermal provider selection and reproducible benchmark design.
+5. Per-session audio observation before any routing, virtual-device, EQ, or DSP claim.
+6. Consent-bound enrolled-device jobs before generic cross-device automation.
 
-- a registered antivirus provider;
-- a substitute for Defender or another Windows-registered provider;
-- integrated with proprietary Malwarebytes internals;
-- a production update service;
-- signed for trusted public distribution;
-- an unattended remote-management agent;
-- a generic remote shell;
-- production-ready;
-- accessibility- or visually-approved.
-
-## Exact resume step
-
-Review PR #7 and its two green workflow runs. After owner review, keep the next branch focused on **signed distribution** or **read-only application/startup inventory**—not both. Begin by re-running the complete source gate at the PR head and verifying the package artifact's recorded `NotSigned` status before selecting the signing or inventory design.
+Soltex is not a registered antivirus, a Defender/Malwarebytes replacement, a production update service, an unattended remote-management agent, a generic remote shell, a signed public release, or production-ready.

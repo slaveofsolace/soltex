@@ -3,9 +3,9 @@
 Snapshot: 2026-08-09
 Product: **Soltex**
 Repository: `slaveofsolace/soltex`
-Candidate branch: `codex/soltex-ui-focus-v1`
-Stack base: `feat/soltex-monitoring-and-audio` at `a0daa2163529d8f813e79ea7e342ddfbd5c61f50`
-Evidence: [`docs/evidence/2026-08-09-ui-focus`](evidence/2026-08-09-ui-focus/README.md)
+Merged baseline: `main` at `61639bfe7ea3a7191fcb6c70ea1f2a699aa77248` (PR #9)
+Continuation branch: `sol/soltex-ui-evidence-matrix`
+Evidence: [`docs/evidence/2026-08-09-ui-focus`](evidence/2026-08-09-ui-focus/README.md) and [`docs/evidence/2026-08-09-ui-evidence-matrix`](evidence/2026-08-09-ui-evidence-matrix/README.md)
 
 ## Evidence vocabulary
 
@@ -17,9 +17,9 @@ Evidence: [`docs/evidence/2026-08-09-ui-focus`](evidence/2026-08-09-ui-focus/REA
 
 A narrow pass proves only its named boundary.
 
-## Owner-host candidate evidence
+## Owner-host evidence
 
-The current candidate was built and exercised locally on the owner-controlled Windows host with .NET SDK 10.0.302. GitHub CI remains a separate required gate on the exact published head.
+The UI-focus candidate merged through PR #9. The evidence-matrix continuation was then built and exercised locally on the owner-controlled Windows host with .NET SDK 10.0.302. GitHub CI remains a separate required gate on the exact published continuation head.
 
 | Gate | Result |
 |---|---:|
@@ -31,11 +31,12 @@ The current candidate was built and exercised locally on the owner-controlled Wi
 | Device Fabric suite | 24/24 |
 | Monitoring suite | 15/15 |
 | Core Audio suite | 10/10 |
-| WPF application suite | 9/9 |
+| WPF application suite | 10/10 |
 | Identity/design guards | Passed under Windows PowerShell 5.1 |
 | Native renders | Eight defaults and three expanded states at 1280x820 |
+| Evidence fail-closed paths | Stale targets and mismatched tested commits rejected before capture |
 
-The complete local evidence boundary and nonclaims are recorded in the linked evidence packet. CI/package evidence from earlier stack commits remains historical; it does not substitute for a run on this candidate head.
+The complete local evidence boundary and nonclaims are recorded in the linked packets. CI/package evidence from earlier stack commits remains historical; it does not substitute for a run on the published continuation head.
 
 ## Implemented
 
@@ -45,6 +46,8 @@ The complete local evidence boundary and nonclaims are recorded in the linked ev
 - reusable cards, buttons, progress controls, sliders, focus states, and sparklines;
 - Home, Monitoring, Devices, Mixer, Clips, Security, Remote Assist, and Updates workspaces;
 - native render-smoke selection for all eight defaults plus Monitoring, Mixer, and Security disclosure states;
+- work-area-independent 1280x820 popup render-smoke path with a constrained-viewport regression;
+- workspace-column clipping and explicit navigation-label ownership so local content cannot corrupt global navigation evidence;
 - quiet default hierarchy with secondary operational detail behind explicit controls.
 
 ### Monitoring
@@ -122,7 +125,10 @@ RustDesk remains an external program.
 
 - self-contained `win-x64` executable;
 - per-user Inno Setup definition;
-- package-smoke workflow that launches, renders, hashes, and records Authenticode status.
+- package-smoke workflow that launches, renders, hashes, and records Authenticode status;
+- schema-versioned package identity that distinguishes the source branch head from the commit actually tested;
+- package identity that binds the retained Home render by dimensions, length, and SHA-256;
+- Windows evidence workflow covering all eight default workspaces and three progressive-disclosure states with dimensions and per-file SHA-256 provenance.
 
 The CI package at this snapshot is unsigned.
 
@@ -142,4 +148,4 @@ The CI package at this snapshot is unsigned.
 
 ## Exact next slice
 
-Publish this aggregate candidate, require Windows and package-smoke CI on its exact head, and merge it to `main` with history preserved. Then close the superseded stacked PRs and remove only branches proven reachable from `main` after checking local worktree ownership. Trusted signed distribution remains the highest-priority release blocker after consolidation.
+Publish the evidence-matrix continuation, require Windows and package-smoke CI on its exact head, inspect both manifests, and merge it to `main` with history preserved. After that verification-only slice lands, the next product slice should add bounded historical monitoring storage and a read-only Applications inventory; trusted signed distribution remains the highest-priority release blocker.

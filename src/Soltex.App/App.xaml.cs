@@ -62,6 +62,8 @@ public partial class App : Application
 
         Directory.CreateDirectory(outputDirectory);
         window.ShowInTaskbar = false;
+        window.WindowStartupLocation = WindowStartupLocation.Manual;
+        RenderSmokeCapture.ConfigureWindow(window);
         window.Left = -32_000;
         window.Top = -32_000;
         window.Show();
@@ -82,14 +84,7 @@ public partial class App : Application
                 window.UpdateLayout();
                 window.PrepareRenderSmokeCapture();
                 window.UpdateLayout();
-                Dispatcher.Invoke(static () => { }, DispatcherPriority.Render);
-                int width = Math.Max(1, checked((int)Math.Ceiling(window.ActualWidth)));
-                int height = Math.Max(1, checked((int)Math.Ceiling(window.ActualHeight)));
-                RenderTargetBitmap warmup = new(width, height, 96, 96, PixelFormats.Pbgra32);
-                warmup.Render(window);
-                Dispatcher.Invoke(static () => { }, DispatcherPriority.Render);
-                RenderTargetBitmap bitmap = new(width, height, 96, 96, PixelFormats.Pbgra32);
-                bitmap.Render(window);
+                RenderTargetBitmap bitmap = RenderSmokeCapture.Capture(window);
                 PngBitmapEncoder encoder = new();
                 encoder.Frames.Add(BitmapFrame.Create(bitmap));
                 using FileStream stream = new(fullOutputPath, FileMode.Create, FileAccess.Write, FileShare.None);

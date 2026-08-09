@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          fetch-depth: 2
           persist-credentials: false
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
         with:
@@ -136,86 +137,20 @@ jobs:
             Tee-Object -FilePath .\artifacts\validation\tests-eicar.log
           if ($LASTEXITCODE -ne 0) { throw "EICAR interoperability suite failed with exit code $LASTEXITCODE." }
 
-      - name: Render Home workspace
-        id: render_home
+      - name: Capture complete UI evidence matrix
+        id: render_matrix
         shell: pwsh
+        env:
+          SOLTEX_SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           $ErrorActionPreference = 'Stop'
-          dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\home-current-source.png --panel home 2>&1 |
-            Tee-Object -FilePath .\artifacts\validation\render-home.log
-          if ($LASTEXITCODE -ne 0) { throw "Home render failed with exit code $LASTEXITCODE." }
-
-      - name: Render Monitoring workspace
-        id: render_monitoring
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\monitoring-current-source.png --panel monitoring 2>&1 |
-            Tee-Object -FilePath .\artifacts\validation\render-monitoring.log
-          if ($LASTEXITCODE -ne 0) { throw "Monitoring render failed with exit code $LASTEXITCODE." }
-
-      - name: Render Devices workspace
-        id: render_devices
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\devices-current-source.png --panel devices 2>&1 |
-            Tee-Object -FilePath .\artifacts\validation\render-devices.log
-          if ($LASTEXITCODE -ne 0) { throw "Devices render failed with exit code $LASTEXITCODE." }
-
-      - name: Render Security panel
-        id: render_security
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\security-current-source.png --panel security 2>&1 |
-            Tee-Object -FilePath .\artifacts\validation\render-security.log
-          if ($LASTEXITCODE -ne 0) { throw "Security render failed with exit code $LASTEXITCODE." }
-
-      - name: Render Remote Assist panel
-        id: render_remote
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\remote-assist-current-source.png --panel remote 2>&1 |
-            Tee-Object -FilePath .\artifacts\validation\render-remote-assist.log
-          if ($LASTEXITCODE -ne 0) { throw "Remote Assist render failed with exit code $LASTEXITCODE." }
-
-      - name: Render Updates panel
-        id: render_update
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          dotnet run --project .\src\Soltex.App\Soltex.App.csproj --configuration Release --no-build -- --render-smoke .\artifacts\visual\updates-current-source.png --panel update 2>&1 |
-            Tee-Object -FilePath .\artifacts\validation\render-updates.log
-          if ($LASTEXITCODE -ne 0) { throw "Updates render failed with exit code $LASTEXITCODE." }
-
-      - name: Verify render evidence
-        id: verify_renders
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $expected = @(
-            '.\artifacts\visual\home-current-source.png',
-            '.\artifacts\visual\monitoring-current-source.png',
-            '.\artifacts\visual\devices-current-source.png',
-            '.\artifacts\visual\security-current-source.png',
-            '.\artifacts\visual\remote-assist-current-source.png',
-            '.\artifacts\visual\updates-current-source.png'
-          )
-          foreach ($path in $expected) {
-            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
-              throw "Expected render artifact was not created: $path"
-            }
-          }
-          $renderErrors = Get-ChildItem .\artifacts\visual -Filter '*.error.txt' -File -ErrorAction SilentlyContinue
-          if ($renderErrors) {
-            foreach ($errorFile in $renderErrors) {
-              Write-Host "Render error: $($errorFile.FullName)"
-              Get-Content -LiteralPath $errorFile.FullName
-            }
-            throw 'A render-smoke error file was produced.'
-          }
+          .\eng\capture-ui-evidence.ps1 `
+            -OutputDirectory .\artifacts\visual `
+            -ValidationDirectory .\artifacts\validation `
+            -Configuration Release `
+            -SourceHeadSha $env:SOLTEX_SOURCE_HEAD_SHA `
+            -TestedCommitSha $env:GITHUB_SHA `
+            -DotnetPath (Get-Command dotnet -ErrorAction Stop).Source
 
       - name: Record complete-gate classification
         if: always()
@@ -233,13 +168,7 @@ jobs:
             monitoring_tests = '${{ steps.monitoring_tests.outcome }}'
             audio_tests = '${{ steps.audio_tests.outcome }}'
             app_tests = '${{ steps.app_tests.outcome }}'
-            render_home = '${{ steps.render_home.outcome }}'
-            render_monitoring = '${{ steps.render_monitoring.outcome }}'
-            render_devices = '${{ steps.render_devices.outcome }}'
-            render_security = '${{ steps.render_security.outcome }}'
-            render_remote = '${{ steps.render_remote.outcome }}'
-            render_update = '${{ steps.render_update.outcome }}'
-            verify_renders = '${{ steps.verify_renders.outcome }}'
+            render_matrix = '${{ steps.render_matrix.outcome }}'
             eicar = '${{ steps.eicar.outcome }}'
           }
           $requiredFailures = @(
@@ -274,12 +203,7 @@ jobs:
           name: soltex-windows-evidence-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             artifacts/validation/**
-            artifacts/visual/home-current-source.png
-            artifacts/visual/monitoring-current-source.png
-            artifacts/visual/devices-current-source.png
-            artifacts/visual/security-current-source.png
-            artifacts/visual/remote-assist-current-source.png
-            artifacts/visual/updates-current-source.png
+            artifacts/visual/**
             artifacts/visual/*.error.txt
           if-no-files-found: warn
           retention-days: 30

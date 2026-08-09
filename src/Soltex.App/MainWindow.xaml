@@ -14,13 +14,18 @@
         Loaded="Window_Loaded"
         Closed="Window_Closed">
 
-    <Grid>
+    <Grid Background="{StaticResource CanvasBrush}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="198" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}" BorderBrush="{StaticResource TrackBrush}" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0"
+                Background="{StaticResource SidebarBrush}"
+                BorderBrush="{StaticResource TrackBrush}"
+                BorderThickness="0,0,1,0"
+                TextElement.Foreground="{StaticResource TextBrush}"
+                TextElement.FontFamily="{StaticResource UiFont}">
             <Grid Margin="18,22">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -30,7 +35,10 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel>
-                    <TextBlock Text="Soltex" FontFamily="{StaticResource DisplayFont}" FontSize="28" />
+                    <TextBlock Text="Soltex"
+                               Foreground="{StaticResource TextBrush}"
+                               FontFamily="{StaticResource DisplayFont}"
+                               FontSize="28" />
                     <TextBlock Text="LOCAL CONTROL SURFACE"
                                Margin="1,6,0,0"
                                Foreground="{StaticResource MutedBrush}"
@@ -48,56 +56,72 @@
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="01" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource AccentDimBrush}" />
-                            <TextBlock Grid.Column="1" Text="Home" />
+                            <TextBlock Grid.Column="1"
+                                       Text="Home"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Button x:Name="MonitoringNavButton" Style="{StaticResource NavButton}" Click="MonitoringNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="02" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
-                            <TextBlock Grid.Column="1" Text="Monitoring" />
+                            <TextBlock Grid.Column="1"
+                                       Text="Monitoring"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Button x:Name="DevicesNavButton" Style="{StaticResource NavButton}" Click="DevicesNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="03" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
-                            <TextBlock Grid.Column="1" Text="Devices" />
+                            <TextBlock Grid.Column="1"
+                                       Text="Devices"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Button x:Name="MixerNavButton" Style="{StaticResource NavButton}" Click="MixerNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="04" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
-                            <TextBlock Grid.Column="1" Text="Mixer" />
+                            <TextBlock Grid.Column="1"
+                                       Text="Mixer"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Button x:Name="ClipsNavButton" Style="{StaticResource NavButton}" Click="ClipsNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="05" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
-                            <TextBlock Grid.Column="1" Text="Clips" />
+                            <TextBlock Grid.Column="1"
+                                       Text="Clips"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Button x:Name="SecurityNavButton" Style="{StaticResource NavButton}" Click="SecurityNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="06" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
-                            <TextBlock Grid.Column="1" Text="Security" />
+                            <TextBlock Grid.Column="1"
+                                       Text="Security"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Button x:Name="RemoteNavButton" Style="{StaticResource NavButton}" Click="RemoteNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="07" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
-                            <TextBlock Grid.Column="1" Text="Remote Assist" />
+                            <TextBlock Grid.Column="1"
+                                       Text="Remote Assist"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Button x:Name="UpdateNavButton" Style="{StaticResource NavButton}" Click="UpdateNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="08" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
-                            <TextBlock Grid.Column="1" Text="Updates" />
+                            <TextBlock Grid.Column="1"
+                                       Text="Updates"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                 </StackPanel>
@@ -135,7 +159,11 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Column="1" Margin="34,28,34,26">
+        <Grid Grid.Column="1"
+              Margin="34,28,34,26"
+              ClipToBounds="True"
+              TextElement.Foreground="{StaticResource TextBrush}"
+              TextElement.FontFamily="{StaticResource UiFont}">
             <views:HomeView x:Name="HomePanel" />
             <views:MonitoringView x:Name="MonitoringPanel" Visibility="Collapsed" />
             <views:DevicesView x:Name="DevicesPanel" Visibility="Collapsed" />
