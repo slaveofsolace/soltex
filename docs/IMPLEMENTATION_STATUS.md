@@ -31,7 +31,7 @@ The UI-focus candidate merged through PR #9. The evidence-matrix continuation wa
 | Device Fabric suite | 24/24 |
 | Monitoring suite | 15/15 |
 | Core Audio suite | 10/10 |
-| WPF application suite | 9/9 |
+| WPF application suite | 10/10 |
 | Identity/design guards | Passed under Windows PowerShell 5.1 |
 | Native renders | Eight defaults and three expanded states at 1280x820 |
 | Evidence fail-closed paths | Stale targets and mismatched tested commits rejected before capture |
@@ -46,6 +46,8 @@ The complete local evidence boundary and nonclaims are recorded in the linked pa
 - reusable cards, buttons, progress controls, sliders, focus states, and sparklines;
 - Home, Monitoring, Devices, Mixer, Clips, Security, Remote Assist, and Updates workspaces;
 - native render-smoke selection for all eight defaults plus Monitoring, Mixer, and Security disclosure states;
+- work-area-independent 1280x820 popup render-smoke path with a constrained-viewport regression;
+- workspace-column clipping and explicit navigation-label ownership so local content cannot corrupt global navigation evidence;
 - quiet default hierarchy with secondary operational detail behind explicit controls.
 
 ### Monitoring
@@ -125,6 +127,7 @@ RustDesk remains an external program.
 - per-user Inno Setup definition;
 - package-smoke workflow that launches, renders, hashes, and records Authenticode status;
 - schema-versioned package identity that distinguishes the source branch head from the commit actually tested;
+- package identity that binds the retained Home render by dimensions, length, and SHA-256;
 - Windows evidence workflow covering all eight default workspaces and three progressive-disclosure states with dimensions and per-file SHA-256 provenance.
 
 The CI package at this snapshot is unsigned.

@@ -25,7 +25,10 @@ This continuation closes the native UI evidence gap without changing the product
 - records per-file byte lengths and SHA-256 digests;
 - separates `source_head_sha` from `tested_commit_sha` in render and package evidence;
 - records package identity through a reusable fail-closed script;
+- binds the retained package render by dimensions, length, and SHA-256;
 - captures the published GUI process's explicit waited exit code;
+- uses a nonactivating, borderless popup Window so its 1280x820 capture is not clamped to hosted work-area geometry;
+- clips workspace drawing to its column and binds navigation labels directly to their owning buttons;
 - gives GitHub checkouts enough ancestry depth to verify a pull-request merge checkout;
 - uploads the complete visual directory instead of a six-file allowlist;
 - records factual validation and clean-room SteelSeries reference boundaries.
@@ -45,8 +48,8 @@ Update: 17/17
 Device Fabric: 24/24
 Monitoring: 15/15
 Core Audio: 10/10
-WPF application: 9/9
-total required tests: 136/136
+WPF application: 10/10
+total required tests: 137/137
 native renders: 11/11 at 1280x820
 stale-output recovery: rejected before capture
 mismatched tested commit: rejected before capture
@@ -54,6 +57,8 @@ self-contained package: published and rendered; process exit code 0
 package identity: schema 2; Authenticode NotSigned
 package stale/identity recovery: rejected before evidence write
 ```
+
+The first PR run correctly rejected a 1044x788 hosted capture. The root cause was the normal-chrome window inheriting the runner work-area constraint. The recovery configures render-smoke as a nonactivating, borderless, nonresizable popup fixed to 1280x820 and captures the complete native Window visual. A focused regression starts from a 1044x788 request, exercises that real off-screen popup path, and proves the canonical bitmap plus bottom-right content.
 
 Generated images and their manifest remain under ignored `artifacts/` paths. All eleven images were directly inspected. This is render evidence, not owner visual acceptance or accessibility conformance.
 

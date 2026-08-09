@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Soltex.App.Controls;
@@ -34,7 +35,8 @@ internal static class Program
             ("Monitoring view renders provenance and bounded rows", () => MonitoringViewRenders(snapshot)),
             ("Monitoring details are disclosed only on request", MonitoringDetailsAreProgressive),
             ("Mixer prioritizes active endpoints", () => MixerPrioritizesActiveEndpoints(audioSnapshot)),
-            ("Devices view renders an explicit unnrolled profile", () => DevicesViewRenders(device))
+            ("Devices view renders an explicit unnrolled profile", () => DevicesViewRenders(device)),
+            ("Render-smoke uses an unconstrained popup viewport", RenderSmokeUsesCanonicalViewport)
         ];
 
         int failed = 0;
@@ -211,6 +213,66 @@ internal static class Program
         True(view.DeviceProvenanceText.Text.Contains("NotEnrolled", StringComparison.Ordinal), "Devices did not expose the unenrolled state.");
         True(view.DeviceHeroCard.ActualHeight <= 221, "The Devices hero exceeded its bounded viewport height.");
         True(view.DeviceProfileCard.ActualWidth >= 240, "The Devices profile collapsed below its usable width.");
+    }
+
+    private static void RenderSmokeUsesCanonicalViewport()
+    {
+        Grid surface = new()
+        {
+            Background = Brushes.Black
+        };
+        TextBlock inheritedText = new()
+        {
+            Text = "Inherited foreground",
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Top
+        };
+        surface.Children.Add(inheritedText);
+        surface.Children.Add(new Border
+        {
+            Width = 32,
+            Height = 32,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Background = Brushes.Magenta
+        });
+        Window constrainedHost = new()
+        {
+            Width = 1044,
+            Height = 788,
+            Foreground = Brushes.White,
+            Content = surface
+        };
+        RenderSmokeCapture.ConfigureWindow(constrainedHost);
+        constrainedHost.ShowInTaskbar = false;
+        constrainedHost.WindowStartupLocation = WindowStartupLocation.Manual;
+        constrainedHost.Left = -32_000;
+        constrainedHost.Top = -32_000;
+        constrainedHost.Show();
+
+        RenderTargetBitmap bitmap;
+        try
+        {
+            bitmap = RenderSmokeCapture.Capture(constrainedHost);
+        }
+        finally
+        {
+            constrainedHost.Close();
+        }
+        True(ReferenceEquals(constrainedHost.Content, surface),
+            "Render-smoke replaced the product content surface.");
+        True(constrainedHost.WindowStyle == WindowStyle.None && constrainedHost.ResizeMode == ResizeMode.NoResize,
+            "Render-smoke did not configure a borderless, nonresizable popup window.");
+        True(ReferenceEquals(TextElement.GetForeground(inheritedText), Brushes.White),
+            "Render-smoke lost a descendant foreground inherited from the constrained host.");
+        True(bitmap.PixelWidth == 1280 && bitmap.PixelHeight == 820,
+            "Render-smoke did not use the canonical 1280x820 viewport.");
+
+        byte[] pixels = new byte[checked(bitmap.PixelWidth * bitmap.PixelHeight * 4)];
+        bitmap.CopyPixels(pixels, checked(bitmap.PixelWidth * 4), 0);
+        int bottomRight = checked((((bitmap.PixelHeight - 8) * bitmap.PixelWidth) + bitmap.PixelWidth - 8) * 4);
+        True(pixels[bottomRight] > 200 && pixels[bottomRight + 2] > 200 && pixels[bottomRight + 3] > 200,
+            "Render-smoke clipped content that expanded beyond the constrained host viewport.");
     }
 
     private static byte[] Render(FrameworkElement element, int width, int height)

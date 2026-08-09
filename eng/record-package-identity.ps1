@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$ExecutablePath = 'artifacts\publish\win-x64\Soltex.exe',
+    [string]$RenderPath = 'artifacts\validation\package-home.png',
     [string]$OutputPath = 'artifacts\validation\package-smoke.json',
     [string]$Runtime = 'win-x64',
     [string]$SourceHeadSha,
@@ -62,9 +63,13 @@ if ($SourceHeadSha -ne $TestedCommitSha) {
 }
 
 $resolvedExecutable = Resolve-RepositoryPath -Path $ExecutablePath
+$resolvedRender = Resolve-RepositoryPath -Path $RenderPath
 $resolvedOutput = Resolve-RepositoryPath -Path $OutputPath
 if (-not (Test-Path -LiteralPath $resolvedExecutable -PathType Leaf)) {
     throw "Published executable was not found: '$resolvedExecutable'."
+}
+if (-not (Test-Path -LiteralPath $resolvedRender -PathType Leaf)) {
+    throw "Published package render was not found: '$resolvedRender'."
 }
 if (Test-Path -LiteralPath $resolvedOutput) {
     throw "Refusing to overwrite existing package identity evidence: '$resolvedOutput'."
@@ -75,6 +80,18 @@ New-Item -ItemType Directory -Force -Path $outputDirectory | Out-Null
 
 $item = Get-Item -LiteralPath $resolvedExecutable
 $hash = Get-FileHash -LiteralPath $resolvedExecutable -Algorithm SHA256
+$renderItem = Get-Item -LiteralPath $resolvedRender
+$renderHash = Get-FileHash -LiteralPath $resolvedRender -Algorithm SHA256
+Add-Type -AssemblyName System.Drawing
+$renderImage = [System.Drawing.Image]::FromFile($resolvedRender)
+try {
+    if ($renderImage.Width -ne 1280 -or $renderImage.Height -ne 820) {
+        throw "Published package render is $($renderImage.Width)x$($renderImage.Height); expected 1280x820."
+    }
+}
+finally {
+    $renderImage.Dispose()
+}
 $signature = Get-AuthenticodeSignature -FilePath $resolvedExecutable
 $signatureStatus = $signature.Status.ToString()
 if ($signatureStatus -notin @('Valid', 'NotSigned')) {
@@ -94,7 +111,15 @@ if ($signatureStatus -notin @('Valid', 'NotSigned')) {
     sha256 = $hash.Hash.ToLowerInvariant()
     authenticode_status = $signatureStatus
     signed = ($signature.Status -eq 'Valid')
+    render = [ordered]@{
+        panel = 'home'
+        file = $renderItem.Name
+        length = $renderItem.Length
+        sha256 = $renderHash.Hash.ToLowerInvariant()
+        width = 1280
+        height = 820
+    }
     recorded_at_utc = (Get-Date).ToUniversalTime().ToString('o')
-} | ConvertTo-Json | Set-Content -Encoding UTF8 -LiteralPath $resolvedOutput
+} | ConvertTo-Json -Depth 4 | Set-Content -Encoding UTF8 -LiteralPath $resolvedOutput
 
 Write-Host "Recorded package identity: $resolvedOutput"

@@ -84,6 +84,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           .\eng\record-package-identity.ps1 `
             -ExecutablePath .\artifacts\publish\win-x64\Soltex.exe `
+            -RenderPath .\artifacts\validation\package-home.png `
             -OutputPath .\artifacts\validation\package-smoke.json `
             -Runtime win-x64 `
             -SourceHeadSha $env:SOLTEX_SOURCE_HEAD_SHA `

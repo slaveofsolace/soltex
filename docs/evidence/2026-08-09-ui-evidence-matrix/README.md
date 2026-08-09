@@ -8,7 +8,7 @@ Merged baseline: `main` at `61639bfe7ea3a7191fcb6c70ea1f2a699aa77248` (PR #9)
 
 Continuation branch: `sol/soltex-ui-evidence-matrix`
 
-This packet records the verification-contract continuation after the UI-focus candidate merged. It does not change the product interface. It closes an evidence gap: the Windows workflow previously retained six default workspace captures while the native render path supports eight defaults and three progressive-disclosure states.
+This packet records the verification-contract continuation after the UI-focus candidate merged. It does not change the user-facing product interface. It closes an evidence gap: the Windows workflow previously retained six default workspace captures while the native render path supports eight defaults and three progressive-disclosure states.
 
 ## Canonical matrix
 
@@ -50,18 +50,24 @@ The complete workflow-equivalent path was exercised on the owner-controlled Wind
 | Release build | Passed; 0 warnings, 0 errors |
 | Identity guard | Passed |
 | Design-token guard | Passed |
-| Required test executables | 136/136 |
+| Required test executables | 137/137 |
 | Native matrix | 11/11 PNGs at 1280x820 |
 | Stale-evidence recovery check | Rejected before capture, as designed |
 | Mismatched tested-commit check | Rejected before capture, as designed |
-| Self-contained `win-x64` publish | Passed; 71,508,801-byte executable |
+| Self-contained `win-x64` publish | Passed; exact length and SHA-256 recorded in the generated manifest |
 | Published executable render | Passed through an explicit waited process; exit code 0 |
-| Package identity schema 2 | Passed; SHA-256 `c95188f518279b368311ef3881ff35a75ce43a56e81b8bfcf5ab1e669ab80673`; Authenticode truthfully `NotSigned` |
+| Package identity schema 2 | Passed; executable and render hashes recorded; Authenticode truthfully `NotSigned` |
 | Package stale/identity negative paths | Rejected before evidence write, as designed |
 
 The eleven generated PNGs and the local manifest remain under ignored `artifacts/` paths. They were inspected directly; no blank frame, missing workspace, render error sidecar, or obvious viewport clipping was observed. Expanded Monitoring, Mixer, and Security evidence intentionally moves focus to the disclosed content.
 
 The package launch uses an explicit waited `Start-Process` result. This avoids treating an unset interactive-shell `$LASTEXITCODE` as a package failure while still failing on the process object's actual nonzero exit code.
+
+## Hosted-viewport recovery
+
+The first PR run correctly rejected a 1044x788 Home capture produced when the hosted Windows desktop constrained the visible WPF window to its work area. The product had been rendering `Window.ActualWidth` and `Window.ActualHeight`, so physical runner geometry leaked into supposedly comparable evidence.
+
+The recovery keeps the 1280x820 acceptance contract. Render-smoke now configures the same complete WPF Window visual as a nonactivating, borderless, nonresizable popup fixed to the canonical viewport, which avoids normal work-area clamping without rebuilding or compositing the interface. A focused WPF regression begins with a 1044x788 request, exercises the real off-screen popup path, and proves the 1280x820 bitmap plus an unclipped bottom-right marker. Workspace drawing is clipped to its column and navigation labels bind directly to their owning buttons. Package identity also verifies and records its retained Home render's dimensions, length, and SHA-256.
 
 ## Reference-only UI observation
 

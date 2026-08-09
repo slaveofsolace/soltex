@@ -26,18 +26,20 @@ Local workflow-equivalent validation on the owner-controlled Windows host:
 | `Soltex.DeviceFabric.Tests` | 24/24 |
 | `Soltex.Monitoring.Tests` | 15/15 |
 | `Soltex.Audio.Tests` | 10/10 |
-| `Soltex.App.Tests` | 9/9 |
+| `Soltex.App.Tests` | 10/10 |
 | complete native matrix | 11/11 at 1280x820 |
 | stale-output negative path | Failed closed before capture |
 | mismatched-tested-commit negative path | Failed closed before capture |
-| self-contained `win-x64` publish | Passed; 71,508,801 bytes |
+| self-contained `win-x64` publish | Passed; length and SHA-256 recorded in generated evidence |
 | published package native Home render | Passed; waited process exit code 0 |
-| package identity schema 2 | Passed; SHA-256 `c95188f518279b368311ef3881ff35a75ce43a56e81b8bfcf5ab1e669ab80673`; Authenticode `NotSigned` |
+| package identity schema 2 | Passed; executable/render hashes and 1280x820 dimensions recorded; Authenticode `NotSigned` |
 | package stale/identity negative paths | Failed closed before evidence write |
 
 The matrix contains all eight default workspaces plus expanded Monitoring details, Mixer endpoints, and Security activity. `eng/capture-ui-evidence.ps1` rejects stale outputs, render error sidecars, missing/empty files, wrong dimensions, checked-out/tested-commit mismatch, and unavailable source-head ancestry. Its manifest records each artifact's byte size and SHA-256 digest together with separate `source_head_sha` and `tested_commit_sha` values.
 
-`eng/record-package-identity.ps1` gives package-smoke schema version 2 the same source/tested distinction while retaining `commit` as a compatibility alias for the tested checkout. Both workflows use checkout depth 2 for pull-request ancestry proof. The launch step reads an explicit waited process exit code rather than relying on an interactive shell to populate `$LASTEXITCODE` for a GUI executable.
+The first PR run exposed and correctly rejected a hosted 1044x788 capture. The normal-chrome WPF window had inherited the hosted work-area limit. Render-smoke now configures the same complete Window visual as a nonactivating, borderless, nonresizable popup fixed to 1280x820. A focused regression starts from a 1044x788 request, exercises the real off-screen popup path, and verifies the canonical bitmap plus unclipped bottom-right content. The workspace column also clips its descendants, while navigation labels bind directly to their owning buttons.
+
+`eng/record-package-identity.ps1` gives package-smoke schema version 2 the same source/tested distinction while retaining `commit` as a compatibility alias for the tested checkout. It also binds the retained Home render by dimensions, length, and SHA-256. Both workflows use checkout depth 2 for pull-request ancestry proof. The launch step reads an explicit waited process exit code rather than relying on an interactive shell to populate `$LASTEXITCODE` for a GUI executable.
 
 The exact published-head GitHub run remains a merge gate for this continuation. See [`evidence/2026-08-09-ui-evidence-matrix`](evidence/2026-08-09-ui-evidence-matrix/README.md) for the matrix and nonclaims.
 
