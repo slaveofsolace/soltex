@@ -36,7 +36,7 @@ foreach ($relativePath in $tracked) {
     $lines = [IO.File]::ReadAllLines($fullPath)
     for ($i = 0; $i -lt $lines.Length; $i++) {
         foreach ($match in $hexPattern.Matches($lines[$i])) {
-            $violations.Add("${relativePath}:$($i + 1): raw colour '$($match.Value)' — use a token from $tokenFile")
+            $violations.Add("${relativePath}:$($i + 1): raw colour '$($match.Value)' - use a token from $tokenFile")
         }
     }
 }

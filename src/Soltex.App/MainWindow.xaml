@@ -103,17 +103,34 @@
                 </StackPanel>
 
                 <StackPanel Grid.Row="3">
-                    <Border Background="{StaticResource SignalSurfaceBrush}" BorderBrush="{StaticResource SignalBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="13">
-                        <StackPanel>
-                            <TextBlock Text="Protected locally" Foreground="{StaticResource SignalBrush}" FontWeight="SemiBold" />
-                            <TextBlock Margin="0,5,0,0"
-                                       Text="Uses the antivirus already registered with Windows. No duplicate resident engine."
-                                       TextWrapping="Wrap"
-                                       Foreground="{StaticResource MutedBrush}"
-                                       FontSize="11" />
-                        </StackPanel>
+                    <Border Background="{StaticResource SignalSurfaceBrush}"
+                            BorderBrush="{StaticResource SignalBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Ellipse Width="7"
+                                     Height="7"
+                                     Fill="{StaticResource SignalBrush}"
+                                     VerticalAlignment="Top"
+                                     Margin="0,5,9,0" />
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Windows protection"
+                                           Foreground="{StaticResource SignalBrush}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Margin="0,3,0,0"
+                                           Text="Registered provider · no resident Soltex engine"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource MutedBrush}"
+                                           FontSize="10" />
+                            </StackPanel>
+                        </Grid>
                     </Border>
-                    <TextBlock Margin="1,14,0,0" Text="Windows-native preview" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="10" />
+                    <TextBlock Margin="1,10,0,0" Text="Windows-native preview" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="10" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -243,7 +260,7 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="12" />
-                                    <RowDefinition Height="190" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -256,13 +273,25 @@
                                                    Text="Bounded Defender Operational events; file and process paths are never shown."
                                                    Foreground="{StaticResource MutedBrush}" />
                                     </StackPanel>
-                                    <TextBlock x:Name="EventQueryStatus"
-                                               Grid.Column="1"
-                                               Text="Checking"
-                                               Foreground="{StaticResource MutedBrush}"
-                                               VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock x:Name="EventQueryStatus"
+                                                   Margin="0,0,10,0"
+                                                   Text="Checking"
+                                                   Foreground="{StaticResource MutedBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <Button x:Name="SecurityActivityButton"
+                                                Style="{StaticResource SecondaryButton}"
+                                                Content="Show activity"
+                                                AutomationProperties.Name="Show recent Windows protection activity"
+                                                Click="SecurityActivity_Click" />
+                                    </StackPanel>
                                 </Grid>
-                                <DataGrid x:Name="DefenderEventGrid" Grid.Row="2" SelectionMode="Single">
+                                <DataGrid x:Name="DefenderEventGrid"
+                                          Grid.Row="2"
+                                          Height="190"
+                                          Visibility="Collapsed"
+                                          SelectionMode="Single"
+                                          AutomationProperties.Name="Recent Windows protection activity">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="When" Binding="{Binding When}" Width="125" />
                                         <DataGridTextColumn Header="Level" Binding="{Binding Severity}" Width="90" />
@@ -916,6 +945,7 @@
             <views:MixerView x:Name="MixerPanel" Visibility="Collapsed" />
 
             <Grid x:Name="ClipsPanel" Visibility="Collapsed">
+                <StackPanel>
                 <Border Style="{StaticResource CardStyle}" VerticalAlignment="Top">
                     <StackPanel>
                         <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="05 / CAPTURE" />
@@ -924,6 +954,32 @@
                                    Text="Rolling capture, hardware encoding, and the click-through overlay remain documented future stages. No game injection or protected-content bypass is permitted." />
                     </StackPanel>
                 </Border>
+                    <Border Margin="0,18,0,0"
+                            MaxWidth="640"
+                            HorizontalAlignment="Left"
+                            Style="{StaticResource HeroCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="CAPTURE OFF"
+                                       Style="{StaticResource PageEyebrowStyle}"
+                                       Foreground="{StaticResource WarningBrush}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="Nothing records in the background"
+                                       FontFamily="{StaticResource DisplayFont}"
+                                       FontSize="28" />
+                            <TextBlock Margin="0,9,0,0"
+                                       MaxWidth="520"
+                                       Text="This workspace will stay quiet until bounded capture, retention, and consent controls have implementation evidence."
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       LineHeight="20" />
+                            <TextBlock Margin="0,16,0,0"
+                                       Text="No recorder · no overlay · no game injection"
+                                       Foreground="{StaticResource QuietTextBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="10" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </Grid>
         </Grid>
     </Grid>

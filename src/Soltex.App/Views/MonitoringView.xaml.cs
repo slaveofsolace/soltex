@@ -15,6 +15,7 @@ public partial class MonitoringView : UserControl
     private readonly BoundedTelemetryHistory _memoryHistory = new(HistoryCapacity);
     private readonly BoundedTelemetryHistory _networkReceiveHistory = new(HistoryCapacity, 0, double.MaxValue);
     private readonly BoundedTelemetryHistory _networkSendHistory = new(HistoryCapacity, 0, double.MaxValue);
+    private bool _detailsVisible;
 
     public MonitoringView()
     {
@@ -25,6 +26,18 @@ public partial class MonitoringView : UserControl
         CpuHistoryChart.ScaleLabelFormatter = FormatPercentBound;
         MemoryHistoryChart.ScaleLabelFormatter = FormatPercentBound;
         NetworkHistoryChart.ScaleLabelFormatter = FormatRateBound;
+    }
+
+    private void MonitoringDetails_Click(object sender, RoutedEventArgs e)
+    {
+        _detailsVisible = !_detailsVisible;
+        MonitoringDetailsPanel.Visibility = _detailsVisible ? Visibility.Visible : Visibility.Collapsed;
+        MonitoringDetailsButton.Content = _detailsVisible ? "Hide system detail" : "Show system detail";
+        MonitoringDetailsButton.SetCurrentValue(
+            System.Windows.Automation.AutomationProperties.NameProperty,
+            _detailsVisible
+                ? "Hide storage, provider, and process details"
+                : "Show storage, provider, and process details");
     }
 
     private static string FormatPercentBound(double value) =>

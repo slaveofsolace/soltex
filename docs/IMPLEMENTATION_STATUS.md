@@ -1,11 +1,11 @@
 # Implementation status
 
-Snapshot: 2026-08-05  
-Product: **Soltex**  
-Repository: `slaveofsolace/soltex`  
-Current branch: `audit/soltex-v1-quality-pass`  
-Current commit: `a2ac7718fd207364c9a74199585a9720ae53821f`  
-Pull request: [#7](https://github.com/slaveofsolace/soltex/pull/7)
+Snapshot: 2026-08-09
+Product: **Soltex**
+Repository: `slaveofsolace/soltex`
+Candidate branch: `codex/soltex-ui-focus-v1`
+Stack base: `feat/soltex-monitoring-and-audio` at `a0daa2163529d8f813e79ea7e342ddfbd5c61f50`
+Evidence: [`docs/evidence/2026-08-09-ui-focus`](evidence/2026-08-09-ui-focus/README.md)
 
 ## Evidence vocabulary
 
@@ -17,24 +17,25 @@ Pull request: [#7](https://github.com/slaveofsolace/soltex/pull/7)
 
 A narrow pass proves only its named boundary.
 
-## Windows-verified branch head
+## Owner-host candidate evidence
 
-GitHub Actions run `31065075683` exercised the source branch head on Windows Server 2025 with .NET 10:
+The current candidate was built and exercised locally on the owner-controlled Windows host with .NET SDK 10.0.302. GitHub CI remains a separate required gate on the exact published head.
 
 | Gate | Result |
 |---|---:|
 | Release build | 0 warnings, 0 errors |
-| Security/Remote focused suite | 31/31 |
+| Security/Remote focused suite | 32/32, including opt-in in-memory AMSI/EICAR |
 | Supply-chain suite | 18/18 |
 | Security hardening suite | 12/12 |
 | Update-planner suite | 17/17 |
 | Device Fabric suite | 24/24 |
 | Monitoring suite | 15/15 |
-| WPF application suite | 7/7 |
-| Hosted EICAR/AMSI | 31/32 |
-| Native renders | Home, Monitoring, Devices, Security, Remote Assist, Updates passed |
+| Core Audio suite | 10/10 |
+| WPF application suite | 9/9 |
+| Identity/design guards | Passed under Windows PowerShell 5.1 |
+| Native renders | Eight defaults and three expanded states at 1280x820 |
 
-Run `31065075715` independently published and launched the self-contained `win-x64` package and produced a native Home render.
+The complete local evidence boundary and nonclaims are recorded in the linked evidence packet. CI/package evidence from earlier stack commits remains historical; it does not substitute for a run on this candidate head.
 
 ## Implemented
 
@@ -42,8 +43,9 @@ Run `31065075715` independently published and launched the self-contained `win-x
 
 - shared warm dark/coral WPF theme;
 - reusable cards, buttons, progress controls, sliders, focus states, and sparklines;
-- Home, Monitoring, Devices, Security, Remote Assist, and Updates workspaces;
-- native render-smoke selection for those six workspaces.
+- Home, Monitoring, Devices, Mixer, Clips, Security, Remote Assist, and Updates workspaces;
+- native render-smoke selection for all eight defaults plus Monitoring, Mixer, and Security disclosure states;
+- quiet default hierarchy with secondary operational detail behind explicit controls.
 
 ### Monitoring
 
@@ -53,17 +55,30 @@ Run `31065075715` independently published and launched the self-contained `win-x
 - bounded process CPU/memory/thread observations;
 - active-interface receive/send throughput from `NetworkInterface` statistics;
 - bounded CPU, memory, and network histories;
+- fixed volumes, provider coverage, and process tables disclosed only on request;
 - explicit provider provenance, partial, stale, and unavailable states;
 - no executable-path, packet-payload, destination, or connection-history collection;
 - sampling suspended when Home/Monitoring is hidden or the window is minimized.
 
 GPU, clocks, temperatures, fans, and power remain unavailable until a supported provider is selected.
 
+### Audio observation
+
+- read-only Windows Core Audio endpoint enumeration;
+- render/capture classification, state, default assignment, current volume, and mute observation;
+- bounded primary lists of at most six active endpoints per direction;
+- overflow active and inactive endpoints behind one explicit disclosure control;
+- inaccessible/unavailable states clear stale endpoint values;
+- live capture overhead and sanitized-name tests.
+
+Soltex does not set volume, route signal, create virtual devices, equalize, suppress noise, or replace SteelSeries Sonar.
+
 ### Security companion
 
 - provider-neutral Windows Security Center health with bounded fallback;
 - Defender status and supported scan/intelligence-update requests when available;
 - bounded, path-redacted Defender Operational events;
+- Defender Operational activity collapsed by default and cleared on query failure;
 - AMSI inspection for content Soltex ingests;
 - hashing, exact-hash allow decisions, Authenticode verification;
 - authenticated quarantine and local audit state;
@@ -119,11 +134,12 @@ The CI package at this snapshot is unsigned.
 - direct proprietary Malwarebytes integration;
 - installer activation/repair/rollback/uninstall evidence;
 - GPU/thermal/fan telemetry;
-- complete App Control, Audio, Clips, Privacy, Drive, Box, NAS, or unified-search features;
+- complete App Control, Clips capture, Privacy, Drive, Box, NAS, or unified-search features;
+- audio routing, virtual devices, DSP, equalization, noise suppression, or per-app session control;
 - generic remote command execution;
 - full high-contrast, reduced-motion, accessibility, or viewport/scaling conformance;
 - production readiness.
 
 ## Exact next slice
 
-Trusted distribution is the highest-priority release blocker. Select a production code-signing identity, define custody/revocation/timestamping, and add a signed installer/package verification lane. In parallel, the next low-privilege product feature should be read-only installed-application/startup inventory using documented Windows locations.
+Publish this aggregate candidate, require Windows and package-smoke CI on its exact head, and merge it to `main` with history preserved. Then close the superseded stacked PRs and remove only branches proven reachable from `main` after checking local worktree ownership. Trusted signed distribution remains the highest-priority release blocker after consolidation.

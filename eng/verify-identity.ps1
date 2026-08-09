@@ -90,7 +90,7 @@ foreach ($relativePath in $tracked) {
             }
 
             foreach ($needle in @($entry.lineContains)) {
-                if ($line.Contains([string]$needle, [StringComparison]::Ordinal)) {
+                if ($line.IndexOf([string]$needle, [StringComparison]::Ordinal) -ge 0) {
                     $allowed = $true
                     break
                 }

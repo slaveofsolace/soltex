@@ -8,6 +8,11 @@ namespace Soltex.App.Views;
 
 public partial class MixerView : UserControl
 {
+    private const int PrimaryEndpointLimit = 6;
+    private EndpointRow[] _morePlayback = [];
+    private EndpointRow[] _moreRecording = [];
+    private bool _moreVisible;
+
     public MixerView()
     {
         InitializeComponent();
@@ -26,13 +31,31 @@ public partial class MixerView : UserControl
 
         EndpointRow[] playback = BuildRows(snapshot.Render, palette);
         EndpointRow[] recording = BuildRows(snapshot.Capture, palette);
-        PlaybackItems.ItemsSource = playback;
-        RecordingItems.ItemsSource = recording;
-        NoPlaybackText.Visibility = playback.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
-        NoRecordingText.Visibility = recording.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        EndpointRow[] activePlayback = playback.Where(row => row.IsActive).ToArray();
+        EndpointRow[] activeRecording = recording.Where(row => row.IsActive).ToArray();
+        EndpointRow[] primaryPlayback = activePlayback.Take(PrimaryEndpointLimit).ToArray();
+        EndpointRow[] primaryRecording = activeRecording.Take(PrimaryEndpointLimit).ToArray();
+        _morePlayback = playback.Skip(primaryPlayback.Length).ToArray();
+        _moreRecording = recording.Skip(primaryRecording.Length).ToArray();
 
-        PlaybackCountText.Text = DescribeCount(playback);
-        RecordingCountText.Text = DescribeCount(recording);
+        PlaybackItems.ItemsSource = primaryPlayback;
+        RecordingItems.ItemsSource = primaryRecording;
+        MorePlaybackItems.ItemsSource = _morePlayback;
+        MoreRecordingItems.ItemsSource = _moreRecording;
+        NoPlaybackText.Visibility = activePlayback.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        NoRecordingText.Visibility = activeRecording.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        NoMorePlaybackText.Visibility = _morePlayback.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        NoMoreRecordingText.Visibility = _moreRecording.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        PlaybackCountText.Text = DescribePrimaryCount(primaryPlayback.Length, activePlayback.Length);
+        RecordingCountText.Text = DescribePrimaryCount(primaryRecording.Length, activeRecording.Length);
+        MorePlaybackCountText.Text = _morePlayback.Length.ToString(CultureInfo.CurrentCulture);
+        MoreRecordingCountText.Text = _moreRecording.Length.ToString(CultureInfo.CurrentCulture);
+        if (_morePlayback.Length + _moreRecording.Length == 0)
+        {
+            _moreVisible = false;
+        }
+        UpdateMoreVisibility();
 
         int active = snapshot.Endpoints.Count(endpoint => endpoint.State == AudioEndpointState.Active);
         ActiveCountText.Text = active.ToString(CultureInfo.CurrentCulture);
@@ -54,8 +77,52 @@ public partial class MixerView : UserControl
     {
         Brush danger = (Brush)FindResource("DangerBrush");
         SetStatePill(danger, "UNAVAILABLE");
+        PlaybackItems.ItemsSource = Array.Empty<EndpointRow>();
+        RecordingItems.ItemsSource = Array.Empty<EndpointRow>();
+        MorePlaybackItems.ItemsSource = Array.Empty<EndpointRow>();
+        MoreRecordingItems.ItemsSource = Array.Empty<EndpointRow>();
+        _morePlayback = [];
+        _moreRecording = [];
+        _moreVisible = false;
+        PlaybackCountText.Text = "0 active";
+        RecordingCountText.Text = "0 active";
+        ActiveCountText.Text = "—";
+        TotalCountText.Text = "endpoints unavailable";
+        DefaultPlaybackText.Text = "Unavailable";
+        DefaultRecordingText.Text = "Unavailable";
+        StateBreakdownText.Text = "observation unavailable";
+        NoPlaybackText.Visibility = Visibility.Visible;
+        NoRecordingText.Visibility = Visibility.Visible;
+        UpdateMoreVisibility();
         MixerProvenanceText.Text = "Windows Core Audio could not be reached. No values were synthesized.";
     }
+
+    private void MoreEndpoints_Click(object sender, RoutedEventArgs e)
+    {
+        _moreVisible = !_moreVisible;
+        UpdateMoreVisibility();
+    }
+
+    private void UpdateMoreVisibility()
+    {
+        int moreCount = _morePlayback.Length + _moreRecording.Length;
+        bool canShow = moreCount > 0;
+        MoreEndpointsButton.Visibility = canShow ? Visibility.Visible : Visibility.Collapsed;
+        MoreEndpointsPanel.Visibility = canShow && _moreVisible
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        MoreEndpointsButton.Content = _moreVisible
+            ? "Show less"
+            : $"Show {moreCount} more";
+        MoreEndpointsButton.SetCurrentValue(
+            System.Windows.Automation.AutomationProperties.NameProperty,
+            _moreVisible
+                ? "Hide additional audio endpoints"
+                : $"Show {moreCount} additional audio endpoints");
+    }
+
+    private static string DescribePrimaryCount(int shown, int active) =>
+        shown == active ? $"{active} active" : $"{shown} of {active} active";
 
     // Connected endpoints first, then the default, then by name. A machine can
     // report dozens of absent endpoints; the ones in use must not be buried.
@@ -75,12 +142,6 @@ public partial class MixerView : UserControl
         AudioEndpointState.NotPresent => 3,
         _ => 4
     };
-
-    private static string DescribeCount(EndpointRow[] rows)
-    {
-        int active = rows.Count(row => row.IsActive);
-        return $"{active}/{rows.Length} active";
-    }
 
     private static string DescribeDefault(IEnumerable<AudioEndpoint> endpoints) =>
         endpoints.FirstOrDefault(endpoint => endpoint.IsDefault)?.Name ?? "Not reported";

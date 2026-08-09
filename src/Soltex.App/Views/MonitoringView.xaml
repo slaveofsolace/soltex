@@ -24,22 +24,30 @@
                                FontSize="{StaticResource FontBody}"
                                Text="Bounded Windows readings with provenance, timing, and visible gaps." />
                 </StackPanel>
-                <Border Grid.Column="1" Style="{StaticResource StatusPillStyle}" VerticalAlignment="Top">
-                    <StackPanel Orientation="Horizontal">
-                        <Ellipse x:Name="MonitorStateDot"
-                                 Width="7"
-                                 Height="7"
-                                 Fill="{StaticResource WarningBrush}"
-                                 VerticalAlignment="Center" />
-                        <TextBlock x:Name="MonitorStateText"
-                                   Margin="8,0,0,0"
-                                   Text="WAITING"
-                                   Foreground="{StaticResource WarningBrush}"
-                                   FontFamily="{StaticResource MonoFont}"
-                                   FontSize="{StaticResource FontMono}"
-                                   FontWeight="SemiBold" />
-                    </StackPanel>
-                </Border>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                    <Button x:Name="MonitoringDetailsButton"
+                            Margin="0,0,10,0"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Show system detail"
+                            AutomationProperties.Name="Show storage, provider, and process details"
+                            Click="MonitoringDetails_Click" />
+                    <Border Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="MonitorStateDot"
+                                     Width="7"
+                                     Height="7"
+                                     Fill="{StaticResource WarningBrush}"
+                                     VerticalAlignment="Center" />
+                            <TextBlock x:Name="MonitorStateText"
+                                       Margin="8,0,0,0"
+                                       Text="WAITING"
+                                       Foreground="{StaticResource WarningBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMono}"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </Grid>
 
             <!-- Processor and physical memory -->
@@ -369,6 +377,7 @@
                 </Grid>
             </Border>
 
+            <StackPanel x:Name="MonitoringDetailsPanel" Visibility="Collapsed">
             <!-- Volumes and provider coverage -->
             <Grid Margin="0,16,0,0">
                 <Grid.ColumnDefinitions>
@@ -547,6 +556,7 @@
                                Text="Waiting for provider provenance" />
                 </Grid>
             </Border>
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

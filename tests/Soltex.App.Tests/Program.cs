@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Soltex.App.Controls;
 using Soltex.App.Views;
+using Soltex.Audio;
 using Soltex.DeviceFabric;
 using Soltex.Monitoring;
 
@@ -20,6 +22,7 @@ internal static class Program
         SystemTelemetrySnapshot snapshot = SystemTelemetryProvider.CaptureAsync(
             TimeSpan.FromMilliseconds(150),
             CancellationToken.None).GetAwaiter().GetResult();
+        AudioEndpointSnapshot audioSnapshot = AudioEndpointProvider.CaptureAsync().GetAwaiter().GetResult();
 
         List<(string Name, Action Test)> tests =
         [
@@ -29,6 +32,8 @@ internal static class Program
             ("Sparkline auto-scales unbounded throughput values", SparklineAutoScales),
             ("Home view renders a live snapshot", () => HomeViewRenders(snapshot, device)),
             ("Monitoring view renders provenance and bounded rows", () => MonitoringViewRenders(snapshot)),
+            ("Monitoring details are disclosed only on request", MonitoringDetailsAreProgressive),
+            ("Mixer prioritizes active endpoints", () => MixerPrioritizesActiveEndpoints(audioSnapshot)),
             ("Devices view renders an explicit unnrolled profile", () => DevicesViewRenders(device))
         ];
 
@@ -41,7 +46,7 @@ internal static class Program
             {
                 test();
                 testTimer.Stop();
-                Console.WriteLine($"PASP {name} ({testTimer.Elapsed.TotalMilliseconds:F1} ms)");
+                Console.WriteLine($"PASS  {name} ({testTimer.Elapsed.TotalMilliseconds:F1} ms)");
             }
             catch (Exception exception)
             {
@@ -156,6 +161,44 @@ internal static class Program
         True(view.MonitoringProvenanceText.Text.Contains("GetSystemTimes", StringComparison.Ordinal), "Monitoring omitted provider provenance.");
         True(view.MonitoringProvenanceText.Text.Contains("GPU", StringComparison.Ordinal), "Monitoring omitted the GPU limitation.");
         True(view.NetworkCoverageText.Text is "SAMPLED" or "UNAVAILABLE", "Monitoring did not expose the network provider state.");
+    }
+
+    private static void MonitoringDetailsAreProgressive()
+    {
+        MonitoringView view = new();
+        True(view.MonitoringDetailsPanel.Visibility == Visibility.Collapsed,
+            "Monitoring detail must be collapsed on first view.");
+        view.MonitoringDetailsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.MonitoringDetailsPanel.Visibility == Visibility.Visible,
+            "Monitoring detail did not open from its explicit disclosure control.");
+        view.MonitoringDetailsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.MonitoringDetailsPanel.Visibility == Visibility.Collapsed,
+            "Monitoring detail did not close from its disclosure control.");
+    }
+
+    private static void MixerPrioritizesActiveEndpoints(AudioEndpointSnapshot snapshot)
+    {
+        MixerView view = new();
+        view.UpdateSnapshot(snapshot);
+        int activePlayback = snapshot.Render.Count(endpoint => endpoint.State == AudioEndpointState.Active);
+        int activeRecording = snapshot.Capture.Count(endpoint => endpoint.State == AudioEndpointState.Active);
+        int expectedPrimary = Math.Min(activePlayback, 6) + Math.Min(activeRecording, 6);
+        int moreCount = snapshot.Endpoints.Count - expectedPrimary;
+        True(view.PlaybackItems.Items.Count + view.RecordingItems.Items.Count == expectedPrimary,
+            "Mixer did not keep its primary endpoint lists bounded and active-only.");
+        True(expectedPrimary <= 12, "Mixer exposed more than twelve endpoints in the primary view.");
+        True(view.MorePlaybackItems.Items.Count + view.MoreRecordingItems.Items.Count == moreCount,
+            "Mixer lost endpoints while partitioning the primary and additional lists.");
+        True(view.MoreEndpointsPanel.Visibility == Visibility.Collapsed,
+            "Additional audio endpoints must be collapsed on first view.");
+        if (moreCount > 0)
+        {
+            True(view.MoreEndpointsButton.Visibility == Visibility.Visible,
+                "Mixer omitted the additional-endpoint disclosure control.");
+            view.MoreEndpointsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            True(view.MoreEndpointsPanel.Visibility == Visibility.Visible,
+                "Mixer additional endpoints did not open from their disclosure control.");
+        }
     }
 
     private static void DevicesViewRenders(LocalDeviceObservation device)

@@ -24,6 +24,7 @@ namespace Soltex.App;
     Justification = "WPF owns the Window lifecycle; Closed cancels and disposes every owned resource.")]
 public partial class MainWindow : Window
 {
+    private FrameworkElement? _renderSmokeFocusTarget;
     private readonly SecurityRuntime _runtime = SecurityRuntime.CreateDefault();
     private readonly ObservableCollection<QuarantineRow> _quarantineRows = [];
     private readonly ObservableCollection<DefenderEventRow> _defenderEventRows = [];
@@ -39,6 +40,7 @@ public partial class MainWindow : Window
     private ProtectionMonitorState? _lastMonitorState;
     private RemoteAssistExecutable? _remoteAssistExecutable;
     private AuthenticodeVerificationResult? _remoteAssistTrust;
+    private bool _securityActivityVisible;
 
     public MainWindow()
     {
@@ -283,8 +285,13 @@ public partial class MainWindow : Window
             cancellationToken);
         if (!result.Succeeded)
         {
+            _defenderEventRows.Clear();
+            _securityActivityVisible = false;
+            DefenderEventGrid.Visibility = Visibility.Collapsed;
             EventQueryStatus.Text = "Unavailable";
             EventQueryStatus.Foreground = (Brush)FindResource("WarningBrush");
+            SecurityActivityButton.Content = "Activity unavailable";
+            SecurityActivityButton.IsEnabled = false;
             AddActivity("Defender activity unavailable: " + result.Error);
             return;
         }
@@ -297,6 +304,32 @@ public partial class MainWindow : Window
 
         EventQueryStatus.Text = $"{result.Events.Count} events · {result.Duration.TotalMilliseconds:F0} ms";
         EventQueryStatus.Foreground = (Brush)FindResource("MutedBrush");
+        if (result.Events.Count == 0)
+        {
+            _securityActivityVisible = false;
+            DefenderEventGrid.Visibility = Visibility.Collapsed;
+        }
+        SecurityActivityButton.IsEnabled = result.Events.Count > 0;
+        UpdateSecurityActivityButton();
+    }
+
+    private void SecurityActivity_Click(object sender, RoutedEventArgs e)
+    {
+        _securityActivityVisible = !_securityActivityVisible;
+        DefenderEventGrid.Visibility = _securityActivityVisible ? Visibility.Visible : Visibility.Collapsed;
+        UpdateSecurityActivityButton();
+    }
+
+    private void UpdateSecurityActivityButton()
+    {
+        SecurityActivityButton.Content = _securityActivityVisible
+            ? "Hide activity"
+            : $"Show activity ({_defenderEventRows.Count})";
+        SecurityActivityButton.SetCurrentValue(
+            System.Windows.Automation.AutomationProperties.NameProperty,
+            _securityActivityVisible
+                ? "Hide recent Windows protection activity"
+                : $"Show {_defenderEventRows.Count} recent Windows protection events");
     }
 
     private void OnProtectionMonitorUpdated(ProtectionMonitorUpdate update)
@@ -896,6 +929,15 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (string.Equals(normalized, "monitoring-details", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(MonitoringPanel, MonitoringNavButton);
+            MonitoringPanel.MonitoringDetailsButton.RaiseEvent(
+                new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+            _renderSmokeFocusTarget = MonitoringPanel.MonitoringDetailsPanel;
+            return true;
+        }
+
         if (string.Equals(normalized, "monitoring", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(normalized, "monitor", StringComparison.OrdinalIgnoreCase))
         {
@@ -907,6 +949,14 @@ public partial class MainWindow : Window
             string.Equals(normalized, "device", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(DevicesPanel, DevicesNavButton);
+            return true;
+        }
+
+        if (string.Equals(normalized, "security-activity", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(SecurityPanel, SecurityNavButton);
+            SecurityActivity_Click(SecurityActivityButton, new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+            _renderSmokeFocusTarget = DefenderEventGrid;
             return true;
         }
 
@@ -929,6 +979,15 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (string.Equals(normalized, "mixer-more", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(MixerPanel, MixerNavButton);
+            MixerPanel.MoreEndpointsButton.RaiseEvent(
+                new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+            _renderSmokeFocusTarget = MixerPanel.MoreEndpointsPanel;
+            return true;
+        }
+
         if (string.Equals(normalized, "mixer", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(MixerPanel, MixerNavButton);
@@ -942,6 +1001,11 @@ public partial class MainWindow : Window
         }
 
         return false;
+    }
+
+    internal void PrepareRenderSmokeCapture()
+    {
+        _renderSmokeFocusTarget?.BringIntoView();
     }
 
     private void ShowPanel(UIElement panel, System.Windows.Controls.Button selectedButton)
