@@ -8,157 +8,11 @@
         MinWidth="1040"
         MinHeight="700"
         WindowStartupLocation="CenterScreen"
-        Background="#1F1F1F"
-        Foreground="#D1CFC0"
+        Background="{StaticResource CanvasBrush}"
+        Foreground="{StaticResource TextBrush}"
         FontFamily="{StaticResource UiFont}"
         Loaded="Window_Loaded"
         Closed="Window_Closed">
-    <Window.Resources>
-        <FontFamily x:Key="DisplayFont">Georgia</FontFamily>
-        <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
-        <SolidColorBrush x:Key="SurfaceBrush" Color="#252522" />
-        <SolidColorBrush x:Key="RaisedBrush" Color="#2B2B27" />
-        <SolidColorBrush x:Key="BorderBrush" Color="#3B3A34" />
-        <SolidColorBrush x:Key="MutedBrush" Color="#96938A" />
-        <SolidColorBrush x:Key="AccentBrush" Color="#F76F53" />
-        <SolidColorBrush x:Key="SignalBrush" Color="#7ED0A7" />
-        <SolidColorBrush x:Key="SelectedNavBrush" Color="#372925" />
-        <SolidColorBrush x:Key="NavRestBrush" Color="Transparent" />
-        <SolidColorBrush x:Key="WarningBrush" Color="#E6B866" />
-        <SolidColorBrush x:Key="DangerBrush" Color="#F18279" />
-
-        <Style x:Key="CardStyle" TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="14" />
-            <Setter Property="Padding" Value="22" />
-        </Style>
-
-        <Style x:Key="ActionButton" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
-            <Setter Property="Foreground" Value="#211714" />
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="16,10" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="ButtonBorder"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.9" />
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.76" />
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="#F9A08D" />
-                                <Setter TargetName="ButtonBorder" Property="BorderThickness" Value="2" />
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="ButtonBorder" Property="Opacity" Value="0.42" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource ActionButton}">
-            <Setter Property="Background" Value="{StaticResource RaisedBrush}" />
-            <Setter Property="Foreground" Value="#D1CFC0" />
-            <Setter Property="BorderBrush" Value="#45443D" />
-        </Style>
-
-        <Style x:Key="NavButton" TargetType="Button">
-            <Setter Property="Background" Value="{StaticResource NavRestBrush}" />
-            <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="HorizontalContentAlignment" Value="Left" />
-            <Setter Property="Margin" Value="0,0,0,4" />
-            <Setter Property="Padding" Value="12,10" />
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border x:Name="NavSurface"
-                                Background="{TemplateBinding Background}"
-                                CornerRadius="8"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                              VerticalAlignment="Center" />
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="NavSurface" Property="Background" Value="{StaticResource RaisedBrush}" />
-                            </Trigger>
-                            <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="NavSurface" Property="Background" Value="#302A27" />
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="FieldStyle" TargetType="TextBox">
-            <Setter Property="Background" Value="#1B1B19" />
-            <Setter Property="Foreground" Value="#E5E2D5" />
-            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="14,11" />
-            <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}" />
-            <Setter Property="SelectionBrush" Value="#8058453F" />
-            <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
-            <Setter Property="FontSize" Value="14" />
-        </Style>
-
-        <Style x:Key="EyebrowStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-            <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
-            <Setter Property="FontSize" Value="10" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-
-        <Style TargetType="DataGrid">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Foreground" Value="#D1CFC0" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="GridLinesVisibility" Value="Horizontal" />
-            <Setter Property="HorizontalGridLinesBrush" Value="#3B3A34" />
-            <Setter Property="RowBackground" Value="Transparent" />
-            <Setter Property="AlternatingRowBackground" Value="#21211E" />
-            <Setter Property="HeadersVisibility" Value="Column" />
-            <Setter Property="CanUserAddRows" Value="False" />
-            <Setter Property="CanUserDeleteRows" Value="False" />
-            <Setter Property="IsReadOnly" Value="True" />
-            <Setter Property="AutoGenerateColumns" Value="False" />
-        </Style>
-
-        <Style TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="#2B2B27" />
-            <Setter Property="Foreground" Value="#BDBAAF" />
-            <Setter Property="BorderBrush" Value="#3B3A34" />
-            <Setter Property="Padding" Value="10,8" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-
-        <Style TargetType="DataGridCell">
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Padding" Value="10,8" />
-        </Style>
-    </Window.Resources>
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -166,7 +20,7 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="#181816" BorderBrush="#34332E" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0" Background="{StaticResource SidebarBrush}" BorderBrush="{StaticResource TrackBrush}" BorderThickness="0,0,1,0">
             <Grid Margin="18,22">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -193,73 +47,90 @@
                             Click="HomeNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="01" FontFamily="{StaticResource MonoFont}" Foreground="#8E5A4E" />
+                            <TextBlock Text="01" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource AccentDimBrush}" />
                             <TextBlock Grid.Column="1" Text="Home" />
                         </Grid>
                     </Button>
                     <Button x:Name="MonitoringNavButton" Style="{StaticResource NavButton}" Click="MonitoringNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="02" FontFamily="{StaticResource MonoFont}" Foreground="#66645E" />
+                            <TextBlock Text="02" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
                             <TextBlock Grid.Column="1" Text="Monitoring" />
                         </Grid>
                     </Button>
                     <Button x:Name="DevicesNavButton" Style="{StaticResource NavButton}" Click="DevicesNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="03" FontFamily="{StaticResource MonoFont}" Foreground="#66645E" />
+                            <TextBlock Text="03" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
                             <TextBlock Grid.Column="1" Text="Devices" />
                         </Grid>
                     </Button>
                     <Button x:Name="MixerNavButton" Style="{StaticResource NavButton}" Click="MixerNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="04" FontFamily="{StaticResource MonoFont}" Foreground="#66645E" />
+                            <TextBlock Text="04" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
                             <TextBlock Grid.Column="1" Text="Mixer" />
                         </Grid>
                     </Button>
                     <Button x:Name="ClipsNavButton" Style="{StaticResource NavButton}" Click="ClipsNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="05" FontFamily="{StaticResource MonoFont}" Foreground="#66645E" />
+                            <TextBlock Text="05" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
                             <TextBlock Grid.Column="1" Text="Clips" />
                         </Grid>
                     </Button>
                     <Button x:Name="SecurityNavButton" Style="{StaticResource NavButton}" Click="SecurityNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="06" FontFamily="{StaticResource MonoFont}" Foreground="#66645E" />
+                            <TextBlock Text="06" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
                             <TextBlock Grid.Column="1" Text="Security" />
                         </Grid>
                     </Button>
                     <Button x:Name="RemoteNavButton" Style="{StaticResource NavButton}" Click="RemoteNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="07" FontFamily="{StaticResource MonoFont}" Foreground="#66645E" />
+                            <TextBlock Text="07" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
                             <TextBlock Grid.Column="1" Text="Remote Assist" />
                         </Grid>
                     </Button>
                     <Button x:Name="UpdateNavButton" Style="{StaticResource NavButton}" Click="UpdateNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="08" FontFamily="{StaticResource MonoFont}" Foreground="#66645E" />
+                            <TextBlock Text="08" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource QuietTextBrush}" />
                             <TextBlock Grid.Column="1" Text="Updates" />
                         </Grid>
                     </Button>
                 </StackPanel>
 
                 <StackPanel Grid.Row="3">
-                    <Border Background="#20231F" BorderBrush="#36443C" BorderThickness="1" CornerRadius="12" Padding="13">
-                        <StackPanel>
-                            <TextBlock Text="Protected locally" Foreground="{StaticResource SignalBrush}" FontWeight="SemiBold" />
-                            <TextBlock Margin="0,5,0,0"
-                                       Text="Uses the antivirus already registered with Windows. No duplicate resident engine."
-                                       TextWrapping="Wrap"
-                                       Foreground="{StaticResource MutedBrush}"
-                                       FontSize="11" />
-                        </StackPanel>
+                    <Border Background="{StaticResource SignalSurfaceBrush}"
+                            BorderBrush="{StaticResource SignalBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Ellipse Width="7"
+                                     Height="7"
+                                     Fill="{StaticResource SignalBrush}"
+                                     VerticalAlignment="Top"
+                                     Margin="0,5,9,0" />
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Windows protection"
+                                           Foreground="{StaticResource SignalBrush}"
+                                           FontWeight="SemiBold" />
+                                <TextBlock Margin="0,3,0,0"
+                                           Text="Registered provider · no resident Soltex engine"
+                                           TextWrapping="Wrap"
+                                           Foreground="{StaticResource MutedBrush}"
+                                           FontSize="10" />
+                            </StackPanel>
+                        </Grid>
                     </Border>
-                    <TextBlock Margin="1,14,0,0" Text="Windows-native preview" Foreground="#66645E" FontFamily="{StaticResource MonoFont}" FontSize="10" />
+                    <TextBlock Margin="1,10,0,0" Text="Windows-native preview" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="10" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -282,7 +153,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Style="{StaticResource EyebrowStyle}" Text="06 / SYSTEM DEFENSE" />
+                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="06 / SYSTEM DEFENSE" />
                         <TextBlock Margin="0,5,0,0" Text="Security" FontFamily="{StaticResource DisplayFont}" FontSize="38" />
                         <TextBlock Margin="0,5,0,0"
                                    Text="Windows protection health, focused scans, safe imports, and recoverable quarantine."
@@ -299,7 +170,7 @@
 
                 <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
-                        <Border x:Name="HealthHero" Style="{StaticResource CardStyle}" BorderBrush="#365445" Background="#20251F">
+                        <Border x:Name="HealthHero" Style="{StaticResource CardStyle}" BorderBrush="{StaticResource SignalBorderBrush}" Background="{StaticResource SignalSurfaceBrush}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -313,7 +184,7 @@
                                     <TextBlock x:Name="HealthDetail"
                                                Margin="0,6,0,0"
                                                Text="Soltex is reading supported Windows Security and Defender status."
-                                               Foreground="#B8C4B9"
+                                               Foreground="{StaticResource SignalTextBrush}"
                                                TextWrapping="Wrap" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
@@ -389,7 +260,7 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="12" />
-                                    <RowDefinition Height="190" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -402,13 +273,25 @@
                                                    Text="Bounded Defender Operational events; file and process paths are never shown."
                                                    Foreground="{StaticResource MutedBrush}" />
                                     </StackPanel>
-                                    <TextBlock x:Name="EventQueryStatus"
-                                               Grid.Column="1"
-                                               Text="Checking"
-                                               Foreground="{StaticResource MutedBrush}"
-                                               VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock x:Name="EventQueryStatus"
+                                                   Margin="0,0,10,0"
+                                                   Text="Checking"
+                                                   Foreground="{StaticResource MutedBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <Button x:Name="SecurityActivityButton"
+                                                Style="{StaticResource SecondaryButton}"
+                                                Content="Show activity"
+                                                AutomationProperties.Name="Show recent Windows protection activity"
+                                                Click="SecurityActivity_Click" />
+                                    </StackPanel>
                                 </Grid>
-                                <DataGrid x:Name="DefenderEventGrid" Grid.Row="2" SelectionMode="Single">
+                                <DataGrid x:Name="DefenderEventGrid"
+                                          Grid.Row="2"
+                                          Height="190"
+                                          Visibility="Collapsed"
+                                          SelectionMode="Single"
+                                          AutomationProperties.Name="Recent Windows protection activity">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="When" Binding="{Binding When}" Width="125" />
                                         <DataGridTextColumn Header="Level" Binding="{Binding Severity}" Width="90" />
@@ -464,7 +347,7 @@
                                     </DataGrid>
                                     <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
                                         <Button Margin="0,0,8,0" Style="{StaticResource SecondaryButton}" Content="Restore" Click="Restore_Click" />
-                                        <Button Style="{StaticResource SecondaryButton}" Foreground="#FF9BA2" Content="Delete" Click="Delete_Click" />
+                                        <Button Style="{StaticResource SecondaryButton}" Foreground="{StaticResource DangerTextBrush}" Content="Delete" Click="Delete_Click" />
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -486,7 +369,7 @@
                                              Grid.Row="2"
                                              Background="Transparent"
                                              BorderThickness="0"
-                                             Foreground="#C9C6BB"
+                                             Foreground="{StaticResource TextBrush}"
                                              FontSize="12" />
                                     <Button Grid.Row="4"
                                             HorizontalAlignment="Left"
@@ -498,7 +381,7 @@
                         </Grid>
 
                         <TextBlock Margin="2,14,2,4"
-                                   Foreground="#77746D"
+                                   Foreground="{StaticResource QuietTextBrush}"
                                    FontSize="11"
                                    TextWrapping="Wrap"
                                    Text="Scope: this build is a Windows security companion, not a registered third-party antivirus provider. Defender or another registered provider supplies system-wide real-time protection. Soltex adds focused orchestration and protects its own import boundary." />
@@ -519,7 +402,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Style="{StaticResource EyebrowStyle}" Text="07 / CONSENT-FIRST BRIDGE" />
+                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="07 / CONSENT-FIRST BRIDGE" />
                         <TextBlock Margin="0,5,0,0"
                                    Text="Remote Assist"
                                    FontFamily="{StaticResource DisplayFont}"
@@ -545,8 +428,8 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel>
-                            <Border Background="#292622"
-                                    BorderBrush="#514239"
+                            <Border Background="{StaticResource HeroPanelBrush}"
+                                    BorderBrush="{StaticResource HeroBorderBrush}"
                                     BorderThickness="1"
                                     CornerRadius="24"
                                     Padding="28">
@@ -586,7 +469,7 @@
                                         </StackPanel>
                                         <Border Grid.Column="3"
                                                 VerticalAlignment="Top"
-                                                Background="#1D1D1A"
+                                                Background="{StaticResource InsetBrush}"
                                                 BorderBrush="{StaticResource BorderBrush}"
                                                 BorderThickness="1"
                                                 CornerRadius="12"
@@ -603,32 +486,32 @@
                                     <TextBlock x:Name="RemoteTrustDetail"
                                                Grid.Row="2"
                                                Text="Choose an installed, signed RustDesk.exe. Soltex never bundles or silently downloads the remote-control runtime."
-                                               Foreground="#B8B4A9"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
                                                TextWrapping="Wrap"
                                                LineHeight="21" />
 
                                     <Border Grid.Row="4"
-                                            Background="#1D1D1A"
+                                            Background="{StaticResource InsetBrush}"
                                             BorderBrush="{StaticResource BorderBrush}"
                                             BorderThickness="1"
                                             CornerRadius="10"
                                             Padding="14,12">
                                         <StackPanel>
                                             <TextBlock Text="SELECTED CLIENT"
-                                                       Foreground="#77746D"
+                                                       Foreground="{StaticResource QuietTextBrush}"
                                                        FontFamily="{StaticResource MonoFont}"
                                                        FontSize="9" />
                                             <TextBlock x:Name="RemoteExecutablePath"
                                                        Margin="0,6,0,0"
                                                        Text="No external client selected"
-                                                       Foreground="#D1CFC0"
+                                                       Foreground="{StaticResource TextBrush}"
                                                        FontFamily="{StaticResource MonoFont}"
                                                        FontSize="11"
                                                        TextWrapping="Wrap" />
                                             <TextBlock x:Name="RemoteFingerprint"
                                                        Margin="0,7,0,0"
                                                        Text="SHA-256 unavailable"
-                                                       Foreground="#77746D"
+                                                       Foreground="{StaticResource QuietTextBrush}"
                                                        FontFamily="{StaticResource MonoFont}"
                                                        FontSize="9"
                                                        TextWrapping="Wrap" />
@@ -691,9 +574,9 @@
                         </StackPanel>
 
                         <StackPanel Grid.Column="2">
-                            <Border Style="{StaticResource CardStyle}" Background="#222620" BorderBrush="#3D4C42">
+                            <Border Style="{StaticResource CardStyle}" Background="{StaticResource SignalSurfaceBrush}" BorderBrush="{StaticResource SignalBorderBrush}">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource EyebrowStyle}" Foreground="{StaticResource SignalBrush}" Text="SESSION SIGNAL" />
+                                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Foreground="{StaticResource SignalBrush}" Text="SESSION SIGNAL" />
                                     <TextBlock x:Name="RemoteSessionStatus"
                                                Margin="0,12,0,0"
                                                Text="No launch requested"
@@ -739,13 +622,13 @@
                                     </Grid>
 
                                     <Border Margin="0,20,0,0"
-                                            Background="#1D1D1A"
+                                            Background="{StaticResource InsetBrush}"
                                             BorderBrush="{StaticResource BorderBrush}"
                                             BorderThickness="1"
                                             CornerRadius="10"
                                             Padding="13">
                                         <TextBlock Text="No bundled binary · no password flags · no elevation · no service install"
-                                                   Foreground="#A8A49A"
+                                                   Foreground="{StaticResource MutedBrush}"
                                                    FontFamily="{StaticResource MonoFont}"
                                                    FontSize="10"
                                                    TextWrapping="Wrap" />
@@ -770,7 +653,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Style="{StaticResource EyebrowStyle}" Text="08 / VERIFIED DELIVERY" />
+                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="08 / VERIFIED DELIVERY" />
                         <TextBlock Margin="0,5,0,0"
                                    Text="Updates"
                                    FontFamily="{StaticResource DisplayFont}"
@@ -793,8 +676,8 @@
                 <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel>
                         <Border x:Name="UpdateReadinessHero"
-                                Background="#292622"
-                                BorderBrush="#514239"
+                                Background="{StaticResource HeroPanelBrush}"
+                                BorderBrush="{StaticResource HeroBorderBrush}"
                                 BorderThickness="1"
                                 CornerRadius="24"
                                 Padding="28">
@@ -819,13 +702,13 @@
                                     <TextBlock x:Name="UpdateStateDetail"
                                                Margin="0,7,0,0"
                                                Text="No signed release source is configured, and no incomplete planning attempt is recorded."
-                                               Foreground="#B8B4A9"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
                                                TextWrapping="Wrap"
                                                LineHeight="21" />
                                 </StackPanel>
                                 <Border Grid.Column="3"
                                         VerticalAlignment="Top"
-                                        Background="#1D1D1A"
+                                        Background="{StaticResource InsetBrush}"
                                         BorderBrush="{StaticResource BorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="12"
@@ -891,19 +774,19 @@
                                                 <RowDefinition Height="Auto" />
                                             </Grid.RowDefinitions>
                                             <StackPanel>
-                                                <TextBlock Text="Installed build" Foreground="#77746D" FontFamily="{StaticResource MonoFont}" FontSize="9" />
+                                                <TextBlock Text="Installed build" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
                                                 <TextBlock x:Name="CurrentBuildText" Margin="0,5,0,0" Text="Reading assembly" />
                                             </StackPanel>
                                             <StackPanel Grid.Column="1">
-                                                <TextBlock Text="Release channel" Foreground="#77746D" FontFamily="{StaticResource MonoFont}" FontSize="9" />
+                                                <TextBlock Text="Release channel" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
                                                 <TextBlock Margin="0,5,0,0" Text="Not configured" Foreground="{StaticResource WarningBrush}" />
                                             </StackPanel>
                                             <StackPanel Grid.Row="2">
-                                                <TextBlock Text="Target release" Foreground="#77746D" FontFamily="{StaticResource MonoFont}" FontSize="9" />
+                                                <TextBlock Text="Target release" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
                                                 <TextBlock Margin="0,5,0,0" Text="None prepared" />
                                             </StackPanel>
                                             <StackPanel Grid.Row="2" Grid.Column="1">
-                                                <TextBlock Text="Plan and disk impact" Foreground="#77746D" FontFamily="{StaticResource MonoFont}" FontSize="9" />
+                                                <TextBlock Text="Plan and disk impact" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
                                                 <TextBlock Margin="0,5,0,0" Text="Not computed" />
                                             </StackPanel>
                                         </Grid>
@@ -913,13 +796,13 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <Border Background="#1D1D1A"
+                                            <Border Background="{StaticResource InsetBrush}"
                                                     BorderBrush="{StaticResource BorderBrush}"
                                                     BorderThickness="1"
                                                     CornerRadius="10"
                                                     Padding="13">
                                                 <TextBlock Text="A production release key, publisher pin, and signed descriptor source must be selected before planning can be enabled."
-                                                           Foreground="#A8A49A"
+                                                           Foreground="{StaticResource MutedBrush}"
                                                            FontSize="11"
                                                            TextWrapping="Wrap" />
                                             </Border>
@@ -981,9 +864,9 @@
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
-                                <Border Style="{StaticResource CardStyle}" Background="#222620" BorderBrush="#3D4C42">
+                                <Border Style="{StaticResource CardStyle}" Background="{StaticResource SignalSurfaceBrush}" BorderBrush="{StaticResource SignalBorderBrush}">
                                     <StackPanel>
-                                        <TextBlock Style="{StaticResource EyebrowStyle}" Foreground="{StaticResource SignalBrush}" Text="NON-INSTALLING BOUNDARY" />
+                                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Foreground="{StaticResource SignalBrush}" Text="NON-INSTALLING BOUNDARY" />
                                         <TextBlock Margin="0,12,0,0"
                                                    Text="Nothing installs from this page"
                                                    FontFamily="{StaticResource DisplayFont}"
@@ -1034,13 +917,13 @@
                                                    TextWrapping="Wrap"
                                                    LineHeight="20" />
                                         <Border Margin="0,18,0,0"
-                                                Background="#1D1D1A"
+                                                Background="{StaticResource InsetBrush}"
                                                 BorderBrush="{StaticResource BorderBrush}"
                                                 BorderThickness="1"
                                                 CornerRadius="10"
                                                 Padding="13">
                                             <TextBlock Text="No installer · no elevation · no service · no activation · no automatic rollback claim"
-                                                       Foreground="#A8A49A"
+                                                       Foreground="{StaticResource MutedBrush}"
                                                        FontFamily="{StaticResource MonoFont}"
                                                        FontSize="10"
                                                        TextWrapping="Wrap" />
@@ -1051,7 +934,7 @@
                         </Grid>
 
                         <TextBlock Margin="2,16,2,4"
-                                   Foreground="#77746D"
+                                   Foreground="{StaticResource QuietTextBrush}"
                                    FontSize="11"
                                    TextWrapping="Wrap"
                                    Text="Scope: the update planner can authenticate, acquire, stage, verify, and preview a candidate. It does not install, elevate, activate, repair, uninstall, or silently recover a release." />
@@ -1059,26 +942,44 @@
                 </ScrollViewer>
             </Grid>
 
-            <Grid x:Name="MixerPanel" Visibility="Collapsed">
-                <Border Style="{StaticResource CardStyle}" VerticalAlignment="Top">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource EyebrowStyle}" Text="04 / AUDIO ROUTING" />
-                        <TextBlock Margin="0,7,0,0" Text="Mixer" FontFamily="{StaticResource DisplayFont}" FontSize="38" />
-                        <TextBlock Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
-                                   Text="Audio routing and parametric EQ remain a documented scaffold boundary in this reconstruction. The Security module is the implemented focus of this handoff." />
-                    </StackPanel>
-                </Border>
-            </Grid>
+            <views:MixerView x:Name="MixerPanel" Visibility="Collapsed" />
 
             <Grid x:Name="ClipsPanel" Visibility="Collapsed">
+                <StackPanel>
                 <Border Style="{StaticResource CardStyle}" VerticalAlignment="Top">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource EyebrowStyle}" Text="05 / CAPTURE" />
+                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="05 / CAPTURE" />
                         <TextBlock Margin="0,7,0,0" Text="Clips" FontFamily="{StaticResource DisplayFont}" FontSize="38" />
                         <TextBlock Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
                                    Text="Rolling capture, hardware encoding, and the click-through overlay remain documented future stages. No game injection or protected-content bypass is permitted." />
                     </StackPanel>
                 </Border>
+                    <Border Margin="0,18,0,0"
+                            MaxWidth="640"
+                            HorizontalAlignment="Left"
+                            Style="{StaticResource HeroCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="CAPTURE OFF"
+                                       Style="{StaticResource PageEyebrowStyle}"
+                                       Foreground="{StaticResource WarningBrush}" />
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="Nothing records in the background"
+                                       FontFamily="{StaticResource DisplayFont}"
+                                       FontSize="28" />
+                            <TextBlock Margin="0,9,0,0"
+                                       MaxWidth="520"
+                                       Text="This workspace will stay quiet until bounded capture, retention, and consent controls have implementation evidence."
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       LineHeight="20" />
+                            <TextBlock Margin="0,16,0,0"
+                                       Text="No recorder · no overlay · no game injection"
+                                       Foreground="{StaticResource QuietTextBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="10" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
             </Grid>
         </Grid>
     </Grid>

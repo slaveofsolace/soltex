@@ -1,25 +1,29 @@
-# Soltex documentation map
+# Documentation index
 
-Current continuation begins with [`../HANDOFF.md`](../HANDOFF.md).
+Start here:
 
-- `ARCHITECTURE.md`: component and trust-boundary map.
-- `IMPLEMENTATION_STATUS.md`: evidence-backed feature status and remaining work.
-- `IMMERSIVE_WORKSPACE.md`: current visual system, telemetry provenance, interaction states, and UI nonclaims.
-- `REFERENCE_SYSTEMS.md`: clean-room AppControl/Zen/CAM/Sonar/RustDesk/Tailscale/security/cloud lessons and staged product requirements.
-- `GITHUB_CONSOLIDATION.md`: audited linear branch stack, single-integration-PR contract, evidence fields, and post-merge cleanup proof.
-- `MASTER_PROJECT_BLUEPRINT.md`: product direction and staged roadmap.
-- `NAMING_AND_COMPATIBILITY.md`: identity migration and installed-state contract.
-- `VALIDATION.md`: exact build, suite, EICAR, render, and evidence procedure.
-- `THREAT_MODEL.md`: assets, adversaries, abuse cases, and mitigations.
-- `SUPPLY_CHAIN_SECURITY.md`: publisher, release, transport, and update boundaries.
-- `SECURITY_ENGINEERING_HANDOFF.md`: supported Windows security interfaces and nonclaims.
-- `REMOTE_ASSIST.md`: RustDesk clean-room external-client boundary.
-- `PERSONAL_DEVICE_FABRIC.md`: typed multi-device architecture and connector separation.
-- `PRODUCT_SPEC.md` and `PARITY_MATRIX.md`: product requirements and demonstrated parity.
-- `RESEARCH_AUDIT.md`: factual source and clean-room research record.
+- [README](../README.md) — product overview and local build commands.
+- [Implementation status](IMPLEMENTATION_STATUS.md) — what currently works and what is not claimed.
+- [Validation](VALIDATION.md) — exact current CI, test, render, and package evidence.
+- [V1 audit](AUDIT.md) — architecture, security, performance, UX, release, and roadmap findings.
+- [Handoff](../HANDOFF.md) — exact branch, commits, evidence, and resume step.
 
-`evidence/` is append-only run evidence. `archive/prompts/` preserves superseded planning prompts for provenance; those files are not current instructions and are intentionally excluded from product-identity enforcement only through a documented historical allowlist.
+Design and architecture:
 
-The current immersive-workspace evidence packet is `evidence/2026-08-04-immersive-workspace/`; it freezes the Windows gate, screenshot hashes, Human Eye review, Resource Pilfer disposition, and Human Cortex decision ledger for implementation commit `2a0699b2ca77b30fa636279b1d5ecab603a8bde9`.
+- [Design system](DESIGN_SYSTEM.md) — tokens, components, and the enforced visual language.
+- [Architecture](ARCHITECTURE.md)
+- [Threat model](THREAT_MODEL.md)
+- [Supply-chain security](SUPPLY_CHAIN_SECURITY.md)
+- [Security engineering](SECURITY_ENGINEERING_HANDOFF.md)
+- [Immersive workspace](IMMERSIVE_WORKSPACE.md)
+- [Personal device fabric](PERSONAL_DEVICE_FABRIC.md)
+- [Remote Assist](REMOTE_ASSIST.md)
+- [Naming and compatibility](NAMING_AND_COMPATIBILITY.md)
 
-The bounded public-reference research packet is `evidence/2026-08-04-reference-systems/`. It records why the proprietary AppControl desktop installer was not acquired and retains a fail-closed Resource Pilfer candidate registry.
+Product context and historical planning:
+
+- [Master project blueprint](MASTER_PROJECT_BLUEPRINT.md)
+- [Parity matrix](PARITY_MATRIX.md)
+- [Research audit](RESEARCH_AUDIT.md)
+
+`IMPLEMENTATION_STATUS.md`, `VALIDATION.md`, `AUDIT.md`, and the root `HANDOFF.md` are the current operational record. Historical commit messages and retained workflow artifacts remain the source for older evidence.

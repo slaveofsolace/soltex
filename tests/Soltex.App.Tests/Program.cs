@@ -1,9 +1,11 @@
 using System.Diagnostics;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Soltex.App.Controls;
 using Soltex.App.Views;
+using Soltex.Audio;
 using Soltex.DeviceFabric;
 using Soltex.Monitoring;
 
@@ -20,14 +22,19 @@ internal static class Program
         SystemTelemetrySnapshot snapshot = SystemTelemetryProvider.CaptureAsync(
             TimeSpan.FromMilliseconds(150),
             CancellationToken.None).GetAwaiter().GetResult();
+        AudioEndpointSnapshot audioSnapshot = AudioEndpointProvider.CaptureAsync().GetAwaiter().GetResult();
 
         List<(string Name, Action Test)> tests =
         [
             ("Shared theme exposes required control resources", ThemeResourcesAreAvailable),
-            ("Sparkline renders bounded values", SparklineRenders),
+            ("Telemetry runs only in visible live workspaces", TelemetryRunsOnlyInLiveWorkspaces),
+            ("Sparkline renders bounded percentage values", SparklineRenders),
+            ("Sparkline auto-scales unbounded throughput values", SparklineAutoScales),
             ("Home view renders a live snapshot", () => HomeViewRenders(snapshot, device)),
             ("Monitoring view renders provenance and bounded rows", () => MonitoringViewRenders(snapshot)),
-            ("Devices view renders an explicit unenrolled profile", () => DevicesViewRenders(device))
+            ("Monitoring details are disclosed only on request", MonitoringDetailsAreProgressive),
+            ("Mixer prioritizes active endpoints", () => MixerPrioritizesActiveEndpoints(audioSnapshot)),
+            ("Devices view renders an explicit unnrolled profile", () => DevicesViewRenders(device))
         ];
 
         int failed = 0;
@@ -65,6 +72,45 @@ internal static class Program
         True(resources.Contains("SoltexSliderStyle"), "The shared slider style is missing.");
     }
 
+    private static void TelemetryRunsOnlyInLiveWorkspaces()
+    {
+        True(TelemetryActivityPolicy.ShouldRun(
+            isLoaded: true,
+            isClosing: false,
+            WindowState.Normal,
+            homeVisible: true,
+            monitoringVisible: false),
+            "Home should keep telemetry active.");
+        True(TelemetryActivityPolicy.ShouldRun(
+            isLoaded: true,
+            isClosing: false,
+            WindowState.Maximized,
+            homeVisible: false,
+            monitoringVisible: true),
+            "Monitoring should keep telemetry active.");
+        True(!TelemetryActivityPolicy.ShouldRun(
+            isLoaded: true,
+            isClosing: false,
+            WindowState.Normal,
+            homeVisible: false,
+            monitoringVisible: false),
+            "Hidden live workspaces must suspend telemetry.");
+        True(!TelemetryActivityPolicy.ShouldRun(
+            isLoaded: true,
+            isClosing: false,
+            WindowState.Minimized,
+            homeVisible: true,
+            monitoringVisible: false),
+            "A minimized window must suspend telemetry.");
+        True(!TelemetryActivityPolicy.ShouldRun(
+            isLoaded: true,
+            isClosing: true,
+            WindowState.Normal,
+            homeVisible: true,
+            monitoringVisible: false),
+            "Closing must prevent telemetry restart.");
+    }
+
     private static void SparklineRenders()
     {
         Sparkline sparkline = new()
@@ -78,6 +124,20 @@ internal static class Program
         True(CountVisiblePixels(pixels) > 50, "The sparkline render did not produce visible pixels.");
     }
 
+    private static void SparklineAutoScales()
+    {
+        Sparkline sparkline = new()
+        {
+            Values = [0, 4_096, 2_048, 16_384, 8_192],
+            AutoScale = true,
+            Stroke = Brushes.LightGreen,
+            Fill = new SolidColorBrush(Color.FromArgb(32, 126, 208, 167)),
+            StrokeThickness = 2
+        };
+        byte[] pixels = Render(sparkline, 320, 90);
+        True(CountVisiblePixels(pixels) > 50, "The auto-scaled sparkline did not produce visible pixels.");
+    }
+
     private static void HomeViewRenders(SystemTelemetrySnapshot snapshot, LocalDeviceObservation device)
     {
         HomeView view = new();
@@ -86,6 +146,7 @@ internal static class Program
         True(CountVisiblePixels(pixels) > 5_000, "The Home view render was unexpectedly empty.");
         True(view.HomeStateText.Text.Length > 0, "Home did not expose a telemetry state.");
         True(view.MachineNameText.Text == device.DisplayName, "Home did not render the observed local device.");
+        True(view.NetworkStatusText.Text is "LIVE" or "UNAVAILABLE", "Home did not expose the network observation state.");
         True(view.HomeHeroCard.ActualHeight <= 266, "The Home hero exceeded its bounded viewport height.");
         True(view.MachineProfileCard.ActualWidth >= 220, "The Home machine profile collapsed below its usable width.");
     }
@@ -99,6 +160,45 @@ internal static class Program
         True(view.ProcessGrid.Items.Count <= SystemTelemetryProvider.MaximumProcessCount, "Monitoring exceeded the process-row bound.");
         True(view.MonitoringProvenanceText.Text.Contains("GetSystemTimes", StringComparison.Ordinal), "Monitoring omitted provider provenance.");
         True(view.MonitoringProvenanceText.Text.Contains("GPU", StringComparison.Ordinal), "Monitoring omitted the GPU limitation.");
+        True(view.NetworkCoverageText.Text is "SAMPLED" or "UNAVAILABLE", "Monitoring did not expose the network provider state.");
+    }
+
+    private static void MonitoringDetailsAreProgressive()
+    {
+        MonitoringView view = new();
+        True(view.MonitoringDetailsPanel.Visibility == Visibility.Collapsed,
+            "Monitoring detail must be collapsed on first view.");
+        view.MonitoringDetailsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.MonitoringDetailsPanel.Visibility == Visibility.Visible,
+            "Monitoring detail did not open from its explicit disclosure control.");
+        view.MonitoringDetailsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.MonitoringDetailsPanel.Visibility == Visibility.Collapsed,
+            "Monitoring detail did not close from its disclosure control.");
+    }
+
+    private static void MixerPrioritizesActiveEndpoints(AudioEndpointSnapshot snapshot)
+    {
+        MixerView view = new();
+        view.UpdateSnapshot(snapshot);
+        int activePlayback = snapshot.Render.Count(endpoint => endpoint.State == AudioEndpointState.Active);
+        int activeRecording = snapshot.Capture.Count(endpoint => endpoint.State == AudioEndpointState.Active);
+        int expectedPrimary = Math.Min(activePlayback, 6) + Math.Min(activeRecording, 6);
+        int moreCount = snapshot.Endpoints.Count - expectedPrimary;
+        True(view.PlaybackItems.Items.Count + view.RecordingItems.Items.Count == expectedPrimary,
+            "Mixer did not keep its primary endpoint lists bounded and active-only.");
+        True(expectedPrimary <= 12, "Mixer exposed more than twelve endpoints in the primary view.");
+        True(view.MorePlaybackItems.Items.Count + view.MoreRecordingItems.Items.Count == moreCount,
+            "Mixer lost endpoints while partitioning the primary and additional lists.");
+        True(view.MoreEndpointsPanel.Visibility == Visibility.Collapsed,
+            "Additional audio endpoints must be collapsed on first view.");
+        if (moreCount > 0)
+        {
+            True(view.MoreEndpointsButton.Visibility == Visibility.Visible,
+                "Mixer omitted the additional-endpoint disclosure control.");
+            view.MoreEndpointsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+            True(view.MoreEndpointsPanel.Visibility == Visibility.Visible,
+                "Mixer additional endpoints did not open from their disclosure control.");
+        }
     }
 
     private static void DevicesViewRenders(LocalDeviceObservation device)

@@ -1,0 +1,107 @@
+name: package-smoke
+
+on:
+  push:
+    paths:
+      - '.github/workflows/package-smoke.yml'
+      - 'Directory.Build.props'
+      - 'global.json'
+      - 'eng/make-icon.ps1'
+      - 'eng/publish-release.ps1'
+      - 'src/**'
+  pull_request:
+    paths:
+      - '.github/workflows/package-smoke.yml'
+      - 'Directory.Build.props'
+      - 'global.json'
+      - 'eng/make-icon.ps1'
+      - 'eng/publish-release.ps1'
+      - 'src/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+
+jobs:
+  publish-smoke:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Prepare evidence directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force .\artifacts\validation | Out-Null
+
+      - name: Publish self-contained desktop package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & .\eng\publish-release.ps1 -Version '0.0.0-ci' -Runtime 'win-x64' -SkipInstaller 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\package-publish.log
+
+      - name: Launch published package render smoke
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = Resolve-Path .\artifacts\publish\win-x64\Soltex.exe
+          & $exe --render-smoke .\artifacts\validation\package-home.png --panel home 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\package-launch.log
+          if ($LASTEXITCODE -ne 0) {
+            throw "Published package render failed with exit code $LASTEXITCODE."
+          }
+          if (-not (Test-Path -LiteralPath .\artifacts\validation\package-home.png -PathType Leaf)) {
+            throw 'The published package did not create its Home render evidence.'
+          }
+          if (Test-Path -LiteralPath .\artifacts\validation\package-home.png.error.txt -PathType Leaf) {
+            Get-Content -LiteralPath .\artifacts\validation\package-home.png.error.txt
+            throw 'The published package produced a render-smoke error file.'
+          }
+
+      - name: Record package identity
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = Resolve-Path .\artifacts\publish\win-x64\Soltex.exe
+          $item = Get-Item -LiteralPath $exe
+          $hash = Get-FileHash -LiteralPath $exe -Algorithm SHA256
+          $signature = Get-AuthenticodeSignature -FilePath $exe
+          $status = $signature.Status.ToString()
+          if ($status -notin @('Valid', 'NotSigned')) {
+            throw "Published package has an unacceptable Authenticode status: $status."
+          }
+          [ordered]@{
+            schema_version = 1
+            commit = $env:GITHUB_SHA
+            runtime = 'win-x64'
+            file = $item.Name
+            length = $item.Length
+            sha256 = $hash.Hash
+            authenticode_status = $status
+            signed = ($signature.Status -eq 'Valid')
+            recorded_at_utc = (Get-Date).ToUniversalTime().ToString('o')
+          } | ConvertTo-Json | Set-Content -Encoding UTF8 .\artifacts\validation\package-smoke.json
+
+      - name: Upload package evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: soltex-package-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/publish/win-x64/Soltex.exe
+            artifacts/validation/package-publish.log
+            artifacts/validation/package-launch.log
+            artifacts/validation/package-home.png
+            artifacts/validation/package-home.png.error.txt
+            artifacts/validation/package-smoke.json
+          if-no-files-found: warn
+          retention-days: 30

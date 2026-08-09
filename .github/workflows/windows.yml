@@ -36,6 +36,14 @@ jobs:
           .\eng\verify-identity.ps1 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\identity-policy.log
 
+      - name: Verify Soltex design tokens
+        id: design_tokens
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\eng\verify-design-tokens.ps1 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\design-tokens.log
+
       - name: Build Release
         id: build
         shell: pwsh
@@ -98,6 +106,15 @@ jobs:
           dotnet run --project .\tests\Soltex.Monitoring.Tests\Soltex.Monitoring.Tests.csproj --configuration Release --no-build 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\tests-monitoring.log
           if ($LASTEXITCODE -ne 0) { throw "Monitoring provider suite failed with exit code $LASTEXITCODE." }
+
+      - name: Run bounded audio endpoint suite
+        id: audio_tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\tests\Soltex.Audio.Tests\Soltex.Audio.Tests.csproj --configuration Release --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\tests-audio.log
+          if ($LASTEXITCODE -ne 0) { throw "Audio endpoint suite failed with exit code $LASTEXITCODE." }
 
       - name: Run WPF control suite
         id: app_tests
@@ -206,6 +223,7 @@ jobs:
         run: |
           $outcomes = [ordered]@{
             identity = '${{ steps.identity.outcome }}'
+            design_tokens = '${{ steps.design_tokens.outcome }}'
             build = '${{ steps.build.outcome }}'
             default_tests = '${{ steps.default_tests.outcome }}'
             supply_chain = '${{ steps.supply_chain.outcome }}'
@@ -213,6 +231,7 @@ jobs:
             update_tests = '${{ steps.update_tests.outcome }}'
             device_fabric_tests = '${{ steps.device_fabric_tests.outcome }}'
             monitoring_tests = '${{ steps.monitoring_tests.outcome }}'
+            audio_tests = '${{ steps.audio_tests.outcome }}'
             app_tests = '${{ steps.app_tests.outcome }}'
             render_home = '${{ steps.render_home.outcome }}'
             render_monitoring = '${{ steps.render_monitoring.outcome }}'

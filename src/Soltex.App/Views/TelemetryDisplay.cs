@@ -12,6 +12,9 @@ internal static class TelemetryDisplay
 
     internal static string Bytes(long bytes) => BytesCore(Math.Max(0, bytes));
 
+    internal static string BytesPerSecond(long bytesPerSecond) =>
+        BytesCore(Math.Max(0, bytesPerSecond)) + "/s";
+
     internal static string State(TelemetryObservationState state) => state switch
     {
         TelemetryObservationState.Current => "CURRENT",

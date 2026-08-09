@@ -9,6 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Soltex.App\Soltex.App.csproj" />
+    <ProjectReference Include="..\..\src\Soltex.Audio\Soltex.Audio.csproj" />
     <ProjectReference Include="..\..\src\Soltex.DeviceFabric\Soltex.DeviceFabric.csproj" />
     <ProjectReference Include="..\..\src\Soltex.Monitoring\Soltex.Monitoring.csproj" />
   </ItemGroup>

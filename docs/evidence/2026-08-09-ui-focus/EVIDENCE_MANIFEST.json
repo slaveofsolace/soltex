@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "generatedAtUtc": "2026-08-09T08:13:54.4478253Z",
+  "viewport": {
+    "width": 1280,
+    "height": 820
+  },
+  "artifacts": [
+    {
+      "path": "clips.png",
+      "bytes": 67890,
+      "sha256": "fc0d0b83d6737bb98b1b7cd27aca6586779b7b6384d0673e5b958bfefe36f12c"
+    },
+    {
+      "path": "devices.png",
+      "bytes": 115601,
+      "sha256": "f0d7255911aeda75df3ec102b4feb6e8b829248fd63637e17c37791aa0052312"
+    },
+    {
+      "path": "home.png",
+      "bytes": 101262,
+      "sha256": "4656c98c6b7d4e55e702a46a157bc87bedcfeb68fbf04e5be4e2e7b63726c4ae"
+    },
+    {
+      "path": "mixer-more.png",
+      "bytes": 172145,
+      "sha256": "52bb24d51dac0bc7579b1ef2ce3d822325e5489f32ba21b7f3e62aab2ffb1c79"
+    },
+    {
+      "path": "mixer.png",
+      "bytes": 136713,
+      "sha256": "c1fcf7f8f007423cf5e5aeab0f407ad26b98befe8d7fb6a6a5995bd98fedac8f"
+    },
+    {
+      "path": "monitoring-details.png",
+      "bytes": 105593,
+      "sha256": "2b799e96f9c562bc3bdb962c6a12e023ceae1011ff935b2e8b34c9c0a5fbb7f3"
+    },
+    {
+      "path": "monitoring.png",
+      "bytes": 103882,
+      "sha256": "e9740e0b8d965be6074b1349f8a00d30f9566feadc11fcf78ccf67a51b1a4c1d"
+    },
+    {
+      "path": "remote.png",
+      "bytes": 110126,
+      "sha256": "544d099c517d09bbe528ad6c7c3c1e72e7e02288375fd90de1beaa5848ea5475"
+    },
+    {
+      "path": "security-activity.png",
+      "bytes": 125696,
+      "sha256": "e6b7e8792517fb423fd1a550915c6fb5bc4301998035d3b69f52ecfc1fd9a202"
+    },
+    {
+      "path": "security.png",
+      "bytes": 113197,
+      "sha256": "e5500d16e150b458b771a670372047abdf4ae1a122ad4872603a4d598972ef26"
+    },
+    {
+      "path": "update.png",
+      "bytes": 124471,
+      "sha256": "cc5c0baa9b6b64fa14c204870b9e7571df7a59bd7860a0a2e382e24052910e66"
+    }
+  ]
+}

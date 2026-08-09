@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -8,6 +9,20 @@ namespace Soltex.App;
 
 public partial class App : Application
 {
+    public App()
+    {
+        foreach (string argument in Environment.GetCommandLineArgs())
+        {
+            if (string.Equals(argument, "--render-smoke", StringComparison.OrdinalIgnoreCase))
+            {
+                // This must happen before InitializeComponent loads any font-backed
+                // resources; OnStartup is too late for deterministic text capture.
+                RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
+                break;
+            }
+        }
+    }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -25,7 +40,8 @@ public partial class App : Application
             if (!window.TrySelectRenderSmokePanel(panelName))
             {
                 throw new ArgumentException(
-                    "The render-smoke panel must be one of: home, monitoring, devices, security, remote, update, mixer, clips.");
+                    "The render-smoke panel must be one of: home, monitoring, monitoring-details, devices, " +
+                    "security, security-activity, remote, update, mixer, mixer-more, clips.");
             }
 
             RenderSmokeSnapshot(window, panelOutputPath);
@@ -60,9 +76,18 @@ public partial class App : Application
             int exitCode = 0;
             try
             {
+                window.InvalidateMeasure();
+                window.InvalidateArrange();
+                window.InvalidateVisual();
                 window.UpdateLayout();
+                window.PrepareRenderSmokeCapture();
+                window.UpdateLayout();
+                Dispatcher.Invoke(static () => { }, DispatcherPriority.Render);
                 int width = Math.Max(1, checked((int)Math.Ceiling(window.ActualWidth)));
                 int height = Math.Max(1, checked((int)Math.Ceiling(window.ActualHeight)));
+                RenderTargetBitmap warmup = new(width, height, 96, 96, PixelFormats.Pbgra32);
+                warmup.Render(window);
+                Dispatcher.Invoke(static () => { }, DispatcherPriority.Render);
                 RenderTargetBitmap bitmap = new(width, height, 96, 96, PixelFormats.Pbgra32);
                 bitmap.Render(window);
                 PngBitmapEncoder encoder = new();

@@ -4,6 +4,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Tokens.xaml" />
                 <ResourceDictionary Source="Themes/SoltexTheme.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

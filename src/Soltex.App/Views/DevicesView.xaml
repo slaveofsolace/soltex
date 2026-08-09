@@ -45,7 +45,7 @@
                         <TextBlock x:Name="DeviceNameText" Margin="0,8,0,0" Text="Local machine" FontFamily="{StaticResource DisplayFont}" FontSize="36" />
                         <TextBlock x:Name="DeviceOsText" Margin="0,7,0,0" Text="Reading Windows profile…" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
                         <StackPanel Margin="0,19,0,0" Orientation="Horizontal">
-                            <Border Style="{StaticResource StatusPillStyle}" Background="{StaticResource SignalQuietBrush}" BorderBrush="#365243">
+                            <Border Style="{StaticResource StatusPillStyle}" Background="{StaticResource SignalQuietBrush}" BorderBrush="{StaticResource SignalBorderBrush}">
                                 <TextBlock x:Name="ObservationStateText" Text="OBSERVING" Foreground="{StaticResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
                             </Border>
                             <Border Margin="8,0,0,0" Style="{StaticResource StatusPillStyle}">
@@ -54,7 +54,7 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <Border x:Name="DeviceProfileCard" Grid.Column="1" Background="#20201D" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="13" Padding="18">
+                    <Border x:Name="DeviceProfileCard" Grid.Column="1" Background="{StaticResource QuietBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="13" Padding="18">
                         <StackPanel>
                             <Grid Margin="0,0,0,12">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>

@@ -6,15 +6,17 @@ List<(string Name, Func<Task> Test)> tests =
     ("System CPU math reports bounded busy time", SystemCpuMathIsBoundedAsync),
     ("System CPU math rejects regressing counters", SystemCpuMathRejectsRegressionAsync),
     ("Process CPU math respects machine capacity", ProcessCpuMathRespectsCapacityAsync),
-    ("Process names remove control characters and enforce bounds", ProcessNamesAreSanitizedAsync),
-    ("Telemetry history validates capacity and samples", TelemetryHistoryValidatesInputAsync),
+    ("Network rate math rejects regressions and reports bytes per second", NetworkRateMathIsBoundedAsync),
+    ("Process and network names remove control characters and enforce bounds", ObservationNamesAreSanitizedAsync),
+    ("Telemetry history validates capacity, range, and samples", TelemetryHistoryValidatesInputAsync),
     ("Telemetry history is bounded and snapshots are immutable", TelemetryHistoryIsBoundedAsync),
-    ("Telemetry history clamps percentages", TelemetryHistoryClampsAsync),
+    ("Telemetry history respects configured ranges", TelemetryHistoryRespectsRangeAsync),
     ("Sample windows reject unsafe bounds", SampleWindowsAreBoundedAsync),
     ("Cancellation stops a pending sample", PendingSampleCanBeCancelledAsync),
     ("Live Windows capture is bounded and provenance-labeled", LiveCaptureIsBoundedAsync),
     ("Live process rows expose no paths", LiveProcessRowsExposeNoPathsAsync),
     ("Live memory and volume percentages are bounded", LivePercentagesAreBoundedAsync),
+    ("Live network observations are bounded or explicitly unavailable", LiveNetworkIsBoundedAsync),
     ("Monitoring capture overhead is measured", CapturePerformanceIsMeasuredAsync)
 ];
 
@@ -70,12 +72,24 @@ static Task ProcessCpuMathRespectsCapacityAsync()
     return Task.CompletedTask;
 }
 
-static Task ProcessNamesAreSanitizedAsync()
+static Task NetworkRateMathIsBoundedAsync()
+{
+    Equal(2_000L, TelemetryMath.CalculateByteRate(1_000, 2_000, TimeSpan.FromMilliseconds(500)));
+    True(TelemetryMath.CalculateByteRate(2_000, 1_000, TimeSpan.FromSeconds(1)) is null, "Regressing network counters must be unavailable.");
+    True(TelemetryMath.CalculateByteRate(1_000, 2_000, TimeSpan.Zero) is null, "Zero network sample time must be unavailable.");
+    return Task.CompletedTask;
+}
+
+static Task ObservationNamesAreSanitizedAsync()
 {
     Equal("calc.exe", TelemetryMath.SanitizeProcessName(" calc\r\n.exe "));
-    string longName = new('A', SystemTelemetryProvider.MaximumProcessNameLength + 20);
-    Equal(SystemTelemetryProvider.MaximumProcessNameLength, TelemetryMath.SanitizeProcessName(longName).Length);
+    string longProcessName = new('A', SystemTelemetryProvider.MaximumProcessNameLength + 20);
+    Equal(SystemTelemetryProvider.MaximumProcessNameLength, TelemetryMath.SanitizeProcessName(longProcessName).Length);
     Equal("Unavailable", TelemetryMath.SanitizeProcessName("\r\n"));
+
+    Equal("Ethernet 2", TelemetryMath.SanitizeNetworkName(" Ethernet\r\n 2 "));
+    string longNetworkName = new('N', SystemTelemetryProvider.MaximumNetworkNameLength + 20);
+    Equal(SystemTelemetryProvider.MaximumNetworkNameLength, TelemetryMath.SanitizeNetworkName(longNetworkName).Length);
     return Task.CompletedTask;
 }
 
@@ -83,6 +97,7 @@ static Task TelemetryHistoryValidatesInputAsync()
 {
     Throws<ArgumentOutOfRangeException>(() => _ = new BoundedTelemetryHistory(1));
     Throws<ArgumentOutOfRangeException>(() => _ = new BoundedTelemetryHistory(BoundedTelemetryHistory.MaximumCapacity + 1));
+    Throws<ArgumentOutOfRangeException>(() => _ = new BoundedTelemetryHistory(4, 10, 10));
     BoundedTelemetryHistory history = new(4);
     Throws<ArgumentOutOfRangeException>(() => history.Add(double.NaN));
     Throws<ArgumentOutOfRangeException>(() => history.Add(double.PositiveInfinity));
@@ -103,13 +118,19 @@ static Task TelemetryHistoryIsBoundedAsync()
     return Task.CompletedTask;
 }
 
-static Task TelemetryHistoryClampsAsync()
+static Task TelemetryHistoryRespectsRangeAsync()
 {
-    BoundedTelemetryHistory history = new(3);
-    _ = history.Add(-4);
-    var snapshot = history.Add(104);
-    Equal(0d, snapshot[0]);
-    Equal(100d, snapshot[1]);
+    BoundedTelemetryHistory percentage = new(3);
+    _ = percentage.Add(-4);
+    var percentageSnapshot = percentage.Add(104);
+    Equal(0d, percentageSnapshot[0]);
+    Equal(100d, percentageSnapshot[1]);
+
+    BoundedTelemetryHistory throughput = new(3, 0, double.MaxValue);
+    _ = throughput.Add(4_096);
+    var throughputSnapshot = throughput.Add(8_192);
+    Equal(4_096d, throughputSnapshot[0]);
+    Equal(8_192d, throughputSnapshot[1]);
     return Task.CompletedTask;
 }
 
@@ -135,7 +156,8 @@ static async Task LiveCaptureIsBoundedAsync()
     True(snapshot.Processes.Count <= SystemTelemetryProvider.MaximumProcessCount, "Process result exceeded its bound.");
     True(snapshot.Volumes.Count <= SystemTelemetryProvider.MaximumVolumeCount, "Volume result exceeded its bound.");
     True(snapshot.Provenance.Contains("GetSystemTimes", StringComparison.Ordinal), "System timing provenance is missing.");
-    True(snapshot.Limitations.Count >= 2, "Unsupported GPU/network signals must remain explicit.");
+    True(snapshot.Provenance.Contains("NetworkInterface", StringComparison.Ordinal), "Network provenance is missing.");
+    True(snapshot.Limitations.Any(item => item.Contains("GPU", StringComparison.Ordinal)), "The unsupported GPU signal must remain explicit.");
 }
 
 static async Task LiveProcessRowsExposeNoPathsAsync()
@@ -175,6 +197,28 @@ static async Task LivePercentagesAreBoundedAsync()
     }
 }
 
+static async Task LiveNetworkIsBoundedAsync()
+{
+    SystemTelemetrySnapshot snapshot = await CaptureAsync();
+    if (snapshot.Network is not NetworkTelemetry network)
+    {
+        True(
+            snapshot.Limitations.Any(item => item.Contains("Network throughput", StringComparison.Ordinal)),
+            "Unavailable network telemetry must be explained.");
+        return;
+    }
+
+    True(network.ReceiveBytesPerSecond >= 0, "Receive rate cannot be negative.");
+    True(network.SendBytesPerSecond >= 0, "Send rate cannot be negative.");
+    True(network.Interfaces.Count is > 0 and <= SystemTelemetryProvider.MaximumNetworkInterfaceCount, "Network-interface result exceeded its bound.");
+    foreach (NetworkInterfaceTelemetry item in network.Interfaces)
+    {
+        True(item.Name.Length is > 0 and <= SystemTelemetryProvider.MaximumNetworkNameLength, "Network name is outside bounds.");
+        True(!item.Name.Any(char.IsControl), "Network name contains a control character.");
+        True(item.ReceiveBytesPerSecond >= 0 && item.SendBytesPerSecond >= 0, "Network rate cannot be negative.");
+    }
+}
+
 static async Task CapturePerformanceIsMeasuredAsync()
 {
     Stopwatch stopwatch = Stopwatch.StartNew();
@@ -183,6 +227,7 @@ static async Task CapturePerformanceIsMeasuredAsync()
     True(stopwatch.Elapsed < TimeSpan.FromSeconds(5), "Monitoring capture exceeded its five-second test ceiling.");
     Console.WriteLine(
         $"      state={snapshot.State}; processes={snapshot.Processes.Count}; volumes={snapshot.Volumes.Count}; " +
+        $"interfaces={snapshot.Network?.Interfaces.Count ?? 0}; network_bps={snapshot.Network?.TotalBytesPerSecond ?? 0}; " +
         $"inaccessible={snapshot.InaccessibleProcessCount}; provider_ms={snapshot.CaptureDuration.TotalMilliseconds:F1}; wall_ms={stopwatch.Elapsed.TotalMilliseconds:F1}");
 }
 

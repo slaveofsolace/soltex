@@ -39,7 +39,9 @@ internal static class NativeTelemetry
         memory = new MemoryTelemetry(
             status.TotalPhysical,
             Math.Min(status.AvailablePhysical, status.TotalPhysical),
-            Math.Clamp(status.MemoryLoad, 0u, 100u));
+            Math.Clamp(status.MemoryLoad, 0u, 100u),
+            status.TotalPageFile,
+            Math.Min(status.AvailablePageFile, status.TotalPageFile));
         return true;
     }
 

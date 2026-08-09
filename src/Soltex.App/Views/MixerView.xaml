@@ -1,0 +1,318 @@
+<UserControl x:Class="Soltex.App.Views.MixerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent"
+             Foreground="{StaticResource TextBrush}"
+             FontFamily="{StaticResource UiFont}">
+    <UserControl.Resources>
+        <!--
+            One template drives both endpoint lists. Colour and opacity come from
+            the row so an endpoint that is absent cannot present a confident
+            green level reading.
+        -->
+        <DataTemplate x:Key="AudioEndpointTemplate">
+            <Grid Margin="0,0,0,13" Opacity="{Binding RowOpacity}" ToolTip="{Binding Tooltip}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="86" />
+                    <ColumnDefinition Width="46" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}"
+                                   TextTrimming="CharacterEllipsis"
+                                   FontWeight="SemiBold" />
+                        <Border Margin="8,0,0,0"
+                                Style="{StaticResource StatusPillStyle}"
+                                Background="{StaticResource SignalQuietBrush}"
+                                BorderBrush="{StaticResource SignalBorderBrush}"
+                                Visibility="{Binding DefaultVisibility}">
+                            <TextBlock Text="DEFAULT"
+                                       Foreground="{StaticResource SignalBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMicro}" />
+                        </Border>
+                        <Border Margin="8,0,0,0"
+                                Style="{StaticResource StatusPillStyle}"
+                                Visibility="{Binding MuteVisibility}">
+                            <TextBlock Text="MUTED"
+                                       Foreground="{StaticResource WarningBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMicro}" />
+                        </Border>
+                    </StackPanel>
+                    <TextBlock Margin="0,3,0,0"
+                               Text="{Binding StateText}"
+                               Foreground="{Binding StateBrush}"
+                               FontFamily="{StaticResource MonoFont}"
+                               FontSize="{StaticResource FontMicro}" />
+                </StackPanel>
+                <ProgressBar Grid.Column="1"
+                             Margin="10,0"
+                             Maximum="100"
+                             Value="{Binding VolumePercent, Mode=OneWay}"
+                             Style="{StaticResource MetricProgressStyle}"
+                             Foreground="{Binding VolumeBrush}"
+                             VerticalAlignment="Center"
+                             AutomationProperties.Name="{Binding VolumeAccessibleName}" />
+                <TextBlock Grid.Column="2"
+                           Text="{Binding VolumeText}"
+                           Foreground="{Binding VolumeTextBrush}"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           FontFamily="{StaticResource MonoFont}"
+                           FontSize="{StaticResource FontMono}" />
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled"
+                  HorizontalContentAlignment="Stretch">
+        <StackPanel>
+
+            <!-- Page header -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="04 / AUDIO ENDPOINTS" />
+                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Mixer" />
+                    <TextBlock Margin="0,5,0,0"
+                               MaxWidth="720"
+                               HorizontalAlignment="Left"
+                               Style="{StaticResource MutedTextStyle}"
+                               FontSize="{StaticResource FontBody}"
+                               TextWrapping="Wrap"
+                               Text="A read-only view of Windows Core Audio endpoints. Soltex observes volume and mute; it does not set them, route audio, or apply processing." />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                    <Button x:Name="MoreEndpointsButton"
+                            Margin="0,0,10,0"
+                            Visibility="Collapsed"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Show more"
+                            AutomationProperties.Name="Show more audio endpoints"
+                            Click="MoreEndpoints_Click" />
+                    <Border Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="MixerStateDot"
+                                     Width="7"
+                                     Height="7"
+                                     Fill="{StaticResource WarningBrush}"
+                                     VerticalAlignment="Center" />
+                            <TextBlock x:Name="MixerStateText"
+                                       Margin="8,0,0,0"
+                                       Text="WAITING"
+                                       Foreground="{StaticResource WarningBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMono}"
+                                       FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <!-- Endpoint summary -->
+            <Border Margin="0,20,0,0" Style="{StaticResource HeroCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="28" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="28" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="ACTIVE NOW" Style="{StaticResource PageEyebrowStyle}" Foreground="{StaticResource SignalBrush}" />
+                        <StackPanel Orientation="Horizontal" Margin="0,4,0,0" VerticalAlignment="Bottom">
+                            <TextBlock x:Name="ActiveCountText"
+                                       Text="—"
+                                       Style="{StaticResource MetricValueStyle}"
+                                       FontSize="42" />
+                            <TextBlock x:Name="TotalCountText"
+                                       Margin="10,0,0,8"
+                                       Text="of 0 endpoints"
+                                       Foreground="{StaticResource MutedBrush}" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                        <TextBlock Text="DEFAULT PLAYBACK"
+                                   Foreground="{StaticResource QuietTextBrush}"
+                                   FontFamily="{StaticResource MonoFont}"
+                                   FontSize="{StaticResource FontMicro}" />
+                        <TextBlock x:Name="DefaultPlaybackText"
+                                   Margin="0,5,0,0"
+                                   MaxWidth="260"
+                                   Text="Not reported"
+                                   TextTrimming="CharacterEllipsis"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="DEFAULT RECORDING"
+                                   Margin="0,12,0,0"
+                                   Foreground="{StaticResource QuietTextBrush}"
+                                   FontFamily="{StaticResource MonoFont}"
+                                   FontSize="{StaticResource FontMicro}" />
+                        <TextBlock x:Name="DefaultRecordingText"
+                                   Margin="0,5,0,0"
+                                   MaxWidth="260"
+                                   Text="Not reported"
+                                   TextTrimming="CharacterEllipsis"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right">
+                        <TextBlock Text="ENDPOINT STATE"
+                                   Foreground="{StaticResource QuietTextBrush}"
+                                   FontFamily="{StaticResource MonoFont}"
+                                   FontSize="{StaticResource FontMicro}"
+                                   HorizontalAlignment="Right" />
+                        <TextBlock x:Name="StateBreakdownText"
+                                   Margin="0,6,0,0"
+                                   Text="awaiting observation"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   FontFamily="{StaticResource MonoFont}"
+                                   FontSize="{StaticResource FontMono}"
+                                   HorizontalAlignment="Right"
+                                   TextAlignment="Right"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Playback and recording endpoints -->
+            <Grid Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Style="{StaticResource CardStyle}" VerticalAlignment="Top">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Playback" />
+                            <TextBlock x:Name="PlaybackCountText"
+                                       Grid.Column="1"
+                                       Text="0"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMono}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock Margin="0,4,0,14"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   Text="Render endpoints, connected first." />
+                        <ItemsControl x:Name="PlaybackItems" ItemTemplate="{StaticResource AudioEndpointTemplate}" />
+                        <TextBlock x:Name="NoPlaybackText"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   Text="No active playback endpoint was observed." />
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}" VerticalAlignment="Top">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Recording" />
+                            <TextBlock x:Name="RecordingCountText"
+                                       Grid.Column="1"
+                                       Text="0"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMono}"
+                                       VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock Margin="0,4,0,14"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   Text="Capture endpoints, connected first." />
+                        <ItemsControl x:Name="RecordingItems" ItemTemplate="{StaticResource AudioEndpointTemplate}" />
+                        <TextBlock x:Name="NoRecordingText"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   Text="No active recording endpoint was observed." />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border x:Name="MoreEndpointsPanel"
+                    Margin="0,16,0,0"
+                    Visibility="Collapsed"
+                    Style="{StaticResource QuietCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="16" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="More playback" />
+                            <TextBlock x:Name="MorePlaybackCountText"
+                                       Grid.Column="1"
+                                       Text="0"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontFamily="{StaticResource MonoFont}" />
+                        </Grid>
+                        <ItemsControl x:Name="MorePlaybackItems"
+                                      ItemTemplate="{StaticResource AudioEndpointTemplate}"
+                                      AutomationProperties.Name="Additional playback endpoints" />
+                        <TextBlock x:Name="NoMorePlaybackText"
+                                   Text="No additional playback endpoints."
+                                   Foreground="{StaticResource MutedBrush}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="More recording" />
+                            <TextBlock x:Name="MoreRecordingCountText"
+                                       Grid.Column="1"
+                                       Text="0"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontFamily="{StaticResource MonoFont}" />
+                        </Grid>
+                        <ItemsControl x:Name="MoreRecordingItems"
+                                      ItemTemplate="{StaticResource AudioEndpointTemplate}"
+                                      AutomationProperties.Name="Additional recording endpoints" />
+                        <TextBlock x:Name="NoMoreRecordingText"
+                                   Text="No additional recording endpoints."
+                                   Foreground="{StaticResource MutedBrush}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Margin="0,16,0,0" Style="{StaticResource QuietCardStyle}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Scope" />
+                    <TextBlock Margin="0,5,0,0"
+                               Style="{StaticResource MutedTextStyle}"
+                               TextWrapping="Wrap"
+                               LineHeight="19"
+                               Text="This panel reads endpoint identity, state, default assignment, and current volume/mute from Windows Core Audio. It does not set volume, route signal between devices, or apply equalization or other processing. A level is shown only for a connected endpoint; disconnected endpoints report no level rather than a stale one." />
+                    <TextBlock x:Name="MixerProvenanceText"
+                               Margin="0,10,0,0"
+                               Foreground="{StaticResource QuietTextBrush}"
+                               FontFamily="{StaticResource MonoFont}"
+                               FontSize="{StaticResource FontMicro}"
+                               TextWrapping="Wrap"
+                               Text="Waiting for the first audio observation" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

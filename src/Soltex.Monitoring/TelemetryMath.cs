@@ -50,7 +50,34 @@ internal static class TelemetryMath
         return Math.Clamp(usedMilliseconds / capacityMilliseconds * 100, 0, 100);
     }
 
-    internal static string SanitizeProcessName(string? value)
+    internal static long? CalculateByteRate(
+        long firstBytes,
+        long secondBytes,
+        TimeSpan elapsed)
+    {
+        if (firstBytes < 0 || secondBytes < firstBytes || elapsed <= TimeSpan.Zero)
+        {
+            return null;
+        }
+
+        double rate = (secondBytes - firstBytes) / elapsed.TotalSeconds;
+        if (!double.IsFinite(rate) || rate < 0)
+        {
+            return null;
+        }
+
+        return rate >= long.MaxValue
+            ? long.MaxValue
+            : (long)Math.Round(rate, MidpointRounding.AwayFromZero);
+    }
+
+    internal static string SanitizeProcessName(string? value) =>
+        SanitizeLabel(value, SystemTelemetryProvider.MaximumProcessNameLength);
+
+    internal static string SanitizeNetworkName(string? value) =>
+        SanitizeLabel(value, SystemTelemetryProvider.MaximumNetworkNameLength);
+
+    private static string SanitizeLabel(string? value, int maximumLength)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -59,7 +86,7 @@ internal static class TelemetryMath
 
         string safe = new string(value
             .Where(character => !char.IsControl(character))
-            .Take(SystemTelemetryProvider.MaximumProcessNameLength)
+            .Take(maximumLength)
             .ToArray()).Trim();
         return safe.Length == 0 ? "Unavailable" : safe;
     }

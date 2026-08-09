@@ -1,5 +1,8 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Security;
 
 namespace Soltex.Monitoring;
@@ -9,7 +12,10 @@ public static class SystemTelemetryProvider
     public const int MaximumProcessCount = 32;
     public const int MaximumProcessNameLength = 80;
     public const int MaximumVolumeCount = 8;
+    public const int MaximumNetworkInterfaceCount = 16;
+    public const int MaximumNetworkNameLength = 96;
     private const int MaximumObservedProcessCount = 2_048;
+    private const int MaximumObservedNetworkInterfaceCount = 256;
     private static readonly TimeSpan DefaultSampleWindow = TimeSpan.FromMilliseconds(300);
     private static readonly TimeSpan MinimumSampleWindow = TimeSpan.FromMilliseconds(100);
     private static readonly TimeSpan MaximumSampleWindow = TimeSpan.FromSeconds(2);
@@ -29,14 +35,16 @@ public static class SystemTelemetryProvider
 
         Stopwatch capture = Stopwatch.StartNew();
         bool hasFirstSystemTimes = NativeTelemetry.TryReadSystemTimes(out SystemTimesSample firstSystemTimes);
-        Dictionary<int, ProcessSeed> firstProcesses = CaptureProcessSeeds(out int firstInaccessible);
+        Dictionary<int, ProcessSeed> firstProcesses = CaptureProcessSeeds(out int firstInaccessibleProcesses);
+        Dictionary<string, NetworkSeed> firstNetworks = CaptureNetworkSeeds(out int firstInaccessibleNetworks);
 
         Stopwatch sample = Stopwatch.StartNew();
         await Task.Delay(window, cancellationToken).ConfigureAwait(false);
         sample.Stop();
 
         bool hasSecondSystemTimes = NativeTelemetry.TryReadSystemTimes(out SystemTimesSample secondSystemTimes);
-        Dictionary<int, ProcessSeed> secondProcesses = CaptureProcessSeeds(out int secondInaccessible);
+        Dictionary<int, ProcessSeed> secondProcesses = CaptureProcessSeeds(out int secondInaccessibleProcesses);
+        Dictionary<string, NetworkSeed> secondNetworks = CaptureNetworkSeeds(out int secondInaccessibleNetworks);
         double? cpuPercent = hasFirstSystemTimes && hasSecondSystemTimes
             ? TelemetryMath.CalculateSystemUsage(
                 firstSystemTimes.Idle,
@@ -49,6 +57,7 @@ public static class SystemTelemetryProvider
 
         _ = NativeTelemetry.TryReadMemory(out MemoryTelemetry? memory);
         List<StorageVolumeTelemetry> volumes = CaptureVolumes(out string? volumeLimitation);
+        NetworkTelemetry? network = CalculateNetworkTelemetry(firstNetworks, secondNetworks, sample.Elapsed);
         ProcessTelemetry[] processes = CalculateProcessTelemetry(
             firstProcesses,
             secondProcesses,
@@ -56,8 +65,7 @@ public static class SystemTelemetryProvider
 
         List<string> limitations =
         [
-            "GPU load, clocks, temperatures, and fan speed are unavailable until a separately supported provider is configured.",
-            "Network throughput is not sampled in this first bounded provider."
+            "GPU load, clocks, temperatures, and fan speed are unavailable until a separately supported provider is configured."
         ];
         if (cpuPercent is null)
         {
@@ -74,9 +82,20 @@ public static class SystemTelemetryProvider
             limitations.Add(volumeLimitation);
         }
 
-        TelemetryObservationState state = cpuPercent is not null || memory is not null || processes.Length > 0
-            ? limitations.Count == 0 ? TelemetryObservationState.Current : TelemetryObservationState.Partial
-            : TelemetryObservationState.Unavailable;
+        int inaccessibleNetworks = firstInaccessibleNetworks + secondInaccessibleNetworks;
+        if (network is null)
+        {
+            limitations.Add("Network throughput is unavailable because no stable active interface sample completed.");
+        }
+        else if (inaccessibleNetworks > 0)
+        {
+            limitations.Add("One or more network interfaces could not be sampled.");
+        }
+
+        TelemetryObservationState state =
+            cpuPercent is not null || memory is not null || network is not null || processes.Length > 0
+                ? limitations.Count == 0 ? TelemetryObservationState.Current : TelemetryObservationState.Partial
+                : TelemetryObservationState.Unavailable;
         capture.Stop();
         return new SystemTelemetrySnapshot(
             DateTimeOffset.UtcNow,
@@ -85,9 +104,10 @@ public static class SystemTelemetryProvider
             cpuPercent,
             memory,
             volumes,
+            network,
             processes,
-            firstInaccessible + secondInaccessible,
-            "GetSystemTimes · GlobalMemoryStatusEx · System.Diagnostics.Process · DriveInfo",
+            firstInaccessibleProcesses + secondInaccessibleProcesses,
+            "GetSystemTimes · GlobalMemoryStatusEx · NetworkInterface statistics · System.Diagnostics.Process · DriveInfo",
             limitations);
     }
 
@@ -142,6 +162,135 @@ public static class SystemTelemetryProvider
 
         return snapshots;
     }
+
+    private static Dictionary<string, NetworkSeed> CaptureNetworkSeeds(out int inaccessibleCount)
+    {
+        inaccessibleCount = 0;
+        Dictionary<string, NetworkSeed> snapshots = new(StringComparer.Ordinal);
+        NetworkInterface[] interfaces;
+        try
+        {
+            interfaces = NetworkInterface.GetAllNetworkInterfaces();
+        }
+        catch (NetworkInformationException)
+        {
+            inaccessibleCount++;
+            return snapshots;
+        }
+        catch (PlatformNotSupportedException)
+        {
+            inaccessibleCount++;
+            return snapshots;
+        }
+
+        foreach (NetworkInterface networkInterface in interfaces.Take(MaximumObservedNetworkInterfaceCount))
+        {
+            if (networkInterface.OperationalStatus != OperationalStatus.Up ||
+                networkInterface.NetworkInterfaceType == NetworkInterfaceType.Loopback ||
+                string.IsNullOrWhiteSpace(networkInterface.Id))
+            {
+                continue;
+            }
+
+            try
+            {
+                if (!HasUsableUnicastAddress(networkInterface))
+                {
+                    continue;
+                }
+
+                IPv4InterfaceStatistics statistics = networkInterface.GetIPv4Statistics();
+                if (statistics.BytesReceived < 0 || statistics.BytesSent < 0)
+                {
+                    inaccessibleCount++;
+                    continue;
+                }
+
+                snapshots[networkInterface.Id] = new NetworkSeed(
+                    TelemetryMath.SanitizeNetworkName(networkInterface.Name),
+                    networkInterface.NetworkInterfaceType.ToString(),
+                    statistics.BytesReceived,
+                    statistics.BytesSent);
+            }
+            catch (NetworkInformationException)
+            {
+                inaccessibleCount++;
+            }
+            catch (NotSupportedException)
+            {
+                inaccessibleCount++;
+            }
+        }
+
+        if (interfaces.Length > MaximumObservedNetworkInterfaceCount)
+        {
+            inaccessibleCount += interfaces.Length - MaximumObservedNetworkInterfaceCount;
+        }
+
+        return snapshots;
+    }
+
+    private static bool HasUsableUnicastAddress(NetworkInterface networkInterface)
+    {
+        IPInterfaceProperties properties = networkInterface.GetIPProperties();
+        return properties.UnicastAddresses.Any(addressInformation =>
+            addressInformation.Address.AddressFamily is
+                AddressFamily.InterNetwork or AddressFamily.InterNetworkV6 &&
+            !IPAddress.IsLoopback(addressInformation.Address));
+    }
+
+    private static NetworkTelemetry? CalculateNetworkTelemetry(
+        IReadOnlyDictionary<string, NetworkSeed> first,
+        IReadOnlyDictionary<string, NetworkSeed> second,
+        TimeSpan elapsed)
+    {
+        List<NetworkInterfaceTelemetry> interfaces = [];
+        long receiveTotal = 0;
+        long sendTotal = 0;
+        foreach ((string interfaceId, NetworkSeed current) in second)
+        {
+            if (!first.TryGetValue(interfaceId, out NetworkSeed prior))
+            {
+                continue;
+            }
+
+            long? receiveRate = TelemetryMath.CalculateByteRate(
+                prior.BytesReceived,
+                current.BytesReceived,
+                elapsed);
+            long? sendRate = TelemetryMath.CalculateByteRate(
+                prior.BytesSent,
+                current.BytesSent,
+                elapsed);
+            if (receiveRate is null || sendRate is null)
+            {
+                continue;
+            }
+
+            receiveTotal = SaturatingAdd(receiveTotal, receiveRate.Value);
+            sendTotal = SaturatingAdd(sendTotal, sendRate.Value);
+            interfaces.Add(new NetworkInterfaceTelemetry(
+                current.Name,
+                current.InterfaceType,
+                receiveRate.Value,
+                sendRate.Value));
+        }
+
+        if (interfaces.Count == 0)
+        {
+            return null;
+        }
+
+        NetworkInterfaceTelemetry[] visibleInterfaces = interfaces
+            .OrderByDescending(item => item.TotalBytesPerSecond)
+            .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .Take(MaximumNetworkInterfaceCount)
+            .ToArray();
+        return new NetworkTelemetry(receiveTotal, sendTotal, visibleInterfaces);
+    }
+
+    private static long SaturatingAdd(long left, long right) =>
+        left > long.MaxValue - right ? long.MaxValue : left + right;
 
     private static ProcessTelemetry[] CalculateProcessTelemetry(
         IReadOnlyDictionary<int, ProcessSeed> first,
@@ -225,4 +374,10 @@ public static class SystemTelemetryProvider
         TimeSpan ProcessorTime,
         long WorkingSetBytes,
         int ThreadCount);
+
+    private readonly record struct NetworkSeed(
+        string Name,
+        string InterfaceType,
+        long BytesReceived,
+        long BytesSent);
 }
