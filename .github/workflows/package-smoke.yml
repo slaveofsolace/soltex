@@ -8,6 +8,7 @@ on:
       - 'global.json'
       - 'eng/make-icon.ps1'
       - 'eng/publish-release.ps1'
+      - 'eng/record-package-identity.ps1'
       - 'src/**'
   pull_request:
     paths:
@@ -16,6 +17,7 @@ on:
       - 'global.json'
       - 'eng/make-icon.ps1'
       - 'eng/publish-release.ps1'
+      - 'eng/record-package-identity.ps1'
       - 'src/**'
   workflow_dispatch:
 
@@ -33,6 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          fetch-depth: 2
           persist-credentials: false
       - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
         with:
@@ -54,10 +57,16 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $exe = Resolve-Path .\artifacts\publish\win-x64\Soltex.exe
-          & $exe --render-smoke .\artifacts\validation\package-home.png --panel home 2>&1 |
-            Tee-Object -FilePath .\artifacts\validation\package-launch.log
-          if ($LASTEXITCODE -ne 0) {
-            throw "Published package render failed with exit code $LASTEXITCODE."
+          $output = [System.IO.Path]::GetFullPath('.\artifacts\validation\package-home.png')
+          $process = Start-Process `
+            -FilePath $exe `
+            -ArgumentList @('--render-smoke', $output, '--panel', 'home') `
+            -WindowStyle Hidden `
+            -Wait `
+            -PassThru
+          "exit_code=$($process.ExitCode)" | Set-Content -Encoding UTF8 .\artifacts\validation\package-launch.log
+          if ($process.ExitCode -ne 0) {
+            throw "Published package render failed with exit code $($process.ExitCode)."
           }
           if (-not (Test-Path -LiteralPath .\artifacts\validation\package-home.png -PathType Leaf)) {
             throw 'The published package did not create its Home render evidence.'
@@ -69,27 +78,18 @@ jobs:
 
       - name: Record package identity
         shell: pwsh
+        env:
+          SOLTEX_SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $exe = Resolve-Path .\artifacts\publish\win-x64\Soltex.exe
-          $item = Get-Item -LiteralPath $exe
-          $hash = Get-FileHash -LiteralPath $exe -Algorithm SHA256
-          $signature = Get-AuthenticodeSignature -FilePath $exe
-          $status = $signature.Status.ToString()
-          if ($status -notin @('Valid', 'NotSigned')) {
-            throw "Published package has an unacceptable Authenticode status: $status."
-          }
-          [ordered]@{
-            schema_version = 1
-            commit = $env:GITHUB_SHA
-            runtime = 'win-x64'
-            file = $item.Name
-            length = $item.Length
-            sha256 = $hash.Hash
-            authenticode_status = $status
-            signed = ($signature.Status -eq 'Valid')
-            recorded_at_utc = (Get-Date).ToUniversalTime().ToString('o')
-          } | ConvertTo-Json | Set-Content -Encoding UTF8 .\artifacts\validation\package-smoke.json
+          .\eng\record-package-identity.ps1 `
+            -ExecutablePath .\artifacts\publish\win-x64\Soltex.exe `
+            -OutputPath .\artifacts\validation\package-smoke.json `
+            -Runtime win-x64 `
+            -SourceHeadSha $env:SOLTEX_SOURCE_HEAD_SHA `
+            -TestedCommitSha $env:GITHUB_SHA `
+            -EventName $env:GITHUB_EVENT_NAME `
+            -HeadRef $env:GITHUB_HEAD_REF
 
       - name: Upload package evidence
         if: always()

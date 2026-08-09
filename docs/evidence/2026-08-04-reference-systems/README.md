@@ -51,3 +51,5 @@ The independently authored outcome is [`../../REFERENCE_SYSTEMS.md`](../../REFER
 ## Nonclaims
 
 No runtime, installer, code, network, performance, security, detection, UI-parity, or interoperability inspection was performed on AppControl or the other reference products. Page availability and claims are controlled by their publishers and may change after this snapshot.
+
+Later evidence is kept separate: a user-authorized, local, visual-only SteelSeries GG/Sonar observation from 2026-08-09 is recorded in [`../2026-08-09-ui-evidence-matrix/RESOURCE_PROVENANCE.md`](../2026-08-09-ui-evidence-matrix/RESOURCE_PROVENANCE.md). It does not retroactively change this public-metadata snapshot.
