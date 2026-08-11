@@ -1,218 +1,170 @@
 # Soltex design system
 
-The visual language of the Soltex workspace, defined once and enforced. Every
-colour, radius, spacing, type, and motion value lives in
-[`src/Soltex.App/Themes/Tokens.xaml`](../src/Soltex.App/Themes/Tokens.xaml).
-No other XAML file may contain a raw colour literal —
-[`eng/verify-design-tokens.ps1`](../eng/verify-design-tokens.ps1) fails the
-Windows gate if one appears. New features tie to these tokens so the product
-stays consistent as it grows.
+Soltex uses one lightweight WPF design system defined by
+[`Tokens.xaml`](../src/Soltex.App/Themes/Tokens.xaml) and
+[`SoltexTheme.xaml`](../src/Soltex.App/Themes/SoltexTheme.xaml).
+The Windows gate rejects raw colour literals outside `Tokens.xaml`.
 
-## Principles
+## Product intent
 
-- **A quiet technical workspace.** Warm near-black ground, parchment text, one
-  coral interaction accent. Colour carries meaning, not decoration.
-- **Green means confirmed-good, never brand.** Green is reserved for healthy or
-  supported state; amber for attention; red for danger. A neutral state stays
-  neutral rather than borrowing a status colour.
-- **Tokens first.** Add a primitive to `Tokens.xaml`, consume it by name. A value
-  that is worth using twice is worth naming once.
-- **Lightweight.** No control library, no theming framework, no runtime colour
-  computation. Flat `ResourceDictionary` merges only.
+Soltex is a native system workspace, not a marketing dashboard or terminal skin.
 
-## Layers
+- information density should feel useful, not crowded;
+- direct controls appear before implementation commentary;
+- preview modules are visibly different from working modules;
+- typography is sans-serif throughout the product surface;
+- one electric-iris accent identifies interaction;
+- green, amber, and red are reserved for confirmed state;
+- colour never carries status without a text label;
+- borders and stepped surfaces express hierarchy; decorative shadows are avoided;
+- motion is brief and disabled when Windows requests reduced animation.
 
-`Tokens.xaml` is merged before `SoltexTheme.xaml` in
-[`App.xaml`](../src/Soltex.App/App.xaml):
-
-1. **Colour primitives** — the only raw hex in the app.
-2. **Semantic brushes** — roles (`SurfaceBrush`, `AccentBrush`, …) that reference
-   the primitives. UI references brushes, never primitives directly.
-3. **Scales** — radius, spacing, type, motion.
-
-`SoltexTheme.xaml` holds component styles only; it references tokens and contains
-no literals.
-
-## Colour
-
-Warm graphite ground, darkest to lightest. All contrast ratios are against
-`CanvasColor` (`#1F1F1F`) unless noted.
+## Palette
 
 ### Surfaces
 
-| Token | Hex | Role |
+| Token | Value | Role |
 |---|---|---|
-| `SidebarColor` | `#181816` | Navigation rail |
-| `FieldColor` | `#1B1B19` | Text input wells |
-| `InsetColor` | `#1D1D1A` | Inset pills and code chips |
-| `CanvasColor` | `#1F1F1F` | Window ground |
-| `QuietColor` | `#21211E` | Quiet cards and inset rows |
-| `SurfaceColor` | `#252522` | Default card |
-| `RaisedColor` | `#2B2B27` | Raised controls, table headers |
-| `ElevatedColor` | `#302B27` | Keyboard-focus surface |
-| `HeroBaseColor` | `#292622` | Hero panels |
-| `TrackColor` | `#34332E` | Progress / slider track |
+| `CanvasColor` | `#0B0D12` | Window ground |
+| `SidebarColor` | `#0F1117` | Navigation rail |
+| `FieldColor` | `#101218` | Inputs |
+| `InsetColor` | `#111319` | Recessed regions |
+| `QuietColor` | `#13161D` | Low-emphasis containers |
+| `SurfaceColor` | `#171A22` | Default card |
+| `RaisedColor` | `#1D212A` | Hover and table headers |
+| `ElevatedColor` | `#242936` | Focused surface |
+| `TrackColor` | `#2B303B` | Progress and slider tracks |
 
-Elevation is expressed by stepping up this ramp and adding a border — not by
-drop shadows, which are avoided for performance.
-
-### Text (parchment)
-
-| Token | Hex | Contrast | Use |
-|---|---|---:|---|
-| `TextBrightColor` | `#E7E3D6` | ~12:1 | Emphasised values, input text |
-| `TextColor` | `#D8D5C8` | ~11:1 | Primary body and headings |
-| `TextSecondaryColor` | `#BDBAAF` | ~8:1 | Secondary detail, table headers |
-| `MutedColor` | `#96938A` | ~5.3:1 | Labels, descriptions (AA) |
-| `QuietTextColor` | `#716F68` | ~3.2:1 | Non-essential mono metadata only |
-
-`QuietTextColor` is below the 4.5:1 threshold for body text and is reserved for
-non-essential metadata (provenance strings, timestamps, sample counts) rendered
-in the mono face. Do not use it for information a user must read to act.
-
-### Accent (coral)
-
-| Token | Hex | Use |
-|---|---|---|
-| `AccentColor` | `#F76F53` | Primary action, eyebrows, active nav (~5.9:1) |
-| `AccentFocusColor` | `#F9A08D` | Keyboard-focus ring on accent controls |
-| `AccentDimColor` | `#8E5A4E` | Active nav index numeral |
-| `AccentQuietColor` | `#3A2925` | Accent-tinted quiet fill |
-| `OnAccentColor` | `#211714` | Text on an accent fill (~6.5:1 on coral) |
-
-### Status
-
-| Token | Hex | Meaning |
-|---|---|---|
-| `SignalColor` | `#7ED0A7` | Confirmed-good / supported (green) |
-| `SignalTextColor` | `#B8C4B9` | Body text inside a green surface |
-| `SignalSurfaceColor` | `#20251F` | Green-tinted card ground |
-| `SignalQuietColor` | `#202B25` | Green pill fill |
-| `SignalBorderColor` | `#3D4C42` | Green surface border |
-| `WarningColor` | `#E6B866` | Attention / waiting (amber) |
-| `DangerColor` | `#F18279` | Danger (red) |
-| `DangerTextColor` | `#FF9BA2` | Destructive control label |
-
-Status is never encoded by colour alone. Every status pairs a colour with a text
-label or mono tag (`LIVE`, `PARTIAL`, `NOT ENROLLED`, `UNAVAILABLE`) so it reads
-without colour perception.
-
-### Edges, navigation, and translucent fills
-
-| Token | Hex | Role |
-|---|---|---|
-| `BorderColor` | `#3B3A34` | Default hairline border |
-| `BorderStrongColor` | `#4A4840` | Emphasised / secondary-button border |
-| `HeroBorderColor` | `#514239` | Hero panel border |
-| `NavSelectedColor` | `#372925` | Selected navigation entry |
-| `ScrollTrackColor` | `#242421` | Scrollbar rail |
-| `ScrollThumbColor` | `#5B5850` | Scrollbar thumb |
-| `AccentAreaColor` | `#183F302A` | Coral chart area fill (≈9% alpha) |
-| `SignalAreaColor` | `#1422381F` | Green chart area fill (≈8% alpha) |
-| `SelectionColor` | `#8058453F` | Text selection highlight |
-
-Each colour primitive has a matching `…Brush` (for example `SurfaceColor` →
-`SurfaceBrush`). UI binds to the brush.
-
-## Radius
+### Text
 
 | Token | Value | Use |
-|---|---:|---|
-| `RadiusXs` | 4 | Scrollbar, track caps |
-| `RadiusSm` | 8 | Buttons, nav entries |
-| `RadiusMd` | 10 | Inset chips |
-| `RadiusLg` | 12 | Pills, small cards |
-| `RadiusCard` | 14 | Default card |
-| `RadiusHero` | 18 | Hero card |
-| `RadiusHeroXl` | 24 | Large hero panel |
+|---|---|---|
+| `TextBrightColor` | `#FFFFFF` | Emphasized values |
+| `TextColor` | `#F1F3F7` | Primary copy |
+| `TextSecondaryColor` | `#C7CBD4` | Secondary detail |
+| `MutedColor` | `#9197A4` | Labels and descriptions |
+| `QuietTextColor` | `#646B78` | Nonessential metadata only |
 
-## Spacing
+`QuietTextColor` must not carry information required to make a decision.
 
-An 8-based scale with a 4/6 fine step for dense controls. Use these for new gaps
-and padding rather than fresh numbers.
+### Interaction and status
 
-| Token | Value | | Padding token | Value |
-|---|---:|---|---|---|
-| `Space2xs` | 4 | | `PadCard` | 22 |
-| `SpaceXs` | 6 | | `PadHero` | 26 |
-| `SpaceSm` | 8 | | `PadCompact` | 15 |
-| `SpaceMd` | 12 | | `PadPill` | 10,6 |
-| `SpaceLg` | 16 | | `PadField` | 14,11 |
-| `SpaceXl` | 20 | | `PadButton` | 16,10 |
-| `Space2xl` | 24 | | | |
-| `Space3xl` | 28 | | | |
+| Token | Value | Meaning |
+|---|---|---|
+| `AccentColor` | `#8B7CFF` | Primary action and selected workspace |
+| `AccentFocusColor` | `#B2A8FF` | Keyboard focus |
+| `AccentQuietColor` | `#211E3D` | Selected or branded quiet surface |
+| `SignalColor` | `#5DD39E` | Confirmed healthy or current |
+| `WarningColor` | `#F4BE63` | Attention, partial, or preview |
+| `DangerColor` | `#FF6B7A` | Failure or destructive action |
+
+Contrast must be remeasured whenever a palette token changes. The current
+palette is not a formal WCAG conformance claim.
+
+## Geometry and spacing
+
+The surface language is deliberately compact.
+
+| Radius token | Value |
+|---|---:|
+| `RadiusXs` | 4 |
+| `RadiusSm` | 6 |
+| `RadiusMd` | 8 |
+| `RadiusLg` | 10 |
+| `RadiusCard` | 10 |
+| `RadiusHero` | 12 |
+| `RadiusHeroXl` | 14 |
+
+| Padding token | Value |
+|---|---:|
+| `PadCard` | 18 |
+| `PadHero` | 20 |
+| `PadCompact` | 14 |
+| `PadPill` | 9,5 |
+| `PadField` | 12,10 |
+| `PadButton` | 14,9 |
+
+Avoid adding new gaps or radii until the existing scale is proven insufficient.
 
 ## Type
 
-Three roles: **Georgia** for display moments, **Segoe UI** for controls and body,
-**Cascadia Mono** for measurements and identifiers.
+- `UiFont`: Segoe UI Variable Text with Segoe UI fallback.
+- `DisplayFont`: Segoe UI Variable Display with Segoe UI fallback.
+- `IconFont`: Segoe Fluent Icons with Segoe MDL2 Assets fallback.
+- `MonoFont`: Cascadia Mono with Consolas fallback, reserved for identifiers,
+  measurements, and compact provenance.
 
 | Token | Size | Role |
 |---|---:|---|
-| `FontMicro` | 9 | Mono tags |
-| `FontMono` | 10 | Eyebrows, mono captions |
-| `FontCaption` | 11 | Fine print |
+| `FontMicro` | 10 | Compact tags |
+| `FontMono` | 11 | Measurements |
+| `FontCaption` | 12 | Supporting copy |
 | `FontSmall` | 12 | Muted descriptions |
-| `FontLabel` | 13 | Navigation labels |
+| `FontLabel` | 13 | Navigation |
 | `FontBody` | 14 | Body |
-| `FontSection` | 17 | Section titles |
-| `FontTitle` | 22 | Card titles (display) |
-| `FontDisplaySm` | 24 | Hero subtitles (display) |
-| `FontMetric` | 36 | Metric values (display) |
-| `FontDisplay` | 38 | Page titles (display) |
+| `FontSection` | 17 | Section headings |
+| `FontTitle` | 20 | Card titles |
+| `FontDisplaySm` | 22 | Compact hero title |
+| `FontMetric` | 34 | Primary metric |
+| `FontDisplay` | 30 | Page title |
 
-Named text styles in `SoltexTheme.xaml` — `PageEyebrowStyle`, `PageTitleStyle`,
-`SectionTitleStyle`, `MutedTextStyle`, `MetricValueStyle` — apply these roles.
-Prefer a named style over an inline `FontSize`.
+The old Georgia display face and oversized 38–64 px editorial hierarchy are
+retired from normal product UI.
 
-## Motion
+## Navigation
 
-Swiss-quiet transitions, 140–220 ms. Respect the system reduced-motion setting
-before animating.
+Navigation is grouped by user intent:
 
-| Token | Duration |
-|---|---:|
-| `MotionFast` | 140 ms |
-| `MotionBase` | 180 ms |
-| `MotionSlow` | 220 ms |
+- System: Overview and Performance.
+- Control: Audio, Security, and Remote Assist.
+- Connect and maintain: Device Mesh, Capture, and Updates.
+
+A working module and a preview module must never look equivalent. Preview badges
+are explicit and exposed through UI Automation.
 
 ## Components
 
-Styles in `SoltexTheme.xaml`, all token-driven:
+All component styles live in `SoltexTheme.xaml`:
 
-| Style | Applies to |
-|---|---|
-| `CardStyle`, `QuietCardStyle`, `HeroCardStyle` | Surface containers |
-| `StatusPillStyle` | Status pills |
-| `ActionButton`, `SecondaryButton`, `NavButton` | Buttons and nav entries |
-| `FieldStyle` | Text inputs |
-| `MetricProgressStyle` | Metric bars |
-| `SoltexSliderStyle` | Sliders |
-| implicit `ScrollBar`, `DataGrid`, `DataGridColumnHeader`, `DataGridCell` | Lists and tables |
+- `CardStyle`, `QuietCardStyle`, and `HeroCardStyle`;
+- `ActionButton`, `SecondaryButton`, and `NavButton`;
+- `StatusPillStyle`, `FieldStyle`, `MetricProgressStyle`;
+- `SoltexSliderStyle`;
+- implicit scrollbar and data-grid styles.
 
-### Interaction states
+Every interactive control needs rest, hover, pressed, keyboard-focus, disabled,
+busy, success, and failure behavior where applicable.
 
-Every interactive control defines rest, hover, pressed, keyboard-focus, and
-disabled. Focus is always visible: accent controls thicken to a 2px
-`AccentFocusBrush` ring; nav entries raise to `ElevatedBrush`. Disabled controls
-drop to 0.42 opacity rather than changing hue.
+## Motion
+
+| Token | Duration |
+|---|---:|
+| `MotionFast` | 120 ms |
+| `MotionBase` | 160 ms |
+| `MotionSlow` | 200 ms |
+
+Motion must clarify state change. It must not loop decoratively.
 
 ## Accessibility status
 
-Implemented: visible focus on every control, non-colour status labels, AA body
-contrast, `AutomationProperties.Name` on charts and key controls.
+Implemented boundaries include visible focus, text-backed status, named charts,
+and automation names on primary controls.
 
-Not yet verified (tracked in [`VALIDATION.md`](VALIDATION.md) and `HANDOFF.md`):
-high-contrast theme behaviour, reduced-motion wiring, a full keyboard/UI
-Automation traversal, the 100/125/150/200% scaling matrix, and owner visual
-acceptance. No accessibility-conformance claim is made.
+Still required before conformance claims:
 
-## Extending the system
+- complete keyboard traversal;
+- UI Automation and screen-reader review;
+- high-contrast behavior;
+- reduced-motion verification;
+- 100%, 125%, 150%, and 200% scaling;
+- small-window and multi-monitor coverage;
+- owner visual acceptance.
 
-1. **New colour** → add a `Color` primitive and its `…Brush` to `Tokens.xaml`,
-   then reference the brush. The guard rejects a raw hex used anywhere else.
-2. **New component** → add a keyed `Style` to `SoltexTheme.xaml` that references
-   tokens; do not inline values.
-3. **New size or gap** → reuse a scale token; add a new scale step only when a
-   genuinely new rhythm is needed, and document it here.
-4. Run `pwsh eng/verify-design-tokens.ps1` (also runs in CI) before committing.
+## Extension rules
+
+1. Add raw colours only to `Tokens.xaml`.
+2. Add reusable components only to `SoltexTheme.xaml`.
+3. Prefer an existing spacing, type, and radius token.
+4. Keep preview capability visibly labeled.
+5. Run the design-token guard, Release build, application tests, and complete
+   native render matrix before merging.

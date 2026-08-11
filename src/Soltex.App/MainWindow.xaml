@@ -153,7 +153,7 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel>
                         <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="PROTECTION" />
-                        <TextBlock Margin="0,5,0,0" Text="Security" FontFamily="{StaticResource DisplayFont}" FontSize="38" />
+                        <TextBlock Margin="0,5,0,0" Text="Security" FontFamily="{StaticResource DisplayFont}" FontSize="{StaticResource FontDisplay}" />
                         <TextBlock Margin="0,5,0,0"
                                    Text="Protection health, focused scans, safe imports, and recoverable quarantine."
                                    Foreground="{StaticResource MutedBrush}"
@@ -405,7 +405,7 @@
                         <TextBlock Margin="0,5,0,0"
                                    Text="Remote Assist"
                                    FontFamily="{StaticResource DisplayFont}"
-                                   FontSize="38" />
+                                   FontSize="{StaticResource FontDisplay}" />
                         <TextBlock Margin="0,6,0,0"
                                    Text="Open an authorized RustDesk session without moving its transport or credentials into Soltex."
                                    Foreground="{StaticResource MutedBrush}"
@@ -656,7 +656,7 @@
                         <TextBlock Margin="0,5,0,0"
                                    Text="Updates"
                                    FontFamily="{StaticResource DisplayFont}"
-                                   FontSize="38" />
+                                   FontSize="{StaticResource FontDisplay}" />
                         <TextBlock Margin="0,6,0,0"
                                    MaxWidth="700"
                                    Text="Inspect signed update-planning evidence before any future installer or elevation boundary exists."

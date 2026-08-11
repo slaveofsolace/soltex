@@ -273,7 +273,7 @@
                                 <TextBlock x:Name="NetworkTotalText"
                                            Text="—"
                                            Style="{StaticResource MetricValueStyle}"
-                                           FontSize="38" />
+                                           FontSize="{StaticResource FontMetric}" />
                                 <TextBlock x:Name="NetworkInterfaceCountText"
                                            Margin="12,0,0,6"
                                            Text="0 stable interfaces"

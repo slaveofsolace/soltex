@@ -47,14 +47,14 @@
     <Color x:Key="BorderStrongColor">#3A4050</Color>
     <Color x:Key="HeroBorderColor">#343A49</Color>
 
-    <!-- Parchment text, brightest to quietest. -->
+    <!-- High-clarity neutral text, brightest to quietest. -->
     <Color x:Key="TextBrightColor">#FFFFFF</Color>
     <Color x:Key="TextColor">#F1F3F7</Color>
     <Color x:Key="TextSecondaryColor">#C7CBD4</Color>
     <Color x:Key="MutedColor">#9197A4</Color>
     <Color x:Key="QuietTextColor">#646B78</Color>
 
-    <!-- Coral interaction accent. -->
+    <!-- Electric-iris interaction accent. -->
     <Color x:Key="AccentColor">#8B7CFF</Color>
     <Color x:Key="AccentFocusColor">#B2A8FF</Color>
     <Color x:Key="AccentDimColor">#6E63C7</Color>
@@ -194,7 +194,7 @@
     <sys:Double x:Key="FontDisplay">30</sys:Double>
 
     <!-- ============================================================ -->
-    <!-- 6. Motion durations (Swiss-quiet: 140–220 ms)                 -->
+    <!-- 6. Motion durations (native-quiet: 120–200 ms)                  -->
     <!-- ============================================================ -->
     <Duration x:Key="MotionFast">0:0:0.12</Duration>
     <Duration x:Key="MotionBase">0:0:0.16</Duration>
