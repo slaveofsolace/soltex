@@ -126,7 +126,7 @@
                         <TextBlock Text="Local workspace" Foreground="{StaticResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" />
                         <TextBlock Grid.Column="1" Text="v1 preview" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                     </Grid>
-                </StackPanel>                </StackPanel>
+                </StackPanel>
             </Grid>
         </Border>
 
