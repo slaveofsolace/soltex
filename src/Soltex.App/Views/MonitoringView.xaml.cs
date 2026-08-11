@@ -15,7 +15,11 @@ public partial class MonitoringView : UserControl
     private readonly BoundedTelemetryHistory _memoryHistory = new(HistoryCapacity);
     private readonly BoundedTelemetryHistory _networkReceiveHistory = new(HistoryCapacity, 0, double.MaxValue);
     private readonly BoundedTelemetryHistory _networkSendHistory = new(HistoryCapacity, 0, double.MaxValue);
+    private readonly ProcessActionService _processActions = new();
     private bool _detailsVisible;
+    private bool _isRefreshingProcesses;
+    private bool _processActionBusy;
+    private ProcessActionTicket? _pendingForceTicket;
 
     public MonitoringView()
     {
@@ -38,6 +42,112 @@ public partial class MonitoringView : UserControl
             _detailsVisible
                 ? "Hide storage, provider, and process details"
                 : "Show storage, provider, and process details");
+    }
+
+    private void ProcessGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_isRefreshingProcesses)
+        {
+            return;
+        }
+
+        ProcessRow? selected = ProcessGrid.SelectedItem as ProcessRow;
+        if (_pendingForceTicket is not null &&
+            (selected is null ||
+             selected.ProcessId != _pendingForceTicket.ProcessId ||
+             !string.Equals(selected.Name, _pendingForceTicket.ExpectedName, StringComparison.OrdinalIgnoreCase)))
+        {
+            _pendingForceTicket = null;
+            HideProcessAction();
+        }
+
+        UpdateProcessActionControls(selected);
+    }
+
+    private async void EndTask_Click(object sender, RoutedEventArgs e)
+    {
+        if (_processActionBusy || ProcessGrid.SelectedItem is not ProcessRow selected)
+        {
+            return;
+        }
+
+        SetProcessActionBusy(true);
+        HideProcessAction();
+        ProcessActionResult result = await _processActions.RequestCloseAsync(
+            new ProcessActionRequest(selected.ProcessId, selected.Name));
+        _pendingForceTicket = result.Ticket;
+        ShowProcessActionResult(result);
+        SetProcessActionBusy(false);
+    }
+
+    private async void ForceStop_Click(object sender, RoutedEventArgs e)
+    {
+        if (_processActionBusy || _pendingForceTicket is not ProcessActionTicket ticket)
+        {
+            return;
+        }
+
+        SetProcessActionBusy(true);
+        ProcessActionResult result = await _processActions.ForceStopAsync(ticket);
+        _pendingForceTicket = null;
+        ShowProcessActionResult(result);
+        SetProcessActionBusy(false);
+    }
+
+    private void CancelEndTask_Click(object sender, RoutedEventArgs e)
+    {
+        _pendingForceTicket = null;
+        HideProcessAction();
+        UpdateProcessActionControls(ProcessGrid.SelectedItem as ProcessRow);
+    }
+
+    private void SetProcessActionBusy(bool busy)
+    {
+        _processActionBusy = busy;
+        ProcessGrid.IsEnabled = !busy;
+        EndTaskButton.Content = busy ? "Working…" : "End task";
+        UpdateProcessActionControls(ProcessGrid.SelectedItem as ProcessRow);
+    }
+
+    private void UpdateProcessActionControls(ProcessRow? selected)
+    {
+        EndTaskButton.IsEnabled =
+            !_processActionBusy &&
+            _pendingForceTicket is null &&
+            selected is not null;
+        EndTaskButton.SetCurrentValue(
+            System.Windows.Automation.AutomationProperties.HelpTextProperty,
+            selected is null
+                ? "Select a process row first."
+                : $"Request a graceful close for {selected.Name}, PID {selected.ProcessId}.");
+    }
+
+    private void ShowProcessActionResult(ProcessActionResult result)
+    {
+        ProcessActionText.Text = result.Message;
+        ProcessActionText.Foreground = (Brush)FindResource(result.Status switch
+        {
+            ProcessActionStatus.Closed or
+            ProcessActionStatus.AlreadyExited or
+            ProcessActionStatus.ForceStopped => "SignalBrush",
+            ProcessActionStatus.NeedsForceConfirmation => "WarningBrush",
+            _ => "DangerBrush"
+        });
+        bool requiresForce =
+            result.Status == ProcessActionStatus.NeedsForceConfirmation &&
+            result.Ticket is not null;
+        ForceStopButton.Visibility = requiresForce ? Visibility.Visible : Visibility.Collapsed;
+        CancelEndTaskButton.Content = requiresForce ? "Cancel" : "Dismiss";
+        ProcessActionPanel.Visibility = Visibility.Visible;
+        UpdateProcessActionControls(ProcessGrid.SelectedItem as ProcessRow);
+    }
+
+    private void HideProcessAction()
+    {
+        ProcessActionPanel.Visibility = Visibility.Collapsed;
+        ForceStopButton.Visibility = Visibility.Collapsed;
+        CancelEndTaskButton.Content = "Dismiss";
+        ProcessActionText.Text = string.Empty;
     }
 
     private static string FormatPercentBound(double value) =>
@@ -196,8 +306,29 @@ public partial class MonitoringView : UserControl
 
     private void RenderProcesses(SystemTelemetrySnapshot snapshot)
     {
+        int? selectedProcessId = (ProcessGrid.SelectedItem as ProcessRow)?.ProcessId;
         ProcessRow[] processes = snapshot.Processes.Select(process => new ProcessRow(process)).ToArray();
-        ProcessGrid.ItemsSource = processes;
+        _isRefreshingProcesses = true;
+        try
+        {
+            ProcessGrid.ItemsSource = processes;
+            ProcessGrid.SelectedItem = selectedProcessId is int processId
+                ? processes.FirstOrDefault(process => process.ProcessId == processId)
+                : null;
+        }
+        finally
+        {
+            _isRefreshingProcesses = false;
+        }
+
+        ProcessRow? selected = ProcessGrid.SelectedItem as ProcessRow;
+        if (_pendingForceTicket is not null &&
+            (selected is null || selected.ProcessId != _pendingForceTicket.ProcessId))
+        {
+            _pendingForceTicket = null;
+            HideProcessAction();
+        }
+        UpdateProcessActionControls(selected);
         ProcessCountText.Text =
             $"{processes.Length} rows · {snapshot.InaccessibleProcessCount} inaccessible";
         MonitoringProvenanceText.Text =

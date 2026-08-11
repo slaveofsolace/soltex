@@ -1,151 +1,89 @@
 # Implementation status
 
-Snapshot: 2026-08-09
-Product: **Soltex**
-Repository: `slaveofsolace/soltex`
-Merged baseline: `main` at `61639bfe7ea3a7191fcb6c70ea1f2a699aa77248` (PR #9)
-Continuation branch: `sol/soltex-ui-evidence-matrix`
-Evidence: [`docs/evidence/2026-08-09-ui-focus`](evidence/2026-08-09-ui-focus/README.md) and [`docs/evidence/2026-08-09-ui-evidence-matrix`](evidence/2026-08-09-ui-evidence-matrix/README.md)
+Snapshot: 2026-08-11  
+Product: **Soltex**  
+Repository: `slaveofsolace/soltex`  
+Canonical baseline: `main` at `9e424a47f1cf23d8a174162d3561f5b27dbb7551`  
+Draft rebuild: `sol/soltex-product-rebuild` / [PR #11](https://github.com/slaveofsolace/soltex/pull/11)
 
 ## Evidence vocabulary
 
-- **Windows-verified:** compiled and exercised by the stated Windows gate.
+- **Hosted Windows-verified:** compiled and exercised by the stated Windows workflow on the exact commit.
 - **Owner-host verified:** exercised on the owner's separately identified Windows machine.
 - **Implemented, verification pending:** source exists but the complete current gate has not passed.
-- **Designed:** architecture exists without a working end-to-end capability.
+- **Designed:** an architecture or typed boundary exists without an end-to-end user capability.
 - **Not implemented:** no working capability exists.
 
-A narrow pass proves only its named boundary.
+A passing test proves only its named boundary. A rendered image proves layout execution, not human visual acceptance.
 
-## Owner-host evidence
+## Current candidate
 
-The UI-focus candidate merged through PR #9. The evidence-matrix continuation was then built and exercised locally on the owner-controlled Windows host with .NET SDK 10.0.302. GitHub CI remains a separate required gate on the exact published continuation head.
+### Product shell
 
-| Gate | Result |
-|---|---:|
-| Release build | 0 warnings, 0 errors |
-| Security/Remote focused suite | 32/32, including opt-in in-memory AMSI/EICAR |
-| Supply-chain suite | 18/18 |
-| Security hardening suite | 12/12 |
-| Update-planner suite | 17/17 |
-| Device Fabric suite | 24/24 |
-| Monitoring suite | 15/15 |
-| Core Audio suite | 10/10 |
-| WPF application suite | 10/10 |
-| Identity/design guards | Passed under Windows PowerShell 5.1 |
-| Native renders | Eight defaults and three expanded states at 1280x820 |
-| Evidence fail-closed paths | Stale targets and mismatched tested commits rejected before capture |
+Implemented on the draft branch:
 
-The complete local evidence boundary and nonclaims are recorded in the linked packets. CI/package evidence from earlier stack commits remains historical; it does not substitute for a run on the published continuation head.
+- compact module-owned navigation: Overview, Performance, Audio, Security, Remote Assist, Device mesh preview, Capture preview, and Updates;
+- deep neutral surfaces, restrained electric-iris accent, Segoe UI Variable typography, tighter spacing/radii, Fluent glyphs, and clearer focus hierarchy;
+- preview labels and concise first-view copy so unfinished modules do not masquerade as shipped tools;
+- progressive disclosure retained for provider, event, and overflow detail.
 
-## Implemented
+The pre-rebuild exact native matrix was human-inspected. Fresh images from the current candidate still require human review before PR #11 can leave draft.
 
-### Desktop workspace
+### Performance and bounded task action
 
-- shared warm dark/coral WPF theme;
-- reusable cards, buttons, progress controls, sliders, focus states, and sparklines;
-- Home, Monitoring, Devices, Mixer, Clips, Security, Remote Assist, and Updates workspaces;
-- native render-smoke selection for all eight defaults plus Monitoring, Mixer, and Security disclosure states;
-- work-area-independent 1280x820 popup render-smoke path with a constrained-viewport regression;
-- workspace-column clipping and explicit navigation-label ownership so local content cannot corrupt global navigation evidence;
-- quiet default hierarchy with secondary operational detail behind explicit controls.
+Implemented on the draft branch:
 
-### Monitoring
+- live CPU, memory/commit, storage, network, and bounded process observation;
+- history charts and explicit provider/limitation states;
+- process selection with graceful End task first;
+- a second explicit force-stop confirmation only after the target does not close;
+- PID, name, Windows session, and start-time revalidation;
+- hard rejection of Soltex, PID 0–4, Session 0, cross-session targets, and named critical Windows/security processes;
+- force stop targets only the chosen process, never its descendants.
 
-- CPU utilization from `GetSystemTimes`;
-- physical-memory status from `GlobalMemoryStatusEx`;
-- fixed-volume capacity from `DriveInfo`;
-- bounded process CPU/memory/thread observations;
-- active-interface receive/send throughput from `NetworkInterface` statistics;
-- bounded CPU, memory, and network histories;
-- fixed volumes, provider coverage, and process tables disclosed only on request;
-- explicit provider provenance, partial, stale, and unavailable states;
-- no executable-path, packet-payload, destination, or connection-history collection;
-- sampling suspended when Home/Monitoring is hidden or the window is minimized.
-
-GPU, clocks, temperatures, fans, and power remain unavailable until a supported provider is selected.
+No executable paths, packet contents, destination history, elevation bypass, or generic process-tree termination are introduced.
 
 ### Audio observation
 
-- read-only Windows Core Audio endpoint enumeration;
-- render/capture classification, state, default assignment, current volume, and mute observation;
-- bounded primary lists of at most six active endpoints per direction;
-- overflow active and inactive endpoints behind one explicit disclosure control;
-- inaccessible/unavailable states clear stale endpoint values;
-- live capture overhead and sanitized-name tests.
+Implemented: read-only Windows Core Audio endpoint enumeration, render/capture grouping, state, default assignment, current volume, mute observation, and bounded primary lists.
 
-Soltex does not set volume, route signal, create virtual devices, equalize, suppress noise, or replace SteelSeries Sonar.
+Not yet implemented: per-app sessions, volume/mute writes, app routing, virtual devices, EQ, DSP, or noise suppression.
 
 ### Security companion
 
-- provider-neutral Windows Security Center health with bounded fallback;
-- Defender status and supported scan/intelligence-update requests when available;
-- bounded, path-redacted Defender Operational events;
-- Defender Operational activity collapsed by default and cleared on query failure;
-- AMSI inspection for content Soltex ingests;
-- hashing, exact-hash allow decisions, Authenticode verification;
-- authenticated quarantine and local audit state;
-- bounded import-folder observation.
+Implemented: provider-neutral Windows Security Center health, Defender status and supported requests, path-redacted Defender events, AMSI for ingested content, hashing, Authenticode observation, authenticated quarantine/audit state, and bounded import observation.
 
-Soltex is not registered as an antivirus provider and does not disable or replace one.
+Soltex is not an antivirus provider and does not disable or replace Defender or Malwarebytes.
 
-### Supply-chain and update planning
+### Device fabric and Remote Assist
 
-- immutable publisher snapshot verification;
-- explicit publisher pin policy;
-- detached signed manifests;
-- authenticated current/last-known-good state;
-- monotonic sequence and equivocation checks;
-- bounded ZIP central-directory preflight and staging;
-- signed acquisition descriptors and trust rotation;
-- HTTPS origin/redirect/length/hash bounds;
-- deterministic non-installing preview and exact confirmation;
-- authenticated planning/recovery journal.
+Implemented/designed: typed local observation, capability manifests, enrollment/revocation/policy models, and a trusted separately installed RustDesk launcher with identity revalidation and local confirmation.
 
-No production release identity, trust root, source, installer activation, rollback, or uninstall transaction is configured.
+Not yet implemented: remote executor, unattended correction, public listener, Tailscale authorization, mTLS enrollment, emergency stop, or fleet/NAS log transport. RustDesk remains external remote hands.
 
-### Device Fabric
+### Updates and packaging
 
-- typed local device observation;
-- capability catalog and target-manifest enforcement;
-- enrollment/revocation/policy models and focused tests.
+Implemented: signed-manifest/update-planning primitives, monotonic/equivocation checks, bounded staging, deterministic preview, recovery journal, self-contained `win-x64` packaging, Inno Setup definition, package smoke, hashes, and retained render identity.
 
-No remote executor, generic shell, public listener, unattended access, or Tailscale authorization integration exists.
+Not yet implemented: production publisher identity/trust root, signed public release, activation/repair/rollback/uninstall evidence, or GitHub Release automation.
 
-### Remote Assist
+## Hosted verification history
 
-- separately installed RustDesk selection;
-- SHA-256 and Authenticode revalidation;
-- constrained peer IDs and shell-free launch;
-- local confirmation and path/peer-ID-free audit summaries.
+The shell rebuild commits through `7d07ed1919fe0da07450b178314d2cb903d03efb` passed Windows run `31547358061` and package run `31547357905`.
 
-RustDesk remains an external program.
+- Windows artifact `9123019062`: SHA-256 `5834aabf2c7e4287f0e91e5f38464f3e35fe263087bff5ddaa6d9e6b57091112`
+- package artifact `9123004528`: SHA-256 `ac53ff1a5f7088f641d0f42be3031f5720f50499a8ed5febef2d693dc43751d8`
 
-### Packaging
+Those runs do not cover later process-action source. Exact-head workflows and native capture inspection remain required.
 
-- self-contained `win-x64` executable;
-- per-user Inno Setup definition;
-- package-smoke workflow that launches, renders, hashes, and records Authenticode status;
-- schema-versioned package identity that distinguishes the source branch head from the commit actually tested;
-- package identity that binds the retained Home render by dimensions, length, and SHA-256;
-- Windows evidence workflow covering all eight default workspaces and three progressive-disclosure states with dimensions and per-file SHA-256 provenance.
+## Next stages
 
-The CI package at this snapshot is unsigned.
+1. Pass exact-head Windows/package workflows; inspect fresh default and expanded native renders.
+2. Add a real Settings/permissions surface and read-only installed/startup Applications inventory.
+3. Add Core Audio session observation and documented volume/mute writes with read-back. Routing remains a separate signed virtual-audio component.
+4. Add mTLS/Tailscale device enrollment, capability-scoped agents, revocation, emergency stop, and NAS audit transport. Keep personal Google Drive and work Box in separate permission domains.
+5. Add Windows Graphics Capture, benchmark profiles/provenance, signing, installer lifecycle evidence, accessibility/scaling verification, and owner acceptance.
 
-## Not implemented or not claimed
+## Nonclaims
 
-- trusted signed public distribution;
-- GitHub Release automation;
-- true antivirus engine, minifilter, ELAM, PPL, MVI participation, cloud reputation, or efficacy claim;
-- direct proprietary Malwarebytes integration;
-- installer activation/repair/rollback/uninstall evidence;
-- GPU/thermal/fan telemetry;
-- complete App Control, Clips capture, Privacy, Drive, Box, NAS, or unified-search features;
-- audio routing, virtual devices, DSP, equalization, noise suppression, or per-app session control;
-- generic remote command execution;
-- full high-contrast, reduced-motion, accessibility, or viewport/scaling conformance;
-- production readiness.
-
-## Exact next slice
-
-Publish the evidence-matrix continuation, require Windows and package-smoke CI on its exact head, inspect both manifests, and merge it to `main` with history preserved. After that verification-only slice lands, the next product slice should add bounded historical monitoring storage and a read-only Applications inventory; trusted signed distribution remains the highest-priority release blocker.
+Soltex is not yet production-ready, a full AppControl replacement, a SteelSeries GG/Sonar replacement, an antivirus engine, a remote-management platform, or an unattended correction system.

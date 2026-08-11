@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Soltex.App;
 using Soltex.App.Controls;
 using Soltex.App.Views;
 using Soltex.Audio;
@@ -29,6 +30,9 @@ internal static class Program
         [
             ("Shared theme exposes required control resources", ThemeResourcesAreAvailable),
             ("Telemetry runs only in visible live workspaces", TelemetryRunsOnlyInLiveWorkspaces),
+            ("Process actions reject Windows and Soltex targets", ProcessActionsRejectProtectedTargets),
+            ("Process actions reject identity drift", ProcessActionsRejectIdentityDrift),
+            ("Process actions admit only the selected user-session process", ProcessActionsAdmitBoundedTarget),
             ("Sparkline renders bounded percentage values", SparklineRenders),
             ("Sparkline auto-scales unbounded throughput values", SparklineAutoScales),
             ("Home view renders a live snapshot", () => HomeViewRenders(snapshot, device)),
@@ -113,6 +117,45 @@ internal static class Program
             "Closing must prevent telemetry restart.");
     }
 
+    private static void ProcessActionsRejectProtectedTargets()
+    {
+        ProcessActionPolicyDecision system = ProcessActionPolicy.EvaluateTarget(
+            new ProcessActionRequest(4, "System"), 7000, 2, 0, "System");
+        True(!system.Allowed, "PID 4 must always be rejected.");
+
+        ProcessActionPolicyDecision defender = ProcessActionPolicy.EvaluateTarget(
+            new ProcessActionRequest(640, "MsMpEng"), 7000, 2, 2, "MsMpEng");
+        True(!defender.Allowed, "The Defender engine must be rejected.");
+
+        ProcessActionPolicyDecision ownProcess = ProcessActionPolicy.EvaluateTarget(
+            new ProcessActionRequest(7000, "Soltex"), 7000, 2, 2, "Soltex");
+        True(!ownProcess.Allowed, "Soltex must not end itself.");
+    }
+
+    private static void ProcessActionsRejectIdentityDrift()
+    {
+        ProcessActionPolicyDecision renamed = ProcessActionPolicy.EvaluateTarget(
+            new ProcessActionRequest(9000, "notepad"), 7000, 2, 2, "calculator");
+        True(!renamed.Allowed, "A changed process name must be rejected.");
+
+        ProcessActionTicket ticket = new(9000, "notepad", 2, 12345);
+        ProcessActionPolicyDecision recycled = ProcessActionPolicy.RevalidateTicket(
+            ticket, 7000, 2, 2, "notepad", 67890);
+        True(!recycled.Allowed, "A recycled PID with a different start time must be rejected.");
+    }
+
+    private static void ProcessActionsAdmitBoundedTarget()
+    {
+        ProcessActionPolicyDecision allowed = ProcessActionPolicy.EvaluateTarget(
+            new ProcessActionRequest(9000, "notepad"), 7000, 2, 2, "notepad");
+        True(allowed.Allowed, "A matching noncritical process in the current user session should be eligible.");
+
+        ProcessActionTicket ticket = new(9000, "notepad", 2, 12345);
+        ProcessActionPolicyDecision revalidated = ProcessActionPolicy.RevalidateTicket(
+            ticket, 7000, 2, 2, "notepad", 12345);
+        True(revalidated.Allowed, "The exact confirmed process instance should revalidate.");
+    }
+
     private static void SparklineRenders()
     {
         Sparkline sparkline = new()
@@ -163,6 +206,8 @@ internal static class Program
         True(view.MonitoringProvenanceText.Text.Contains("GetSystemTimes", StringComparison.Ordinal), "Monitoring omitted provider provenance.");
         True(view.MonitoringProvenanceText.Text.Contains("GPU", StringComparison.Ordinal), "Monitoring omitted the GPU limitation.");
         True(view.NetworkCoverageText.Text is "SAMPLED" or "UNAVAILABLE", "Monitoring did not expose the network provider state.");
+        True(!view.EndTaskButton.IsEnabled, "End task must remain disabled until a process is selected.");
+        True(view.ProcessActionPanel.Visibility == Visibility.Collapsed, "Process action feedback must be quiet by default.");
     }
 
     private static void MonitoringDetailsAreProgressive()

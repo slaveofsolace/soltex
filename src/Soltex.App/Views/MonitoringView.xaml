@@ -509,6 +509,7 @@
                         <RowDefinition Height="12" />
                         <RowDefinition Height="230" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <Grid>
@@ -522,15 +523,27 @@
                                        Style="{StaticResource MutedTextStyle}"
                                        Text="Name and PID only; executable paths are intentionally omitted." />
                         </StackPanel>
-                        <TextBlock x:Name="ProcessCountText"
-                                   Grid.Column="1"
-                                   Foreground="{StaticResource MutedBrush}"
-                                   VerticalAlignment="Center"
-                                   Text="0 rows" />
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <TextBlock x:Name="ProcessCountText"
+                                       Margin="0,0,12,0"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       VerticalAlignment="Center"
+                                       Text="0 rows" />
+                            <Button x:Name="EndTaskButton"
+                                    IsEnabled="False"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="End task"
+                                    AutomationProperties.Name="End selected task"
+                                    Click="EndTask_Click" />
+                        </StackPanel>
                     </Grid>
 
                     <DataGrid x:Name="ProcessGrid"
                               Grid.Row="2"
+                              SelectionMode="Single"
+                              SelectionChanged="ProcessGrid_SelectionChanged"
                               AlternationCount="2"
                               EnableRowVirtualization="True"
                               EnableColumnVirtualization="True"
@@ -546,8 +559,44 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
+                    <Border x:Name="ProcessActionPanel"
+                            Grid.Row="3"
+                            Margin="0,12,0,0"
+                            Padding="12"
+                            Style="{StaticResource QuietCardStyle}"
+                            Visibility="Collapsed"
+                            AutomationProperties.LiveSetting="Polite">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="ProcessActionText"
+                                       Margin="0,0,14,0"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap" />
+                            <Button x:Name="ForceStopButton"
+                                    Grid.Column="1"
+                                    Margin="0,0,8,0"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Foreground="{StaticResource DangerBrush}"
+                                    BorderBrush="{StaticResource DangerBrush}"
+                                    Content="Force stop"
+                                    AutomationProperties.Name="Confirm force stop selected task"
+                                    Visibility="Collapsed"
+                                    Click="ForceStop_Click" />
+                            <Button x:Name="CancelEndTaskButton"
+                                    Grid.Column="2"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Dismiss"
+                                    AutomationProperties.Name="Dismiss process action"
+                                    Click="CancelEndTask_Click" />
+                        </Grid>
+                    </Border>
+
                     <TextBlock x:Name="MonitoringProvenanceText"
-                               Grid.Row="3"
+                               Grid.Row="4"
                                Margin="0,12,0,0"
                                Foreground="{StaticResource QuietTextBrush}"
                                FontFamily="{StaticResource MonoFont}"

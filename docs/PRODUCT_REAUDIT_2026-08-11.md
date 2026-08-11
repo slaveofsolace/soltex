@@ -36,6 +36,18 @@ Soltex may learn from those general interaction patterns:
 
 No SteelSeries code, binary, asset, preset, DSP behavior, private protocol, brand element, or copied layout is permitted.
 
+## Delivery ledger
+
+### Stage 0 — product shell and hierarchy
+
+Implemented on the draft rebuild branch: compact module-owned navigation, deep-neutral design tokens, restrained electric-iris accent, human UI typography, bounded first-view copy, preview badges, and explicit separation of real, partial, and preview capabilities.
+
+### Stage 1A — bounded process action
+
+Implemented on the draft rebuild branch: single-row End task, graceful `CloseMainWindow` request first, explicit force-stop confirmation only after the grace window, and revalidation of PID, name, Windows session, and process start time. Soltex, PID 0–4, Session 0, cross-session targets, and named critical Windows/security processes are rejected. Force stop never includes descendants. This is a user-session task action, not an administrator or service manager.
+
+Hosted Windows build/tests and fresh native capture review are still required on the exact commit before this stage can be called accepted.
+
 ## Rebuild stages
 
 ### Stage 0 — product shell and hierarchy
