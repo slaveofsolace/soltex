@@ -124,12 +124,12 @@ internal static class ProcessActionPolicy
     private static ProcessActionPolicyDecision Deny(string reason) => new(false, reason);
 }
 
-internal sealed class ProcessActionService
+internal static class ProcessActionService
 {
     private static readonly TimeSpan GracefulCloseTimeout = TimeSpan.FromSeconds(2);
     private static readonly TimeSpan ForceStopTimeout = TimeSpan.FromSeconds(2);
 
-    internal async Task<ProcessActionResult> RequestCloseAsync(
+    internal static async Task<ProcessActionResult> RequestCloseAsync(
         ProcessActionRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -174,7 +174,7 @@ internal sealed class ProcessActionService
         }
     }
 
-    internal async Task<ProcessActionResult> ForceStopAsync(
+    internal static async Task<ProcessActionResult> ForceStopAsync(
         ProcessActionTicket ticket,
         CancellationToken cancellationToken = default)
     {

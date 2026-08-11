@@ -15,7 +15,6 @@ public partial class MonitoringView : UserControl
     private readonly BoundedTelemetryHistory _memoryHistory = new(HistoryCapacity);
     private readonly BoundedTelemetryHistory _networkReceiveHistory = new(HistoryCapacity, 0, double.MaxValue);
     private readonly BoundedTelemetryHistory _networkSendHistory = new(HistoryCapacity, 0, double.MaxValue);
-    private readonly ProcessActionService _processActions = new();
     private bool _detailsVisible;
     private bool _isRefreshingProcesses;
     private bool _processActionBusy;
@@ -73,7 +72,7 @@ public partial class MonitoringView : UserControl
 
         SetProcessActionBusy(true);
         HideProcessAction();
-        ProcessActionResult result = await _processActions.RequestCloseAsync(
+        ProcessActionResult result = await ProcessActionService.RequestCloseAsync(
             new ProcessActionRequest(selected.ProcessId, selected.Name));
         _pendingForceTicket = result.Ticket;
         ShowProcessActionResult(result);
@@ -88,7 +87,7 @@ public partial class MonitoringView : UserControl
         }
 
         SetProcessActionBusy(true);
-        ProcessActionResult result = await _processActions.ForceStopAsync(ticket);
+        ProcessActionResult result = await ProcessActionService.ForceStopAsync(ticket);
         _pendingForceTicket = null;
         ShowProcessActionResult(result);
         SetProcessActionBusy(false);
