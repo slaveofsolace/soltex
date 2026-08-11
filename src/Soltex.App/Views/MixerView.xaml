@@ -78,15 +78,15 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="04 / AUDIO ENDPOINTS" />
-                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Mixer" />
+                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="AUDIO" />
+                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Audio devices" />
                     <TextBlock Margin="0,5,0,0"
                                MaxWidth="720"
                                HorizontalAlignment="Left"
                                Style="{StaticResource MutedTextStyle}"
                                FontSize="{StaticResource FontBody}"
                                TextWrapping="Wrap"
-                               Text="A read-only view of Windows Core Audio endpoints. Soltex observes volume and mute; it does not set them, route audio, or apply processing." />
+                               Text="Playback and recording endpoints reported by Windows Core Audio." />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                     <Button x:Name="MoreEndpointsButton"
@@ -164,7 +164,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right">
-                        <TextBlock Text="ENDPOINT STATE"
+                        <TextBlock Text="DEVICE STATE"
                                    Foreground="{StaticResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="{StaticResource FontMicro}"
@@ -298,7 +298,7 @@
 
             <Border Margin="0,16,0,0" Style="{StaticResource QuietCardStyle}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Scope" />
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="How this works" />
                     <TextBlock Margin="0,5,0,0"
                                Style="{StaticResource MutedTextStyle}"
                                TextWrapping="Wrap"

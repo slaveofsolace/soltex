@@ -14,9 +14,9 @@
       5. Type       — font families and the size scale.
       6. Motion     — animation durations.
 
-    Palette intent: a warm, near-black graphite ground with parchment text, one
-    coral interaction accent, green reserved for confirmed-good state, amber for
-    attention, and red for danger. See docs/DESIGN_SYSTEM.md for the full rationale
+    Palette intent: a deep neutral system ground with high-clarity text, one
+    electric-iris interaction accent, green reserved for confirmed-good state,
+    amber for attention, and red for danger. See docs/DESIGN_SYSTEM.md for the full rationale
     and usage rules.
 -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -28,58 +28,58 @@
     <!-- ============================================================ -->
 
     <!-- Graphite ground, darkest to lightest. -->
-    <Color x:Key="SidebarColor">#181816</Color>
-    <Color x:Key="FieldColor">#1B1B19</Color>
-    <Color x:Key="InsetColor">#1D1D1A</Color>
-    <Color x:Key="CanvasColor">#1F1F1F</Color>
-    <Color x:Key="QuietColor">#21211E</Color>
-    <Color x:Key="SurfaceColor">#252522</Color>
-    <Color x:Key="RaisedColor">#2B2B27</Color>
-    <Color x:Key="ElevatedColor">#302B27</Color>
-    <Color x:Key="HeroBaseColor">#292622</Color>
-    <Color x:Key="HeroEdgeColor">#22221F</Color>
-    <Color x:Key="TrackColor">#34332E</Color>
-    <Color x:Key="ScrollTrackColor">#242421</Color>
-    <Color x:Key="ScrollThumbColor">#5B5850</Color>
+    <Color x:Key="SidebarColor">#0F1117</Color>
+    <Color x:Key="FieldColor">#101218</Color>
+    <Color x:Key="InsetColor">#111319</Color>
+    <Color x:Key="CanvasColor">#0B0D12</Color>
+    <Color x:Key="QuietColor">#13161D</Color>
+    <Color x:Key="SurfaceColor">#171A22</Color>
+    <Color x:Key="RaisedColor">#1D212A</Color>
+    <Color x:Key="ElevatedColor">#242936</Color>
+    <Color x:Key="HeroBaseColor">#161A22</Color>
+    <Color x:Key="HeroEdgeColor">#11141B</Color>
+    <Color x:Key="TrackColor">#2B303B</Color>
+    <Color x:Key="ScrollTrackColor">#14171E</Color>
+    <Color x:Key="ScrollThumbColor">#535B6B</Color>
 
     <!-- Edges. -->
-    <Color x:Key="BorderColor">#3B3A34</Color>
-    <Color x:Key="BorderStrongColor">#4A4840</Color>
-    <Color x:Key="HeroBorderColor">#514239</Color>
+    <Color x:Key="BorderColor">#2A2F3A</Color>
+    <Color x:Key="BorderStrongColor">#3A4050</Color>
+    <Color x:Key="HeroBorderColor">#343A49</Color>
 
     <!-- Parchment text, brightest to quietest. -->
-    <Color x:Key="TextBrightColor">#E7E3D6</Color>
-    <Color x:Key="TextColor">#D8D5C8</Color>
-    <Color x:Key="TextSecondaryColor">#BDBAAF</Color>
-    <Color x:Key="MutedColor">#96938A</Color>
-    <Color x:Key="QuietTextColor">#716F68</Color>
+    <Color x:Key="TextBrightColor">#FFFFFF</Color>
+    <Color x:Key="TextColor">#F1F3F7</Color>
+    <Color x:Key="TextSecondaryColor">#C7CBD4</Color>
+    <Color x:Key="MutedColor">#9197A4</Color>
+    <Color x:Key="QuietTextColor">#646B78</Color>
 
     <!-- Coral interaction accent. -->
-    <Color x:Key="AccentColor">#F76F53</Color>
-    <Color x:Key="AccentFocusColor">#F9A08D</Color>
-    <Color x:Key="AccentDimColor">#8E5A4E</Color>
-    <Color x:Key="AccentQuietColor">#3A2925</Color>
-    <Color x:Key="OnAccentColor">#211714</Color>
+    <Color x:Key="AccentColor">#8B7CFF</Color>
+    <Color x:Key="AccentFocusColor">#B2A8FF</Color>
+    <Color x:Key="AccentDimColor">#6E63C7</Color>
+    <Color x:Key="AccentQuietColor">#211E3D</Color>
+    <Color x:Key="OnAccentColor">#FFFFFF</Color>
 
     <!-- Green: confirmed-good only. -->
-    <Color x:Key="SignalColor">#7ED0A7</Color>
-    <Color x:Key="SignalTextColor">#B8C4B9</Color>
-    <Color x:Key="SignalSurfaceColor">#20251F</Color>
-    <Color x:Key="SignalQuietColor">#202B25</Color>
-    <Color x:Key="SignalBorderColor">#3D4C42</Color>
+    <Color x:Key="SignalColor">#5DD39E</Color>
+    <Color x:Key="SignalTextColor">#B6D8C8</Color>
+    <Color x:Key="SignalSurfaceColor">#13251E</Color>
+    <Color x:Key="SignalQuietColor">#162C23</Color>
+    <Color x:Key="SignalBorderColor">#2E5745</Color>
 
     <!-- Amber attention, red danger. -->
-    <Color x:Key="WarningColor">#E6B866</Color>
-    <Color x:Key="DangerColor">#F18279</Color>
-    <Color x:Key="DangerTextColor">#FF9BA2</Color>
+    <Color x:Key="WarningColor">#F4BE63</Color>
+    <Color x:Key="DangerColor">#FF6B7A</Color>
+    <Color x:Key="DangerTextColor">#FF9DA8</Color>
 
     <!-- Navigation selection tint. -->
-    <Color x:Key="NavSelectedColor">#372925</Color>
+    <Color x:Key="NavSelectedColor">#23203D</Color>
 
     <!-- Translucent fills for chart areas and text selection (#AARRGGBB). -->
-    <Color x:Key="AccentAreaColor">#183F302A</Color>
-    <Color x:Key="SignalAreaColor">#1422381F</Color>
-    <Color x:Key="SelectionColor">#8058453F</Color>
+    <Color x:Key="AccentAreaColor">#248B7CFF</Color>
+    <Color x:Key="SignalAreaColor">#1A5DD39E</Color>
+    <Color x:Key="SelectionColor">#607A6EF0</Color>
 
     <!-- ============================================================ -->
     <!-- 2. Semantic brushes                                           -->
@@ -147,12 +147,12 @@
     <!-- 3. Corner-radius scale                                        -->
     <!-- ============================================================ -->
     <CornerRadius x:Key="RadiusXs">4</CornerRadius>
-    <CornerRadius x:Key="RadiusSm">8</CornerRadius>
-    <CornerRadius x:Key="RadiusMd">10</CornerRadius>
-    <CornerRadius x:Key="RadiusLg">12</CornerRadius>
-    <CornerRadius x:Key="RadiusCard">14</CornerRadius>
-    <CornerRadius x:Key="RadiusHero">18</CornerRadius>
-    <CornerRadius x:Key="RadiusHeroXl">24</CornerRadius>
+    <CornerRadius x:Key="RadiusSm">6</CornerRadius>
+    <CornerRadius x:Key="RadiusMd">8</CornerRadius>
+    <CornerRadius x:Key="RadiusLg">10</CornerRadius>
+    <CornerRadius x:Key="RadiusCard">10</CornerRadius>
+    <CornerRadius x:Key="RadiusHero">12</CornerRadius>
+    <CornerRadius x:Key="RadiusHeroXl">14</CornerRadius>
 
     <!-- ============================================================ -->
     <!-- 4. Spacing scale and common paddings                          -->
@@ -166,36 +166,37 @@
     <sys:Double x:Key="Space2xl">24</sys:Double>
     <sys:Double x:Key="Space3xl">28</sys:Double>
 
-    <Thickness x:Key="PadCard">22</Thickness>
-    <Thickness x:Key="PadHero">26</Thickness>
-    <Thickness x:Key="PadCompact">15</Thickness>
-    <Thickness x:Key="PadPill">10,6</Thickness>
-    <Thickness x:Key="PadField">14,11</Thickness>
-    <Thickness x:Key="PadButton">16,10</Thickness>
+    <Thickness x:Key="PadCard">18</Thickness>
+    <Thickness x:Key="PadHero">20</Thickness>
+    <Thickness x:Key="PadCompact">14</Thickness>
+    <Thickness x:Key="PadPill">9,5</Thickness>
+    <Thickness x:Key="PadField">12,10</Thickness>
+    <Thickness x:Key="PadButton">14,9</Thickness>
 
     <!-- ============================================================ -->
     <!-- 5. Type: families and size scale                              -->
     <!-- ============================================================ -->
-    <FontFamily x:Key="UiFont">Segoe UI Variable, Segoe UI</FontFamily>
-    <FontFamily x:Key="DisplayFont">Georgia</FontFamily>
+    <FontFamily x:Key="UiFont">Segoe UI Variable Text, Segoe UI</FontFamily>
+    <FontFamily x:Key="DisplayFont">Segoe UI Variable Display, Segoe UI</FontFamily>
+    <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
     <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
 
-    <sys:Double x:Key="FontMicro">9</sys:Double>
-    <sys:Double x:Key="FontMono">10</sys:Double>
-    <sys:Double x:Key="FontCaption">11</sys:Double>
+    <sys:Double x:Key="FontMicro">10</sys:Double>
+    <sys:Double x:Key="FontMono">11</sys:Double>
+    <sys:Double x:Key="FontCaption">12</sys:Double>
     <sys:Double x:Key="FontSmall">12</sys:Double>
     <sys:Double x:Key="FontLabel">13</sys:Double>
     <sys:Double x:Key="FontBody">14</sys:Double>
     <sys:Double x:Key="FontSection">17</sys:Double>
-    <sys:Double x:Key="FontTitle">22</sys:Double>
-    <sys:Double x:Key="FontDisplaySm">24</sys:Double>
-    <sys:Double x:Key="FontMetric">36</sys:Double>
-    <sys:Double x:Key="FontDisplay">38</sys:Double>
+    <sys:Double x:Key="FontTitle">20</sys:Double>
+    <sys:Double x:Key="FontDisplaySm">22</sys:Double>
+    <sys:Double x:Key="FontMetric">34</sys:Double>
+    <sys:Double x:Key="FontDisplay">30</sys:Double>
 
     <!-- ============================================================ -->
     <!-- 6. Motion durations (Swiss-quiet: 140–220 ms)                 -->
     <!-- ============================================================ -->
-    <Duration x:Key="MotionFast">0:0:0.14</Duration>
-    <Duration x:Key="MotionBase">0:0:0.18</Duration>
-    <Duration x:Key="MotionSlow">0:0:0.22</Duration>
+    <Duration x:Key="MotionFast">0:0:0.12</Duration>
+    <Duration x:Key="MotionBase">0:0:0.16</Duration>
+    <Duration x:Key="MotionSlow">0:0:0.20</Duration>
 </ResourceDictionary>

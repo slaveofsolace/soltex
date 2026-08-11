@@ -17,12 +17,12 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="02 / SYSTEM PULSE" />
-                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Monitoring" />
+                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="PERFORMANCE" />
+                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Performance" />
                     <TextBlock Margin="0,5,0,0"
                                Style="{StaticResource MutedTextStyle}"
                                FontSize="{StaticResource FontBody}"
-                               Text="Bounded Windows readings with provenance, timing, and visible gaps." />
+                               Text="Live CPU, memory, network, storage, and process activity." />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                     <Button x:Name="MonitoringDetailsButton"

@@ -28,3 +28,5 @@ Product context and historical planning:
 - [Research audit](RESEARCH_AUDIT.md)
 
 `IMPLEMENTATION_STATUS.md`, `VALIDATION.md`, `AUDIT.md`, and the root `HANDOFF.md` are the current operational record. Historical commit messages and retained workflow artifacts remain the source for older evidence.
+
+- [Product reaudit and rebuild contract](PRODUCT_REAUDIT_2026-08-11.md)

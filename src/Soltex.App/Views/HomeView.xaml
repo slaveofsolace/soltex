@@ -15,12 +15,12 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="01 / LOCAL WORKSPACE" />
-                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Home" />
+                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="SYSTEM" />
+                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Overview" />
                     <TextBlock Margin="0,5,0,0"
                                Style="{StaticResource MutedTextStyle}"
                                FontSize="14"
-                               Text="A calm, factual view of this machine—what is known, what is limited, and what needs attention." />
+                               Text="Live system state with the important signals first." />
                 </StackPanel>
                 <Border x:Name="HomeStatePill" Grid.Column="1" Style="{StaticResource StatusPillStyle}" VerticalAlignment="Top">
                     <StackPanel Orientation="Horizontal">
@@ -36,7 +36,7 @@
                 </Border>
             </Grid>
 
-            <Border x:Name="HomeHeroCard" Margin="0,20,0,0" Style="{StaticResource HeroCardStyle}" Height="265">
+            <Border x:Name="HomeHeroCard" Margin="0,20,0,0" Style="{StaticResource HeroCardStyle}" Height="230">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -49,9 +49,9 @@
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Text="LIVE RHYTHM" Style="{StaticResource PageEyebrowStyle}" Foreground="{StaticResource SignalBrush}" />
+                        <TextBlock Text="PROCESSOR" Style="{StaticResource PageEyebrowStyle}" Foreground="{StaticResource SignalBrush}" />
                         <StackPanel Grid.Row="1" Margin="0,5,0,0" Orientation="Horizontal" VerticalAlignment="Bottom">
-                            <TextBlock x:Name="CpuHeroValue" Text="—" FontFamily="{StaticResource DisplayFont}" FontSize="64" />
+                            <TextBlock x:Name="CpuHeroValue" Text="—" FontFamily="{StaticResource DisplayFont}" FontSize="52" FontWeight="SemiBold" />
                             <TextBlock Margin="12,0,0,10" Text="CPU" Foreground="{StaticResource MutedBrush}" FontSize="13" />
                         </StackPanel>
                         <controls:Sparkline x:Name="CpuSparkline"
@@ -79,7 +79,7 @@
                             CornerRadius="13"
                             Padding="18">
                         <StackPanel>
-                            <TextBlock Text="THIS MACHINE" Style="{StaticResource PageEyebrowStyle}" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock Text="THIS PC" Style="{StaticResource PageEyebrowStyle}" Foreground="{StaticResource MutedBrush}" />
                             <TextBlock x:Name="MachineNameText" Margin="0,8,0,0" Text="Local machine" FontSize="20" FontWeight="SemiBold" />
                             <TextBlock x:Name="MachineOsText" Margin="0,5,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Text="Reading Windows profile…" />
                             <Border Margin="0,16,0,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="0,14,0,0">
@@ -89,7 +89,7 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="Device Fabric" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                                        <TextBlock Text="Device mesh" Foreground="{StaticResource MutedBrush}" FontSize="11" />
                                         <TextBlock Text="Local observation only" Margin="0,4,0,0" FontWeight="SemiBold" />
                                     </StackPanel>
                                     <TextBlock Grid.Column="1"
@@ -107,7 +107,7 @@
 
             <Grid Margin="0,16,0,0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.62*" />
+                    <ColumnDefinition Width="1.45*" />
                     <ColumnDefinition Width="16" />
                     <ColumnDefinition Width="1*" />
                 </Grid.ColumnDefinitions>
@@ -158,8 +158,8 @@
 
                 <Border Grid.Column="2" Style="{StaticResource QuietCardStyle}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Network pulse" />
-                        <TextBlock Margin="0,4,0,12" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Aggregate throughput from active Windows interfaces." />
+                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Network" />
+                        <TextBlock Margin="0,4,0,12" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="Current traffic across active Windows interfaces." />
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock x:Name="NetworkRateText" Text="Unavailable" FontFamily="{StaticResource DisplayFont}" FontSize="25" />
@@ -174,16 +174,6 @@
                                             Fill="{StaticResource SignalAreaBrush}"
                                             StrokeThickness="2"
                                             AutomationProperties.Name="Recent aggregate network throughput" />
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="GPU telemetry" />
-                            <TextBlock Grid.Column="1" Text="UNAVAILABLE" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
-                        </Grid>
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <TextBlock Text="Remote peers" />
-                            <TextBlock Grid.Column="1" Text="NONE ENROLLED" Foreground="{StaticResource MutedBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
-                        </Grid>
                     </StackPanel>
                 </Border>
             </Grid>

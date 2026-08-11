@@ -14,12 +14,12 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="03 / DEVICE FABRIC" />
-                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Devices" />
+                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="DEVICE MESH / PREVIEW" />
+                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Device mesh" />
                     <TextBlock Margin="0,5,0,0"
                                Style="{StaticResource MutedTextStyle}"
                                FontSize="14"
-                               Text="A local identity card and a typed capability contract—not an enrolled command network." />
+                               Text="This PC is visible locally. Secure enrollment and remote jobs are not enabled yet." />
                 </StackPanel>
                 <Border Grid.Column="1" Style="{StaticResource StatusPillStyle}" VerticalAlignment="Top">
                     <StackPanel Orientation="Horizontal">
@@ -85,7 +85,7 @@
                 </Grid.ColumnDefinitions>
                 <Border Style="{StaticResource CardStyle}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="No peer devices enrolled" />
+                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="No connected devices" />
                         <TextBlock Margin="0,5,0,14"
                                    Style="{StaticResource MutedTextStyle}"
                                    TextWrapping="Wrap"
@@ -124,10 +124,10 @@
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Typed capability contract" />
-                            <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedTextStyle}" Text="Exactly six reviewed shapes; none is an executing remote job in this slice." />
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Planned device actions" />
+                            <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedTextStyle}" Text="Reviewed action shapes are visible here before enrollment is enabled." />
                         </StackPanel>
-                        <TextBlock Grid.Column="1" Text="MODEL ONLY" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="PREVIEW" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" VerticalAlignment="Center" />
                     </Grid>
                     <ItemsControl x:Name="CapabilityItems" Margin="0,16,0,0">
                         <ItemsControl.ItemsPanel>

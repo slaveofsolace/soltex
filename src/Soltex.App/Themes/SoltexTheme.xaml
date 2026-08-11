@@ -86,10 +86,11 @@
     <Style x:Key="NavButton" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource NavRestBrush}" />
         <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
-        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
-        <Setter Property="Margin" Value="0,0,0,4" />
-        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="Margin" Value="0,2" />
+        <Setter Property="Padding" Value="11,9" />
         <Setter Property="FontSize" Value="{StaticResource FontLabel}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
@@ -97,6 +98,8 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="NavSurface"
                             Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="{StaticResource RadiusSm}"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -105,9 +108,11 @@
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="NavSurface" Property="Background" Value="{StaticResource RaisedBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextBrightBrush}" />
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">
                             <Setter TargetName="NavSurface" Property="Background" Value="{StaticResource ElevatedBrush}" />
+                            <Setter TargetName="NavSurface" Property="BorderBrush" Value="{StaticResource AccentDimBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
