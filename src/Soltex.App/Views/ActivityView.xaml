@@ -19,15 +19,11 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel>
-                <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="History" />
-                <TextBlock Margin="0,5,0,0"
-                           Style="{StaticResource PageTitleStyle}"
-                           Text="Activity" />
-                <TextBlock Margin="0,5,0,0"
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Activity" />
+                <TextBlock Margin="0,3,0,0"
                            Style="{StaticResource MutedTextStyle}"
-                           FontSize="{StaticResource FontBody}"
-                           Text="Meaningful Soltex actions and state changes—never clicks or browsing." />
+                           Text="Meaningful Soltex state changes and recovery events." />
             </StackPanel>
             <Border Grid.Column="1"
                     Style="{StaticResource StatusPillStyle}"
@@ -76,7 +72,7 @@
         </Grid>
 
         <Border Grid.Row="4"
-                Style="{StaticResource CardStyle}"
+                Style="{StaticResource WorkbenchStyle}"
                 Padding="0"
                 ClipToBounds="True">
             <Grid>

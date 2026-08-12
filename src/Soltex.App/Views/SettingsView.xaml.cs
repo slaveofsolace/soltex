@@ -116,6 +116,18 @@ public partial class SettingsView : UserControl
             ActivityRetention = ActivityRetention.ThirtyDays
         });
 
+    private void GeneralSettingsTab_Click(object sender, RoutedEventArgs e) =>
+        ShowSettingsPanel(GeneralSettingsPanel, GeneralSettingsTab);
+
+    private void WindowSettingsTab_Click(object sender, RoutedEventArgs e) =>
+        ShowSettingsPanel(WindowSettingsPanel, WindowSettingsTab);
+
+    private void PrivacySettingsTab_Click(object sender, RoutedEventArgs e) =>
+        ShowSettingsPanel(PrivacySettingsPanel, PrivacySettingsTab);
+
+    private void AboutSettingsTab_Click(object sender, RoutedEventArgs e) =>
+        ShowSettingsPanel(AboutSettingsPanel, AboutSettingsTab);
+
     private void ResetDefaults_Click(object sender, RoutedEventArgs e) =>
         Commit(SoltexPreferences.Default);
 
@@ -179,6 +191,33 @@ public partial class SettingsView : UserControl
             selected ? "SelectedNavBrush" : "NavRestBrush");
         button.Foreground = (Brush)FindResource(
             selected ? "AccentBrush" : "MutedBrush");
+    }
+
+    private void ShowSettingsPanel(UIElement panel, Button selectedTab)
+    {
+        GeneralSettingsPanel.Visibility = panel == GeneralSettingsPanel
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        WindowSettingsPanel.Visibility = panel == WindowSettingsPanel
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        PrivacySettingsPanel.Visibility = panel == PrivacySettingsPanel
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        AboutSettingsPanel.Visibility = panel == AboutSettingsPanel
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        foreach (Button tab in new[]
+                 {
+                     GeneralSettingsTab,
+                     WindowSettingsTab,
+                     PrivacySettingsTab,
+                     AboutSettingsTab
+                 })
+        {
+            tab.Tag = tab == selectedTab ? "Selected" : null;
+        }
     }
 
     private void SetToggle(Button button, bool enabled)

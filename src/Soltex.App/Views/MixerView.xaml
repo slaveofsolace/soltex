@@ -138,27 +138,28 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled"
-                  HorizontalContentAlignment="Stretch">
-        <StackPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
             <!-- Page header -->
-            <Grid>
+            <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="AUDIO" />
-                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Audio mixer" />
-                    <TextBlock Margin="0,5,0,0"
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Style="{StaticResource PageTitleStyle}" Text="Audio" />
+                    <TextBlock Margin="0,3,0,0"
                                MaxWidth="720"
                                HorizontalAlignment="Left"
                                Style="{StaticResource MutedTextStyle}"
-                               FontSize="{StaticResource FontBody}"
-                               TextWrapping="Wrap"
-                               Text="Per-app volume and mute with device context from Windows Core Audio." />
+                               Text="Per-app volume, mute, and device context from Windows Core Audio." />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                     <Button x:Name="RefreshAudioButton"
@@ -186,8 +187,15 @@
                 </StackPanel>
             </Grid>
 
-            <!-- Active app sessions are the primary job; device inventory stays below. -->
-            <Border Margin="0,20,0,0" Style="{StaticResource CardStyle}">
+            <Grid x:Name="MixerOverviewPanel" Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+            <!-- Active app sessions are the primary job. -->
+            <Border Grid.Row="0" Style="{StaticResource CardStyle}" ClipToBounds="True">
                 <StackPanel>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -251,7 +259,7 @@
             </Border>
 
             <!-- Endpoint summary -->
-            <Border Margin="0,20,0,0" Style="{StaticResource HeroCardStyle}">
+            <Border Grid.Row="2" Style="{StaticResource HeroCardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
@@ -261,7 +269,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Text="ACTIVE NOW" Style="{StaticResource PageEyebrowStyle}" Foreground="{StaticResource SignalBrush}" />
+                        <TextBlock Text="Active now" Foreground="{StaticResource SignalBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0" VerticalAlignment="Bottom">
                             <TextBlock x:Name="ActiveCountText"
                                        Text="—"
@@ -275,7 +283,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                        <TextBlock Text="DEFAULT PLAYBACK"
+                        <TextBlock Text="Default playback"
                                    Foreground="{StaticResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="{StaticResource FontMicro}" />
@@ -285,7 +293,7 @@
                                    Text="Not reported"
                                    TextTrimming="CharacterEllipsis"
                                    FontWeight="SemiBold" />
-                        <TextBlock Text="DEFAULT RECORDING"
+                        <TextBlock Text="Default recording"
                                    Margin="0,12,0,0"
                                    Foreground="{StaticResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
@@ -299,7 +307,7 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right">
-                        <TextBlock Text="DEVICE STATE"
+                        <TextBlock Text="Device state"
                                    Foreground="{StaticResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="{StaticResource FontMicro}"
@@ -324,8 +332,15 @@
                 </Grid>
             </Border>
 
-            <!-- Playback and recording endpoints -->
-            <StackPanel x:Name="EndpointDetailsPanel" Visibility="Collapsed">
+            </Grid>
+
+            <!-- Playback and recording endpoints use an internal work-area scroll. -->
+            <ScrollViewer x:Name="EndpointDetailsPanel"
+                          Grid.Row="2"
+                          Visibility="Collapsed"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+            <StackPanel>
             <Grid Margin="0,16,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -487,24 +502,18 @@
                 </Grid>
             </Border>
             </StackPanel>
+            </ScrollViewer>
 
-            <Border Margin="0,16,0,0" Style="{StaticResource QuietCardStyle}">
-                <StackPanel>
-                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="How this works" />
-                    <TextBlock Margin="0,5,0,0"
-                               Style="{StaticResource MutedTextStyle}"
-                               TextWrapping="Wrap"
-                               LineHeight="19"
-                               Text="Soltex reads active shared-mode playback sessions plus endpoint identity, state, defaults, and level from Windows Core Audio. App volume and mute are the only direct audio writes: the target is revalidated immediately before each change and the observed result is read back before success is shown. Fallback reminders retain only a local endpoint fingerprint; Windows Sound settings remain the supported owner of system default selection. Soltex does not route signal, create virtual devices, or apply EQ, effects, or noise processing." />
-                    <TextBlock x:Name="MixerProvenanceText"
-                               Margin="0,10,0,0"
-                               Foreground="{StaticResource QuietTextBrush}"
-                               FontFamily="{StaticResource MonoFont}"
-                               FontSize="{StaticResource FontMicro}"
-                               TextWrapping="Wrap"
-                               Text="Waiting for the first audio observation" />
-                </StackPanel>
-            </Border>
-        </StackPanel>
-    </ScrollViewer>
+            <Grid Grid.Row="4" Margin="2,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <TextBlock x:Name="MixerProvenanceText"
+                           Foreground="{StaticResource QuietTextBrush}"
+                           FontFamily="{StaticResource MonoFont}"
+                           FontSize="{StaticResource FontMicro}"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="App volume and mute are the only direct audio writes. Windows owns default-device selection; Soltex does not route signal, create virtual devices, or apply EQ or effects."
+                           Text="Waiting for the first audio observation" />
+                <TextBlock Grid.Column="1" Margin="14,0,0,0" Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}" Text="Core Audio · read-back confirmed" />
+            </Grid>
+    </Grid>
 </UserControl>

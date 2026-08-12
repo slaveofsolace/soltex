@@ -488,13 +488,16 @@ public partial class MixerView : UserControl
 
     private void UpdateDeviceDetailsVisibility()
     {
+        MixerOverviewPanel.Visibility = _deviceDetailsVisible
+            ? Visibility.Collapsed
+            : Visibility.Visible;
         EndpointDetailsPanel.Visibility = _deviceDetailsVisible
             ? Visibility.Visible
             : Visibility.Collapsed;
-        DeviceDetailsButton.Content = _deviceDetailsVisible ? "Hide devices" : "View devices";
+        DeviceDetailsButton.Content = _deviceDetailsVisible ? "Mixer" : "Audio devices";
         DeviceDetailsButton.SetCurrentValue(
             System.Windows.Automation.AutomationProperties.NameProperty,
-            _deviceDetailsVisible ? "Hide audio device details" : "Show audio device details");
+            _deviceDetailsVisible ? "Show app audio mixer" : "Show audio device details");
     }
 
     private void UpdateMoreVisibility()

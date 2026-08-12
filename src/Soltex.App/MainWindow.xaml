@@ -36,18 +36,18 @@
 
                 <Grid>
                     <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                    <Border Width="30" Height="30" Background="{StaticResource AccentQuietBrush}" BorderBrush="{StaticResource AccentDimBrush}" BorderThickness="1" CornerRadius="8">
+                    <Border Width="30" Height="30" Background="{StaticResource AccentQuietBrush}" BorderBrush="{StaticResource AccentDimBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusSm}">
                         <TextBlock Text="S" Foreground="{StaticResource AccentFocusBrush}" FontFamily="{StaticResource DisplayFont}" FontWeight="SemiBold" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
                         <TextBlock Text="Soltex" Foreground="{StaticResource TextBrightBrush}" FontFamily="{StaticResource DisplayFont}" FontSize="18" FontWeight="SemiBold" />
-                        <TextBlock Text="SYSTEM WORKSPACE" Margin="0,2,0,0" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                        <TextBlock Text="Local control" Margin="0,2,0,0" Foreground="{StaticResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" />
                     </StackPanel>
                 </Grid>
 
                 <StackPanel Grid.Row="2">
-                    <TextBlock Margin="10,0,0,6" Text="SYSTEM" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" FontWeight="SemiBold" />
-                    <Button x:Name="HomeNavButton" Style="{StaticResource NavButton}" Background="{StaticResource SelectedNavBrush}" Foreground="{StaticResource AccentBrush}" AutomationProperties.Name="Overview" Click="HomeNav_Click">
+                    <TextBlock Margin="10,0,0,6" Text="System" Foreground="{StaticResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
+                    <Button x:Name="HomeNavButton" Tag="Selected" Style="{StaticResource NavButton}" AutomationProperties.Name="Overview" Click="HomeNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE80F;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
@@ -68,7 +68,7 @@
                             <TextBlock Grid.Column="1" Text="Applications" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
-                    <TextBlock Margin="10,17,0,6" Text="CONTROL" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" FontWeight="SemiBold" />
+                    <TextBlock Margin="10,17,0,6" Text="Control" Foreground="{StaticResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                     <Button x:Name="MixerNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Audio" Click="MixerNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -90,7 +90,7 @@
                             <TextBlock Grid.Column="1" Text="Remote Assist" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
-                    <TextBlock Margin="10,17,0,6" Text="MAINTENANCE" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" FontWeight="SemiBold" />
+                    <TextBlock Margin="10,17,0,6" Text="Maintain" Foreground="{StaticResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                     <Button x:Name="DevicesNavButton" Visibility="Collapsed" Style="{StaticResource NavButton}" AutomationProperties.Name="Device mesh preview" Click="DevicesNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
@@ -175,7 +175,13 @@
             <Grid x:Name="SecurityPanel" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="18" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
@@ -184,248 +190,201 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="PROTECTION" />
-                        <TextBlock Margin="0,5,0,0" Text="Security" FontFamily="{StaticResource DisplayFont}" FontSize="{StaticResource FontDisplay}" />
-                        <TextBlock Margin="0,5,0,0"
-                                   Text="Protection health, focused scans, safe imports, and recoverable quarantine."
-                                   Foreground="{StaticResource MutedBrush}"
-                                   FontSize="14"
-                                   TextWrapping="Wrap"
-                                   MaxWidth="680" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource PageTitleStyle}" Text="Security" />
+                        <TextBlock Margin="0,3,0,0"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   Text="Windows protection status, scans, and recoverable isolation." />
                     </StackPanel>
-                    <Button Grid.Column="1"
-                            Style="{StaticResource SecondaryButton}"
-                            Content="Open Windows Security"
-                            Click="OpenWindowsSecurity_Click" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Margin="0,0,10,0" Style="{StaticResource StatusPillStyle}"
+                                ToolTip="Soltex is a Windows security companion. The registered Windows provider supplies system-wide real-time protection.">
+                            <TextBlock Text="Windows companion" Foreground="{StaticResource TextSecondaryBrush}" FontSize="{StaticResource FontCaption}" />
+                        </Border>
+                        <Button Style="{StaticResource SecondaryButton}"
+                                Content="Open Windows Security"
+                                Click="OpenWindowsSecurity_Click" />
+                    </StackPanel>
                 </Grid>
 
-                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel>
-                        <Border x:Name="HealthHero" Style="{StaticResource CardStyle}" BorderBrush="{StaticResource SignalBorderBrush}" Background="{StaticResource SignalSurfaceBrush}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="18" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Ellipse x:Name="HealthDot" Width="16" Height="16" Fill="{StaticResource SignalBrush}" VerticalAlignment="Top" Margin="0,6,0,0" />
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock x:Name="HealthTitle" Text="Checking Windows protection…" FontSize="20" FontWeight="SemiBold" />
-                                    <TextBlock x:Name="HealthDetail"
-                                               Margin="0,6,0,0"
-                                               Text="Soltex is reading supported Windows Security and Defender status."
-                                               Foreground="{StaticResource SignalTextBrush}"
-                                               TextWrapping="Wrap" />
-                                </StackPanel>
-                                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <ProgressBar x:Name="BusyProgress" Width="90" Height="5" Margin="0,0,12,0" IsIndeterminate="True" Visibility="Collapsed" />
-                                    <Button x:Name="RefreshButton" Style="{StaticResource SecondaryButton}" Content="Refresh" Click="Refresh_Click" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
+                <Border x:Name="HealthHero"
+                        Grid.Row="2"
+                        Background="{StaticResource SignalSurfaceBrush}"
+                        BorderBrush="{StaticResource SignalBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusCard}"
+                        Padding="12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Ellipse x:Name="HealthDot" Width="10" Height="10" Fill="{StaticResource SignalBrush}" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                            <TextBlock x:Name="HealthTitle" Text="Checking Windows protection…" FontSize="{StaticResource FontSection}" FontWeight="SemiBold" />
+                            <TextBlock x:Name="HealthDetail"
+                                       Margin="0,3,0,0"
+                                       Text="Reading supported Windows Security and Defender status."
+                                       Foreground="{StaticResource SignalTextBrush}"
+                                       FontSize="{StaticResource FontCaption}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center">
+                            <ProgressBar x:Name="BusyProgress" Width="72" Height="4" Margin="0,0,10,0" IsIndeterminate="True" Visibility="Collapsed" />
+                            <Button x:Name="RefreshButton" Style="{StaticResource SecondaryButton}" Content="Refresh" Click="Refresh_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
-                        <Grid Margin="0,14,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="10" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="10" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="10" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
+                <Border Grid.Row="4" Style="{StaticResource WorkbenchStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="1" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="1" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="1" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="12,9">
+                            <TextBlock Text="Real-time" Style="{StaticResource MutedTextStyle}" />
+                            <TextBlock x:Name="RealTimeStatus" Margin="0,3,0,0" Text="Checking" FontWeight="SemiBold" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="{StaticResource BorderBrush}" />
+                        <StackPanel Grid.Column="2" Margin="12,9">
+                            <TextBlock Text="Behavior" Style="{StaticResource MutedTextStyle}" />
+                            <TextBlock x:Name="BehaviorStatus" Margin="0,3,0,0" Text="Checking" FontWeight="SemiBold" />
+                        </StackPanel>
+                        <Border Grid.Column="3" Background="{StaticResource BorderBrush}" />
+                        <StackPanel Grid.Column="4" Margin="12,9">
+                            <TextBlock Text="Cloud" Style="{StaticResource MutedTextStyle}" />
+                            <TextBlock x:Name="CloudStatus" Margin="0,3,0,0" Text="Checking" FontWeight="SemiBold" />
+                        </StackPanel>
+                        <Border Grid.Column="5" Background="{StaticResource BorderBrush}" />
+                        <StackPanel Grid.Column="6" Margin="12,9">
+                            <TextBlock Text="Intelligence" Style="{StaticResource MutedTextStyle}" />
+                            <TextBlock x:Name="SignatureStatus" Margin="0,3,0,0" Text="Checking" FontWeight="SemiBold" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
-                            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="15">
-                                <StackPanel>
-                                    <TextBlock Text="Defender real-time" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-                                    <TextBlock x:Name="RealTimeStatus" Margin="0,5,0,0" Text="Checking" FontSize="15" FontWeight="SemiBold" />
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="15">
-                                <StackPanel>
-                                    <TextBlock Text="Defender behavior" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-                                    <TextBlock x:Name="BehaviorStatus" Margin="0,5,0,0" Text="Checking" FontSize="15" FontWeight="SemiBold" />
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Column="4" Style="{StaticResource CardStyle}" Padding="15">
-                                <StackPanel>
-                                    <TextBlock Text="Defender cloud" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-                                    <TextBlock x:Name="CloudStatus" Margin="0,5,0,0" Text="Checking" FontSize="15" FontWeight="SemiBold" />
-                                </StackPanel>
-                            </Border>
-                            <Border Grid.Column="6" Style="{StaticResource CardStyle}" Padding="15">
-                                <StackPanel>
-                                    <TextBlock Text="Intelligence" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-                                    <TextBlock x:Name="SignatureStatus" Margin="0,5,0,0" Text="Checking" FontSize="15" FontWeight="SemiBold" />
-                                </StackPanel>
-                            </Border>
-                        </Grid>
+                <Border Grid.Row="6"
+                        Background="{StaticResource QuietBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusCard}"
+                        Padding="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Scan" Margin="2,0,16,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button x:Name="QuickScanButton" Margin="0,0,8,0" Style="{StaticResource ActionButton}" Content="Quick scan" Click="QuickScan_Click" />
+                            <Button x:Name="FileScanButton" Margin="0,0,8,0" Style="{StaticResource SecondaryButton}" Content="File" Click="FileScan_Click" />
+                            <Button x:Name="FolderScanButton" Margin="0,0,8,0" Style="{StaticResource SecondaryButton}" Content="Folder" Click="FolderScan_Click" />
+                            <Button x:Name="UpdateButton" Style="{StaticResource SecondaryButton}" Content="Update intelligence" Click="Update_Click" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="EventQueryStatus" Margin="0,0,10,0" Text="Checking" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
+                            <Button x:Name="SecurityActivityButton"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Windows events"
+                                    AutomationProperties.Name="Show recent Windows protection activity"
+                                    Click="SecurityActivity_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
-                        <Border Margin="0,14,0,0" Style="{StaticResource CardStyle}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="14" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <StackPanel>
-                                    <TextBlock Text="Scan with Windows Defender" FontSize="17" FontWeight="SemiBold" />
-                                    <TextBlock Margin="0,5,0,0"
-                                               Text="Soltex delegates detection and remediation to the installed Windows engine."
-                                               Foreground="{StaticResource MutedBrush}"
-                                               TextWrapping="Wrap"
-                                               ToolTip="Soltex delegates detection and remediation to the installed Windows engine." />
-                                </StackPanel>
-                                <WrapPanel Grid.Row="2">
-                                    <Button x:Name="QuickScanButton" Margin="0,0,8,0" Style="{StaticResource ActionButton}" Content="Quick scan" Click="QuickScan_Click" />
-                                    <Button x:Name="FileScanButton" Margin="0,0,8,0" Style="{StaticResource SecondaryButton}" Content="Scan file" Click="FileScan_Click" />
-                                    <Button x:Name="FolderScanButton" Margin="0,0,8,0" Style="{StaticResource SecondaryButton}" Content="Scan folder" Click="FolderScan_Click" />
-                                    <Button x:Name="UpdateButton" Style="{StaticResource SecondaryButton}" Content="Update" Click="Update_Click" />
-                                </WrapPanel>
-                            </Grid>
-                        </Border>
+                <Border Grid.Row="8" Style="{StaticResource WorkbenchStyle}">
+                    <Grid Margin="12">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <DataGrid x:Name="DefenderEventGrid"
+                                  Height="180"
+                                  Margin="0,0,0,10"
+                                  Visibility="Collapsed"
+                                  SelectionMode="Single"
+                                  AutomationProperties.Name="Recent Windows protection activity">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="When" Binding="{Binding When}" Width="125" />
+                                <DataGridTextColumn Header="Level" Binding="{Binding Severity}" Width="85" />
+                                <DataGridTextColumn Header="Event" Binding="{Binding Title}" Width="190" />
+                                <DataGridTemplateColumn Header="Detail" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" LineHeight="18" ToolTip="{Binding Detail}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
 
-                        <Border Margin="0,14,0,0" Style="{StaticResource CardStyle}">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="12" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="Windows protection activity" FontSize="17" FontWeight="SemiBold" />
-                                        <TextBlock Margin="0,4,0,0"
-                                                   Text="Bounded Defender Operational events; file and process paths are never shown."
-                                                   Foreground="{StaticResource MutedBrush}" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                        <TextBlock x:Name="EventQueryStatus"
-                                                   Margin="0,0,10,0"
-                                                   Text="Checking"
-                                                   Foreground="{StaticResource MutedBrush}"
-                                                   VerticalAlignment="Center" />
-                                        <Button x:Name="SecurityActivityButton"
-                                                Style="{StaticResource SecondaryButton}"
-                                                Content="Show activity"
-                                                AutomationProperties.Name="Show recent Windows protection activity"
-                                                Click="SecurityActivity_Click" />
-                                    </StackPanel>
-                                </Grid>
-                                <DataGrid x:Name="DefenderEventGrid"
-                                          Grid.Row="2"
-                                          Height="190"
-                                          Visibility="Collapsed"
-                                          SelectionMode="Single"
-                                          AutomationProperties.Name="Recent Windows protection activity">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="When" Binding="{Binding When}" Width="125" />
-                                        <DataGridTextColumn Header="Level" Binding="{Binding Severity}" Width="90" />
-                                        <DataGridTextColumn Header="Event" Binding="{Binding Title}" Width="210" />
-                                        <DataGridTemplateColumn Header="Detail" Width="*">
-                                            <DataGridTemplateColumn.CellTemplate>
-                                                <DataTemplate>
-                                                    <TextBlock Text="{Binding Detail}"
-                                                               TextWrapping="Wrap"
-                                                               LineHeight="18"
-                                                               ToolTip="{Binding Detail}" />
-                                                </DataTemplate>
-                                            </DataGridTemplateColumn.CellTemplate>
-                                        </DataGridTemplateColumn>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </Grid>
-                        </Border>
-
-                        <Grid Margin="0,14,0,0">
+                        <Grid Grid.Row="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="3*" />
-                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="1" />
                                 <ColumnDefinition Width="2*" />
                             </Grid.ColumnDefinitions>
-
-                            <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                            <Grid Margin="0,0,12,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="8" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="8" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
                                 <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="12" />
-                                    <RowDefinition Height="145" />
-                                        <RowDefinition Height="12" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel>
-                                            <TextBlock Text="Soltex quarantine" FontSize="17" FontWeight="SemiBold" />
-                                            <TextBlock Margin="0,4,0,0" Text="Only explicit, recoverable file isolation." Foreground="{StaticResource MutedBrush}" />
-                                        </StackPanel>
-                                        <TextBlock x:Name="QuarantineCount" Grid.Column="1" Text="0 items" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
-                                    </Grid>
-                                    <DataGrid x:Name="QuarantineGrid" Grid.Row="2" SelectionMode="Single">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header="File" Binding="{Binding FileName}" Width="2*" />
-                                            <DataGridTextColumn Header="Detection" Binding="{Binding Detection}" Width="2*" />
-                                            <DataGridTextColumn Header="When" Binding="{Binding When}" Width="*" />
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-                                        <Button Margin="0,0,8,0" Style="{StaticResource SecondaryButton}" Content="Restore" Click="Restore_Click" />
-                                        <Button Style="{StaticResource SecondaryButton}" Foreground="{StaticResource DangerTextBrush}" Content="Delete" Click="Delete_Click" />
-                                    </StackPanel>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Quarantine" />
+                                    <TextBlock x:Name="QuarantineCount" Grid.Column="1" Text="0 items" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
                                 </Grid>
-                            </Border>
-
-                            <Border Grid.Column="2" Style="{StaticResource CardStyle}">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="12" />
-                                        <RowDefinition Height="*" />
-                                        <RowDefinition Height="12" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="Activity" FontSize="17" FontWeight="SemiBold" />
-                                        <TextBlock Margin="0,4,0,0" Text="Paths are hashed in the local audit log." Foreground="{StaticResource MutedBrush}" />
-                                    </StackPanel>
-                                    <ListBox x:Name="ActivityList"
-                                             Grid.Row="2"
-                                             Background="Transparent"
-                                             BorderThickness="0"
-                                             Foreground="{StaticResource TextBrush}"
-                                             FontSize="12" />
-                                    <Button Grid.Row="4"
-                                            HorizontalAlignment="Left"
-                                            Style="{StaticResource SecondaryButton}"
-                                            Content="Open protected imports"
-                                            Click="OpenImports_Click" />
-                                </Grid>
-                            </Border>
+                                <DataGrid x:Name="QuarantineGrid" Grid.Row="2" SelectionMode="Single">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="File" Binding="{Binding FileName}" Width="2*" />
+                                        <DataGridTextColumn Header="Detection" Binding="{Binding Detection}" Width="2*" />
+                                        <DataGridTextColumn Header="When" Binding="{Binding When}" Width="*" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button Margin="0,0,8,0" Style="{StaticResource SecondaryButton}" Content="Restore" Click="Restore_Click" />
+                                    <Button Style="{StaticResource SecondaryButton}" Foreground="{StaticResource DangerTextBrush}" Content="Delete" Click="Delete_Click" />
+                                </StackPanel>
+                            </Grid>
+                            <Border Grid.Column="1" Background="{StaticResource BorderBrush}" />
+                            <Grid Grid.Column="2" Margin="12,0,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="8" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="8" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Soltex activity" />
+                                <ListBox x:Name="ActivityList" Grid.Row="2" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextBrush}" FontSize="{StaticResource FontCaption}" />
+                                <Button Grid.Row="4" HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}" Content="Protected imports" Click="OpenImports_Click" />
+                            </Grid>
                         </Grid>
-
-                        <TextBlock Margin="2,14,2,4"
-                                   Foreground="{StaticResource QuietTextBrush}"
-                                   FontSize="11"
-                                   TextWrapping="Wrap"
-                                   Text="Scope: this build is a Windows security companion, not a registered third-party antivirus provider. Defender or another registered provider supplies system-wide real-time protection. Soltex adds focused orchestration and protects its own import boundary." />
-                    </StackPanel>
-                </ScrollViewer>
+                    </Grid>
+                </Border>
             </Grid>
 
             <Grid x:Name="RemotePanel" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="22" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
                     <RowDefinition Height="*" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
                 <Grid>
@@ -433,249 +392,114 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="REMOTE ASSIST" />
-                        <TextBlock Margin="0,5,0,0"
-                                   Text="Remote Assist"
-                                   FontFamily="{StaticResource DisplayFont}"
-                                   FontSize="{StaticResource FontDisplay}" />
-                        <TextBlock Margin="0,6,0,0"
-                                   Text="Open an authorized RustDesk session without moving its transport or credentials into Soltex."
-                                   Foreground="{StaticResource MutedBrush}"
-                                   FontSize="14" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource PageTitleStyle}" Text="Remote Assist" />
+                        <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Launch an authorized session through a user-selected RustDesk client." />
                     </StackPanel>
-                    <Button Grid.Column="1"
-                            VerticalAlignment="Top"
-                            Style="{StaticResource SecondaryButton}"
-                            Content="Source &amp; license"
-                            Click="OpenRustDeskSource_Click" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Margin="0,0,10,0" Style="{StaticResource StatusPillStyle}"
+                                ToolTip="Soltex does not bundle, download, authenticate, elevate, or install the remote-control runtime.">
+                            <TextBlock Text="External runtime" Foreground="{StaticResource TextSecondaryBrush}" FontSize="{StaticResource FontCaption}" />
+                        </Border>
+                        <Button Style="{StaticResource SecondaryButton}" Content="Source &amp; license" Click="OpenRustDeskSource_Click" />
+                    </StackPanel>
                 </Grid>
 
-                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <Border Grid.Row="2"
+                        Background="{StaticResource QuietBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusCard}"
+                        Padding="12">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="5*" />
-                            <ColumnDefinition Width="22" />
-                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Ellipse x:Name="RemoteTrustDot" Width="10" Height="10" Fill="{StaticResource MutedBrush}" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                            <TextBlock x:Name="RemoteTrustState" Text="RustDesk is not connected" FontSize="{StaticResource FontSection}" FontWeight="SemiBold" />
+                            <TextBlock x:Name="RemoteTrustDetail" Margin="0,3,0,0" Text="Choose an installed, signed RustDesk.exe." Style="{StaticResource MutedTextStyle}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <Border Grid.Column="3" Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
+                            <TextBlock x:Name="RemoteTrustPill" Text="NOT CONNECTED" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" FontWeight="SemiBold" />
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <Border Grid.Row="4" Style="{StaticResource WorkbenchStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="1" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
 
-                        <StackPanel>
-                            <Border Background="{StaticResource HeroPanelBrush}"
-                                    BorderBrush="{StaticResource HeroBorderBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="24"
-                                    Padding="28">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="18" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="18" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="20" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="14" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <Ellipse x:Name="RemoteTrustDot"
-                                                 Width="13"
-                                                 Height="13"
-                                                 Fill="{StaticResource MutedBrush}"
-                                                 VerticalAlignment="Center" />
-                                        <StackPanel Grid.Column="2">
-                                            <TextBlock x:Name="RemoteTrustState"
-                                                       Text="RustDesk is not connected"
-                                                       FontFamily="{StaticResource DisplayFont}"
-                                                       FontSize="23" />
-                                            <TextBlock Margin="0,4,0,0"
-                                                       Text="External runtime boundary"
-                                                       Foreground="{StaticResource MutedBrush}"
-                                                       FontFamily="{StaticResource MonoFont}"
-                                                       FontSize="10" />
-                                        </StackPanel>
-                                        <Border Grid.Column="3"
-                                                VerticalAlignment="Top"
-                                                Background="{StaticResource InsetBrush}"
-                                                BorderBrush="{StaticResource BorderBrush}"
-                                                BorderThickness="1"
-                                                CornerRadius="12"
-                                                Padding="10,6">
-                                            <TextBlock x:Name="RemoteTrustPill"
-                                                       Text="NOT CONNECTED"
-                                                       Foreground="{StaticResource WarningBrush}"
-                                                       FontFamily="{StaticResource MonoFont}"
-                                                       FontSize="9"
-                                                       FontWeight="SemiBold" />
-                                        </Border>
-                                    </Grid>
-
-                                    <TextBlock x:Name="RemoteTrustDetail"
-                                               Grid.Row="2"
-                                               Text="Choose an installed, signed RustDesk.exe. Soltex never bundles or silently downloads the remote-control runtime."
-                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                               TextWrapping="Wrap"
-                                               LineHeight="21" />
-
-                                    <Border Grid.Row="4"
-                                            Background="{StaticResource InsetBrush}"
-                                            BorderBrush="{StaticResource BorderBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="10"
-                                            Padding="14,12">
-                                        <StackPanel>
-                                            <TextBlock Text="SELECTED CLIENT"
-                                                       Foreground="{StaticResource QuietTextBrush}"
-                                                       FontFamily="{StaticResource MonoFont}"
-                                                       FontSize="9" />
-                                            <TextBlock x:Name="RemoteExecutablePath"
-                                                       Margin="0,6,0,0"
-                                                       Text="No external client selected"
-                                                       Foreground="{StaticResource TextBrush}"
-                                                       FontFamily="{StaticResource MonoFont}"
-                                                       FontSize="11"
-                                                       TextWrapping="Wrap" />
-                                            <TextBlock x:Name="RemoteFingerprint"
-                                                       Margin="0,7,0,0"
-                                                       Text="SHA-256 unavailable"
-                                                       Foreground="{StaticResource QuietTextBrush}"
-                                                       FontFamily="{StaticResource MonoFont}"
-                                                       FontSize="9"
-                                                       TextWrapping="Wrap" />
-                                        </StackPanel>
-                                    </Border>
-
-                                    <StackPanel Grid.Row="6" Orientation="Horizontal">
-                                        <Button Margin="0,0,10,0"
-                                                Style="{StaticResource SecondaryButton}"
-                                                Content="Choose RustDesk.exe"
-                                                Click="SelectRustDesk_Click" />
-                                        <Button x:Name="RemoteShareButton"
-                                                Style="{StaticResource ActionButton}"
-                                                Content="Open sharing interface"
-                                                IsEnabled="False"
-                                                Click="ShareRemote_Click" />
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-
-                            <Border Margin="0,18,0,0" Style="{StaticResource CardStyle}">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="18" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="9" />
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="18" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-                                    <StackPanel>
-                                        <TextBlock Text="Control an authorized peer"
-                                                   FontFamily="{StaticResource DisplayFont}"
-                                                   FontSize="22" />
-                                        <TextBlock Margin="0,5,0,0"
-                                                   Text="The ID is validated and passed as one literal argument. Secrets never cross the Soltex boundary."
-                                                   Foreground="{StaticResource MutedBrush}"
-                                                   TextWrapping="Wrap" />
-                                    </StackPanel>
-                                    <TextBox x:Name="RemotePeerIdInput"
-                                             Grid.Row="2"
-                                             Style="{StaticResource FieldStyle}"
-                                             MaxLength="64"
-                                             ToolTip="RustDesk peer ID" />
-                                    <TextBlock x:Name="RemotePeerHint"
-                                               Grid.Row="4"
-                                               Text="Enter 3–64 letters, numbers, hyphens, or underscores"
-                                               Foreground="{StaticResource MutedBrush}"
-                                               FontSize="11" />
-                                    <Button x:Name="RemoteConnectButton"
-                                            Grid.Row="6"
-                                            HorizontalAlignment="Left"
-                                            Style="{StaticResource ActionButton}"
-                                            Content="Connect with RustDesk"
-                                            IsEnabled="False"
-                                            Click="ConnectRemote_Click" />
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="2">
-                            <Border Style="{StaticResource CardStyle}" Background="{StaticResource SignalSurfaceBrush}" BorderBrush="{StaticResource SignalBorderBrush}">
+                        <Grid Margin="18">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="16" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="16" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Client" />
+                            <Border Grid.Row="2" Background="{StaticResource InsetBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusSm}" Padding="12">
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Foreground="{StaticResource SignalBrush}" Text="SESSION SIGNAL" />
-                                    <TextBlock x:Name="RemoteSessionStatus"
-                                               Margin="0,12,0,0"
-                                               Text="No launch requested"
-                                               FontFamily="{StaticResource DisplayFont}"
-                                               FontSize="21" />
-                                    <TextBlock x:Name="RemoteSessionDetail"
-                                               Margin="0,8,0,0"
-                                               Text="Soltex is idle. RustDesk remains the visible owner of any future session."
-                                               Foreground="{StaticResource MutedBrush}"
-                                               TextWrapping="Wrap"
-                                               LineHeight="20" />
+                                    <TextBlock Text="Selected executable" Style="{StaticResource MutedTextStyle}" />
+                                    <TextBlock x:Name="RemoteExecutablePath" Margin="0,6,0,0" Text="No external client selected" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMono}" TextWrapping="Wrap" />
+                                    <TextBlock x:Name="RemoteFingerprint" Margin="0,7,0,0" Text="SHA-256 unavailable" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
+                            <StackPanel Grid.Row="4" Orientation="Horizontal">
+                                <Button Margin="0,0,10,0" Style="{StaticResource SecondaryButton}" Content="Choose RustDesk.exe" Click="SelectRustDesk_Click" />
+                                <Button x:Name="RemoteShareButton" Style="{StaticResource ActionButton}" Content="Open sharing" IsEnabled="False" Click="ShareRemote_Click" />
+                            </StackPanel>
+                        </Grid>
 
-                            <Border Margin="0,18,0,0" Style="{StaticResource CardStyle}">
-                                <StackPanel>
-                                    <TextBlock Text="Permission boundary"
-                                               FontFamily="{StaticResource DisplayFont}"
-                                               FontSize="21" />
-                                    <TextBlock Margin="0,6,0,18"
-                                               Text="A deliberately small bridge with visible stops."
-                                               Foreground="{StaticResource MutedBrush}" />
+                        <Border Grid.Column="1" Background="{StaticResource BorderBrush}" />
 
-                                    <Grid Margin="0,0,0,15">
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="30" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                        <TextBlock Text="01" Foreground="{StaticResource AccentBrush}" FontFamily="{StaticResource MonoFont}" FontSize="10" />
-                                        <TextBlock Grid.Column="1" Text="Choose a local signed client" TextWrapping="Wrap" />
-                                    </Grid>
-                                    <Grid Margin="0,0,0,15">
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="30" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                        <TextBlock Text="02" Foreground="{StaticResource AccentBrush}" FontFamily="{StaticResource MonoFont}" FontSize="10" />
-                                        <TextBlock Grid.Column="1" Text="Confirm each Soltex launch" TextWrapping="Wrap" />
-                                    </Grid>
-                                    <Grid Margin="0,0,0,15">
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="30" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                        <TextBlock Text="03" Foreground="{StaticResource AccentBrush}" FontFamily="{StaticResource MonoFont}" FontSize="10" />
-                                        <TextBlock Grid.Column="1" Text="Authenticate and consent in RustDesk" TextWrapping="Wrap" />
-                                    </Grid>
-                                    <Grid>
-                                        <Grid.ColumnDefinitions><ColumnDefinition Width="30" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                        <TextBlock Text="04" Foreground="{StaticResource AccentBrush}" FontFamily="{StaticResource MonoFont}" FontSize="10" />
-                                        <TextBlock Grid.Column="1" Text="End and inspect the session there" TextWrapping="Wrap" />
-                                    </Grid>
-
-                                    <Border Margin="0,20,0,0"
-                                            Background="{StaticResource InsetBrush}"
-                                            BorderBrush="{StaticResource BorderBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="10"
-                                            Padding="13">
-                                        <TextBlock Text="No bundled binary · no password flags · no elevation · no service install"
-                                                   Foreground="{StaticResource MutedBrush}"
-                                                   FontFamily="{StaticResource MonoFont}"
-                                                   FontSize="10"
-                                                   TextWrapping="Wrap" />
-                                    </Border>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
+                        <Grid Grid.Column="2" Margin="18">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="6" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="22" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="10" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="16" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Connect to a peer" />
+                            <TextBlock x:Name="RemoteSessionStatus" Grid.Row="2" Text="No launch requested" Foreground="{StaticResource SignalBrush}" FontWeight="SemiBold" />
+                            <TextBlock x:Name="RemoteSessionDetail" Grid.Row="4" Text="RustDesk remains the visible owner of any session." Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                            <TextBox x:Name="RemotePeerIdInput" Grid.Row="6" Style="{StaticResource FieldStyle}" MaxLength="64" ToolTip="RustDesk peer ID" />
+                            <Grid Grid.Row="8">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock x:Name="RemotePeerHint" Text="3–64 letters, numbers, hyphens, or underscores" Style="{StaticResource MutedTextStyle}" VerticalAlignment="Center" />
+                                <Button x:Name="RemoteConnectButton" Grid.Column="1" Margin="14,0,0,0" Style="{StaticResource ActionButton}" Content="Connect" IsEnabled="False" Click="ConnectRemote_Click" />
+                            </Grid>
+                        </Grid>
                     </Grid>
-                </ScrollViewer>
+                </Border>
+
+                <Border Grid.Row="6" Background="{StaticResource InsetBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusSm}" Padding="10">
+                    <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}"
+                               Text="Each launch is confirmed in Soltex; authentication, consent, session controls, and termination stay in RustDesk." />
+                </Border>
             </Grid>
 
             <Grid x:Name="UpdatePanel" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="22" />
+                    <RowDefinition Height="12" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="10" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
@@ -684,327 +508,173 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="SOFTWARE DELIVERY" />
-                        <TextBlock Margin="0,5,0,0"
-                                   Text="Updates"
-                                   FontFamily="{StaticResource DisplayFont}"
-                                   FontSize="{StaticResource FontDisplay}" />
-                        <TextBlock Margin="0,6,0,0"
-                                   MaxWidth="700"
-                                   Text="Inspect signed update-planning evidence before any future installer or elevation boundary exists."
-                                   Foreground="{StaticResource MutedBrush}"
-                                   FontSize="14"
-                                   TextWrapping="Wrap" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource PageTitleStyle}" Text="Updates" />
+                        <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Inspect authenticated planning evidence before any install boundary exists." />
                     </StackPanel>
-                    <Button x:Name="UpdateInspectButton"
-                            Grid.Column="1"
-                            VerticalAlignment="Top"
-                            Style="{StaticResource SecondaryButton}"
-                            Content="Inspect local state"
-                            Click="UpdateInspect_Click" />
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Margin="0,0,10,0" Style="{StaticResource StatusPillStyle}"
+                                ToolTip="This component authenticates, acquires, stages, verifies, and previews a candidate. It does not install, elevate, activate, repair, uninstall, or claim automatic rollback.">
+                            <TextBlock Text="Preview only" Foreground="{StaticResource TextSecondaryBrush}" FontSize="{StaticResource FontCaption}" />
+                        </Border>
+                        <Button x:Name="UpdateInspectButton" Style="{StaticResource SecondaryButton}" Content="Inspect local state" Click="UpdateInspect_Click" />
+                    </StackPanel>
                 </Grid>
 
-                <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel>
-                        <Border x:Name="UpdateReadinessHero"
-                                Background="{StaticResource HeroPanelBrush}"
-                                BorderBrush="{StaticResource HeroBorderBrush}"
-                                BorderThickness="1"
-                                CornerRadius="24"
-                                Padding="28">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="14" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Ellipse x:Name="UpdateStateDot"
-                                         Width="13"
-                                         Height="13"
-                                         Fill="{StaticResource SignalBrush}"
-                                         VerticalAlignment="Top"
-                                         Margin="0,8,0,0" />
-                                <StackPanel Grid.Column="2">
-                                    <TextBlock x:Name="UpdateStateTitle"
-                                               Text="Planner state is clean"
-                                               FontFamily="{StaticResource DisplayFont}"
-                                               FontSize="24" />
-                                    <TextBlock x:Name="UpdateStateDetail"
-                                               Margin="0,7,0,0"
-                                               Text="No signed release source is configured, and no incomplete planning attempt is recorded."
-                                               Foreground="{StaticResource TextSecondaryBrush}"
-                                               TextWrapping="Wrap"
-                                               LineHeight="21" />
-                                </StackPanel>
-                                <Border Grid.Column="3"
-                                        VerticalAlignment="Top"
-                                        Background="{StaticResource InsetBrush}"
-                                        BorderBrush="{StaticResource BorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="12"
-                                        Padding="10,6">
-                                    <TextBlock x:Name="UpdateStatePill"
-                                               Text="IDLE"
-                                               Foreground="{StaticResource SignalBrush}"
-                                               FontFamily="{StaticResource MonoFont}"
-                                               FontSize="9"
-                                               FontWeight="SemiBold" />
-                                </Border>
-                            </Grid>
+                <Border x:Name="UpdateReadinessHero"
+                        Grid.Row="2"
+                        Background="{StaticResource QuietBrush}"
+                        BorderBrush="{StaticResource BorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource RadiusCard}"
+                        Padding="12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Ellipse x:Name="UpdateStateDot" Width="10" Height="10" Fill="{StaticResource SignalBrush}" VerticalAlignment="Center" />
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                            <TextBlock x:Name="UpdateStateTitle" Text="Planner state is clean" FontSize="{StaticResource FontSection}" FontWeight="SemiBold" />
+                            <TextBlock x:Name="UpdateStateDetail" Margin="0,3,0,0" Text="No signed release source or incomplete attempt is recorded." Style="{StaticResource MutedTextStyle}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <Border Grid.Column="3" Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
+                            <TextBlock x:Name="UpdateStatePill" Text="IDLE" Foreground="{StaticResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" FontWeight="SemiBold" />
                         </Border>
+                    </Grid>
+                </Border>
 
-                        <Grid Margin="0,18,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="5*" />
-                                <ColumnDefinition Width="22" />
-                                <ColumnDefinition Width="3*" />
-                            </Grid.ColumnDefinitions>
+                <Border Grid.Row="4" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="UpdatePreviewTab" Tag="Selected" Style="{StaticResource TabButtonStyle}" Content="Prepared preview" AutomationProperties.Name="Show prepared update preview" Click="UpdatePreviewTab_Click" />
+                        <Button x:Name="UpdateJournalTab" Margin="8,0,0,0" Style="{StaticResource TabButtonStyle}" Content="Planning journal" AutomationProperties.Name="Show update planning journal" Click="UpdateJournalTab_Click" />
+                        <Button x:Name="UpdateRecoveryTab" Margin="8,0,0,0" Style="{StaticResource TabButtonStyle}" Content="Recovery" AutomationProperties.Name="Show update recovery review" Click="UpdateRecoveryTab_Click" />
+                    </StackPanel>
+                </Border>
 
-                            <StackPanel>
-                                <Border Style="{StaticResource CardStyle}">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="18" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="18" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel>
-                                                <TextBlock Text="Prepared preview"
-                                                           FontFamily="{StaticResource DisplayFont}"
-                                                           FontSize="22" />
-                                                <TextBlock Margin="0,5,0,0"
-                                                           Text="Exact file, hash, publisher, and disk-impact evidence appears here only after signed planning succeeds."
-                                                           Foreground="{StaticResource MutedBrush}"
-                                                           TextWrapping="Wrap" />
-                                            </StackPanel>
-                                            <TextBlock x:Name="UpdatePreviewStatus"
-                                                       Grid.Column="1"
-                                                       Margin="18,3,0,0"
-                                                       Text="NO PREVIEW"
-                                                       Foreground="{StaticResource WarningBrush}"
-                                                       FontFamily="{StaticResource MonoFont}"
-                                                       FontSize="9" />
-                                        </Grid>
-
-                                        <Grid Grid.Row="2">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto" />
-                                                <RowDefinition Height="13" />
-                                                <RowDefinition Height="Auto" />
-                                            </Grid.RowDefinitions>
-                                            <StackPanel>
-                                                <TextBlock Text="Installed build" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
-                                                <TextBlock x:Name="CurrentBuildText" Margin="0,5,0,0" Text="Reading assembly" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Column="1">
-                                                <TextBlock Text="Release channel" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
-                                                <TextBlock Margin="0,5,0,0" Text="Not configured" Foreground="{StaticResource WarningBrush}" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Row="2">
-                                                <TextBlock Text="Target release" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
-                                                <TextBlock Margin="0,5,0,0" Text="None prepared" />
-                                            </StackPanel>
-                                            <StackPanel Grid.Row="2" Grid.Column="1">
-                                                <TextBlock Text="Plan and disk impact" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
-                                                <TextBlock Margin="0,5,0,0" Text="Not computed" />
-                                            </StackPanel>
-                                        </Grid>
-
-                                        <Grid Grid.Row="4">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <Border Background="{StaticResource InsetBrush}"
-                                                    BorderBrush="{StaticResource BorderBrush}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="10"
-                                                    Padding="13">
-                                                <TextBlock Text="A production release key, publisher pin, and signed descriptor source must be selected before planning can be enabled."
-                                                           Foreground="{StaticResource MutedBrush}"
-                                                           FontSize="11"
-                                                           TextWrapping="Wrap" />
-                                            </Border>
-                                            <Button Grid.Column="1"
-                                                    Margin="12,0,0,0"
-                                                    VerticalAlignment="Stretch"
-                                                    Style="{StaticResource ActionButton}"
-                                                    Content="Plan update"
-                                                    IsEnabled="False"
-                                                    ToolTip="Unavailable until production signing identities and an authenticated release source are configured." />
-                                        </Grid>
-                                    </Grid>
+                <Border Grid.Row="6" Style="{StaticResource WorkbenchStyle}">
+                    <Grid>
+                        <Grid x:Name="UpdatePreviewPanel" Margin="18">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="18" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="18" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Candidate evidence" />
+                                <TextBlock x:Name="UpdatePreviewStatus" Grid.Column="1" Text="NO PREVIEW" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="1" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="1" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                                <StackPanel Margin="0,0,16,14">
+                                    <TextBlock Text="Installed build" Style="{StaticResource MutedTextStyle}" />
+                                    <TextBlock x:Name="CurrentBuildText" Margin="0,5,0,0" Text="Reading assembly" />
+                                </StackPanel>
+                                <Border Grid.Column="1" Grid.RowSpan="3" Background="{StaticResource BorderBrush}" />
+                                <StackPanel Grid.Column="2" Margin="16,0,0,14">
+                                    <TextBlock Text="Release channel" Style="{StaticResource MutedTextStyle}" />
+                                    <TextBlock Margin="0,5,0,0" Text="Not configured" Foreground="{StaticResource WarningBrush}" />
+                                </StackPanel>
+                                <Border Grid.Row="1" Grid.ColumnSpan="3" Background="{StaticResource BorderBrush}" />
+                                <StackPanel Grid.Row="2" Margin="0,14,16,0">
+                                    <TextBlock Text="Target release" Style="{StaticResource MutedTextStyle}" />
+                                    <TextBlock Margin="0,5,0,0" Text="None prepared" />
+                                </StackPanel>
+                                <StackPanel Grid.Row="2" Grid.Column="2" Margin="16,14,0,0">
+                                    <TextBlock Text="Plan and disk impact" Style="{StaticResource MutedTextStyle}" />
+                                    <TextBlock Margin="0,5,0,0" Text="Not computed" />
+                                </StackPanel>
+                            </Grid>
+                            <Grid Grid.Row="4">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <Border Background="{StaticResource InsetBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusSm}" Padding="12">
+                                    <TextBlock Text="Planning stays unavailable until a production release key, publisher pin, and authenticated descriptor source are configured." Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
                                 </Border>
-
-                                <Border Margin="0,18,0,0" Style="{StaticResource CardStyle}">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="14" />
-                                            <RowDefinition Height="235" />
-                                        </Grid.RowDefinitions>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel>
-                                                <TextBlock Text="Authenticated planning journal" FontSize="17" FontWeight="SemiBold" />
-                                                <TextBlock Margin="0,4,0,0"
-                                                           Text="Bounded phases and sanitized details; release URLs and local paths are never displayed."
-                                                           Foreground="{StaticResource MutedBrush}"
-                                                           TextWrapping="Wrap" />
-                                            </StackPanel>
-                                            <TextBlock x:Name="UpdateJournalCount"
-                                                       Grid.Column="1"
-                                                       Margin="16,0,0,0"
-                                                       Text="0 entries"
-                                                       Foreground="{StaticResource MutedBrush}"
-                                                       VerticalAlignment="Center" />
-                                        </Grid>
-                                        <DataGrid x:Name="UpdateJournalGrid" Grid.Row="2" SelectionMode="Single">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header="When" Binding="{Binding When}" Width="135" />
-                                                <DataGridTextColumn Header="Phase" Binding="{Binding Phase}" Width="135" />
-                                                <DataGridTemplateColumn Header="Detail" Width="*">
-                                                    <DataGridTemplateColumn.CellTemplate>
-                                                        <DataTemplate>
-                                                            <TextBlock Text="{Binding Detail}"
-                                                                       TextWrapping="Wrap"
-                                                                       LineHeight="18"
-                                                                       ToolTip="{Binding Detail}" />
-                                                        </DataTemplate>
-                                                    </DataGridTemplateColumn.CellTemplate>
-                                                </DataGridTemplateColumn>
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-                                    </Grid>
-                                </Border>
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2">
-                                <Border Style="{StaticResource CardStyle}" Background="{StaticResource SignalSurfaceBrush}" BorderBrush="{StaticResource SignalBorderBrush}">
-                                    <StackPanel>
-                                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Foreground="{StaticResource SignalBrush}" Text="NON-INSTALLING BOUNDARY" />
-                                        <TextBlock Margin="0,12,0,0"
-                                                   Text="Nothing installs from this page"
-                                                   FontFamily="{StaticResource DisplayFont}"
-                                                   FontSize="21"
-                                                   TextWrapping="Wrap" />
-                                        <TextBlock Margin="0,8,0,18"
-                                                   Text="The current component verifies and stages evidence, then stops at a human-readable preview."
-                                                   Foreground="{StaticResource MutedBrush}"
-                                                   TextWrapping="Wrap"
-                                                   LineHeight="20" />
-                                        <Grid Margin="0,0,0,14">
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="30" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                            <TextBlock Text="01" Foreground="{StaticResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="10" />
-                                            <TextBlock Grid.Column="1" Text="Signed metadata and quorum" TextWrapping="Wrap" />
-                                        </Grid>
-                                        <Grid Margin="0,0,0,14">
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="30" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                            <TextBlock Text="02" Foreground="{StaticResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="10" />
-                                            <TextBlock Grid.Column="1" Text="Pinned HTTPS acquisition" TextWrapping="Wrap" />
-                                        </Grid>
-                                        <Grid Margin="0,0,0,14">
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="30" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                            <TextBlock Text="03" Foreground="{StaticResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="10" />
-                                            <TextBlock Grid.Column="1" Text="Bounded private staging" TextWrapping="Wrap" />
-                                        </Grid>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="30" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-                                            <TextBlock Text="04" Foreground="{StaticResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="10" />
-                                            <TextBlock Grid.Column="1" Text="Exact confirmation challenge" TextWrapping="Wrap" />
-                                        </Grid>
-                                    </StackPanel>
-                                </Border>
-
-                                <Border Margin="0,18,0,0" Style="{StaticResource CardStyle}">
-                                    <StackPanel>
-                                        <TextBlock Text="Recovery review"
-                                                   FontFamily="{StaticResource DisplayFont}"
-                                                   FontSize="21" />
-                                        <TextBlock x:Name="UpdateRecoveryTitle"
-                                                   Margin="0,12,0,0"
-                                                   Text="No interrupted attempt"
-                                                   Foreground="{StaticResource SignalBrush}"
-                                                   FontWeight="SemiBold" />
-                                        <TextBlock x:Name="UpdateRecoveryDetail"
-                                                   Margin="0,7,0,0"
-                                                   Text="No private staging token requires review."
-                                                   Foreground="{StaticResource MutedBrush}"
-                                                   TextWrapping="Wrap"
-                                                   LineHeight="20" />
-                                        <Border Margin="0,18,0,0"
-                                                Background="{StaticResource InsetBrush}"
-                                                BorderBrush="{StaticResource BorderBrush}"
-                                                BorderThickness="1"
-                                                CornerRadius="10"
-                                                Padding="13">
-                                            <TextBlock Text="No installer · no elevation · no service · no activation · no automatic rollback claim"
-                                                       Foreground="{StaticResource MutedBrush}"
-                                                       FontFamily="{StaticResource MonoFont}"
-                                                       FontSize="10"
-                                                       TextWrapping="Wrap" />
-                                        </Border>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
+                                <Button Grid.Column="1" Margin="12,0,0,0" Style="{StaticResource ActionButton}" Content="Plan update" IsEnabled="False" ToolTip="Unavailable until production signing identities and an authenticated release source are configured." />
+                            </Grid>
                         </Grid>
 
-                        <TextBlock Margin="2,16,2,4"
-                                   Foreground="{StaticResource QuietTextBrush}"
-                                   FontSize="11"
-                                   TextWrapping="Wrap"
-                                   Text="Scope: the update planner can authenticate, acquire, stage, verify, and preview a candidate. It does not install, elevate, activate, repair, uninstall, or silently recover a release." />
-                    </StackPanel>
-                </ScrollViewer>
+                        <Grid x:Name="UpdateJournalPanel" Margin="18" Visibility="Collapsed">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="10" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Authenticated planning journal" />
+                                    <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Bounded phases and sanitized detail; URLs and local paths are hidden." />
+                                </StackPanel>
+                                <TextBlock x:Name="UpdateJournalCount" Grid.Column="1" Text="0 entries" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
+                            </Grid>
+                            <DataGrid x:Name="UpdateJournalGrid" Grid.Row="2" SelectionMode="Single">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="When" Binding="{Binding When}" Width="135" />
+                                    <DataGridTextColumn Header="Phase" Binding="{Binding Phase}" Width="135" />
+                                    <DataGridTemplateColumn Header="Detail" Width="*">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate><TextBlock Text="{Binding Detail}" TextWrapping="Wrap" LineHeight="18" ToolTip="{Binding Detail}" /></DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+
+                        <Grid x:Name="UpdateRecoveryPanel" Margin="18" Visibility="Collapsed">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="16" /><RowDefinition Height="Auto" /><RowDefinition Height="20" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Recovery review" />
+                            <StackPanel Grid.Row="2">
+                                <TextBlock x:Name="UpdateRecoveryTitle" Text="No interrupted attempt" Foreground="{StaticResource SignalBrush}" FontWeight="SemiBold" />
+                                <TextBlock x:Name="UpdateRecoveryDetail" Margin="0,5,0,0" Text="No private staging token requires review." Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <Border Grid.Row="4" Background="{StaticResource SignalSurfaceBrush}" BorderBrush="{StaticResource SignalBorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusSm}" Padding="12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock FontWeight="SemiBold" Text="Non-installing boundary" />
+                                        <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedTextStyle}" Text="Signed metadata → pinned acquisition → private staging → exact confirmation." />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" Text="NO INSTALLER · NO ELEVATION · NO SERVICE" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
             </Grid>
 
             <views:MixerView x:Name="MixerPanel" Visibility="Collapsed" />
 
             <Grid x:Name="ClipsPanel" Visibility="Collapsed">
                 <StackPanel>
-                <Border Style="{StaticResource CardStyle}" VerticalAlignment="Top">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="CAPTURE / PREVIEW" />
-                        <TextBlock Margin="0,7,0,0" Text="Capture" FontFamily="{StaticResource DisplayFont}" FontSize="{StaticResource FontDisplay}" />
-                        <TextBlock Margin="0,8,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap"
-                                   Text="Capture is not installed yet. This preview keeps consent, storage, and performance boundaries visible." />
-                    </StackPanel>
-                </Border>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource PageTitleStyle}" Text="Capture" />
+                            <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Consent-first local capture concept; no recorder is installed." />
+                        </StackPanel>
+                        <Border Grid.Column="1" Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
+                            <TextBlock Text="PREVIEW" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                        </Border>
+                    </Grid>
                     <Border Margin="0,18,0,0"
                             MaxWidth="640"
                             HorizontalAlignment="Left"
                             Style="{StaticResource HeroCardStyle}">
                         <StackPanel>
-                            <TextBlock Text="CAPTURE OFF"
-                                       Style="{StaticResource PageEyebrowStyle}"
-                                       Foreground="{StaticResource WarningBrush}" />
-                            <TextBlock Margin="0,8,0,0"
+                            <TextBlock Text="Capture off" Foreground="{StaticResource WarningBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
+                            <TextBlock Margin="0,6,0,0"
                                        Text="Capture is not installed"
                                        FontFamily="{StaticResource DisplayFont}"
-                                       FontSize="28" />
-                            <TextBlock Margin="0,9,0,0"
+                                       FontSize="{StaticResource FontDisplaySm}" />
+                            <TextBlock Margin="0,7,0,0"
                                        MaxWidth="520"
-                                       Text="A future Windows Graphics Capture implementation must remain opt-in, visibly active, locally stored, and performance-bounded."
+                                       Text="A future Windows Graphics Capture implementation must be opt-in, visibly active, locally stored, and performance-bounded."
                                        TextWrapping="Wrap"
-                                       Foreground="{StaticResource MutedBrush}"
-                                       LineHeight="20" />
-                            <TextBlock Margin="0,16,0,0"
+                                       Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock Margin="0,12,0,0"
                                        Text="No recorder · no overlay · no game injection"
                                        Foreground="{StaticResource QuietTextBrush}"
                                        FontFamily="{StaticResource MonoFont}"

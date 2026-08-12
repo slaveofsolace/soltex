@@ -181,10 +181,9 @@ public partial class ApplicationsView : UserControl
             : $"PARTIAL · READ ONLY · {visibleCount:N0} SHOWN";
     }
 
-    private void SetSelected(Button button, bool selected)
+    private static void SetSelected(Button button, bool selected)
     {
-        button.Background = (Brush)FindResource(selected ? "SelectedNavBrush" : "NavRestBrush");
-        button.Foreground = (Brush)FindResource(selected ? "AccentBrush" : "MutedBrush");
+        button.Tag = selected ? "Selected" : null;
     }
 
     private sealed class InstalledRow(InstalledApplicationObservation item)

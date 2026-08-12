@@ -49,12 +49,13 @@ public partial class MonitoringView : UserControl
     internal void SetDetailsVisible(bool visible)
     {
         _detailsVisible = visible;
+        MonitoringOverviewPanel.Visibility = _detailsVisible ? Visibility.Collapsed : Visibility.Visible;
         MonitoringDetailsPanel.Visibility = _detailsVisible ? Visibility.Visible : Visibility.Collapsed;
-        MonitoringDetailsButton.Content = _detailsVisible ? "Hide system detail" : "Show system detail";
+        MonitoringDetailsButton.Content = _detailsVisible ? "Live overview" : "System detail";
         MonitoringDetailsButton.SetCurrentValue(
             System.Windows.Automation.AutomationProperties.NameProperty,
             _detailsVisible
-                ? "Hide storage, provider, and process details"
+                ? "Show live performance overview"
                 : "Show storage, provider, and process details");
     }
 

@@ -5,23 +5,23 @@
              Background="Transparent"
              Foreground="{StaticResource TextBrush}"
              FontFamily="{StaticResource UiFont}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled"
-                  HorizontalContentAlignment="Stretch">
-        <StackPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
             <!-- Page header -->
-            <Grid>
+            <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="PERFORMANCE" />
-                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Performance" />
-                    <TextBlock Margin="0,5,0,0"
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Style="{StaticResource PageTitleStyle}" Text="Performance" />
+                    <TextBlock Margin="0,3,0,0"
                                Style="{StaticResource MutedTextStyle}"
-                               FontSize="{StaticResource FontBody}"
                                Text="Live CPU, memory, network, storage, and process activity." />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
@@ -50,8 +50,15 @@
                 </StackPanel>
             </Grid>
 
+            <Grid x:Name="MonitoringOverviewPanel" Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="248" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
             <!-- Processor and physical memory -->
-            <Grid Margin="0,22,0,0">
+            <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="16" />
@@ -73,7 +80,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="PROCESSOR" Style="{StaticResource PageEyebrowStyle}" />
+                            <TextBlock Text="Processor" Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                             <TextBlock x:Name="CpuDetailText"
                                        Grid.Column="1"
                                        Text="GetSystemTimes"
@@ -144,9 +151,10 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="PHYSICAL MEMORY"
-                                       Style="{StaticResource PageEyebrowStyle}"
-                                       Foreground="{StaticResource SignalBrush}" />
+                            <TextBlock Text="Physical memory"
+                                       Foreground="{StaticResource SignalBrush}"
+                                       FontSize="{StaticResource FontCaption}"
+                                       FontWeight="SemiBold" />
                             <TextBlock x:Name="MemoryDetailText"
                                        Grid.Column="1"
                                        Text="GlobalMemoryStatusEx"
@@ -228,7 +236,7 @@
             </Grid>
 
             <!-- Network throughput -->
-            <Border Margin="0,16,0,0" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="2" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1.45*" />
@@ -377,9 +385,16 @@
                 </Grid>
             </Border>
 
-            <StackPanel x:Name="MonitoringDetailsPanel" Visibility="Collapsed">
+            </Grid>
+
+            <Grid x:Name="MonitoringDetailsPanel" Grid.Row="2" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
             <!-- Volumes and provider coverage -->
-            <Grid Margin="0,16,0,0">
+            <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1.3*" />
                     <ColumnDefinition Width="16" />
@@ -502,12 +517,12 @@
             </Grid>
 
             <!-- Processes -->
-            <Border Margin="0,16,0,0" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="2" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="12" />
-                        <RowDefinition Height="230" />
+                        <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
@@ -605,7 +620,6 @@
                                Text="Waiting for provider provenance" />
                 </Grid>
             </Border>
-            </StackPanel>
-        </StackPanel>
-    </ScrollViewer>
+            </Grid>
+    </Grid>
 </UserControl>

@@ -23,9 +23,15 @@ A passing test proves only its named boundary. A rendered image proves layout ex
 Implemented on the draft branch:
 
 - compact module-owned navigation: Overview, Performance, Applications, Audio, Security, Remote Assist, Activity, Updates, and a separate bottom-rail Settings entry;
-- deep neutral surfaces, restrained electric-iris accent, Segoe UI Variable typography, tighter spacing/radii, Fluent glyphs, and clearer focus hierarchy;
-- preview labels and concise first-view copy so unfinished modules do not masquerade as shipped tools;
-- progressive disclosure retained for provider, event, and overflow detail.
+- Quiet Instrument Deck surfaces with graphite work areas, a glacier-blue
+  interaction signal, Segoe UI Variable typography, small-radius hairline
+  geometry, and a 2–3 px selected-workspace rail;
+- compact command headers, local modes, and bounded work areas that put direct
+  controls before commentary;
+- preview labels and concise first-view copy so unfinished modules do not
+  masquerade as shipped tools;
+- progressive disclosure retained inside the owning work area for provider,
+  event, and overflow detail.
 
 Exact native matrices through the Activity checkpoint were agent-inspected at 1280×820 on both the owner host and hosted Windows runner. Human owner visual acceptance remains open, so PR #11 remains draft.
 
@@ -100,11 +106,14 @@ The Audio reconciliation head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183` passed 
 
 ## Next stages
 
-1. Publish and accept the read-only Services/notification-area/runtime-cost slice through exact-head Windows, package, native-render, and owner-review gates.
-2. Add bounded local historical telemetry only after its storage, retention, migration, and measured-idle-cost contract is independently proven.
-3. Accept the user-mediated audio default/fallback workflow through hosted and owner-review gates without claiming routing or DSP; owner-host exact-source and native-pixel gates are complete.
-4. Add mTLS/Tailscale device enrollment, capability-scoped agents, revocation, emergency stop, and NAS audit transport. Keep personal Google Drive and work Box in separate permission domains.
-5. Add Windows Graphics Capture, benchmark profiles/provenance, signing, installer lifecycle evidence, accessibility/scaling verification, and owner acceptance.
+The complete ordered implementation map, prerequisites, owner decisions,
+agent-owned slices, exit gates, and nonclaims now lives in
+[`REMAINING_WORK.md`](REMAINING_WORK.md). The immediate gate is owner review plus
+keyboard, UI Automation, high-contrast, reduced-motion, scaling, and
+representative-viewport evidence for the Quiet Instrument Deck candidate. The
+next independent engineering slice is richer process detail and bounded local
+history; release signing, benchmark limits, Privacy Tool source, device policy,
+and connector accounts each require the named owner inputs before activation.
 
 ## Nonclaims
 

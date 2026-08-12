@@ -1,0 +1,621 @@
+{
+  "schema_version": "2.0.0",
+  "ledger_id": "soltex_ui_rework_20260812",
+  "created_at": "2026-08-12T18:10:00Z",
+  "depth": "DEEP",
+  "iteration": 2,
+  "root": {
+    "kind": "DECISION",
+    "node_id": "root_ui_decision",
+    "statement": "Choose and implement a coherent Soltex interaction system that removes default whole-page scrolling and persistent explanatory clutter without weakening existing behavior or honest capability boundaries.",
+    "source_state": "The pushed 1facf37 native UI is functional but repeats dark SaaS cards, violet selection fills, eyebrow-title-subtitle templates, and long explanation panels across primary workspaces.",
+    "target_state": "Every primary workspace follows the Quiet Instrument Deck contract, presents direct controls first, and fits its common path within the 1280 by 820 reference viewport.",
+    "conditions": [
+      "Preserve working controls, persistent state, lifecycle fixes, preview labels, security boundaries, and protected checkout ownership.",
+      "Do not copy proprietary code, assets, copy, presets, measurements, or distinctive layouts from reference products.",
+      "Reserve subjective visual acceptance and residual accessibility approval for the user."
+    ],
+    "boundary": "The sol/soltex-product-rebuild worktree, its native WPF UI, tests, documentation, and generated local evidence; no production deployment or external account mutation.",
+    "objective_claim_id": "claim_ui_rework_needed",
+    "invariant_ids": [
+      "inv_behavior",
+      "inv_honesty",
+      "inv_clean_room",
+      "inv_human_gate"
+    ],
+    "uncertainty_changes_decision": false
+  },
+  "project_model": {
+    "status": "READY",
+    "facets": {
+      "intent": {
+        "summary": "Make Soltex feel like a deliberate native system utility with less scrolling, less visible prose, and more direct manipulation.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_ui_rework_needed"],
+        "unknown_disposition": ""
+      },
+      "decision": {
+        "summary": "Adopt Quiet Instrument Deck and migrate the highest-friction workspaces before additional product expansion.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_design_direction"],
+        "unknown_disposition": ""
+      },
+      "acceptance_contract": {
+        "summary": "Default primary views fit at 1280 by 820, controls precede commentary, no feature regression is accepted, and owner visual acceptance remains explicit.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_design_direction"],
+        "unknown_disposition": "Owner visual approval and final accessibility disposition remain open until post-implementation native review."
+      },
+      "mechanism": {
+        "summary": "Shared theme tokens and components define the visual grammar; each workspace uses a compact command header plus a bounded table, lane, or master-detail work area.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_design_direction"],
+        "unknown_disposition": ""
+      },
+      "current_state_history": {
+        "summary": "Baseline identity is branch sol/soltex-product-rebuild at 1facf373 with a complete current-source capture matrix dated 2026-08-12.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_ui_rework_needed"],
+        "unknown_disposition": ""
+      },
+      "people_incentives": {
+        "summary": "The user owns subjective visual acceptance and wants a calm, capable app rather than an AI-generated dashboard aesthetic.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_ui_rework_needed"],
+        "unknown_disposition": ""
+      },
+      "lifecycle_recovery": {
+        "summary": "Changes remain isolated in the implementation worktree; the full build, focused suites, and 16-state native candidate matrix passed, and a bounded capture timeout recovered without an orphan process or overlapping retry.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_design_direction"],
+        "unknown_disposition": "Signed installer recovery and broad display/accessibility recovery remain separate later gates."
+      }
+    },
+    "invariants": [
+      {
+        "id": "inv_behavior",
+        "statement": "Existing working commands, persistence, and lifecycle behavior remain functional.",
+        "owner": "Soltex implementation and regression suites",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": ["ev_baseline_capture"]
+      },
+      {
+        "id": "inv_honesty",
+        "statement": "Working, preview, unavailable, and degraded capability remain visibly distinct.",
+        "owner": "Soltex product contract",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": ["ev_design_contract"]
+      },
+      {
+        "id": "inv_clean_room",
+        "statement": "Reference products contribute only general principles; no proprietary payload or distinctive expression is copied.",
+        "owner": "Resource provenance record",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": ["ev_provenance"]
+      },
+      {
+        "id": "inv_human_gate",
+        "statement": "Subjective visual acceptance and residual accessibility approval remain reserved for the user.",
+        "owner": "User",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": ["ev_design_contract"]
+      }
+    ],
+    "dependencies": [
+      {
+        "id": "dep_wpf_theme",
+        "name": "Soltex WPF theme resources",
+        "role": "Shared source of palette, geometry, typography, and reusable component behavior.",
+        "claim_ids": ["claim_design_direction"]
+      },
+      {
+        "id": "dep_native_capture",
+        "name": "Native render-smoke evidence",
+        "role": "Endpoint evidence for viewport, layout, and runtime integration.",
+        "claim_ids": ["claim_design_direction"]
+      }
+    ],
+    "stakeholders": [
+      {
+        "id": "stake_user",
+        "name": "Soltex owner",
+        "role": "Objective owner and final subjective visual accepter.",
+        "claim_ids": ["claim_ui_rework_needed", "claim_design_direction"]
+      }
+    ]
+  },
+  "authority": {
+    "scope": "Modify, test, document, and capture the dedicated Soltex product-rebuild worktree and push the established feature branch and draft PR.",
+    "decision_owner": "Soltex owner",
+    "authorized_actions": [
+      "Edit in-scope WPF source, tests, documentation, and local evidence.",
+      "Run bounded local builds, tests, render smoke, and package verification.",
+      "Commit and push the established implementation branch and update its draft pull request."
+    ],
+    "forbidden_actions": [
+      "Reset, clean, stash, discard, or overwrite the protected owner checkout.",
+      "Copy or redistribute proprietary reference-product payloads or distinctive expression.",
+      "Claim owner visual acceptance, WCAG conformance, feature parity, or production readiness without evidence."
+    ],
+    "human_reserved_decisions": [
+      "Final subjective visual acceptance.",
+      "Residual accessibility and product-risk acceptance."
+    ],
+    "external_state_allowed": true,
+    "hard_gates": [
+      {
+        "id": "gate_authority",
+        "category": "AUTHORITY",
+        "status": "CLEAR",
+        "rationale": "The user explicitly authorized the full design-system rework and implementation.",
+        "claim_ids": ["claim_ui_rework_needed"]
+      },
+      {
+        "id": "gate_safety",
+        "category": "SAFETY",
+        "status": "CLEAR",
+        "rationale": "The work changes UI presentation and bounded app behavior while preserving existing lifecycle and security controls.",
+        "claim_ids": ["claim_design_direction"]
+      },
+      {
+        "id": "gate_privacy",
+        "category": "PRIVACY_SECURITY_LEGAL",
+        "status": "CLEAR",
+        "rationale": "The clean-room boundary is documented and no private data or proprietary payload is acquired.",
+        "claim_ids": ["claim_design_direction"]
+      },
+      {
+        "id": "gate_external",
+        "category": "IRREVERSIBLE_EXTERNAL_STATE",
+        "status": "CLEAR",
+        "rationale": "Only reversible Git branch and draft pull-request updates are authorized external state.",
+        "claim_ids": ["claim_design_direction"]
+      },
+      {
+        "id": "gate_production",
+        "category": "DESTRUCTIVE_PRODUCTION",
+        "status": "NOT_APPLICABLE",
+        "rationale": "No destructive operation or production deployment is in scope.",
+        "claim_ids": ["claim_design_direction"]
+      },
+      {
+        "id": "gate_human",
+        "category": "HUMAN_RESERVED",
+        "status": "CLEAR",
+        "rationale": "Implementation may proceed while final subjective acceptance remains explicitly reserved.",
+        "claim_ids": ["claim_design_direction"]
+      },
+      {
+        "id": "gate_rollback",
+        "category": "ROLLBACK_FAILURE",
+        "status": "CLEAR",
+        "rationale": "The isolated worktree and file-level Git history support bounded recovery without touching owner work.",
+        "claim_ids": ["claim_design_direction"]
+      }
+    ]
+  },
+  "companion_findings": {
+    "lead_skill": "HUMAN_CORTEX",
+    "applicable_domains": ["VISUAL", "UI", "RUNTIME_EXPERIENCE", "ACCESSIBILITY_COMFORT"],
+    "observation_input": "CURRENT_CAPTURE",
+    "cold_eye_status": "COMPLETED",
+    "cold_eye_before_source_inspection": true,
+    "findings": [
+      {
+        "id": "finding_card_stack",
+        "source_skill": "HUMAN_EYE",
+        "domain": "UI",
+        "label": "OBSERVED",
+        "verdict": "REVISE",
+        "statement": "Security, Updates, Remote Assist, and Settings present several equal-weight rounded cards and persistent explanations before or around the primary work.",
+        "evidence_ids": ["ev_baseline_capture"]
+      },
+      {
+        "id": "finding_strong_tables",
+        "source_skill": "HUMAN_EYE",
+        "domain": "UI",
+        "label": "OBSERVED",
+        "verdict": "KEEP",
+        "statement": "Applications and default Performance already use real dense data surfaces that provide a credible system-utility foundation.",
+        "evidence_ids": ["ev_baseline_capture"]
+      },
+      {
+        "id": "finding_visual_acceptance",
+        "source_skill": "HUMAN_EYE",
+        "domain": "VISUAL",
+        "label": "UNKNOWN",
+        "verdict": "UNKNOWN",
+        "statement": "The reworked visual system cannot be accepted until native after-captures are reviewed by the user.",
+        "evidence_ids": []
+      }
+    ],
+    "completion_axes": {
+      "functional_implementation": {
+        "status": "PASS",
+        "signal": "Shared tokens, navigation signal, compact command shelves, local modes, and bounded work areas are implemented across every primary and preview workspace.",
+        "evidence_ids": ["ev_design_contract", "ev_current_xaml", "ev_test_suites"],
+        "rationale": "The affected control suite passed 29 of 29 after the migration, including mutually exclusive Performance, Settings, and Audio work areas."
+      },
+      "runtime_integration": {
+        "status": "PASS",
+        "signal": "Release build and all required suites passed; 16 independent native WPF states rendered at 1280 by 820 without an error sidecar.",
+        "evidence_ids": ["ev_test_suites", "ev_candidate_matrix"],
+        "rationale": "Native execution exercised the default and disclosure paths changed by the design migration."
+      },
+      "player_eye_presentation": {
+        "status": "PASS",
+        "signal": "Agent cold-eye comparison found no gross clipping, hidden common-path command, whole-page default scroll, or obvious copy-budget breach across the 16-state candidate matrix.",
+        "evidence_ids": ["ev_baseline_capture", "ev_candidate_matrix"],
+        "rationale": "This passes the bounded reference-viewport presentation gate while leaving subjective owner acceptance separate."
+      },
+      "evidence_regression_coverage": {
+        "status": "PASS",
+        "signal": "Design-token and identity policies, Release build, eight functional suites, and the complete candidate matrix passed.",
+        "evidence_ids": ["ev_design_guard", "ev_test_suites", "ev_candidate_matrix"],
+        "rationale": "The evidence covers theme policy, behavior, security boundaries, lifecycle-dependent rendering, and all changed native states."
+      },
+      "human_acceptance": {
+        "status": "UNKNOWN",
+        "signal": "No owner decision exists for the reworked UI.",
+        "evidence_ids": [],
+        "rationale": "Subjective quality remains a human-reserved decision."
+      }
+    }
+  },
+  "claims": [
+    {
+      "id": "claim_ui_rework_needed",
+      "label": "OBSERVED",
+      "statement": "The current primary UI overuses whole-page scrolling, repeated card stacks, persistent explanatory text, and a violet dark-SaaS treatment that weakens a system-utility identity.",
+      "evidence_ids": ["ev_baseline_capture", "ev_current_xaml"],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "The complete current-source capture matrix and current XAML independently expose the repeated layout and copy patterns."
+      }
+    },
+    {
+      "id": "claim_design_direction",
+      "label": "MEASURED",
+      "statement": "A shared Quiet Instrument Deck theme plus bounded command-header and work-area templates will reduce visual noise while preserving capability discoverability.",
+      "evidence_ids": ["ev_design_contract", "ev_provenance", "ev_design_guard", "ev_test_suites", "ev_candidate_matrix"],
+      "contradiction_claim_ids": [],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "The rights-safe design contract is implemented, all named regression gates passed, and the complete native candidate matrix supports the intended viewport and hierarchy outcome."
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev_baseline_capture",
+      "kind": "ARTIFACT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "C:/Users/suhai/.codex/visualizations/2026/08/12/soltex-product-rebuild/hosted-1facf37/windows/visual",
+      "captured_at": "2026-08-12T17:13:14Z",
+      "integrity": "Current-source native capture set at branch head 1facf373; primary/default and disclosure states inspected before source-led interpretation.",
+      "supports_claim_ids": ["claim_ui_rework_needed"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_current_xaml",
+      "kind": "SOURCE",
+      "access": "INSPECTED_CURRENT",
+      "locator": "src/Soltex.App/MainWindow.xaml; src/Soltex.App/Views; src/Soltex.App/Themes",
+      "captured_at": "2026-08-12T18:00:00Z",
+      "integrity": "Inspected in clean worktree at 1facf373 before rework edits.",
+      "supports_claim_ids": ["claim_ui_rework_needed"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_design_contract",
+      "kind": "ARTIFACT",
+      "access": "GENERATED_CURRENT",
+      "locator": "docs/DESIGN_SYSTEM.md",
+      "captured_at": "2026-08-12T18:10:00Z",
+      "integrity": "Version 2.0 Quiet Instrument Deck implementation contract.",
+      "supports_claim_ids": ["claim_design_direction"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_provenance",
+      "kind": "ARTIFACT",
+      "access": "GENERATED_CURRENT",
+      "locator": "docs/evidence/2026-08-12-design-system-rework/REFERENCE_PROVENANCE.md",
+      "captured_at": "2026-08-12T18:10:00Z",
+      "integrity": "Dated clean-room record; all sources marked REFERENCE ONLY and no payload acquired.",
+      "supports_claim_ids": ["claim_design_direction"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_design_guard",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "eng/verify-design-tokens.ps1; passed across 10 XAML files on the working candidate",
+      "captured_at": "2026-08-12T19:05:00Z",
+      "integrity": "Raw colour use remained confined to the shared token dictionary after the full migration.",
+      "supports_claim_ids": ["claim_design_direction"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_test_suites",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "docs/evidence/2026-08-12-design-system-rework/IMPLEMENTATION_AUDIT.md",
+      "captured_at": "2026-08-12T19:20:00Z",
+      "integrity": "Release build completed with zero warnings or errors; required suites passed at Security 31/31, supply chain 18/18, hardening 12/12, Updates 17/17, Device Fabric 24/24, Monitoring 16/16, Audio 21/21, and App 29/29.",
+      "supports_claim_ids": ["claim_design_direction"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_candidate_matrix",
+      "kind": "ARTIFACT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "C:/Users/suhai/Documents/soltex-product-rebuild/artifacts/ui-rework-preview-20260812",
+      "captured_at": "2026-08-12T19:40:00Z",
+      "integrity": "Sixteen 1280 by 820 working-candidate native states were directly inspected. The first bounded batch ended after 13 frames with no process remaining; the final three states were captured once in a separate bounded continuation.",
+      "supports_claim_ids": ["claim_design_direction"],
+      "contradicts_claim_ids": []
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "hyp_bounded_workbench",
+      "statement": "Replacing page-level scroll and card stacks with a command header plus bounded work area will make the common path faster to parse without hiding advanced capability.",
+      "mechanism": "Stable spatial regions preserve control location while local tabs and master-detail panes defer uncommon detail without removing it.",
+      "status": "SUPPORTED",
+      "supporting_claim_ids": ["claim_ui_rework_needed", "claim_design_direction"],
+      "contradicting_claim_ids": [],
+      "distinguishing_prediction": "At 1280 by 820 every primary default view will expose its main control or data surface without whole-page scrolling and with no more than 75 explanatory words.",
+      "falsifier": "A primary common-path action is hidden, requires additional navigation, or the default page still needs whole-page scrolling at the reference viewport.",
+      "decision_if_true": "Retain the workbench grammar and migrate remaining preview/detail states consistently.",
+      "test_ids": ["test_native_matrix"],
+      "confidence": {
+        "level": "HIGH",
+        "basis": "The complete candidate matrix and affected control tests support the predicted reference-viewport result without a common-path regression."
+      }
+    }
+  ],
+  "tests": [
+    {
+      "id": "test_cold_eye",
+      "question": "Which current Soltex regions create the strongest hierarchy, scrolling, copy, and interaction friction before source interpretation?",
+      "kind": "INSPECTION",
+      "discriminates_hypothesis_ids": ["hyp_bounded_workbench"],
+      "predicted_outcomes": [
+        {
+          "hypothesis_id": "hyp_bounded_workbench",
+          "outcome": "Repeated card/prose stacks and whole-page scrolling concentrate in Security, Updates, Remote Assist, Settings, and expanded Performance detail."
+        }
+      ],
+      "expected_decision_value": "HIGH",
+      "cost": "LOW",
+      "risk": "LOW",
+      "authorization_status": "AUTHORIZED",
+      "status": "PASS",
+      "evidence_ids": ["ev_baseline_capture"],
+      "changes_decision_if": "If direct-control surfaces were already dominant across all primary views, a theme-only correction would be sufficient."
+    },
+    {
+      "id": "test_native_matrix",
+      "question": "Does the implemented design meet viewport, interaction, accessibility, and regression boundaries in the native WPF runtime?",
+      "kind": "EXPERIMENT",
+      "discriminates_hypothesis_ids": ["hyp_bounded_workbench"],
+      "predicted_outcomes": [
+        {
+          "hypothesis_id": "hyp_bounded_workbench",
+          "outcome": "Primary default workspaces expose the common path without whole-page scrolling, retain advanced detail locally, and pass affected regression suites."
+        }
+      ],
+      "expected_decision_value": "HIGH",
+      "cost": "MEDIUM",
+      "risk": "LOW",
+      "authorization_status": "AUTHORIZED",
+      "status": "PASS",
+      "evidence_ids": ["ev_design_guard", "ev_test_suites", "ev_candidate_matrix"],
+      "changes_decision_if": "Any hidden primary action, clipping, focus failure, copy-budget breach, or behavioral regression requires another implementation iteration."
+    }
+  ],
+  "trace": {
+    "bounds": {
+      "max_depth": 3,
+      "max_nodes": 8,
+      "stop_rule": "Expand only branches that change workspace anatomy, capability discoverability, regression risk, clean-room compliance, or the human acceptance gate."
+    },
+    "nodes": [
+      {
+        "id": "root_ui_decision",
+        "kind": "ROOT",
+        "statement": "Select a coherent system-wide design response to the observed UI friction.",
+        "claim_id": "claim_ui_rework_needed",
+        "depth": 0,
+        "terminal": false,
+        "closure_reason": "EXPANDED"
+      },
+      {
+        "id": "state_attention_fragmented",
+        "kind": "CONSEQUENCE",
+        "statement": "Equal-weight panels, repeated prose, and page scrolling fragment attention and make capability feel less direct.",
+        "claim_id": "claim_ui_rework_needed",
+        "depth": 1,
+        "terminal": false,
+        "closure_reason": "EXPANDED"
+      },
+      {
+        "id": "state_workbench_migration",
+        "kind": "MITIGATION",
+        "statement": "Shared tokens and bounded workspace templates move primary controls into stable visible regions while retaining detail locally.",
+        "claim_id": "claim_design_direction",
+        "depth": 2,
+        "terminal": true,
+        "closure_reason": "MONITORED"
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_fragmentation",
+        "relation": "FORWARD",
+        "source_node_id": "root_ui_decision",
+        "target_node_id": "state_attention_fragmented",
+        "source_delta": "Primary views repeat page-level scrolling, equally emphasized cards, and explanatory text.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "Competing regions dilute visual priority and force spatial context switches before the user reaches the main control.",
+        "conditions": ["Reference viewport is 1280 by 820", "Primary action is below or surrounded by explanation"],
+        "lag": "Immediate during visual parsing and navigation.",
+        "target_delta": "The common path takes more scanning and scrolling to locate.",
+        "affected_refs": ["stake_user", "inv_behavior"],
+        "supporting_claim_ids": ["claim_ui_rework_needed"],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Native capture shows page scrollbars, repeated peer cards, and persistent explanatory blocks.",
+          "latency": "Visible in the first cold-eye pass.",
+          "failure_to_detect": "A cropped screenshot could omit off-screen content; the full state matrix and XAML provide a cross-check."
+        },
+        "falsifier": "All primary common-path controls are immediately visible and unambiguous without page scrolling.",
+        "confidence": {
+          "level": "HIGH",
+          "basis": "Supported by current native captures and current source."
+        }
+      },
+      {
+        "id": "edge_workbench",
+        "relation": "FORWARD",
+        "source_node_id": "state_attention_fragmented",
+        "target_node_id": "state_workbench_migration",
+        "source_delta": "The design contract limits visible prose and peer regions while requiring a stable command header and work area.",
+        "mechanism_status": "HYPOTHESIZED",
+        "mechanism": "Stable position and progressive disclosure reduce competing targets while preserving advanced capability in local panes.",
+        "conditions": ["Controls remain feature-complete", "Local detail stays keyboard reachable", "Viewport and scaling tests pass"],
+        "lag": "After the system-wide XAML migration and native revalidation.",
+        "target_delta": "Primary work becomes visible and spatially predictable with less scrolling and less prose.",
+        "affected_refs": ["dep_wpf_theme", "dep_native_capture", "inv_behavior", "inv_human_gate"],
+        "supporting_claim_ids": ["claim_design_direction"],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "After-capture matrix, word/scroll audit, keyboard checks, and affected tests.",
+          "latency": "At each atomic workspace migration and final native matrix.",
+          "failure_to_detect": "Screenshots alone cannot reveal keyboard, scaling, lifecycle, or owner preference failures."
+        },
+        "falsifier": "Any common-path control becomes harder to find, page scrolling remains, or behavioral/accessibility regression appears.",
+        "confidence": {
+          "level": "MEDIUM",
+          "basis": "The mechanism is plausible and rights-safe but needs final runtime and human evidence."
+        }
+      }
+    ],
+    "feedback_loops": [],
+    "thresholds": [
+      {
+        "id": "threshold_copy",
+        "variable": "Default-view explanatory copy",
+        "boundary": "No more than 75 visible words outside live data, labels, errors, and accessible names.",
+        "direction": "Revise when above the boundary.",
+        "evidence_or_test_ids": ["test_native_matrix"]
+      },
+      {
+        "id": "threshold_scroll",
+        "variable": "Primary default workspace page scrolling",
+        "boundary": "Zero whole-page vertical scrolling at 1280 by 820; bounded work regions may scroll internally.",
+        "direction": "Revise when a common-path page requires scrolling.",
+        "evidence_or_test_ids": ["test_native_matrix"]
+      }
+    ]
+  },
+  "decision": {
+    "iteration_choice": "TEST",
+    "recommendation": "Freeze the implemented Quiet Instrument Deck candidate, bind an exact-commit native matrix, and ask the owner for a KEEP, REVISE, or REJECT decision while keyboard, scaling, high-contrast, and UI Automation gates continue separately.",
+    "selected_action_ids": ["action_ui_migration"],
+    "rejected_options": [
+      "A palette-only reskin would preserve the same information architecture and scrolling failure.",
+      "Copying a reference product one-to-one would violate the clean-room boundary and Soltex identity.",
+      "Adding sliders decoratively would misrepresent discrete or read-only state."
+    ],
+    "decision_claim_ids": ["claim_ui_rework_needed", "claim_design_direction"],
+    "remaining_unknown_claim_ids": [],
+    "human_owner": "Soltex owner",
+    "consecutive_stable_checks": 1,
+    "reopen_trigger": "Reopen the design direction if native evidence shows hidden common-path controls, unresolved whole-page scrolling, accessibility regression, or owner rejection."
+  },
+  "actions": [
+    {
+      "id": "action_ui_migration",
+      "description": "Apply the Quiet Instrument Deck token, component, copy, and workspace anatomy contract across all primary Soltex views, then run native and behavioral verification.",
+      "status": "VERIFIED",
+      "authorization_status": "AUTHORIZED",
+      "authority_basis": "The user explicitly requested a total UI rework, design system, reference study, implementation, and structured remaining-work map.",
+      "destructive": false,
+      "production": false,
+      "external_state_change": true,
+      "irreversible": false,
+      "monitoring": "The diff, design guard, full required suites, and all 16 reference-viewport states were reviewed; exact-commit capture and owner acceptance remain the next gates.",
+      "rollback": {
+        "kind": "COMPENSATING_ACTION",
+        "procedure": "Use bounded file-level inverse patches or a new corrective commit on the isolated branch; never reset or clean the owner checkout.",
+        "preconditions": ["Identify exact task-owned files and current branch identity"],
+        "verification": "Confirm expected Git diff, rebuild, rerun affected tests, and recapture corrected native states.",
+        "evidence_ids": ["ev_test_suites", "ev_candidate_matrix"],
+        "irreversible_residue": "Published Git history remains if a pushed commit is later corrected."
+      },
+      "recovery": {
+        "procedure": "Restore the last verified theme/workspace state using a bounded corrective commit and relaunch the native capture harness.",
+        "owner": "Soltex implementation task",
+        "evidence_ids": ["ev_candidate_matrix"]
+      },
+      "mitigation_consequence_node_ids": ["state_workbench_migration"]
+    }
+  ],
+  "verification": {
+    "mechanism": {
+      "status": "PASS",
+      "signal": "Shared theme primitives and workspace templates compiled and passed affected control tests across every migrated surface.",
+      "evidence_ids": ["ev_design_guard", "ev_test_suites"],
+      "rationale": "The intended bounded-workbench mechanism is present and behaviorally exercised."
+    },
+    "endpoint": {
+      "status": "PASS",
+      "signal": "All 16 working-candidate states rendered and passed agent cold-eye inspection at the 1280 by 820 reference viewport.",
+      "evidence_ids": ["ev_candidate_matrix"],
+      "rationale": "The bounded endpoint passes agent inspection; human acceptance remains explicitly separate and unknown."
+    },
+    "guardrails": {
+      "status": "PASS",
+      "signal": "Clean-room provenance, token policy, functional suites, capability labels, and reference-viewport bounds passed.",
+      "evidence_ids": ["ev_provenance", "ev_design_guard", "ev_test_suites", "ev_candidate_matrix"],
+      "rationale": "Exercised guardrails pass; broader scaling, assistive-technology, and owner gates remain named residual work rather than silently inferred."
+    },
+    "recovery": {
+      "status": "PASS",
+      "signal": "A bounded capture batch timeout left no owned process and resumed only the three missing states; build and lifecycle-dependent shutdown tests remained green.",
+      "evidence_ids": ["ev_test_suites", "ev_candidate_matrix"],
+      "rationale": "The observed failure was retained and recovered without overlapping work or discarding source."
+    }
+  },
+  "closure": {
+    "status": "BOUNDED",
+    "summary": "Quiet Instrument Deck is implemented and passes the bounded working-candidate build, regression, policy, and 16-state native gate; exact-commit binding and owner visual/accessibility acceptance remain open.",
+    "residual_risks": [
+      "WPF scaling and high-contrast behavior may expose layout or token defects not visible at the reference viewport.",
+      "Keyboard focus restoration and UI Automation quality require dedicated evidence.",
+      "Owner visual preference cannot be inferred from automated evidence."
+    ],
+    "human_acceptance_required": true,
+    "accepted_by": "",
+    "acceptance_evidence_ids": [],
+    "nonclaims": [
+      "This ledger records auditable claims and decisions, not hidden chain-of-thought.",
+      "The design contract does not itself prove implementation quality or runtime correctness.",
+      "Native screenshots and green tests will not by themselves grant owner visual acceptance or WCAG conformance."
+    ]
+  }
+}

@@ -1593,6 +1593,38 @@ public partial class MainWindow : Window
         _renderSmokeFocusTarget?.BringIntoView();
     }
 
+    private void UpdatePreviewTab_Click(object sender, RoutedEventArgs e) =>
+        ShowUpdatePanel(UpdatePreviewPanel, UpdatePreviewTab);
+
+    private void UpdateJournalTab_Click(object sender, RoutedEventArgs e) =>
+        ShowUpdatePanel(UpdateJournalPanel, UpdateJournalTab);
+
+    private void UpdateRecoveryTab_Click(object sender, RoutedEventArgs e) =>
+        ShowUpdatePanel(UpdateRecoveryPanel, UpdateRecoveryTab);
+
+    private void ShowUpdatePanel(UIElement panel, System.Windows.Controls.Button selectedTab)
+    {
+        UpdatePreviewPanel.Visibility = panel == UpdatePreviewPanel
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        UpdateJournalPanel.Visibility = panel == UpdateJournalPanel
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        UpdateRecoveryPanel.Visibility = panel == UpdateRecoveryPanel
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        foreach (System.Windows.Controls.Button tab in new[]
+                 {
+                     UpdatePreviewTab,
+                     UpdateJournalTab,
+                     UpdateRecoveryTab
+                 })
+        {
+            tab.Tag = tab == selectedTab ? "Selected" : null;
+        }
+    }
+
     private void ShowPanel(UIElement panel, System.Windows.Controls.Button selectedButton)
     {
         HomePanel.Visibility = panel == HomePanel ? Visibility.Visible : Visibility.Collapsed;
@@ -1621,10 +1653,9 @@ public partial class MainWindow : Window
                      SettingsNavButton
                  })
         {
-            button.Background = (Brush)FindResource(button == selectedButton ? "SelectedNavBrush" : "NavRestBrush");
-            button.Foreground = button == selectedButton
-                ? (Brush)FindResource("AccentBrush")
-                : (Brush)FindResource("MutedBrush");
+            button.Tag = button == selectedButton ? "Selected" : null;
+            button.Background = (Brush)FindResource("NavRestBrush");
+            button.Foreground = (Brush)FindResource("MutedBrush");
         }
 
         _activeWorkspace =

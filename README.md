@@ -2,11 +2,12 @@
 
 Soltex is a proprietary personal-computing workspace. **Soltex** is the canonical product, repository, solution, assembly, and namespace identity. A small, tested compatibility boundary preserves existing authenticated local state and historical evidence without presenting the retired working name as current product copy.
 
-The current desktop solution exposes nine visible workspace areas:
+The current desktop solution exposes nine normal-navigation workspaces plus two
+explicit preview surfaces used by the native evidence matrix:
 
 - **Home** — a real local summary with explicit partial/unavailable signals.
 - **Monitoring** — bounded CPU, physical-memory, process, and fixed-volume observation from supported Windows interfaces.
-- **Devices** — a sanitized local profile and exact non-executing capability model, explicitly not enrolled.
+- **Devices (preview)** — a sanitized local profile and exact non-executing capability model, explicitly not enrolled.
 - **Applications** — bounded, searchable, read-only installed-software, sign-in, and Win32 service inventories.
 - **Audio** — bounded Windows Core Audio endpoint and active app-session state, guarded per-session volume/mute with immediate read-back, local fallback reminders, and a user-mediated Windows Sound handoff.
 - **Security** — the implemented focus: a lightweight companion that cooperates with the antivirus provider registered with Windows, plus bounded local supply-chain verification primitives.
@@ -14,12 +15,22 @@ The current desktop solution exposes nine visible workspace areas:
 - **Activity** — a bounded local timeline of meaningful Soltex actions and recovery transitions, session-only unless the user explicitly selects retention.
 - **Updates** — a non-installing signed planner that authenticates bounded release artifacts and stops at an exact human-readable preview.
 - **Settings** — working local preferences for telemetry cadence, workspace restoration, detail disclosure, Activity retention, and explicit close behavior.
+- **Capture (preview)** — a visible non-installed boundary for a future opt-in Windows Graphics Capture pipeline.
 
 This is a clean-room product. It is not affiliated with, endorsed by, or derived from SteelSeries, Malwarebytes, Zen Browser, AppControl, NZXT, or RustDesk. It contains no copied binaries, signatures, detection models, private protocols, branding, or UI assets from those products. RustDesk remains a separately licensed external program.
 
 ## What works now
 
-Home is the default WPF surface. The visible workspaces share one restrained graphite/iris design system with bounded sparklines, progress, slider/focus, table, and scrollbar resources. One sequential sampler publishes immutable snapshots and copied 48/72-sample histories, surfaces provenance and unsupported signals, retains last confirmed values briefly as stale, and cancels on shutdown. GPU telemetry is not implemented and remains visibly unavailable.
+Home is the default WPF surface. The workspaces share the **Quiet Instrument
+Deck** design system: graphite work surfaces, a glacier-blue interaction signal,
+small-radius hairline geometry, compact command headers, local mode tabs, bounded
+work areas, and direct controls before commentary. Primary default pages do not
+own whole-page scroll viewers at the 1280×820 reference viewport; the Audio
+device-detail list scrolls inside its own work area. One sequential sampler
+publishes immutable snapshots and copied 48/72-sample histories, surfaces
+provenance and unsupported signals, retains last confirmed values briefly as
+stale, and cancels on shutdown. GPU telemetry is not implemented and remains
+visibly unavailable.
 
 Activity records only bounded Soltex-owned events such as an explicit process action, scan request/result, quarantine change, Remote Assist launch result, or a telemetry failure/recovery transition. It does not record clicks, browsing, packet contents, command lines, or executable/file paths. The default is memory-only for the current session; 7-day and 30-day local retention require an explicit Settings choice, shortening retention requires confirmation, and Clear Activity requires confirmation before removing visible and saved history. See [`docs/ACTIVITY.md`](docs/ACTIVITY.md).
 

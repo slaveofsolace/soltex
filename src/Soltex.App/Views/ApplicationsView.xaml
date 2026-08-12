@@ -20,20 +20,11 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel>
-                <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="System inventory" />
-                <TextBlock Margin="0,5,0,0"
-                           Style="{StaticResource PageTitleStyle}"
-                           Text="Applications" />
-                <TextBlock Margin="0,5,0,0"
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Applications" />
+                <TextBlock Margin="0,3,0,0"
                            Style="{StaticResource MutedTextStyle}"
-                           FontSize="{StaticResource FontBody}"
-                           Text="Find software, review sign-in entries, and observe Windows service state." />
-                <TextBlock x:Name="InventorySummaryText"
-                           Margin="0,9,0,0"
-                           Foreground="{StaticResource TextSecondaryBrush}"
-                           FontSize="{StaticResource FontCaption}"
-                           Text="Waiting for supported Windows sources." />
+                           Text="Installed software, startup entries, and Windows services." />
             </StackPanel>
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal"
@@ -65,8 +56,8 @@
         </Grid>
 
         <Border Grid.Row="2"
-                Style="{StaticResource QuietCardStyle}"
-                Padding="10">
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -76,27 +67,36 @@
                     <ColumnDefinition Width="360" />
                 </Grid.ColumnDefinitions>
                 <Button x:Name="InstalledTabButton"
-                        MinWidth="104"
-                        Style="{StaticResource SecondaryButton}"
+                        Tag="Selected"
+                        MinWidth="92"
+                        Style="{StaticResource TabButtonStyle}"
                         Content="Installed"
                         AutomationProperties.Name="Show installed applications"
                         Click="InstalledTab_Click" />
                 <Button x:Name="StartupTabButton"
                         Grid.Column="1"
                         Margin="8,0,0,0"
-                        MinWidth="104"
-                        Style="{StaticResource SecondaryButton}"
+                        MinWidth="92"
+                        Style="{StaticResource TabButtonStyle}"
                         Content="Startup"
                         AutomationProperties.Name="Show startup applications"
                         Click="StartupTab_Click" />
                 <Button x:Name="ServicesTabButton"
                         Grid.Column="2"
                         Margin="8,0,0,0"
-                        MinWidth="104"
-                        Style="{StaticResource SecondaryButton}"
+                        MinWidth="92"
+                        Style="{StaticResource TabButtonStyle}"
                         Content="Services"
                         AutomationProperties.Name="Show read-only Windows services"
                         Click="ServicesTab_Click" />
+                <TextBlock x:Name="InventorySummaryText"
+                           Grid.Column="3"
+                           Margin="16,0"
+                           VerticalAlignment="Center"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="{StaticResource FontCaption}"
+                           TextTrimming="CharacterEllipsis"
+                           Text="Waiting for supported Windows sources." />
                 <Grid Grid.Column="4">
                     <TextBox x:Name="InventorySearchBox"
                              Height="38"
@@ -117,7 +117,7 @@
         </Border>
 
         <Border Grid.Row="4"
-                Style="{StaticResource CardStyle}"
+                Style="{StaticResource WorkbenchStyle}"
                 Padding="0"
                 ClipToBounds="True">
             <Grid>

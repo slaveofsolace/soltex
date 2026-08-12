@@ -1,6 +1,6 @@
 # Soltex master project blueprint
 
-Snapshot: 2026-08-04
+Snapshot: 2026-08-12
 Repository target: `slaveofsolace/soltex` (private)  
 Current isolated source at snapshot: `C:\Users\suhai\Documents\soltex-immersive-workspace`
 
@@ -44,7 +44,8 @@ The current frozen implementation is commit `2a0699b2ca77b30fa636279b1d5ecab603a
 - bounded CPU, physical-memory, process, and fixed-volume observation;
 - copied finite telemetry histories and explicit current/partial/stale/unavailable/recovered state;
 - a sanitized local-device profile that is explicitly `NotEnrolled`;
-- one shared warm graphite/parchment/coral WPF design system.
+- one shared Quiet Instrument Deck WPF design system with graphite work surfaces,
+  a glacier-blue interaction signal, bounded work areas, and direct controls.
 
 Current source also includes:
 
@@ -176,11 +177,18 @@ Planned capabilities:
 
 Clean-room behavior reference: public SteelSeries Sonar workflows.
 
+- Current implementation: bounded Core Audio endpoint/session observation,
+  guarded per-app volume and mute, immediate Windows read-back, fallback
+  reminders, and a user-mediated Windows Sound handoff.
+- Still absent: direct default-endpoint assignment, per-application routing,
+  virtual devices, profiles, EQ, DSP, noise processing, and microphone signal
+  flow.
 - per-application routing and endpoint selection;
 - parametric EQ, presets, limiter/compressor/noise processing, microphone monitoring, and stream/personal mixes;
 - clear signal flow and A/B/bypass states;
 - WASAPI/MMDevice first; a signed virtual endpoint/APO/driver only when required;
-- no claim of live routing while the current repository contains navigation only.
+- no claim of live routing or Sonar parity until those paths are implemented and
+  measured.
 
 ### 6.7 Clips and overlay
 
@@ -196,26 +204,41 @@ Clean-room behavior reference: public SteelSeries Sonar workflows.
 - explicit destination preview for moves/uploads and deterministic conflict handling;
 - no hidden exfiltration to AI or cross-domain sync.
 
-## 7. Visual direction: quiet technical workspace
+## 7. Visual direction: Quiet Instrument Deck
 
-The committed direction is a Swiss/industrial information system with selective editorial hierarchy. It borrows Zen Browser's principles—calm chrome, compact navigation, focus, spatial continuity—not its assets or exact layout.
+The implemented direction is a Swiss-industrial, Windows-native control surface:
+calm at rest, precise under load, and direct before explanatory. It translates
+general focus and progressive-disclosure lessons from Zen Browser, SteelSeries
+Sonar, NZXT CAM, AppControl, and official Microsoft guidance without copying
+their assets, copy, code, dimensions, or distinctive expression.
 
 Defining moves:
 
-- **Type:** a real three-role system using Georgia (display moments), Segoe UI (high-legibility controls/body), and Cascadia Mono (measurements/identifiers). Avoid serif-italic garnish and indiscriminate monospace.
-- **Palette:** warm near-black `#1F1F1F`, warm paper text near `#F4F0E8`, coral `#F76F53` for interaction, green only for confirmed good state, amber for attention, red for danger. No stock purple/blue gradient.
-- **Layout:** a compact collapsible workspace rail, asymmetric primary canvas, contextual inspector, and dense tables that can go edge-to-edge. Surface size encodes importance; avoid rows of identical icon cards and reflexive bento grids.
-- **Motion:** 140–220 ms panel continuity, measured number transitions, and one orchestrated workspace entrance. Respect reduced-motion settings; do not animate every card.
-- **Signature detail:** a thin contextual horizon/rule that carries current device, profile, evidence freshness, and task state across pages.
+- **Type:** Segoe UI Variable for product text and Cascadia Mono only for
+  measurements, identifiers, paths, ports, and timestamps.
+- **Palette:** graphite near-black surfaces with one glacier-blue interaction
+  signal; green, amber, and red are reserved for semantic state.
+- **Layout:** one 52 px-class command header, an optional local mode strip, then
+  one bounded table, lane deck, chart, or master-detail work area. Dense lists
+  scroll internally; primary default pages do not scroll as documents.
+- **Geometry:** hairline borders, shallow surface depth, small radii, no hero
+  gradients, glass, glow, purple selection pills, or equal-weight card carpets.
+- **Signature detail:** a 2–3 px leading signal rail identifies the selected
+  global workspace; the same grammar appears under selected local modes.
+- **Copy:** title plus at most one sentence; default-view explanatory copy stays
+  below 75 words outside data, labels, errors, and accessible names.
+- **Controls:** real values use real controls. Audio volume uses sliders;
+  booleans use toggles/buttons; read-only telemetry uses meters; sliders are not
+  decorative.
+- **Motion:** 120–200 ms functional transitions only, with the Windows reduced-
+  motion preference respected.
 
-Required UI quality:
-
-- real hover, focus-visible, pressed, disabled, loading, empty, degraded, error, recovery, and confirmation states;
-- keyboard navigation, sensible focus restoration, accessible names, and no color-only status;
-- Windows scaling checks at 100%, 125%, 150%, and 200%; representative 1366×768, 1440p, and 4K captures;
-- tables remain readable and virtualized; charts expose text equivalents;
-- no glass-on-glass, gradient headline text, generic rounded-card carpet, micro-label overload, emoji navigation, or placeholder success metrics;
-- current UI has six fresh native renders and a bounded Human Eye `KEEP` review, but remains **owner-unaccepted** until the user completes representative scaling/accessibility review.
+The canonical component, token, page-anatomy, copy-budget, and clean-room rules
+are in [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md). The 2026-08-12 implementation
+replaces page-level scrolling in the primary workspaces with bounded work areas
+and has a complete 16-state 1280×820 native preview pass. Owner acceptance,
+keyboard/screen-reader review, high contrast, reduced motion, multi-scale, and
+representative small/large-window gates remain open.
 
 ## 8. Coding direction
 

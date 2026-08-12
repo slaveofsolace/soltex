@@ -497,12 +497,18 @@ internal static class Program
     private static void MonitoringDetailsAreProgressive()
     {
         MonitoringView view = new();
+        True(view.MonitoringOverviewPanel.Visibility == Visibility.Visible,
+            "Monitoring overview must be visible on first view.");
         True(view.MonitoringDetailsPanel.Visibility == Visibility.Collapsed,
             "Monitoring detail must be collapsed on first view.");
         view.MonitoringDetailsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.MonitoringOverviewPanel.Visibility == Visibility.Collapsed,
+            "Monitoring overview remained visible behind system detail.");
         True(view.MonitoringDetailsPanel.Visibility == Visibility.Visible,
             "Monitoring detail did not open from its explicit disclosure control.");
         view.MonitoringDetailsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.MonitoringOverviewPanel.Visibility == Visibility.Visible,
+            "Monitoring overview did not return after closing system detail.");
         True(view.MonitoringDetailsPanel.Visibility == Visibility.Collapsed,
             "Monitoring detail did not close from its disclosure control.");
     }
@@ -856,6 +862,17 @@ internal static class Program
             "Settings omitted the explicit Activity retention option.");
         True(view.ExitOnCloseButton.Foreground == Application.Current.FindResource("AccentBrush"),
             "Settings did not render Exit as the default close behavior.");
+        True(view.GeneralSettingsPanel.Visibility == Visibility.Visible &&
+             view.WindowSettingsPanel.Visibility == Visibility.Collapsed,
+            "Settings did not open with one bounded category.");
+        view.WindowSettingsTab.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.GeneralSettingsPanel.Visibility == Visibility.Collapsed &&
+             view.WindowSettingsPanel.Visibility == Visibility.Visible,
+            "Settings category switch did not replace the visible work area.");
+        view.PrivacySettingsTab.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.WindowSettingsPanel.Visibility == Visibility.Collapsed &&
+             view.PrivacySettingsPanel.Visibility == Visibility.Visible,
+            "Settings activity category did not replace the window category.");
 
         SoltexPreferences? changed = null;
         view.PreferencesChanged += (_, args) => changed = args.Preferences;
@@ -887,9 +904,13 @@ internal static class Program
             "Mixer lost endpoints while partitioning the primary and additional lists.");
         True(view.EndpointDetailsPanel.Visibility == Visibility.Collapsed,
             "Audio device lists must be collapsed on first view.");
+        True(view.MixerOverviewPanel.Visibility == Visibility.Visible,
+            "Audio mixer must be visible on first view.");
         view.DeviceDetailsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         True(view.EndpointDetailsPanel.Visibility == Visibility.Visible,
             "Audio device lists did not open from their disclosure control.");
+        True(view.MixerOverviewPanel.Visibility == Visibility.Collapsed,
+            "Audio mixer remained visible behind device details.");
         True(view.MoreEndpointsPanel.Visibility == Visibility.Collapsed,
             "Additional audio endpoints must be collapsed on first view.");
         if (moreCount > 0)

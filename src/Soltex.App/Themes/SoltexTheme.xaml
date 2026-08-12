@@ -19,13 +19,29 @@
 
     <Style x:Key="QuietCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
         <Setter Property="Background" Value="{StaticResource QuietBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
     </Style>
 
     <Style x:Key="HeroCardStyle" TargetType="Border" BasedOn="{StaticResource CardStyle}">
         <Setter Property="Background" Value="{StaticResource HeroSurfaceBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource StrongBorderBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource HeroBorderBrush}" />
         <Setter Property="CornerRadius" Value="{StaticResource RadiusHero}" />
         <Setter Property="Padding" Value="{StaticResource PadHero}" />
+    </Style>
+
+    <Style x:Key="CommandShelfStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource QuietBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="0,0,0,1" />
+        <Setter Property="Padding" Value="0,0,0,12" />
+    </Style>
+
+    <Style x:Key="WorkbenchStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusCard}" />
+        <Setter Property="ClipToBounds" Value="True" />
     </Style>
 
     <Style x:Key="StatusPillStyle" TargetType="Border">
@@ -96,16 +112,30 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="NavSurface"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="{StaticResource RadiusSm}"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="Center" />
-                    </Border>
+                    <Grid>
+                        <Border x:Name="NavSurface"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{StaticResource RadiusSm}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="SignalRail"
+                                Width="3"
+                                Margin="0,5,0,5"
+                                HorizontalAlignment="Left"
+                                Background="{StaticResource AccentBrush}"
+                                CornerRadius="0,2,2,0"
+                                Visibility="Collapsed" />
+                    </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="Tag" Value="Selected">
+                            <Setter TargetName="NavSurface" Property="Background" Value="{StaticResource SelectedNavBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextBrightBrush}" />
+                            <Setter TargetName="SignalRail" Property="Visibility" Value="Visible" />
+                        </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="NavSurface" Property="Background" Value="{StaticResource RaisedBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource TextBrightBrush}" />
@@ -118,6 +148,57 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <Style x:Key="TabButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="FontSize" Value="{StaticResource FontLabel}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border x:Name="TabSurface" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <Border x:Name="TabSignal"
+                                Height="2"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Bottom"
+                                Background="{StaticResource AccentBrush}"
+                                Visibility="Collapsed" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Tag" Value="Selected">
+                            <Setter Property="Foreground" Value="{StaticResource TextBrightBrush}" />
+                            <Setter TargetName="TabSignal" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="TabSurface" Property="Background" Value="{StaticResource QuietBrush}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextBrightBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="TabSurface" Property="Background" Value="{StaticResource ElevatedBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.42" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="IconButtonStyle" TargetType="Button" BasedOn="{StaticResource SecondaryButton}">
+        <Setter Property="Width" Value="34" />
+        <Setter Property="Height" Value="34" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="FontFamily" Value="{StaticResource IconFont}" />
+        <Setter Property="FontSize" Value="{StaticResource FontBody}" />
     </Style>
 
     <!-- ===================== Inputs ===================== -->
@@ -137,9 +218,9 @@
     <!-- ===================== Typography ===================== -->
 
     <Style x:Key="PageEyebrowStyle" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
-        <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
-        <Setter Property="FontSize" Value="{StaticResource FontMono}" />
+        <Setter Property="Foreground" Value="{StaticResource MutedBrush}" />
+        <Setter Property="FontFamily" Value="{StaticResource UiFont}" />
+        <Setter Property="FontSize" Value="{StaticResource FontCaption}" />
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
@@ -336,12 +417,12 @@
         <Setter Property="Background" Value="{StaticResource RaisedBrush}" />
         <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Padding" Value="8,7" />
         <Setter Property="FontWeight" Value="SemiBold" />
     </Style>
 
     <Style TargetType="DataGridCell">
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Padding" Value="8,6" />
     </Style>
 </ResourceDictionary>

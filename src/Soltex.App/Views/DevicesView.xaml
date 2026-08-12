@@ -4,167 +4,119 @@
              Background="Transparent"
              Foreground="{StaticResource TextBrush}"
              FontFamily="{StaticResource UiFont}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled"
-                  HorizontalContentAlignment="Stretch">
-        <StackPanel>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="DEVICE MESH / PREVIEW" />
-                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Device mesh" />
-                    <TextBlock Margin="0,5,0,0"
-                               Style="{StaticResource MutedTextStyle}"
-                               FontSize="14"
-                               Text="This PC is visible locally. Secure enrollment and remote jobs are not enabled yet." />
-                </StackPanel>
-                <Border Grid.Column="1" Style="{StaticResource StatusPillStyle}" VerticalAlignment="Top">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="210" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Device mesh" />
+                <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Local profile today; enrollment and remote jobs remain preview-only." />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Margin="0,0,8,0" Style="{StaticResource StatusPillStyle}">
+                    <TextBlock Text="PREVIEW" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                </Border>
+                <Border Style="{StaticResource StatusPillStyle}">
                     <StackPanel Orientation="Horizontal">
                         <Ellipse Width="7" Height="7" Fill="{StaticResource WarningBrush}" VerticalAlignment="Center" />
-                        <TextBlock Margin="8,0,0,0"
-                                   Text="LOCAL ONLY"
-                                   Foreground="{StaticResource WarningBrush}"
-                                   FontFamily="{StaticResource MonoFont}"
-                                   FontSize="10"
-                                   FontWeight="SemiBold" />
+                        <TextBlock Margin="8,0,0,0" Text="LOCAL ONLY" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" FontWeight="SemiBold" />
                     </StackPanel>
                 </Border>
-            </Grid>
+            </StackPanel>
+        </Grid>
 
-            <Border x:Name="DeviceHeroCard" Margin="0,20,0,0" Style="{StaticResource HeroCardStyle}" Height="220">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="280" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Margin="0,0,28,0">
-                        <TextBlock Text="THIS WINDOWS PC" Style="{StaticResource PageEyebrowStyle}" Foreground="{StaticResource SignalBrush}" />
-                        <TextBlock x:Name="DeviceNameText" Margin="0,8,0,0" Text="Local machine" FontFamily="{StaticResource DisplayFont}" FontSize="36" />
-                        <TextBlock x:Name="DeviceOsText" Margin="0,7,0,0" Text="Reading Windows profile…" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
-                        <StackPanel Margin="0,19,0,0" Orientation="Horizontal">
-                            <Border Style="{StaticResource StatusPillStyle}" Background="{StaticResource SignalQuietBrush}" BorderBrush="{StaticResource SignalBorderBrush}">
-                                <TextBlock x:Name="ObservationStateText" Text="OBSERVING" Foreground="{StaticResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
-                            </Border>
-                            <Border Margin="8,0,0,0" Style="{StaticResource StatusPillStyle}">
-                                <TextBlock Text="NOT ENROLLED" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
-                            </Border>
-                        </StackPanel>
+        <Border x:Name="DeviceHeroCard" Grid.Row="2" Style="{StaticResource HeroCardStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="300" /></Grid.ColumnDefinitions>
+                <StackPanel Margin="0,0,24,0" VerticalAlignment="Center">
+                    <TextBlock Text="This Windows PC" Foreground="{StaticResource SignalBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
+                    <TextBlock x:Name="DeviceNameText" Margin="0,7,0,0" Text="Local machine" FontFamily="{StaticResource DisplayFont}" FontSize="32" />
+                    <TextBlock x:Name="DeviceOsText" Margin="0,5,0,0" Text="Reading Windows profile…" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
+                    <StackPanel Margin="0,14,0,0" Orientation="Horizontal">
+                        <Border Style="{StaticResource StatusPillStyle}" Background="{StaticResource SignalQuietBrush}" BorderBrush="{StaticResource SignalBorderBrush}">
+                            <TextBlock x:Name="ObservationStateText" Text="OBSERVING" Foreground="{StaticResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                        </Border>
+                        <Border Margin="8,0,0,0" Style="{StaticResource StatusPillStyle}">
+                            <TextBlock Text="NOT ENROLLED" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                        </Border>
                     </StackPanel>
+                </StackPanel>
 
-                    <Border x:Name="DeviceProfileCard" Grid.Column="1" Background="{StaticResource QuietBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="13" Padding="18">
-                        <StackPanel>
-                            <Grid Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <TextBlock Text="OS architecture" Foreground="{StaticResource MutedBrush}" />
-                                <TextBlock x:Name="OsArchitectureText" Grid.Column="1" Text="—" FontFamily="{StaticResource MonoFont}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <TextBlock Text="Process" Foreground="{StaticResource MutedBrush}" />
-                                <TextBlock x:Name="ProcessArchitectureText" Grid.Column="1" Text="—" FontFamily="{StaticResource MonoFont}" />
-                            </Grid>
-                            <Grid Margin="0,0,0,12">
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <TextBlock Text="Agent" Foreground="{StaticResource MutedBrush}" />
-                                <TextBlock Grid.Column="1" Text="NONE" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" />
-                            </Grid>
-                            <TextBlock x:Name="FrameworkText" Margin="0,5,0,0" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" TextWrapping="Wrap" Text="Runtime unavailable" />
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
-
-            <Grid Margin="0,16,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.45*" />
-                    <ColumnDefinition Width="16" />
-                    <ColumnDefinition Width="1*" />
-                </Grid.ColumnDefinitions>
-                <Border Style="{StaticResource CardStyle}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="No connected devices" />
-                        <TextBlock Margin="0,5,0,14"
-                                   Style="{StaticResource MutedTextStyle}"
-                                   TextWrapping="Wrap"
-                                   LineHeight="19"
-                                   Text="Soltex has no listener, discovery transport, shared password, background agent, or NAS permission authority. Future devices must advertise an exact manifest and remain independently authorized." />
-                        <Grid Background="{StaticResource QuietBrush}">
+                <Border x:Name="DeviceProfileCard" Grid.Column="1" Background="{StaticResource QuietBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusSm}" Padding="14">
+                    <StackPanel VerticalAlignment="Center">
+                        <Grid Margin="0,0,0,10">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                            <StackPanel Margin="13,11">
-                                <TextBlock Text="Private mesh" FontWeight="SemiBold" />
-                                <TextBlock Margin="0,3,0,0"
-                                           Text="Tailscale-compatible transport is a documented future boundary."
-                                           Foreground="{StaticResource MutedBrush}"
-                                           FontSize="10"
-                                           TextWrapping="Wrap" />
-                            </StackPanel>
-                            <TextBlock Grid.Column="1" Margin="13" Text="NOT CONFIGURED" Foreground="{StaticResource MutedBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" VerticalAlignment="Center" />
+                            <TextBlock Text="OS architecture" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock x:Name="OsArchitectureText" Grid.Column="1" Text="—" FontFamily="{StaticResource MonoFont}" />
                         </Grid>
-                    </StackPanel>
-                </Border>
-
-                <Border Grid.Column="2" Style="{StaticResource QuietCardStyle}">
-                    <StackPanel>
-                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Visible remote handoff" />
-                        <TextBlock Margin="0,5,0,14"
-                                   Style="{StaticResource MutedTextStyle}"
-                                   TextWrapping="Wrap"
-                                   LineHeight="19"
-                                   Text="RustDesk stays an external, user-selected client with signature checking and visible per-session consent." />
-                        <Button Style="{StaticResource SecondaryButton}" Click="OpenRemoteAssist_Click" Content="Review Remote Assist" HorizontalAlignment="Left" />
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Process" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock x:Name="ProcessArchitectureText" Grid.Column="1" Text="—" FontFamily="{StaticResource MonoFont}" />
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="Agent" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock Grid.Column="1" Text="NONE" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                        </Grid>
+                        <TextBlock x:Name="FrameworkText" Margin="0,10,0,0" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" TextTrimming="CharacterEllipsis" Text="Runtime unavailable" />
                     </StackPanel>
                 </Border>
             </Grid>
+        </Border>
 
-            <Border Margin="0,16,0,0" Style="{StaticResource CardStyle}">
-                <StackPanel>
+        <Border Grid.Row="4" Style="{StaticResource WorkbenchStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="2*" /><ColumnDefinition Width="1" /><ColumnDefinition Width="3*" /></Grid.ColumnDefinitions>
+                <Grid Margin="18">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="8" /><RowDefinition Height="Auto" /><RowDefinition Height="18" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Connected devices" />
+                    <TextBlock Grid.Row="2" Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" Text="No enrolled device. Soltex has no listener, shared password, background agent, or NAS authority." />
+                    <StackPanel Grid.Row="4" Orientation="Horizontal">
+                        <Button Style="{StaticResource SecondaryButton}" Click="OpenRemoteAssist_Click" Content="Remote Assist" />
+                        <Border Margin="10,0,0,0" Style="{StaticResource StatusPillStyle}">
+                            <TextBlock Text="PRIVATE MESH NOT CONFIGURED" Foreground="{StaticResource MutedBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                        </Border>
+                    </StackPanel>
+                </Grid>
+                <Border Grid.Column="1" Background="{StaticResource BorderBrush}" />
+                <Grid Grid.Column="2" Margin="18">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="10" /><RowDefinition Height="*" /></Grid.RowDefinitions>
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Planned device actions" />
-                            <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedTextStyle}" Text="Reviewed action shapes are visible here before enrollment is enabled." />
-                        </StackPanel>
-                        <TextBlock Grid.Column="1" Text="PREVIEW" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" VerticalAlignment="Center" />
+                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Planned actions" />
+                        <TextBlock Grid.Column="1" Text="PREVIEW" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                     </Grid>
-                    <ItemsControl x:Name="CapabilityItems" Margin="0,16,0,0">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="3" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
+                    <ItemsControl x:Name="CapabilityItems" Grid.Row="2">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Margin="0,0,10,10"
-                                        Background="{StaticResource QuietBrush}"
-                                        BorderBrush="{StaticResource BorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="10"
-                                        Padding="13">
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                     <StackPanel>
                                         <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
-                                        <TextBlock Margin="0,5,0,0" Text="{Binding Description}" Foreground="{StaticResource MutedBrush}" FontSize="10" TextWrapping="Wrap" LineHeight="15" />
-                                        <Grid Margin="0,11,0,0">
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                            <TextBlock Text="{Binding Effect}" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="8" />
-                                            <TextBlock Grid.Column="1" Text="{Binding Approval}" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="8" />
-                                        </Grid>
+                                        <TextBlock Margin="0,3,0,0" Text="{Binding Description}" Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}" TextTrimming="CharacterEllipsis" />
                                     </StackPanel>
-                                </Border>
+                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding Effect}" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" HorizontalAlignment="Right" />
+                                        <TextBlock Margin="0,3,0,0" Text="{Binding Approval}" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" HorizontalAlignment="Right" />
+                                    </StackPanel>
+                                </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    <TextBlock x:Name="DeviceProvenanceText"
-                               Margin="0,4,0,0"
-                               Foreground="{StaticResource QuietTextBrush}"
-                               FontFamily="{StaticResource MonoFont}"
-                               FontSize="9"
-                               TextWrapping="Wrap"
-                               Text="Waiting for local profile provenance" />
-                </StackPanel>
-            </Border>
-        </StackPanel>
-    </ScrollViewer>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <TextBlock x:Name="DeviceProvenanceText" Grid.Row="6" Margin="2,0" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" TextTrimming="CharacterEllipsis" Text="Waiting for local profile provenance" />
+    </Grid>
 </UserControl>

@@ -7,8 +7,12 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="14" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="10" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Grid>
@@ -16,19 +20,15 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel>
-                <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="Preferences" />
-                <TextBlock Margin="0,5,0,0"
-                           Style="{StaticResource PageTitleStyle}"
-                           Text="Settings" />
-                <TextBlock Margin="0,5,0,0"
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Settings" />
+                <TextBlock Margin="0,3,0,0"
                            Style="{StaticResource MutedTextStyle}"
-                           FontSize="{StaticResource FontBody}"
-                           Text="Choose how the local workspace refreshes, remembers, and records." />
+                           Text="Local preferences for this Windows account." />
             </StackPanel>
             <Border Grid.Column="1"
                     Style="{StaticResource StatusPillStyle}"
-                    VerticalAlignment="Top">
+                    VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal">
                     <Ellipse x:Name="SettingsStateDot"
                              Width="7"
@@ -46,141 +46,155 @@
             </Border>
         </Grid>
 
-        <ScrollViewer Grid.Row="2"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
-            <StackPanel MaxWidth="980"
-                        HorizontalAlignment="Left">
-                <TextBlock Style="{StaticResource SectionTitleStyle}"
-                           Text="Performance" />
-                <Border Margin="0,8,0,0"
-                        Style="{StaticResource CardStyle}"
-                        Padding="0">
-                    <StackPanel>
-                        <Grid Margin="16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel MaxWidth="460" HorizontalAlignment="Left">
-                                <TextBlock FontSize="{StaticResource FontBody}"
-                                           FontWeight="SemiBold"
-                                           Text="System refresh cadence" />
-                                <TextBlock Margin="0,5,0,0"
-                                           Foreground="{StaticResource MutedBrush}"
-                                           FontSize="{StaticResource FontCaption}"
-                                           TextWrapping="Wrap"
-                                           Text="Controls live CPU, memory, network, storage, and process observation while Soltex is open." />
-                            </StackPanel>
-                            <StackPanel Grid.Column="1"
-                                        Margin="24,0,0,0"
-                                        Orientation="Horizontal"
-                                        VerticalAlignment="Center">
-                                <Button x:Name="LiveCadenceButton"
-                                        MinWidth="86"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Content="Live · 1 s"
-                                        AutomationProperties.Name="Use one second system refresh cadence"
-                                        Click="LiveCadence_Click" />
-                                <Button x:Name="BalancedCadenceButton"
-                                        Margin="8,0,0,0"
-                                        MinWidth="110"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Content="Balanced · 2 s"
-                                        AutomationProperties.Name="Use two second system refresh cadence"
-                                        Click="BalancedCadence_Click" />
-                                <Button x:Name="QuietCadenceButton"
-                                        Margin="8,0,0,0"
-                                        MinWidth="90"
-                                        Style="{StaticResource SecondaryButton}"
-                                        Content="Quiet · 5 s"
-                                        AutomationProperties.Name="Use five second system refresh cadence"
-                                        Click="QuietCadence_Click" />
-                            </StackPanel>
-                        </Grid>
-                        <Border Height="1"
-                                Background="{StaticResource TrackBrush}" />
-                        <Grid Margin="16">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <StackPanel MaxWidth="560" HorizontalAlignment="Left">
-                                <TextBlock FontSize="{StaticResource FontBody}"
-                                           FontWeight="SemiBold"
-                                           Text="Open Performance details by default" />
-                                <TextBlock Margin="0,5,0,0"
-                                           Foreground="{StaticResource MutedBrush}"
-                                           FontSize="{StaticResource FontCaption}"
-                                           TextWrapping="Wrap"
-                                           Text="Shows volumes, provider coverage, and the process table when Performance opens." />
-                            </StackPanel>
-                            <Button x:Name="PerformanceDetailsButton"
-                                    Grid.Column="1"
-                                    MinWidth="74"
-                                    Style="{StaticResource SecondaryButton}"
-                                    AutomationProperties.Name="Toggle Performance details default"
-                                    Click="PerformanceDetails_Click" />
-                        </Grid>
-                    </StackPanel>
-                </Border>
+        <Border Grid.Row="2"
+                BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,0,1">
+            <StackPanel Orientation="Horizontal">
+                <Button x:Name="GeneralSettingsTab"
+                        Tag="Selected"
+                        Style="{StaticResource TabButtonStyle}"
+                        Content="General"
+                        AutomationProperties.Name="Show general settings"
+                        Click="GeneralSettingsTab_Click" />
+                <Button x:Name="WindowSettingsTab"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource TabButtonStyle}"
+                        Content="Window"
+                        AutomationProperties.Name="Show window settings"
+                        Click="WindowSettingsTab_Click" />
+                <Button x:Name="PrivacySettingsTab"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource TabButtonStyle}"
+                        Content="Activity"
+                        AutomationProperties.Name="Show activity retention settings"
+                        Click="PrivacySettingsTab_Click" />
+                <Button x:Name="AboutSettingsTab"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource TabButtonStyle}"
+                        Content="Boundaries"
+                        AutomationProperties.Name="Show runtime boundaries"
+                        Click="AboutSettingsTab_Click" />
+            </StackPanel>
+        </Border>
 
-                <TextBlock Margin="0,18,0,0"
-                           Style="{StaticResource SectionTitleStyle}"
-                           Text="Workspace" />
-                <Border Margin="0,8,0,0"
-                        Style="{StaticResource CardStyle}"
-                        Padding="0">
-                    <Grid Margin="16">
+        <Border Grid.Row="4" Style="{StaticResource WorkbenchStyle}">
+            <Grid>
+                <Grid x:Name="GeneralSettingsPanel" Margin="18">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="14" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="1" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="1" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Performance" />
+
+                    <Grid Grid.Row="2">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel MaxWidth="560" HorizontalAlignment="Left">
-                            <TextBlock FontSize="{StaticResource FontBody}"
-                                       FontWeight="SemiBold"
-                                       Text="Restore the last workspace" />
-                            <TextBlock Margin="0,5,0,0"
-                                       Foreground="{StaticResource MutedBrush}"
-                                       FontSize="{StaticResource FontCaption}"
-                                       TextWrapping="Wrap"
-                                       Text="Returns to the most recent working module after a normal close." />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold" Text="Refresh cadence" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="How often live system data updates while Soltex is visible." />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="24,0,0,0" Orientation="Horizontal">
+                            <Button x:Name="LiveCadenceButton"
+                                    MinWidth="82"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Live · 1 s"
+                                    AutomationProperties.Name="Use one second system refresh cadence"
+                                    Click="LiveCadence_Click" />
+                            <Button x:Name="BalancedCadenceButton"
+                                    Margin="8,0,0,0"
+                                    MinWidth="106"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Balanced · 2 s"
+                                    AutomationProperties.Name="Use two second system refresh cadence"
+                                    Click="BalancedCadence_Click" />
+                            <Button x:Name="QuietCadenceButton"
+                                    Margin="8,0,0,0"
+                                    MinWidth="86"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Quiet · 5 s"
+                                    AutomationProperties.Name="Use five second system refresh cadence"
+                                    Click="QuietCadence_Click" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="3" Margin="0,14,0,14" Background="{StaticResource BorderBrush}" />
+
+                    <Grid Grid.Row="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold" Text="Open Performance details" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="Show volumes, providers, and processes when Performance opens." />
+                        </StackPanel>
+                        <Button x:Name="PerformanceDetailsButton"
+                                Grid.Column="1"
+                                MinWidth="70"
+                                Style="{StaticResource SecondaryButton}"
+                                AutomationProperties.Name="Toggle Performance details default"
+                                Click="PerformanceDetails_Click" />
+                    </Grid>
+
+                    <TextBlock Grid.Row="6" Style="{StaticResource SectionTitleStyle}" Text="Workspace" />
+
+                    <Border Grid.Row="7" Margin="0,14,0,14" Background="{StaticResource BorderBrush}" />
+
+                    <Grid Grid.Row="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold" Text="Restore the last workspace" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="Return to the most recent module after a normal close." />
                         </StackPanel>
                         <Button x:Name="RestoreWorkspaceButton"
                                 Grid.Column="1"
-                                MinWidth="74"
+                                MinWidth="70"
                                 Style="{StaticResource SecondaryButton}"
                                 AutomationProperties.Name="Toggle restoring the last workspace"
                                 Click="RestoreWorkspace_Click" />
                     </Grid>
-                </Border>
+                </Grid>
 
-                <TextBlock Margin="0,18,0,0"
-                           Style="{StaticResource SectionTitleStyle}"
-                           Text="Window behavior" />
-                <Border Margin="0,8,0,0"
-                        Style="{StaticResource CardStyle}"
-                        Padding="0">
-                    <Grid Margin="16">
+                <Grid x:Name="WindowSettingsPanel" Margin="18" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="When the window closes" />
+                    <Grid Grid.Row="2">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel MaxWidth="520" HorizontalAlignment="Left">
-                            <TextBlock FontSize="{StaticResource FontBody}"
-                                       FontWeight="SemiBold"
-                                       Text="When the window closes" />
-                            <TextBlock x:Name="NotificationAreaDetailText"
-                                       Margin="0,5,0,0"
-                                       Foreground="{StaticResource MutedBrush}"
-                                       FontSize="{StaticResource FontCaption}"
-                                       TextWrapping="Wrap"
-                                       Text="Exit ends the Soltex process. Notification-area mode is opt-in." />
-                        </StackPanel>
-                        <StackPanel Grid.Column="1"
-                                    Margin="24,0,0,0"
-                                    Orientation="Horizontal"
-                                    VerticalAlignment="Center">
+                        <TextBlock x:Name="NotificationAreaDetailText"
+                                   MaxWidth="520"
+                                   VerticalAlignment="Center"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   TextWrapping="Wrap"
+                                   Text="Exit ends Soltex. Notification-area mode is opt-in." />
+                        <StackPanel Grid.Column="1" Margin="24,0,0,0" Orientation="Horizontal">
                             <Button x:Name="ExitOnCloseButton"
                                     MinWidth="78"
                                     Style="{StaticResource SecondaryButton}"
@@ -189,126 +203,136 @@
                                     Click="ExitOnClose_Click" />
                             <Button x:Name="NotificationAreaButton"
                                     Margin="8,0,0,0"
-                                    MinWidth="146"
+                                    MinWidth="142"
                                     Style="{StaticResource SecondaryButton}"
                                     Content="Notification area"
                                     AutomationProperties.Name="Keep Soltex in the notification area when its window closes"
                                     Click="NotificationArea_Click" />
                         </StackPanel>
                     </Grid>
-                </Border>
+                    <Border Grid.Row="4"
+                            Background="{StaticResource QuietBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusSm}"
+                            Padding="12">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="BackgroundRuntimeText"
+                                       Text="Closing Soltex ends this desktop process; no service is installed." />
+                            <TextBlock x:Name="BackgroundRuntimeStateText"
+                                       Grid.Column="1"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMicro}"
+                                       Text="EXIT" />
+                        </Grid>
+                    </Border>
+                </Grid>
 
-                <TextBlock Margin="0,18,0,0"
-                           Style="{StaticResource SectionTitleStyle}"
-                           Text="Activity" />
-                <Border Margin="0,8,0,0"
-                        Style="{StaticResource CardStyle}"
-                        Padding="0">
-                    <Grid Margin="16">
+                <Grid x:Name="PrivacySettingsPanel" Margin="18" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Activity retention" />
+                    <Grid Grid.Row="2">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel MaxWidth="510" HorizontalAlignment="Left">
-                            <TextBlock FontSize="{StaticResource FontBody}"
-                                       FontWeight="SemiBold"
-                                       Text="Keep recent activity" />
-                            <TextBlock Margin="0,5,0,0"
-                                       Foreground="{StaticResource MutedBrush}"
-                                       FontSize="{StaticResource FontCaption}"
-                                       TextWrapping="Wrap"
-                                       Text="Records only meaningful Soltex actions and state changes. Entries are sanitized and bounded to 120." />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold" Text="Keep recent activity" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="Meaningful Soltex events only; sanitized and bounded to 120 entries." />
                         </StackPanel>
-                        <StackPanel Grid.Column="1"
-                                    Margin="24,0,0,0"
-                                    Orientation="Horizontal"
-                                    VerticalAlignment="Center">
+                        <StackPanel Grid.Column="1" Margin="24,0,0,0" Orientation="Horizontal">
                             <Button x:Name="SessionActivityButton"
-                                    MinWidth="92"
+                                    MinWidth="88"
                                     Style="{StaticResource SecondaryButton}"
                                     Content="Session"
                                     AutomationProperties.Name="Keep activity for this session only"
                                     Click="SessionActivity_Click" />
                             <Button x:Name="SevenDayActivityButton"
                                     Margin="8,0,0,0"
-                                    MinWidth="82"
+                                    MinWidth="78"
                                     Style="{StaticResource SecondaryButton}"
                                     Content="7 days"
                                     AutomationProperties.Name="Keep activity for seven days"
                                     Click="SevenDayActivity_Click" />
                             <Button x:Name="ThirtyDayActivityButton"
                                     Margin="8,0,0,0"
-                                    MinWidth="88"
+                                    MinWidth="84"
                                     Style="{StaticResource SecondaryButton}"
                                     Content="30 days"
                                     AutomationProperties.Name="Keep activity for thirty days"
                                     Click="ThirtyDayActivity_Click" />
                         </StackPanel>
                     </Grid>
-                </Border>
-
-                <TextBlock Margin="0,18,0,0"
-                           Style="{StaticResource SectionTitleStyle}"
-                           Text="Runtime boundaries" />
-                <Border Margin="0,8,0,0"
-                        Style="{StaticResource QuietCardStyle}"
-                        Padding="16">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="12" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="12" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="Preferences stay on this Windows account." />
-                        <TextBlock Grid.Column="1"
-                                   Foreground="{StaticResource SignalBrush}"
-                                   FontFamily="{StaticResource MonoFont}"
-                                   FontSize="{StaticResource FontMicro}"
-                                   Text="ON DEVICE" />
-                        <TextBlock Grid.Row="2"
-                                   Text="Performance sampling pauses when minimized or hidden." />
-                        <TextBlock Grid.Row="2"
-                                   Grid.Column="1"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   FontFamily="{StaticResource MonoFont}"
-                                   FontSize="{StaticResource FontMicro}"
-                                   Text="SUSPENDS" />
-                        <TextBlock x:Name="BackgroundRuntimeText"
-                                   Grid.Row="4"
-                                   Text="Closing Soltex ends this desktop process; no service is installed." />
-                        <TextBlock x:Name="BackgroundRuntimeStateText"
-                                   Grid.Row="4"
-                                   Grid.Column="1"
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   FontFamily="{StaticResource MonoFont}"
-                                   FontSize="{StaticResource FontMicro}"
-                                   Text="EXIT" />
-                    </Grid>
-                </Border>
-
-                <Grid Margin="0,18,0,4">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="SettingsSaveDetailText"
-                               VerticalAlignment="Center"
-                               Foreground="{StaticResource MutedBrush}"
-                               FontSize="{StaticResource FontCaption}"
-                               Text="Preferences are ready." />
-                    <Button Grid.Column="1"
-                            Style="{StaticResource SecondaryButton}"
-                            Content="Reset defaults"
-                            AutomationProperties.Name="Reset Soltex preferences to defaults"
-                            Click="ResetDefaults_Click" />
+                    <Border Grid.Row="4"
+                            Background="{StaticResource QuietBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusSm}"
+                            Padding="12">
+                        <TextBlock Text="Session-only is the default. Retained activity stays on this Windows account." />
+                    </Border>
                 </Grid>
-            </StackPanel>
-        </ScrollViewer>
+
+                <Grid x:Name="AboutSettingsPanel" Margin="18" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="16" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="1" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="1" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Runtime boundaries" />
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="Preferences stay on this Windows account." />
+                        <TextBlock Grid.Column="1" Foreground="{StaticResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" Text="ON DEVICE" />
+                    </Grid>
+                    <Border Grid.Row="3" Margin="0,14" Background="{StaticResource BorderBrush}" />
+                    <Grid Grid.Row="4">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="Performance sampling pauses while minimized or hidden." />
+                        <TextBlock Grid.Column="1" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" Text="SUSPENDS" />
+                    </Grid>
+                    <Border Grid.Row="5" Margin="0,14" Background="{StaticResource BorderBrush}" />
+                    <Grid Grid.Row="6">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="Soltex installs no background service." />
+                        <TextBlock Grid.Column="1" Foreground="{StaticResource TextSecondaryBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" Text="DESKTOP ONLY" />
+                    </Grid>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="SettingsSaveDetailText"
+                       VerticalAlignment="Center"
+                       Foreground="{StaticResource MutedBrush}"
+                       FontSize="{StaticResource FontCaption}"
+                       Text="Preferences are ready." />
+            <Button Grid.Column="1"
+                    Style="{StaticResource SecondaryButton}"
+                    Content="Reset defaults"
+                    AutomationProperties.Name="Reset Soltex preferences to defaults"
+                    Click="ResetDefaults_Click" />
+        </Grid>
     </Grid>
 </UserControl>
