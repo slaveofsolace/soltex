@@ -47,7 +47,7 @@ Soltex.App.Tests: 19/19
 targeted post-polish app build: 0 warnings / 0 errors
 targeted post-polish app tests: 19/19
 exact-head native matrix: 14/14 at 1280x820
-render manifest source/tested SHA: regeneration pending after unpublished commit-identity repair
+render manifest source/tested SHA: c88d995a89cbbb46ce481e21900927bf57192af6
 ```
 
 Durable local evidence:
@@ -57,7 +57,7 @@ final full verification transcript:
 C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\activity-final-source-verify-20260811-221629.transcript.log
 
 exact-head native packet:
-regeneration pending after unpublished commit-identity repair
+C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\activity-native-c88d995-20260811-222807
 ```
 
 The exact Activity and Settings captures were directly inspected. They show no gross clipping, broken assets, stock gradient/glass/card-grid treatment, or P0 generic-AI design tell. This is agent inspection at one software-rendered native viewport, not owner visual acceptance, accessibility conformance, DPI/scaling proof, or packaging evidence.

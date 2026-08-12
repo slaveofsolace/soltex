@@ -20,7 +20,7 @@ reboot-safe: YES
 - Portable .NET SDK 10.0.302 installed from the validly signed official installer under `C:\Users\suhai\.codex\tools\dotnet-sdk-10` after the host SDK mismatch was identified.
 - Final Release verification: passed; Security 31/31, Monitoring 16/16, App 19/19.
 - Post-visual-polish targeted Release app build: passed with 0 warnings/0 errors; App 19/19.
-- The pre-publication native matrix passed 14/14 at 1280x820; its exact commit identity is being regenerated after the unpublished commits were repaired to use the repository-local GitHub noreply identity.
+- Exact `c88d995a89cbbb46ce481e21900927bf57192af6` native matrix: 14/14 at 1280x820 after the unpublished commits were repaired to use the repository-local GitHub noreply identity.
 - Activity and Settings captures: directly inspected; no gross clipping or P0 generic-design tell observed.
 - Nonclaims retained: one viewport is not owner acceptance, accessibility/scaling conformance, package evidence, or product parity.
 
