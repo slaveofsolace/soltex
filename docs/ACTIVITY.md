@@ -2,7 +2,7 @@
 
 Snapshot: 2026-08-11
 
-Status: implemented in the draft rebuild; exact-head hosted/package verification and owner visual acceptance remain open
+Status: exact-head Windows/package verified in draft PR #11; owner visual acceptance remains open
 
 ## Purpose
 

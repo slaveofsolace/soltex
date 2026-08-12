@@ -62,18 +62,18 @@ C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\activity-
 
 The exact Activity and Settings captures were directly inspected. They show no gross clipping, broken assets, stock gradient/glass/card-grid treatment, or P0 generic-AI design tell. This is agent inspection at one software-rendered native viewport, not owner visual acceptance, accessibility conformance, DPI/scaling proof, or packaging evidence.
 
+Exact PR head `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` subsequently passed Windows run `31560242046` and package-smoke run `31560242019`. Windows artifact `9127496208` has digest `sha256:0046bc2b99c0e10accf58b3c030025c4802ceee782553a06f7c3881599e969c9`; package artifact `9127485263` has digest `sha256:dfd3b7aed215a2646bac1ad745e431511f5e4de4958b479b9a8d3865865ab30b`. The downloaded Windows ZIP independently matched its digest; its manifest bound source `4437db8` to tested PR merge `4b3fff8`, and all 14 retained PNG sizes, hashes, and 1280×820 dimensions revalidated. Hosted Activity and Settings pixels were directly inspected. The optional hosted AMSI/EICAR run remained 31/32 because the runner's provider returned native result `1`; required gates still passed, and no detection-efficacy claim is made.
+
 ## Exact resume step
 
-1. Push the branch without force.
-2. Confirm PR #11 points at the pushed docs tip and remains draft.
-3. Monitor the exact-head Windows and package-smoke workflows once.
-4. If green, download the Windows evidence artifact, verify its digest/manifest identities, and inspect the hosted Activity and Settings captures.
-5. Reconcile `docs/IMPLEMENTATION_STATUS.md`, `docs/VALIDATION.md`, and the PR body with hosted evidence.
-6. Continue the next product-maturity slice: supported Windows Core Audio session observation followed by explicit volume/mute writes with immediate read-back. Do not claim routing, EQ, DSP, or Sonar parity.
+1. Continue the next product-maturity slice: supported Windows Core Audio session observation on active render endpoints.
+2. Bind sessions through `IAudioSessionManager2`/`IAudioSessionEnumerator`, expose sanitized process identity and current session volume/mute, and keep enumeration bounded.
+3. Add explicit user-owned session volume/mute writes only with immediate Core Audio read-back and visible failure/recovery state.
+4. Add focused COM-layout, bounds, identity-drift, disconnected-session, write/read-back, cancellation, live-overhead, and WPF interaction tests.
+5. Capture and inspect the resulting Audio states before publication. Do not claim routing, EQ, DSP, noise suppression, virtual devices, or Sonar parity.
 
 ## Remaining product work
 
-- exact-head hosted/package acceptance for Activity;
 - per-app Core Audio session observation and supported read-back controls;
 - bounded historical numeric telemetry with independently proven retention/migration/cost;
 - notification/background-runtime policy and idle/minimized/navigation-churn measurements;

@@ -89,13 +89,13 @@ Accepted on the draft branch at `5c4a16de85b0b63bff4779769193a1e94411c77c`: Sett
 
 ### Stage 1D — privacy-bounded Activity
 
-Implemented and owner-host verified on source head `0edb327a46aa05a5cc5e804d30ac56cd797e210a`: one searchable timeline stores at most 120 sanitized meaningful events, defaults to session-only memory, and adds explicit 7-day/30-day retention. Shortening retention and clearing history require main-window confirmation. Invalid, oversized, expired, future, and overflow state recovers explicitly; writes are atomic and storage/deletion failures remain visible. The Release build, focused suites, and 14-state native matrix passed locally, and the Activity/Settings pixels were inspected. Exact-head hosted/package acceptance remains open.
+Accepted on exact PR head `4437db80b844dcfe33cd8265e41cb5fcf00bfd76`: one searchable timeline stores at most 120 sanitized meaningful events, defaults to session-only memory, and adds explicit 7-day/30-day retention. Shortening retention and clearing history require main-window confirmation. Invalid, oversized, expired, future, and overflow state recovers explicitly; writes are atomic and storage/deletion failures remain visible. Owner-host and hosted Windows/package gates passed; the hosted 14-state manifest was independently revalidated and Activity/Settings pixels were inspected. Owner visual acceptance remains open.
 
 ### Stage 1 — Windows control plane
 
 Required before calling Soltex a real system manager:
 
-- finish exact-head hosted/package evidence for the privacy-bounded Activity workspace;
+- extend Audio only through supported Core Audio session observation and confirmed read-back controls;
 - extend the accepted installed-application/startup inventory only through documented, path-minimizing sources;
 - retain the accepted safe process action with protected-process rejection, exact confirmation, and recovery reporting;
 - add service, driver, and startup health observation without generic cleanup claims;

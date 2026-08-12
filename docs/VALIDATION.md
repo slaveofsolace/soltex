@@ -8,7 +8,7 @@ Current draft: `sol/soltex-product-rebuild` / [PR #11](https://github.com/slaveo
 
 ## Activity candidate owner-host gate
 
-The uncommitted Activity candidate was exercised on the owner-controlled Windows host before publication. The gate used the repository-pinned .NET 10 contract through a verified portable .NET SDK 10.0.302 and did not disable, exclude, or reconfigure Windows security.
+The Activity source candidate was exercised on the owner-controlled Windows host before publication. The gate used the repository-pinned .NET 10 contract through a verified portable .NET SDK 10.0.302 and did not disable, exclude, or reconfigure Windows security.
 
 | Command/gate | Result |
 |---|---:|
@@ -19,7 +19,13 @@ The uncommitted Activity candidate was exercised on the owner-controlled Windows
 | `Soltex.App.Tests` | 19/19 |
 | Activity storage/privacy test | Passed inside the app suite |
 
-The Activity test covers the 120-entry bound, session-only no-file default, explicit retained persistence, drive/UNC-path sanitization, durable round trip, confirmed deletion boundary, invalid JSON recovery, and oversized-file fail-closed behavior. The view test covers retention state, filtering/no-match disclosure, deletion routing to the main-window confirmation owner, and native WPF rendering. A passing test does not establish human visual acceptance. Exact-head hosted Windows/package results remain required before the draft pull request can leave draft.
+The Activity test covers the 120-entry bound, session-only no-file default, explicit retained persistence, drive/UNC-path sanitization, durable round trip, confirmed deletion boundary, invalid JSON recovery, and oversized-file fail-closed behavior. The view test covers retention state, filtering/no-match disclosure, deletion routing to the main-window confirmation owner, and native WPF rendering. A passing test does not establish human visual acceptance.
+
+### Exact-head hosted Activity gate
+
+PR head `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` passed Windows run `31560242046` and package-smoke run `31560242019`. Windows artifact `9127496208` has digest `sha256:0046bc2b99c0e10accf58b3c030025c4802ceee782553a06f7c3881599e969c9`; package artifact `9127485263` has digest `sha256:dfd3b7aed215a2646bac1ad745e431511f5e4de4958b479b9a8d3865865ab30b`.
+
+The downloaded Windows ZIP independently matched its GitHub digest. Its render manifest binds source head `4437db8` to tested PR merge `4b3fff8`, records 14 native 1280×820 states, and all retained file lengths, SHA-256 values, and dimensions independently matched. Hosted Activity and Settings captures were directly inspected. Required suites passed: Security 31/31, supply chain 18/18, hardening 12/12, update 17/17, Device Fabric 24/24, monitoring 16/16, audio 10/10, and app/control 19/19. The optional hosted AMSI/EICAR run remained 31/32 because the runner's installed provider returned native result `1`; this is an interoperability nonconfirmation, not an efficacy test.
 
 The current render matrix contains 14 native states: nine visible default workspaces, the two collapsed preview workspaces retained for source-level evaluation, and three progressive-disclosure states. Capture still fails closed on stale targets, source/tested-commit mismatch, missing output, error sidecars, empty images, and non-1280×820 output.
 

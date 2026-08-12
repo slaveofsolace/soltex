@@ -22,8 +22,11 @@ reboot-safe: YES
 - Post-visual-polish targeted Release app build: passed with 0 warnings/0 errors; App 19/19.
 - Exact `c88d995a89cbbb46ce481e21900927bf57192af6` native matrix: 14/14 at 1280x820 after the unpublished commits were repaired to use the repository-local GitHub noreply identity.
 - Activity and Settings captures: directly inspected; no gross clipping or P0 generic-design tell observed.
-- Nonclaims retained: one viewport is not owner acceptance, accessibility/scaling conformance, package evidence, or product parity.
+- Exact PR head `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` passed Windows run `31560242046` and package-smoke run `31560242019`; artifacts `9127496208` and `9127485263` are digest-bound to that head.
+- The downloaded Windows packet and all 14 manifest-bound PNG identities revalidated; hosted Activity/Settings pixels were directly inspected.
+- Hosted AMSI/EICAR remained 31/32 because the runner provider returned result `1`; required gates passed and no efficacy claim is made.
+- Nonclaims retained: one viewport is not owner acceptance, accessibility/scaling conformance, install lifecycle evidence, or product parity.
 
 ## Exact resume step
 
-Publish the non-force branch update, monitor PR #11's exact-head Windows/package workflows once, verify hosted evidence identities and Activity/Settings pixels, reconcile the audit ledger, then start the supported Core Audio session/read-back slice.
+Start the supported Core Audio session/read-back slice from the clean rebuild worktree. Keep session enumeration bounded, sanitize display identity, require explicit writes and immediate read-back, expose failure/recovery, and preserve the routing/EQ/DSP/virtual-device nonclaims.

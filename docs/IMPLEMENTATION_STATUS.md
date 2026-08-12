@@ -27,7 +27,7 @@ Implemented on the draft branch:
 - preview labels and concise first-view copy so unfinished modules do not masquerade as shipped tools;
 - progressive disclosure retained for provider, event, and overflow detail.
 
-Exact native matrices through the Settings checkpoint were agent-inspected at 1280×820. Human owner visual acceptance remains open, and the new Activity slice still requires exact-head hosted/package gates before PR #11 can leave draft.
+Exact native matrices through the Activity checkpoint were agent-inspected at 1280×820 on both the owner host and hosted Windows runner. Human owner visual acceptance remains open, so PR #11 remains draft.
 
 ### Applications
 
@@ -39,7 +39,7 @@ Hosted Windows-verified on `5c4a16de85b0b63bff4779769193a1e94411c77c`: Settings 
 
 ### Activity and local privacy
 
-Implemented and owner-host verified in the current Activity candidate: one searchable timeline retains at most 120 sanitized meaningful events. Session-only is the default and creates no Activity file. Seven-day or 30-day retention is an explicit local preference; shortening retention and clearing history are confirmation-owned by the main window. The JSON document is capped at 256 KiB, rejects unknown or invalid schema data, prunes expired/future/overflow entries, uses atomic replacement, and surfaces storage failure instead of pretending persistence succeeded. File- and path-like text is replaced with a generic local-item summary. Exact-head hosted/package verification and owner visual acceptance remain open.
+Hosted Windows/package verified on PR head `4437db80b844dcfe33cd8265e41cb5fcf00bfd76`: one searchable timeline retains at most 120 sanitized meaningful events. Session-only is the default and creates no Activity file. Seven-day or 30-day retention is an explicit local preference; shortening retention and clearing history are confirmation-owned by the main window. The JSON document is capped at 256 KiB, rejects unknown or invalid schema data, prunes expired/future/overflow entries, uses atomic replacement, and surfaces storage failure instead of pretending persistence succeeded. File- and path-like text is replaced with a generic local-item summary. Owner visual acceptance remains open.
 
 ### Performance and bounded task action
 
@@ -90,13 +90,14 @@ All eleven native 1280×820 captures from that exact Windows run were inspected.
 
 The Settings checkpoint `5c4a16de85b0b63bff4779769193a1e94411c77c` passed Windows run `31551365746` and package-smoke run `31551365787`. Windows artifact `9124417870` has digest `sha256:54c1e6bd62180db525e1dfe9fd0c8ac30f97c56ade3baf27ea0d7181137bd031`; its exact native Settings capture was agent-inspected.
 
+The Activity checkpoint `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` passed Windows run `31560242046` and package-smoke run `31560242019`. Windows artifact `9127496208` has digest `sha256:0046bc2b99c0e10accf58b3c030025c4802ceee782553a06f7c3881599e969c9`; package artifact `9127485263` has digest `sha256:dfd3b7aed215a2646bac1ad745e431511f5e4de4958b479b9a8d3865865ab30b`. The 14-state manifest and retained PNG identities were independently revalidated, and hosted Activity/Settings captures were inspected. Optional hosted AMSI/EICAR remained 31/32 because that runner's installed provider returned native result `1`; required gates passed.
+
 ## Next stages
 
-1. Pass the Activity candidate's exact-head Windows/package workflows and inspect Activity plus Settings native renders.
-2. Add Core Audio session observation and documented volume/mute writes with read-back. Routing remains a separate signed virtual-audio component.
-3. Add bounded local historical telemetry only after its storage, retention, migration, and measured-idle-cost contract is independently proven.
-4. Add mTLS/Tailscale device enrollment, capability-scoped agents, revocation, emergency stop, and NAS audit transport. Keep personal Google Drive and work Box in separate permission domains.
-5. Add Windows Graphics Capture, benchmark profiles/provenance, signing, installer lifecycle evidence, accessibility/scaling verification, and owner acceptance.
+1. Add Core Audio session observation and documented volume/mute writes with read-back. Routing remains a separate signed virtual-audio component.
+2. Add bounded local historical telemetry only after its storage, retention, migration, and measured-idle-cost contract is independently proven.
+3. Add mTLS/Tailscale device enrollment, capability-scoped agents, revocation, emergency stop, and NAS audit transport. Keep personal Google Drive and work Box in separate permission domains.
+4. Add Windows Graphics Capture, benchmark profiles/provenance, signing, installer lifecycle evidence, accessibility/scaling verification, and owner acceptance.
 
 ## Nonclaims
 
