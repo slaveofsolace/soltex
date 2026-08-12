@@ -62,7 +62,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel MaxWidth="460">
+                            <StackPanel MaxWidth="460" HorizontalAlignment="Left">
                                 <TextBlock FontSize="{StaticResource FontBody}"
                                            FontWeight="SemiBold"
                                            Text="System refresh cadence" />
@@ -105,7 +105,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel MaxWidth="560">
+                            <StackPanel MaxWidth="560" HorizontalAlignment="Left">
                                 <TextBlock FontSize="{StaticResource FontBody}"
                                            FontWeight="SemiBold"
                                            Text="Open Performance details by default" />
@@ -136,7 +136,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel MaxWidth="560">
+                        <StackPanel MaxWidth="560" HorizontalAlignment="Left">
                             <TextBlock FontSize="{StaticResource FontBody}"
                                        FontWeight="SemiBold"
                                        Text="Restore the last workspace" />
