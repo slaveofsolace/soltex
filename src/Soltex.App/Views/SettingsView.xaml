@@ -24,7 +24,7 @@
                 <TextBlock Margin="0,5,0,0"
                            Style="{StaticResource MutedTextStyle}"
                            FontSize="{StaticResource FontBody}"
-                           Text="Choose how the local workspace refreshes and reopens." />
+                           Text="Choose how the local workspace refreshes, remembers, and records." />
             </StackPanel>
             <Border Grid.Column="1"
                     Style="{StaticResource StatusPillStyle}"
@@ -152,6 +152,55 @@
                                 Style="{StaticResource SecondaryButton}"
                                 AutomationProperties.Name="Toggle restoring the last workspace"
                                 Click="RestoreWorkspace_Click" />
+                    </Grid>
+                </Border>
+
+                <TextBlock Margin="0,22,0,0"
+                           Style="{StaticResource SectionTitleStyle}"
+                           Text="Activity" />
+                <Border Margin="0,10,0,0"
+                        Style="{StaticResource CardStyle}"
+                        Padding="0">
+                    <Grid Margin="18">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel MaxWidth="510" HorizontalAlignment="Left">
+                            <TextBlock FontSize="{StaticResource FontBody}"
+                                       FontWeight="SemiBold"
+                                       Text="Keep recent activity" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontSize="{StaticResource FontCaption}"
+                                       TextWrapping="Wrap"
+                                       Text="Records only meaningful Soltex actions and state changes. Entries are sanitized and bounded to 120." />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Margin="24,0,0,0"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Button x:Name="SessionActivityButton"
+                                    MinWidth="92"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Session"
+                                    AutomationProperties.Name="Keep activity for this session only"
+                                    Click="SessionActivity_Click" />
+                            <Button x:Name="SevenDayActivityButton"
+                                    Margin="8,0,0,0"
+                                    MinWidth="82"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="7 days"
+                                    AutomationProperties.Name="Keep activity for seven days"
+                                    Click="SevenDayActivity_Click" />
+                            <Button x:Name="ThirtyDayActivityButton"
+                                    Margin="8,0,0,0"
+                                    MinWidth="88"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="30 days"
+                                    AutomationProperties.Name="Keep activity for thirty days"
+                                    Click="ThirtyDayActivity_Click" />
+                        </StackPanel>
                     </Grid>
                 </Border>
 

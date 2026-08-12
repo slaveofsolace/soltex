@@ -18,8 +18,9 @@ Design and architecture:
 - [Immersive workspace](IMMERSIVE_WORKSPACE.md)
 - [Personal device fabric](PERSONAL_DEVICE_FABRIC.md)
 - [Remote Assist](REMOTE_ASSIST.md)
+- [Activity privacy and retention](ACTIVITY.md)
 - [Naming and compatibility](NAMING_AND_COMPATIBILITY.md)
-- [Reference systems](REFERENCE_SYSTEMS.md) â€” clean-room product lessons and reuse boundaries.
+- [Reference systems](REFERENCE_SYSTEMS.md) — clean-room product lessons and reuse boundaries.
 
 Product context and historical planning:
 

@@ -12,16 +12,29 @@ internal enum TelemetryCadence
     Quiet
 }
 
+internal enum ActivityRetention
+{
+    SessionOnly,
+    SevenDays,
+    ThirtyDays
+}
+
 internal sealed record SoltexPreferences(
     TelemetryCadence TelemetryCadence,
     bool RestoreLastWorkspace,
     bool OpenPerformanceDetails,
+    ActivityRetention ActivityRetention,
     string LastWorkspace)
 {
     internal const int CurrentSchemaVersion = 1;
 
     internal static SoltexPreferences Default { get; } =
-        new(global::Soltex.App.TelemetryCadence.Balanced, true, false, "home");
+        new(
+            global::Soltex.App.TelemetryCadence.Balanced,
+            true,
+            false,
+            global::Soltex.App.ActivityRetention.SessionOnly,
+            "home");
 
     internal int TelemetryIntervalMilliseconds => TelemetryCadence switch
     {
@@ -35,6 +48,9 @@ internal sealed record SoltexPreferences(
             Enum.IsDefined(TelemetryCadence) ? TelemetryCadence : global::Soltex.App.TelemetryCadence.Balanced,
             RestoreLastWorkspace,
             OpenPerformanceDetails,
+            Enum.IsDefined(ActivityRetention)
+                ? ActivityRetention
+                : global::Soltex.App.ActivityRetention.SessionOnly,
             NormalizeWorkspace(LastWorkspace));
 
     internal static string NormalizeWorkspace(string? value)
@@ -47,6 +63,7 @@ internal sealed record SoltexPreferences(
             "mixer" or
             "security" or
             "remote" or
+            "activity" or
             "updates" or
             "settings"
                 ? candidate
@@ -113,11 +130,21 @@ internal sealed class PreferencesStore
                 Enum.TryParse(
                     document.TelemetryCadence,
                     ignoreCase: true,
-                    out TelemetryCadence cadence) &&
+                out TelemetryCadence cadence) &&
                 Enum.IsDefined(cadence);
+            bool retentionMissing = string.IsNullOrWhiteSpace(document.ActivityRetention);
+            ActivityRetention retention = global::Soltex.App.ActivityRetention.SessionOnly;
+            bool validRetention =
+                retentionMissing ||
+                (Enum.TryParse(
+                    document.ActivityRetention,
+                    ignoreCase: true,
+                    out retention) &&
+                 Enum.IsDefined(retention));
             string workspace = SoltexPreferences.NormalizeWorkspace(document.LastWorkspace);
             bool normalized =
                 !validCadence ||
+                (!retentionMissing && !validRetention) ||
                 !string.Equals(
                     workspace,
                     document.LastWorkspace?.Trim(),
@@ -126,6 +153,9 @@ internal sealed class PreferencesStore
                 validCadence ? cadence : global::Soltex.App.TelemetryCadence.Balanced,
                 document.RestoreLastWorkspace,
                 document.OpenPerformanceDetails,
+                validRetention && !retentionMissing
+                    ? retention
+                    : global::Soltex.App.ActivityRetention.SessionOnly,
                 workspace);
             return new PreferencesLoadResult(
                 preferences,
@@ -149,6 +179,7 @@ internal sealed class PreferencesStore
             normalized.TelemetryCadence.ToString(),
             normalized.RestoreLastWorkspace,
             normalized.OpenPerformanceDetails,
+            normalized.ActivityRetention.ToString(),
             normalized.LastWorkspace);
         string json = JsonSerializer.Serialize(document, SerializerOptions);
         if (Encoding.UTF8.GetByteCount(json) > MaximumPreferenceBytes)
@@ -189,5 +220,6 @@ internal sealed class PreferencesStore
         string TelemetryCadence,
         bool RestoreLastWorkspace,
         bool OpenPerformanceDetails,
+        string? ActivityRetention,
         string LastWorkspace);
 }

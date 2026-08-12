@@ -1,8 +1,27 @@
 # Validation and evidence
 
-Snapshot: 2026-08-09
+Snapshot: 2026-08-11
 
 Repository: `slaveofsolace/soltex`
+
+Current draft: `sol/soltex-product-rebuild` / [PR #11](https://github.com/slaveofsolace/soltex/pull/11)
+
+## Activity candidate owner-host gate
+
+The uncommitted Activity candidate was exercised on the owner-controlled Windows host before publication. The gate used the repository-pinned .NET 10 contract through a verified portable .NET SDK 10.0.302 and did not disable, exclude, or reconfigure Windows security.
+
+| Command/gate | Result |
+|---|---:|
+| identity policy | Passed; 172 tracked text files, 9 reasoned allowlist entries |
+| Release solution build | Passed |
+| `Soltex.Security.Tests` | 31/31 |
+| `Soltex.Monitoring.Tests` | 16/16 |
+| `Soltex.App.Tests` | 19/19 |
+| Activity storage/privacy test | Passed inside the app suite |
+
+The Activity test covers the 120-entry bound, session-only no-file default, explicit retained persistence, drive/UNC-path sanitization, durable round trip, confirmed deletion boundary, invalid JSON recovery, and oversized-file fail-closed behavior. The view test covers retention state, filtering/no-match disclosure, deletion routing to the main-window confirmation owner, and native WPF rendering. A passing test does not establish human visual acceptance. Exact-head hosted Windows/package results remain required before the draft pull request can leave draft.
+
+The current render matrix contains 14 native states: nine visible default workspaces, the two collapsed preview workspaces retained for source-level evaluation, and three progressive-disclosure states. Capture still fails closed on stale targets, source/tested-commit mismatch, missing output, error sidecars, empty images, and non-1280×820 output.
 
 Merged baseline: `main` at `61639bfe7ea3a7191fcb6c70ea1f2a699aa77248` (PR #9)
 

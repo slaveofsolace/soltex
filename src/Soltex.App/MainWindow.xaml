@@ -107,6 +107,13 @@
                             <TextBlock Grid.Column="2" Text="PREVIEW" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Grid>
                     </Button>
+                    <Button x:Name="ActivityNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Activity" Click="ActivityNav_Click">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE81C;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Text="Activity" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                        </Grid>
+                    </Button>
                     <Button x:Name="UpdateNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Updates" Click="UpdateNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -161,6 +168,7 @@
             <views:HomeView x:Name="HomePanel" />
             <views:MonitoringView x:Name="MonitoringPanel" Visibility="Collapsed" />
             <views:ApplicationsView x:Name="ApplicationsPanel" Visibility="Collapsed" />
+            <views:ActivityView x:Name="ActivityPanel" Visibility="Collapsed" />
             <views:SettingsView x:Name="SettingsPanel" Visibility="Collapsed" />
             <views:DevicesView x:Name="DevicesPanel" Visibility="Collapsed" />
 

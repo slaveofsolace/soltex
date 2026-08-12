@@ -2,22 +2,26 @@
 
 Soltex is a proprietary personal-computing workspace. **Soltex** is the canonical product, repository, solution, assembly, and namespace identity. A small, tested compatibility boundary preserves existing authenticated local state and historical evidence without presenting the retired working name as current product copy.
 
-The current desktop solution exposes eight related workspace areas:
+The current desktop solution exposes nine visible workspace areas:
 
 - **Home** — a real local summary with explicit partial/unavailable signals.
 - **Monitoring** — bounded CPU, physical-memory, process, and fixed-volume observation from supported Windows interfaces.
 - **Devices** — a sanitized local profile and exact non-executing capability model, explicitly not enrolled.
-- **Audio** — future per-application routing, parametric EQ, microphone processing, and stream mixes.
-- **Clips** — future bounded rolling capture with a separate, non-injected overlay.
+- **Applications** — a bounded, searchable, read-only inventory of installed software and sign-in entries.
+- **Audio** — read-only Windows Core Audio endpoint state; per-app sessions and writes remain staged work.
 - **Security** — the implemented focus: a lightweight companion that cooperates with the antivirus provider registered with Windows, plus bounded local supply-chain verification primitives.
 - **Remote Assist** — a consent-first launcher for a separately installed, Windows-trusted RustDesk client; Soltex does not own or embed the remote-session transport.
+- **Activity** — a bounded local timeline of meaningful Soltex actions and recovery transitions, session-only unless the user explicitly selects retention.
 - **Updates** — a non-installing signed planner that authenticates bounded release artifacts and stops at an exact human-readable preview.
+- **Settings** — working local preferences for telemetry cadence, workspace restoration, detail disclosure, and Activity retention.
 
 This is a clean-room product. It is not affiliated with, endorsed by, or derived from SteelSeries, Malwarebytes, Zen Browser, AppControl, NZXT, or RustDesk. It contains no copied binaries, signatures, detection models, private protocols, branding, or UI assets from those products. RustDesk remains a separately licensed external program.
 
 ## What works now
 
-Home is the default WPF surface. Home, Monitoring, and Devices share one warm graphite/coral design system with bounded sparklines, progress, slider/focus, table, and scrollbar resources. One sequential sampler publishes immutable snapshots and copied 48/72-sample histories, surfaces provenance and unsupported signals, retains last confirmed values briefly as stale, and cancels on shutdown. GPU and network telemetry are not implemented and remain visibly unavailable.
+Home is the default WPF surface. The visible workspaces share one restrained graphite/iris design system with bounded sparklines, progress, slider/focus, table, and scrollbar resources. One sequential sampler publishes immutable snapshots and copied 48/72-sample histories, surfaces provenance and unsupported signals, retains last confirmed values briefly as stale, and cancels on shutdown. GPU telemetry is not implemented and remains visibly unavailable.
+
+Activity records only bounded Soltex-owned events such as an explicit process action, scan request/result, quarantine change, Remote Assist launch result, or a telemetry failure/recovery transition. It does not record clicks, browsing, packet contents, command lines, or executable/file paths. The default is memory-only for the current session; 7-day and 30-day local retention require an explicit Settings choice, shortening retention requires confirmation, and Clear Activity requires confirmation before removing visible and saved history. See [`docs/ACTIVITY.md`](docs/ACTIVITY.md).
 
 The .NET 10 WPF solution builds and executes on Windows. The Security companion currently provides:
 
@@ -61,7 +65,7 @@ Requirements: Windows 10 version 2004 (build 19041) or newer, x64. The .NET runt
 
 The installer is **not code-signed**. No production Soltex code-signing identity has been selected, so Windows SmartScreen will warn on first run and the publisher will show as unknown. Verify the download against its published SHA-256 before running it. Code signing is tracked with the rest of the release program in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
-Uninstalling removes the installed program files and shortcuts. Local Soltex state — quarantine, the HMAC-chained audit log, release-sequence state, and planning journals — lives under your user profile and is deliberately left in place so an accidental uninstall cannot destroy authenticated history. Remove it by hand if that is what you want.
+Uninstalling removes the installed program files and shortcuts. Local Soltex state — preferences, optional Activity history, quarantine, the HMAC-chained security audit log, release-sequence state, and planning journals — lives under your user profile and is deliberately left in place so an accidental uninstall cannot destroy authenticated security history. Activity can be cleared from its own confirmed control before uninstalling; the remaining security/update state requires a separate deliberate cleanup procedure.
 
 To build the installer from source, publish the app and compile the script with [Inno Setup](https://jrsoftware.org/isinfo.php) 6:
 
@@ -152,6 +156,7 @@ Documentation:
 - Current continuation handoff: [`HANDOFF.md`](HANDOFF.md).
 - Documentation map: [`docs/INDEX.md`](docs/INDEX.md).
 - Current status and nonclaims: [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md).
+- Activity privacy, retention, recovery, and deletion contract: [`docs/ACTIVITY.md`](docs/ACTIVITY.md).
 - Immersive workspace behavior and visual/data boundaries: [`docs/IMMERSIVE_WORKSPACE.md`](docs/IMMERSIVE_WORKSPACE.md).
 - Exact commands and evidence ledger: [`docs/VALIDATION.md`](docs/VALIDATION.md).
 - Frozen Wave B evidence and decision ledger: [`docs/evidence/2026-08-04-immersive-workspace/`](docs/evidence/2026-08-04-immersive-workspace/).

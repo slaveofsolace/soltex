@@ -41,7 +41,7 @@ public partial class App : Application
             {
                 throw new ArgumentException(
                     "The render-smoke panel must be one of: home, monitoring, monitoring-details, applications, settings, devices, " +
-                    "security, security-activity, remote, update, mixer, mixer-more, clips.");
+                    "security, security-activity, remote, activity, update, mixer, mixer-more, clips.");
             }
 
             RenderSmokeSnapshot(window, panelOutputPath);

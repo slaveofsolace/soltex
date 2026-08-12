@@ -7,6 +7,16 @@ using Soltex.Monitoring;
 
 namespace Soltex.App.Views;
 
+internal sealed class ProcessActionCompletedEventArgs : EventArgs
+{
+    internal ProcessActionCompletedEventArgs(ProcessActionResult result)
+    {
+        Result = result;
+    }
+
+    internal ProcessActionResult Result { get; }
+}
+
 public partial class MonitoringView : UserControl
 {
     private const int HistoryCapacity = 72;
@@ -30,6 +40,8 @@ public partial class MonitoringView : UserControl
         MemoryHistoryChart.ScaleLabelFormatter = FormatPercentBound;
         NetworkHistoryChart.ScaleLabelFormatter = FormatRateBound;
     }
+
+    internal event EventHandler<ProcessActionCompletedEventArgs>? ProcessActionCompleted;
 
     private void MonitoringDetails_Click(object sender, RoutedEventArgs e) =>
         SetDetailsVisible(!_detailsVisible);
@@ -79,6 +91,7 @@ public partial class MonitoringView : UserControl
             new ProcessActionRequest(selected.ProcessId, selected.Name));
         _pendingForceTicket = result.Ticket;
         ShowProcessActionResult(result);
+        ProcessActionCompleted?.Invoke(this, new ProcessActionCompletedEventArgs(result));
         SetProcessActionBusy(false);
     }
 
@@ -93,6 +106,7 @@ public partial class MonitoringView : UserControl
         ProcessActionResult result = await ProcessActionService.ForceStopAsync(ticket);
         _pendingForceTicket = null;
         ShowProcessActionResult(result);
+        ProcessActionCompleted?.Invoke(this, new ProcessActionCompletedEventArgs(result));
         SetProcessActionBusy(false);
     }
 

@@ -44,6 +44,7 @@ public partial class MainWindow : Window
     private AuthenticodeVerificationResult? _remoteAssistTrust;
     private bool _securityActivityVisible;
     private readonly PreferencesStore _preferencesStore;
+    private readonly LocalActivityStore _activityStore;
     private SoltexPreferences _preferences = SoltexPreferences.Default;
     private int _telemetryIntervalMilliseconds = SoltexPreferences.Default.TelemetryIntervalMilliseconds;
     private string _activeWorkspace = "home";
@@ -67,6 +68,15 @@ public partial class MainWindow : Window
             _preferences,
             preferencesLoad.RecoveredFromInvalid,
             preferencesLoad.Detail);
+        _activityStore = new LocalActivityStore(
+            Path.Combine(_runtime.DataRoot, "activity.json"));
+        ActivityLoadResult activityLoad =
+            _activityStore.Load(_preferences.ActivityRetention);
+        ActivityPanel.UpdateEntries(
+            activityLoad.Entries,
+            _preferences.ActivityRetention,
+            activityLoad.Detail,
+            storageHealthy: !activityLoad.RecoveredFromInvalid);
         MonitoringPanel.SetDetailsVisible(_preferences.OpenPerformanceDetails);
         _updateStagingRoot = Path.Combine(_runtime.DataRoot, "update", "staging");
         _updateJournal = new UpdatePlanningJournal(Path.Combine(_runtime.DataRoot, "update", "journal"));
@@ -78,8 +88,11 @@ public partial class MainWindow : Window
         SetRemoteAssistExecutable(RemoteAssistExecutableLocator.FindInstalled());
         DevicesPanel.UpdateObservation(_localDevice);
         DevicesPanel.RemoteAssistRequested += (_, _) => ShowPanel(RemotePanel, RemoteNavButton);
+        MonitoringPanel.ProcessActionCompleted += (_, args) =>
+            AddActivity(args.Result.Message, "Performance");
         ApplicationsPanel.RefreshRequested += ApplicationsPanel_RefreshRequested;
         SettingsPanel.PreferencesChanged += SettingsPanel_PreferencesChanged;
+        ActivityPanel.ClearRequested += ActivityPanel_ClearRequested;
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -109,15 +122,19 @@ public partial class MainWindow : Window
         await RefreshAllAsync();
         await RefreshUpdateJournalAsync();
         _protectionMonitor.Start();
-        AddActivity("Soltex import guard is active.");
+        AddActivity("Soltex import guard is active.", "Security");
         if (_runtime.DataRootKind == ProductDataRootKind.LegacyCompatibility)
         {
-            AddActivity("Soltex is using the existing compatible data location; no files were moved.");
+            AddActivity(
+                "Soltex is using the existing compatible data location; no files were moved.",
+                "Security");
         }
 
-        AddActivity(_protectionMonitor.ChangeNotificationsAvailable
-            ? "Windows Security change notifications are active."
-            : "Windows Security notifications are unavailable; bounded polling remains active.");
+        AddActivity(
+            _protectionMonitor.ChangeNotificationsAvailable
+                ? "Windows Security change notifications are active."
+                : "Windows Security notifications are unavailable; bounded polling remains active.",
+            "Security");
     }
 
     private async void Window_Closed(object? sender, EventArgs e)
@@ -177,7 +194,9 @@ public partial class MainWindow : Window
                     DevicesPanel.UpdateObservation(_localDevice);
                     if (recoveryNoticeRequired)
                     {
-                        AddActivity("Windows telemetry recovered after a bounded retry.");
+                        AddActivity(
+                            "Windows telemetry recovered after a bounded retry.",
+                            "Performance");
                     }
                 });
                 consecutiveFailures = 0;
@@ -206,7 +225,9 @@ public partial class MainWindow : Window
                     }
                     if (consecutiveFailures == 1)
                     {
-                        AddActivity("Windows telemetry was unavailable; a bounded retry is scheduled.");
+                        AddActivity(
+                            "Windows telemetry was unavailable; a bounded retry is scheduled.",
+                            "Performance");
                     }
                 });
             }
@@ -249,7 +270,7 @@ public partial class MainWindow : Window
                 health.Summary,
                 detail: health.Error,
                 cancellationToken: cancellationToken);
-            AddActivity(health.Summary + ".");
+            AddSecuritySessionActivity(health.Summary + ".");
         });
     }
 
@@ -381,7 +402,9 @@ public partial class MainWindow : Window
             EventQueryStatus.Foreground = (Brush)FindResource("WarningBrush");
             SecurityActivityButton.Content = "Activity unavailable";
             SecurityActivityButton.IsEnabled = false;
-            AddActivity("Defender activity unavailable: " + result.Error);
+            AddActivity(
+                "Defender activity unavailable: " + result.Error,
+                "Security");
             return;
         }
 
@@ -440,7 +463,7 @@ public partial class MainWindow : Window
             SecurityEventSeverity severity = update.State == ProtectionMonitorState.Degraded
                 ? SecurityEventSeverity.Warning
                 : SecurityEventSeverity.Information;
-            AddActivity(update.Detail);
+            AddActivity(update.Detail, "Security");
             await _runtime.AuditLog.AppendAsync(
                 update.State == ProtectionMonitorState.Degraded
                     ? "monitor.degraded"
@@ -486,11 +509,13 @@ public partial class MainWindow : Window
         }
         catch (OperationCanceledException)
         {
-            AddActivity("Operation cancelled. A Defender scan already accepted by Windows may continue in the background.");
+            AddActivity(
+                "Operation cancelled. A Defender scan already accepted by Windows may continue in the background.",
+                "Security");
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException or InvalidOperationException)
         {
-            AddActivity("Operation failed: " + exception.Message);
+            AddActivity("Operation failed: " + exception.Message, "Security");
             MessageBox.Show(this, exception.Message, "Soltex Security", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         finally
@@ -526,7 +551,7 @@ public partial class MainWindow : Window
                 result.Operation,
                 detail: result.Message,
                 cancellationToken: cancellationToken);
-            AddActivity($"{result.Operation}: {result.Message}");
+            AddActivity($"{result.Operation}: {result.Message}", "Security");
             if (!result.Succeeded)
             {
                 MessageBox.Show(this, result.Message, result.Operation, MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -554,7 +579,9 @@ public partial class MainWindow : Window
                 assessment.Path,
                 assessment.Detail,
                 cancellationToken);
-            AddActivity($"{System.IO.Path.GetFileName(path)}: {assessment.Verdict}.");
+            AddActivity(
+                $"Selected file assessment: {assessment.Verdict}.",
+                "Security");
 
             if (assessment.ShouldBlock && File.Exists(path))
             {
@@ -577,7 +604,7 @@ public partial class MainWindow : Window
                         entry.OriginalPath,
                         entry.Detection,
                         cancellationToken);
-                    AddActivity($"{System.IO.Path.GetFileName(path)} moved to quarantine.");
+                    AddActivity("Selected file moved to quarantine.", "Security");
                     await RefreshQuarantineAsync(cancellationToken);
                     return;
                 }
@@ -586,7 +613,9 @@ public partial class MainWindow : Window
             if (File.Exists(path))
             {
                 DefenderCommandResult defenderResult = await _runtime.Defender.RunCustomScanAsync(path, cancellationToken);
-                AddActivity($"Defender custom scan: {defenderResult.Message}");
+                AddActivity(
+                    $"Defender custom scan: {defenderResult.Message}",
+                    "Security");
             }
         });
     }
@@ -606,13 +635,36 @@ public partial class MainWindow : Window
                 assessment.Verdict.ToString(),
                 assessment.Path,
                 assessment.Detail);
-            AddActivity($"Import guard: {System.IO.Path.GetFileName(assessment.Path)} · {assessment.Verdict}.");
+            AddActivity(
+                $"Import guard assessed a local item · {assessment.Verdict}.",
+                "Security");
         });
     }
 
-    private void AddActivity(string message)
+    private void AddActivity(string message, string area = "System")
     {
-        ActivityList.Items.Insert(0, $"{DateTimeOffset.Now:t}  {message}");
+        ActivityMutationResult result =
+            _activityStore.Add(area, message, _preferences.ActivityRetention);
+        ActivityPanel.UpdateEntries(
+            _activityStore.Snapshot(),
+            _preferences.ActivityRetention,
+            result.Detail,
+            result.StorageHealthy);
+
+        if (!string.Equals(area, "Security", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        AddSecuritySessionActivity(
+            result.Entry?.Summary ?? "Security activity recorded.");
+    }
+
+    private void AddSecuritySessionActivity(string message)
+    {
+        ActivityEntry entry =
+            ActivityEntry.Create("Security", message, DateTimeOffset.UtcNow);
+        ActivityList.Items.Insert(0, $"{DateTimeOffset.Now:t}  {entry.Summary}");
         while (ActivityList.Items.Count > 40)
         {
             ActivityList.Items.RemoveAt(ActivityList.Items.Count - 1);
@@ -683,7 +735,7 @@ public partial class MainWindow : Window
                 "A quarantine item was restored by the user.",
                 restoredPath,
                 cancellationToken: cancellationToken);
-            AddActivity($"Restored {System.IO.Path.GetFileName(restoredPath)}.");
+            AddActivity("A quarantined item was restored.", "Security");
             await RefreshQuarantineAsync(cancellationToken);
         });
     }
@@ -715,7 +767,9 @@ public partial class MainWindow : Window
                 SecurityEventSeverity.Warning,
                 "A quarantine item was permanently deleted by the user.",
                 cancellationToken: cancellationToken);
-            AddActivity($"Deleted {row.FileName} from quarantine.");
+            AddActivity(
+                "A quarantined item was permanently deleted.",
+                "Security");
             await RefreshQuarantineAsync(cancellationToken);
         });
     }
@@ -901,7 +955,9 @@ public partial class MainWindow : Window
         RemoteSessionStatus.Text = result.Started ? "External client started" : "Launch failed";
         RemoteSessionDetail.Text = result.Message;
         RemoteSessionStatus.Foreground = (Brush)FindResource(result.Started ? "SignalBrush" : "DangerBrush");
-        AddActivity($"Remote Assist {operation}: {result.Message}");
+        AddActivity(
+            $"Remote Assist {operation}: {result.Message}",
+            "Remote Assist");
         try
         {
             await _runtime.AuditLog.AppendAsync(
@@ -912,7 +968,9 @@ public partial class MainWindow : Window
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException)
         {
-            AddActivity("Remote Assist audit write failed: " + exception.Message);
+            AddActivity(
+                "Remote Assist audit write failed: " + exception.Message,
+                "Remote Assist");
         }
     }
 
@@ -1014,6 +1072,9 @@ public partial class MainWindow : Window
 
     private void RemoteNav_Click(object sender, RoutedEventArgs e) => ShowPanel(RemotePanel, RemoteNavButton);
 
+    private void ActivityNav_Click(object sender, RoutedEventArgs e) =>
+        ShowPanel(ActivityPanel, ActivityNavButton);
+
     private void UpdateNav_Click(object sender, RoutedEventArgs e) => ShowPanel(UpdatePanel, UpdateNavButton);
 
     private void SettingsNav_Click(object sender, RoutedEventArgs e) => ShowPanel(SettingsPanel, SettingsNavButton);
@@ -1022,14 +1083,51 @@ public partial class MainWindow : Window
         object? sender,
         PreferencesChangedEventArgs e)
     {
-        _preferences = e.Preferences.Normalize() with
+        SoltexPreferences requested = e.Preferences.Normalize() with
         {
             LastWorkspace = _activeWorkspace
         };
+        bool shorteningActivityRetention =
+            ActivityRetentionRank(requested.ActivityRetention) <
+            ActivityRetentionRank(_preferences.ActivityRetention);
+        if (shorteningActivityRetention)
+        {
+            string retentionImpact =
+                requested.ActivityRetention == ActivityRetention.SessionOnly
+                    ? "Saved Activity history on this Windows account will be removed. Current-session entries remain visible."
+                    : "Saved Activity entries older than 7 days will be removed.";
+            MessageBoxResult choice = MessageBox.Show(
+                this,
+                "Shorten Activity retention?\n\n" + retentionImpact,
+                "Change Activity retention",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+            if (choice != MessageBoxResult.Yes)
+            {
+                SettingsPanel.UpdatePreferences(
+                    _preferences,
+                    recoveredFromInvalid: false,
+                    "Activity retention was not changed.");
+                return;
+            }
+        }
+
+        _preferences = requested;
         Volatile.Write(
             ref _telemetryIntervalMilliseconds,
             _preferences.TelemetryIntervalMilliseconds);
         MonitoringPanel.SetDetailsVisible(_preferences.OpenPerformanceDetails);
+        ActivityMutationResult retentionResult = _activityStore.SetRetention(
+            _preferences.ActivityRetention,
+            removePersistedWhenSessionOnly:
+                shorteningActivityRetention &&
+                _preferences.ActivityRetention == ActivityRetention.SessionOnly);
+        ActivityPanel.UpdateEntries(
+            _activityStore.Snapshot(),
+            _preferences.ActivityRetention,
+            retentionResult.Detail,
+            retentionResult.StorageHealthy);
         try
         {
             _preferencesStore.Save(_preferences);
@@ -1039,6 +1137,36 @@ public partial class MainWindow : Window
         {
             SettingsPanel.ShowSaveFailure();
         }
+    }
+
+    private static int ActivityRetentionRank(ActivityRetention retention) =>
+        retention switch
+        {
+            ActivityRetention.ThirtyDays => 2,
+            ActivityRetention.SevenDays => 1,
+            _ => 0
+        };
+
+    private void ActivityPanel_ClearRequested(object? sender, EventArgs e)
+    {
+        MessageBoxResult choice = MessageBox.Show(
+            this,
+            "Clear all visible and saved Soltex Activity history?",
+            "Clear Activity",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+        if (choice != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        ActivityMutationResult result = _activityStore.Clear();
+        ActivityPanel.UpdateEntries(
+            _activityStore.Snapshot(),
+            _preferences.ActivityRetention,
+            result.Detail,
+            result.StorageHealthy);
     }
 
     private void SavePreferencesForClose()
@@ -1079,6 +1207,9 @@ public partial class MainWindow : Window
                 break;
             case "remote":
                 ShowPanel(RemotePanel, RemoteNavButton);
+                break;
+            case "activity":
+                ShowPanel(ActivityPanel, ActivityNavButton);
                 break;
             case "updates":
                 ShowPanel(UpdatePanel, UpdateNavButton);
@@ -1180,6 +1311,12 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (string.Equals(normalized, "activity", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(ActivityPanel, ActivityNavButton);
+            return true;
+        }
+
         if (string.Equals(normalized, "settings", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(SettingsPanel, SettingsNavButton);
@@ -1199,6 +1336,7 @@ public partial class MainWindow : Window
         HomePanel.Visibility = panel == HomePanel ? Visibility.Visible : Visibility.Collapsed;
         MonitoringPanel.Visibility = panel == MonitoringPanel ? Visibility.Visible : Visibility.Collapsed;
         ApplicationsPanel.Visibility = panel == ApplicationsPanel ? Visibility.Visible : Visibility.Collapsed;
+        ActivityPanel.Visibility = panel == ActivityPanel ? Visibility.Visible : Visibility.Collapsed;
         SettingsPanel.Visibility = panel == SettingsPanel ? Visibility.Visible : Visibility.Collapsed;
         DevicesPanel.Visibility = panel == DevicesPanel ? Visibility.Visible : Visibility.Collapsed;
         MixerPanel.Visibility = panel == MixerPanel ? Visibility.Visible : Visibility.Collapsed;
@@ -1216,6 +1354,7 @@ public partial class MainWindow : Window
                      ClipsNavButton,
                      SecurityNavButton,
                      RemoteNavButton,
+                     ActivityNavButton,
                      UpdateNavButton,
                      SettingsNavButton
                  })
@@ -1232,6 +1371,7 @@ public partial class MainWindow : Window
             panel == MixerPanel ? "mixer" :
             panel == SecurityPanel ? "security" :
             panel == RemotePanel ? "remote" :
+            panel == ActivityPanel ? "activity" :
             panel == UpdatePanel ? "updates" :
             panel == SettingsPanel ? "settings" :
             "home";

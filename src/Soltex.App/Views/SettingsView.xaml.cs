@@ -68,6 +68,24 @@ public partial class SettingsView : UserControl
             RestoreLastWorkspace = !_preferences.RestoreLastWorkspace
         });
 
+    private void SessionActivity_Click(object sender, RoutedEventArgs e) =>
+        Commit(_preferences with
+        {
+            ActivityRetention = ActivityRetention.SessionOnly
+        });
+
+    private void SevenDayActivity_Click(object sender, RoutedEventArgs e) =>
+        Commit(_preferences with
+        {
+            ActivityRetention = ActivityRetention.SevenDays
+        });
+
+    private void ThirtyDayActivity_Click(object sender, RoutedEventArgs e) =>
+        Commit(_preferences with
+        {
+            ActivityRetention = ActivityRetention.ThirtyDays
+        });
+
     private void ResetDefaults_Click(object sender, RoutedEventArgs e) =>
         Commit(SoltexPreferences.Default);
 
@@ -94,6 +112,15 @@ public partial class SettingsView : UserControl
             _preferences.TelemetryCadence == TelemetryCadence.Quiet);
         SetToggle(PerformanceDetailsButton, _preferences.OpenPerformanceDetails);
         SetToggle(RestoreWorkspaceButton, _preferences.RestoreLastWorkspace);
+        SetSelected(
+            SessionActivityButton,
+            _preferences.ActivityRetention == ActivityRetention.SessionOnly);
+        SetSelected(
+            SevenDayActivityButton,
+            _preferences.ActivityRetention == ActivityRetention.SevenDays);
+        SetSelected(
+            ThirtyDayActivityButton,
+            _preferences.ActivityRetention == ActivityRetention.ThirtyDays);
     }
 
     private void SetSelected(Button button, bool selected)

@@ -45,6 +45,8 @@ internal static class Program
             ("Application inventory is bounded and path-free", () => ApplicationInventoryIsBounded(applicationSnapshot)),
             ("Applications view renders installed and startup tabs", () => ApplicationsViewRenders(applicationSnapshot)),
             ("Preference store recovers and round-trips bounded local state", PreferencesRoundTripAndRecovery),
+            ("Activity store bounds, sanitizes, persists, and recovers", ActivityStoreBoundsAndRecovers),
+            ("Activity view renders and filters meaningful events", ActivityViewRenders),
             ("Settings view renders working local preferences", SettingsViewRenders),
             ("Mixer prioritizes active endpoints", () => MixerPrioritizesActiveEndpoints(audioSnapshot)),
             ("Devices view renders an explicit unnrolled profile", () => DevicesViewRenders(device)),
@@ -302,6 +304,7 @@ internal static class Program
                 TelemetryCadence.Quiet,
                 RestoreLastWorkspace: false,
                 OpenPerformanceDetails: true,
+                ActivityRetention: ActivityRetention.SevenDays,
                 LastWorkspace: "security");
             store.Save(expected);
             PreferencesLoadResult loaded = store.Load();
@@ -337,6 +340,136 @@ internal static class Program
         }
     }
 
+    private static void ActivityStoreBoundsAndRecovers()
+    {
+        string directory = Path.Combine(
+            Path.GetTempPath(),
+            "soltex-activity-tests-" + Guid.NewGuid().ToString("N"));
+        string filePath = Path.Combine(directory, "activity.json");
+        Directory.CreateDirectory(directory);
+        try
+        {
+            LocalActivityStore store = new(filePath);
+            ActivityLoadResult empty = store.Load(ActivityRetention.SessionOnly);
+            True(empty.Entries.Count == 0,
+                "Session-only Activity unexpectedly loaded saved history.");
+
+            for (int index = 0; index < LocalActivityStore.MaximumEntryCount + 12; index++)
+            {
+                store.Add(
+                    "System",
+                    "Bounded event " + index.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture),
+                    ActivityRetention.SessionOnly);
+            }
+
+            ActivityMutationResult pathLike = store.Add(
+                "Security",
+                @"Reviewed C:\Users\Person\private-item.exe",
+                ActivityRetention.SessionOnly);
+            True(pathLike.Entry is not null &&
+                 !pathLike.Entry.Summary.Contains(@"C:\", StringComparison.OrdinalIgnoreCase),
+                "Activity exposed path-like text.");
+            ActivityMutationResult uncPathLike = store.Add(
+                @"C:\Users\Person",
+                @"Reviewed \\server\private\item.exe",
+                ActivityRetention.SessionOnly);
+            True(uncPathLike.Entry is not null &&
+                 uncPathLike.Entry.Area == "System" &&
+                 !uncPathLike.Entry.Summary.Contains(@"\\server", StringComparison.OrdinalIgnoreCase),
+                "Activity exposed path-like text from an untrusted area or UNC summary.");
+            True(store.Snapshot().Count == LocalActivityStore.MaximumEntryCount,
+                "Activity did not enforce its entry bound.");
+            True(!File.Exists(filePath),
+                "Session-only Activity created a durable file.");
+
+            ActivityMutationResult persisted = store.SetRetention(
+                ActivityRetention.SevenDays,
+                removePersistedWhenSessionOnly: false);
+            True(persisted.StorageHealthy && File.Exists(filePath),
+                "Activity did not persist after explicit retention.");
+
+            LocalActivityStore reloadedStore = new(filePath);
+            ActivityLoadResult reloaded =
+                reloadedStore.Load(ActivityRetention.SevenDays);
+            True(!reloaded.RecoveredFromInvalid &&
+                 reloaded.Entries.Count == LocalActivityStore.MaximumEntryCount,
+                "Valid bounded Activity did not round-trip.");
+
+            ActivityMutationResult cleared = reloadedStore.Clear();
+            True(cleared.StorageHealthy &&
+                 reloadedStore.Snapshot().Count == 0 &&
+                 !File.Exists(filePath),
+                "Confirmed Activity clearing did not remove durable history.");
+
+            File.WriteAllText(filePath, "{ invalid", Encoding.UTF8);
+            ActivityLoadResult invalid =
+                reloadedStore.Load(ActivityRetention.SevenDays);
+            True(invalid.RecoveredFromInvalid && invalid.Entries.Count == 0,
+                "Invalid Activity did not recover to an empty timeline.");
+
+            File.WriteAllBytes(
+                filePath,
+                new byte[LocalActivityStore.MaximumFileBytes + 1]);
+            ActivityLoadResult oversized =
+                reloadedStore.Load(ActivityRetention.SevenDays);
+            True(oversized.RecoveredFromInvalid && oversized.Entries.Count == 0,
+                "Oversized Activity did not fail closed.");
+        }
+        finally
+        {
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory);
+            }
+        }
+    }
+
+    private static void ActivityViewRenders()
+    {
+        ActivityView view = new();
+        ActivityEntry[] entries =
+        [
+            ActivityEntry.Create(
+                "Security",
+                "Windows protection health refreshed.",
+                DateTimeOffset.UtcNow),
+            ActivityEntry.Create(
+                "Performance",
+                "Windows telemetry recovered after a bounded retry.",
+                DateTimeOffset.UtcNow.AddMinutes(-2))
+        ];
+        view.UpdateEntries(
+            entries,
+            ActivityRetention.SevenDays,
+            "Saved on this Windows account for up to 7 days.",
+            storageHealthy: true);
+        True(view.ActivityItems.Items.Count == 2,
+            "Activity view did not render its events.");
+        True((string)view.ActivityRetentionText.Text == "7 DAYS",
+            "Activity view did not expose its retention state.");
+
+        view.ActivitySearchBox.Text = "__no_activity_match__";
+        True(view.ActivityItems.Visibility == Visibility.Collapsed &&
+             view.ActivityEmptyPanel.Visibility == Visibility.Visible,
+            "Activity search did not expose a clear no-match state.");
+        view.ActivitySearchBox.Clear();
+
+        bool clearRequested = false;
+        view.ClearRequested += (_, _) => clearRequested = true;
+        view.ClearActivityButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(clearRequested,
+            "Activity view did not route deletion through its confirmation owner.");
+
+        byte[] pixels = Render(view, 980, 720);
+        True(CountVisiblePixels(pixels) > 5_000,
+            "The Activity view render was unexpectedly empty.");
+    }
+
     private static void SettingsViewRenders()
     {
         SettingsView view = new();
@@ -344,6 +477,7 @@ internal static class Program
             TelemetryCadence.Quiet,
             RestoreLastWorkspace: false,
             OpenPerformanceDetails: true,
+            ActivityRetention: ActivityRetention.ThirtyDays,
             LastWorkspace: "monitoring");
         view.UpdatePreferences(
             preferences,
@@ -355,6 +489,8 @@ internal static class Program
             "Settings did not render the Performance detail preference.");
         True((string)view.RestoreWorkspaceButton.Content == "Off",
             "Settings did not render the workspace restore preference.");
+        True((string)view.ThirtyDayActivityButton.Content == "30 days",
+            "Settings omitted the explicit Activity retention option.");
 
         SoltexPreferences? changed = null;
         view.PreferencesChanged += (_, args) => changed = args.Preferences;

@@ -22,12 +22,12 @@ A passing test proves only its named boundary. A rendered image proves layout ex
 
 Implemented on the draft branch:
 
-- compact module-owned navigation: Overview, Performance, Applications, Audio, Security, Remote Assist, Updates, and a separate bottom-rail Settings entry;
+- compact module-owned navigation: Overview, Performance, Applications, Audio, Security, Remote Assist, Activity, Updates, and a separate bottom-rail Settings entry;
 - deep neutral surfaces, restrained electric-iris accent, Segoe UI Variable typography, tighter spacing/radii, Fluent glyphs, and clearer focus hierarchy;
 - preview labels and concise first-view copy so unfinished modules do not masquerade as shipped tools;
 - progressive disclosure retained for provider, event, and overflow detail.
 
-Exact native matrices through the accepted Applications workspace were agent-inspected at 1280×820. Human owner visual acceptance remains open, and the current Settings slice still requires its exact-head gate before PR #11 can leave draft.
+Exact native matrices through the Settings checkpoint were agent-inspected at 1280×820. Human owner visual acceptance remains open, and the new Activity slice still requires exact-head hosted/package gates before PR #11 can leave draft.
 
 ### Applications
 
@@ -35,7 +35,11 @@ Hosted Windows-verified on `04da86e6e38f6a1de99b5de8edd2427792f4bf36`: bounded, 
 
 ### Settings and local preferences
 
-Implemented, verification pending: Settings owns a working 1/2/5-second telemetry cadence, optional restoration of the last workspace after a normal close, and the default disclosure state for Performance detail. The bounded non-secret document remains on the current Windows account, recovers explicitly after invalid/oversized input, and does not add analytics or a background service.
+Hosted Windows-verified on `5c4a16de85b0b63bff4779769193a1e94411c77c`: Settings owns a working 1/2/5-second telemetry cadence, optional restoration of the last workspace after a normal close, and the default disclosure state for Performance detail. The bounded non-secret document remains on the current Windows account, recovers explicitly after invalid/oversized input, and does not add analytics or a background service.
+
+### Activity and local privacy
+
+Implemented and owner-host verified in the current Activity candidate: one searchable timeline retains at most 120 sanitized meaningful events. Session-only is the default and creates no Activity file. Seven-day or 30-day retention is an explicit local preference; shortening retention and clearing history are confirmation-owned by the main window. The JSON document is capped at 256 KiB, rejects unknown or invalid schema data, prunes expired/future/overflow entries, uses atomic replacement, and surfaces storage failure instead of pretending persistence succeeded. File- and path-like text is replaced with a generic local-item summary. Exact-head hosted/package verification and owner visual acceptance remain open.
 
 ### Performance and bounded task action
 
@@ -84,11 +88,13 @@ The process-control candidate at `6466fa58971e154dc487070d4bdf873e2cdf3175` pass
 
 All eleven native 1280×820 captures from that exact Windows run were inspected. The later Applications candidate at `04da86e6e38f6a1de99b5de8edd2427792f4bf36` passed Windows run `31550273188` and package run `31550273340`; its 12-state native matrix included the inspected Applications surface.
 
+The Settings checkpoint `5c4a16de85b0b63bff4779769193a1e94411c77c` passed Windows run `31551365746` and package-smoke run `31551365787`. Windows artifact `9124417870` has digest `sha256:54c1e6bd62180db525e1dfe9fd0c8ac30f97c56ade3baf27ea0d7181137bd031`; its exact native Settings capture was agent-inspected.
+
 ## Next stages
 
-1. Pass the current Settings exact-head Windows/package workflows and inspect its native render.
-2. Add local historical telemetry with an explicit retention/off policy and one user-owned Activity surface.
-3. Add Core Audio session observation and documented volume/mute writes with read-back. Routing remains a separate signed virtual-audio component.
+1. Pass the Activity candidate's exact-head Windows/package workflows and inspect Activity plus Settings native renders.
+2. Add Core Audio session observation and documented volume/mute writes with read-back. Routing remains a separate signed virtual-audio component.
+3. Add bounded local historical telemetry only after its storage, retention, migration, and measured-idle-cost contract is independently proven.
 4. Add mTLS/Tailscale device enrollment, capability-scoped agents, revocation, emergency stop, and NAS audit transport. Keep personal Google Drive and work Box in separate permission domains.
 5. Add Windows Graphics Capture, benchmark profiles/provenance, signing, installer lifecycle evidence, accessibility/scaling verification, and owner acceptance.
 
