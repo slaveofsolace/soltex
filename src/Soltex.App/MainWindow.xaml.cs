@@ -223,8 +223,37 @@ public partial class MainWindow : Window
             ? good
             : health.WindowsSecurityCenterHealth == WindowsSecurityHealth.Poor ? danger : warning;
 
+        Brush stateSurface = (Brush)FindResource(health.IsProtected
+            ? "SignalSurfaceBrush"
+            : health.WindowsSecurityCenterHealth == WindowsSecurityHealth.Poor
+                ? "DangerSurfaceBrush"
+                : "WarningSurfaceBrush");
+        Brush stateBorder = (Brush)FindResource(health.IsProtected
+            ? "SignalBorderBrush"
+            : health.WindowsSecurityCenterHealth == WindowsSecurityHealth.Poor
+                ? "DangerBorderBrush"
+                : "WarningBorderBrush");
+
         HealthDot.Fill = stateBrush;
+        HealthHero.Background = stateSurface;
+        HealthHero.BorderBrush = stateBorder;
         HealthTitle.Text = health.Summary;
+
+        ProtectionSummaryDot.Fill = stateBrush;
+        ProtectionSummaryBorder.Background = stateSurface;
+        ProtectionSummaryBorder.BorderBrush = stateBorder;
+        ProtectionSummaryTitle.Text = health.IsProtected
+            ? "Protection"
+            : health.WindowsSecurityCenterHealth == WindowsSecurityHealth.Poor
+                ? "Protection needs attention"
+                : "Protection status";
+        ProtectionSummaryState.Text = health.IsProtected
+            ? "ACTIVE"
+            : health.WindowsSecurityCenterHealth == WindowsSecurityHealth.Poor ? "ATTENTION" : "CHECK";
+        ProtectionSummaryState.Foreground = stateBrush;
+        ProtectionSummaryDetail.Text = health.IsProtected
+            ? "Windows provider reports healthy"
+            : "Open Security for provider details";
         string wsc = health.WindowsSecurityCenterHealth.ToString();
         string mode = string.IsNullOrWhiteSpace(health.AMRunningMode)
             ? "mode unavailable"
@@ -233,7 +262,6 @@ public partial class MainWindow : Window
             ? $"WSC {wsc} · Defender {mode} · intelligence " +
               $"{health.AntivirusSignatureVersion ?? "version unavailable"} · checked {health.CheckedAtUtc.ToLocalTime():t}"
             : $"WSC {wsc} · {health.Error ?? "Defender details are managed by the registered provider."}";
-        HealthHero.BorderBrush = stateBrush;
 
         SetState(RealTimeStatus, health.RealTimeProtectionEnabled, health.StatusQuerySucceeded);
         SetState(BehaviorStatus, health.BehaviorMonitorEnabled, health.StatusQuerySucceeded);
@@ -845,11 +873,12 @@ public partial class MainWindow : Window
             UpdateJournalCount.Text = entryCount == 1 ? "1 entry" : $"{entryCount} entries";
             bool reviewRequired = report.HasIncompletePlanningAttempt ||
                                   report.ExistingPrivateStagingTokens.Count > 0;
-            Brush stateBrush = (Brush)FindResource(reviewRequired ? "WarningBrush" : "SignalBrush");
+            Brush stateBrush = (Brush)FindResource("WarningBrush");
             UpdateStateDot.Fill = stateBrush;
-            UpdateReadinessHero.BorderBrush = stateBrush;
-            UpdateStateTitle.Text = reviewRequired ? "Cleanup review required" : "Planner state is clean";
-            UpdateStatePill.Text = reviewRequired ? "REVIEW" : "IDLE";
+            UpdateReadinessHero.BorderBrush = (Brush)FindResource("WarningBorderBrush");
+            UpdateReadinessHero.Background = (Brush)FindResource("WarningSurfaceBrush");
+            UpdateStateTitle.Text = reviewRequired ? "Cleanup review required" : "Updates are not configured";
+            UpdateStatePill.Text = reviewRequired ? "REVIEW" : "OFF";
             UpdateStatePill.Foreground = stateBrush;
             UpdateStateDetail.Text = reviewRequired
                 ? report.Detail

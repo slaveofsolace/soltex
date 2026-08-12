@@ -20,6 +20,21 @@ The problem is product structure:
 - Device mesh is a model, Capture is empty, Updates is unconfigured, and Remote Assist is only a trusted launcher;
 - runtime evidence is strong for implemented boundaries, but evidence quality is not product completeness.
 
+## Exact native evidence review
+
+The exact `6466fa58971e154dc487070d4bdf873e2cdf3175` Windows and package workflows passed, and all eleven 1280×820 native captures were inspected. The shell is materially cleaner than the baseline, but the images found four remaining product-honesty defects:
+
+- Overview was always labeled partial because an unsupported optional GPU provider was counted as a failure;
+- the persistent sidebar claimed protection was active while the Security page said protection could not be confirmed;
+- Device mesh and Capture placeholders still occupied prime navigation and crowded their labels;
+- Updates used a confirmed-good green state even though no signed release source is configured.
+
+The next correction removes those contradictions, keeps the optional capabilities accessible only to evidence/render paths, and shortens the Overview provider line.
+
+## Clean-room AppControl lessons
+
+AppControl's public help describes four user-owned surfaces: a historical Activity timeline, an app/rule inventory, configurable Alerts, and a searchable Changes log. The useful clean-room lessons for Soltex are history that answers what happened, app-centric rollups, and alerting/AI integrations that remain off until explicitly enabled. Soltex will not copy AppControl code, driver behavior, assets, wording, branding, or layouts.
+
 ## Clean-room SteelSeries lessons
 
 Official SteelSeries material describes GG as a module hub. Engine owns devices and profiles; Sonar owns channel routing and processing; Moments owns capture, edit, and sharing. The useful lesson is not its pixels. It is that every top-level module has a clear job, direct controls, persistent state, and a settings or recovery path.

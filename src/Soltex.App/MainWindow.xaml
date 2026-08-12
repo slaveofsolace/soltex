@@ -83,8 +83,8 @@
                             <TextBlock Grid.Column="1" Text="Remote Assist" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
-                    <TextBlock Margin="10,17,0,6" Text="CONNECT &amp; MAINTAIN" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" FontWeight="SemiBold" />
-                    <Button x:Name="DevicesNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Device mesh preview" Click="DevicesNav_Click">
+                    <TextBlock Margin="10,17,0,6" Text="MAINTENANCE" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" FontWeight="SemiBold" />
+                    <Button x:Name="DevicesNavButton" Visibility="Collapsed" Style="{StaticResource NavButton}" AutomationProperties.Name="Device mesh preview" Click="DevicesNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE772;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
@@ -92,7 +92,7 @@
                             <TextBlock Grid.Column="2" Text="PREVIEW" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Grid>
                     </Button>
-                    <Button x:Name="ClipsNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Capture preview" Click="ClipsNav_Click">
+                    <Button x:Name="ClipsNavButton" Visibility="Collapsed" Style="{StaticResource NavButton}" AutomationProperties.Name="Capture preview" Click="ClipsNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE714;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
@@ -110,15 +110,20 @@
                 </StackPanel>
 
                 <StackPanel Grid.Row="3">
-                    <Border Background="{StaticResource SignalSurfaceBrush}" BorderBrush="{StaticResource SignalBorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusMd}" Padding="11">
+                    <Border x:Name="ProtectionSummaryBorder"
+                            Background="{StaticResource QuietBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusMd}"
+                            Padding="11">
                         <StackPanel>
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <Ellipse Width="7" Height="7" Fill="{StaticResource SignalBrush}" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Margin="8,0,0,0" Text="Protection" FontWeight="SemiBold" />
-                                <TextBlock Grid.Column="2" Text="ACTIVE" Foreground="{StaticResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                                <Ellipse x:Name="ProtectionSummaryDot" Width="7" Height="7" Fill="{StaticResource MutedBrush}" VerticalAlignment="Center" />
+                                <TextBlock x:Name="ProtectionSummaryTitle" Grid.Column="1" Margin="8,0,0,0" Text="Protection status" FontWeight="SemiBold" />
+                                <TextBlock x:Name="ProtectionSummaryState" Grid.Column="2" Text="CHECKING" Foreground="{StaticResource MutedBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                             </Grid>
-                            <TextBlock Margin="15,5,0,0" Text="Managed by Windows Security" Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}" />
+                            <TextBlock x:Name="ProtectionSummaryDetail" Margin="15,5,0,0" Text="Reading Windows Security" Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                     </Border>
                     <Grid Margin="3,10,3,0">
@@ -401,7 +406,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="REMOTE ACCESS" />
+                        <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="REMOTE ASSIST" />
                         <TextBlock Margin="0,5,0,0"
                                    Text="Remote Assist"
                                    FontFamily="{StaticResource DisplayFont}"

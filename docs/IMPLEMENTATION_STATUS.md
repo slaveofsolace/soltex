@@ -69,12 +69,12 @@ Not yet implemented: production publisher identity/trust root, signed public rel
 
 ## Hosted verification history
 
-The shell rebuild commits through `7d07ed1919fe0da07450b178314d2cb903d03efb` passed Windows run `31547358061` and package run `31547357905`.
+The process-control candidate at `6466fa58971e154dc487070d4bdf873e2cdf3175` passed Windows run `31548417109` and package run `31548417244`.
 
-- Windows artifact `9123019062`: SHA-256 `5834aabf2c7e4287f0e91e5f38464f3e35fe263087bff5ddaa6d9e6b57091112`
-- package artifact `9123004528`: SHA-256 `ac53ff1a5f7088f641d0f42be3031f5720f50499a8ed5febef2d693dc43751d8`
+- Windows artifact `9123371405`: SHA-256 `59426b8cec52e343a2e56789822641d926ab7e1511a5c39eb6ffa5cf99747995`
+- package artifact `9123351960`: SHA-256 `15fd5d67c26122b914ebb5a113e27d7d0d61d0698b4c94a0891f564c4b08579a`
 
-Those runs do not cover later process-action source. Exact-head workflows and native capture inspection remain required.
+All eleven native 1280×820 captures from that exact Windows run were inspected. The follow-up visual-honesty correction is not covered by those historical runs and requires a new exact-head gate.
 
 ## Next stages
 

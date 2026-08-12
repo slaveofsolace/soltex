@@ -70,8 +70,12 @@
 
     <!-- Amber attention, red danger. -->
     <Color x:Key="WarningColor">#F4BE63</Color>
+    <Color x:Key="WarningSurfaceColor">#221B10</Color>
+    <Color x:Key="WarningBorderColor">#6F5526</Color>
     <Color x:Key="DangerColor">#FF6B7A</Color>
     <Color x:Key="DangerTextColor">#FF9DA8</Color>
+    <Color x:Key="DangerSurfaceColor">#241319</Color>
+    <Color x:Key="DangerBorderColor">#74313B</Color>
 
     <!-- Navigation selection tint. -->
     <Color x:Key="NavSelectedColor">#23203D</Color>
@@ -131,8 +135,12 @@
     <SolidColorBrush x:Key="SignalQuietBrush" Color="{StaticResource SignalQuietColor}" />
     <SolidColorBrush x:Key="SignalBorderBrush" Color="{StaticResource SignalBorderColor}" />
     <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+    <SolidColorBrush x:Key="WarningSurfaceBrush" Color="{StaticResource WarningSurfaceColor}" />
+    <SolidColorBrush x:Key="WarningBorderBrush" Color="{StaticResource WarningBorderColor}" />
     <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
     <SolidColorBrush x:Key="DangerTextBrush" Color="{StaticResource DangerTextColor}" />
+    <SolidColorBrush x:Key="DangerSurfaceBrush" Color="{StaticResource DangerSurfaceColor}" />
+    <SolidColorBrush x:Key="DangerBorderBrush" Color="{StaticResource DangerBorderColor}" />
 
     <!-- Navigation. -->
     <SolidColorBrush x:Key="SelectedNavBrush" Color="{StaticResource NavSelectedColor}" />

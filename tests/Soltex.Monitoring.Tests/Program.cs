@@ -6,6 +6,7 @@ List<(string Name, Func<Task> Test)> tests =
     ("System CPU math reports bounded busy time", SystemCpuMathIsBoundedAsync),
     ("System CPU math rejects regressing counters", SystemCpuMathRejectsRegressionAsync),
     ("Process CPU math respects machine capacity", ProcessCpuMathRespectsCapacityAsync),
+    ("Unsupported optional signals do not downgrade supported telemetry", UnsupportedSignalsDoNotDowngradeStateAsync),
     ("Network rate math rejects regressions and reports bytes per second", NetworkRateMathIsBoundedAsync),
     ("Process and network names remove control characters and enforce bounds", ObservationNamesAreSanitizedAsync),
     ("Telemetry history validates capacity, range, and samples", TelemetryHistoryValidatesInputAsync),
@@ -69,6 +70,26 @@ static Task ProcessCpuMathRespectsCapacityAsync()
         processorCount: 4);
     Near(25, usage, 0.001);
     Equal(0d, TelemetryMath.CalculateProcessUsage(TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1), 4));
+    return Task.CompletedTask;
+}
+
+static Task UnsupportedSignalsDoNotDowngradeStateAsync()
+{
+    Equal(
+        TelemetryObservationState.Current,
+        SystemTelemetryProvider.DetermineObservationState(
+            hasAnyData: true,
+            hasSupportedProviderFailure: false));
+    Equal(
+        TelemetryObservationState.Partial,
+        SystemTelemetryProvider.DetermineObservationState(
+            hasAnyData: true,
+            hasSupportedProviderFailure: true));
+    Equal(
+        TelemetryObservationState.Unavailable,
+        SystemTelemetryProvider.DetermineObservationState(
+            hasAnyData: false,
+            hasSupportedProviderFailure: false));
     return Task.CompletedTask;
 }
 
