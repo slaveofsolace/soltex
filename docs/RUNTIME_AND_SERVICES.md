@@ -2,7 +2,7 @@
 
 Snapshot: 2026-08-12
 
-Status: implemented on the draft product-rebuild branch; exact-source owner-host and hosted acceptance pending
+Status: exact-source owner-host accepted at `4207ecb70ef30c09203cb4f0f2b3efedf1ef2bd6`; hosted acceptance pending
 
 ## User capability
 
@@ -16,11 +16,11 @@ Settings also owns an explicit close behavior:
 
 Soltex installs no background service. Performance sampling runs only while Home or Performance is visible in a non-minimized window. It stops when the window is hidden, minimized, or closing. Security Center change observation and the bounded Imports watcher remain active while the explicitly opted-in desktop process remains open.
 
-The notification icon uses the documented Unicode `Shell_NotifyIconW` boundary directly and associates callbacks with Soltex's existing owned WPF window. It adds, versions, modifies, focuses, and removes one icon; re-adds it after the taskbar is recreated; and restores the main window if the icon becomes unavailable while hidden. This avoids carrying the complete Windows Forms runtime solely for one notification icon. In a development package comparison, the native boundary reduced the self-contained executable by 10,555,559 bytes (82,136,859 to 71,581,300) while preserving the tested show/hide/dispose lifecycle. Final exact-source package evidence remains required.
+The notification icon uses the documented Unicode `Shell_NotifyIconW` boundary directly and associates callbacks with Soltex's existing owned WPF window. It adds, versions, modifies, focuses, and removes one icon; re-adds it after the taskbar is recreated; and restores the main window if the icon becomes unavailable while hidden. This avoids carrying the complete Windows Forms runtime solely for one notification icon. The exact `4207ecb` package is 71,583,560 bytes, about 10.55 MiB smaller than the earlier Windows Forms comparison package, while preserving the tested show/hide/dispose lifecycle.
 
 Accepted window close now has an explicit ownership boundary. Soltex cancels the active user operation and telemetry loop, waits up to 20 seconds for those tasks and startup to drain, and only then disposes the import monitor, protection monitor, update journal, and security runtime. A timeout skips disposal of resources that may still be referenced and lets process termination reclaim them; it does not race a live task against `QuarantineStore` disposal. Close-to-notification-area is still a cancelled close and does not enter shutdown.
 
-Controlled render and runtime-probe modes use explicit WPF application shutdown. Render evidence waits up to 20 seconds for complete workspace initialization before capture, then waits up to 25 seconds for resource cleanup after closing the window. Initialization, capture, abandoned cleanup, or cleanup timeout produces a nonzero exit and an error sidecar. Development regression evidence for the final dirty candidate includes a zero-warning Release build, 26/26 focused app tests, and clean private-.NET-host renders of Overview, Security, and Settings; all three exited `0`, produced nonempty PNGs, and produced no error sidecar. That evidence diagnoses the reported disposed-object race but is not exact-commit acceptance.
+Controlled render and runtime-probe modes use explicit WPF application shutdown. Render evidence waits up to 20 seconds for complete workspace initialization before capture, then waits up to 25 seconds for resource cleanup after closing the window. Initialization, capture, abandoned cleanup, or cleanup timeout produces a nonzero exit and an error sidecar. Exact-source regression evidence includes a zero-warning Release build, 26/26 focused app tests, 15/15 native states, and a packaged Security render. Every controlled process exited `0` and produced no error sidecar.
 
 ## Read-only Service Control Manager boundary
 
@@ -51,21 +51,21 @@ Soltex cannot start, stop, pause, enable, disable, reconfigure, delete, or insta
 
 The minimize-transition sample is kept separate from minimized steady state. Soltex releases workspace animation clocks when they complete and clears remaining workspace animations before minimize. This avoids describing one-time transition work as continuous background cost while still retaining the transition measurement.
 
-Development evidence from the dirty pre-commit candidate on the owner host is diagnostic, not exact-source acceptance:
+Exact-source owner-host evidence for `4207ecb70ef30c09203cb4f0f2b3efedf1ef2bd6`:
 
 | Measure | Observed |
 |---|---:|
-| startup completion | 2,294.6 ms |
-| 18 navigation transitions | 49.3 ms mean / 327.6 ms maximum |
-| visible idle CPU | 0.821% normalized |
-| minimize transition CPU | 2.375% normalized |
+| startup completion | 2,997.4 ms |
+| 18 navigation transitions | 39.1 ms mean / 379.2 ms maximum |
+| visible idle CPU | 0.643% normalized |
+| minimize transition CPU | 2.531% normalized |
 | minimized steady CPU | 0.000% normalized |
 | hidden notification-area CPU | 0.000% normalized |
 
 The one-time minimize transition was attributed to a worker/runtime thread, not the WPF dispatcher. That observation does not identify the worker implementation or prove the same timing on another machine. The exact report is retained outside the repository at:
 
 ```text
-C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\runtime-probe-lifecycle-fix-20260812-000034
+C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\lifecycle-tray-exact-4207ecb-20260812-0055
 ```
 
 ## Nonclaims

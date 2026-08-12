@@ -28,40 +28,31 @@ The exact self-contained `win-x64` owner-host package is 71,559,764 bytes with S
 
 Published PR head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183` then passed Windows run `31562540695` and package-smoke run `31562540694`. Downloaded artifacts `9128308988` and `9128281441` independently matched GitHub digests `sha256:dd0c089596cbbdd09f79140bf9251770dcf18e482ec46bbef3ccd5aa6537e386` and `sha256:ff0df6759cd4b9ff1c8387d174c74d347f5774b1bb446f9e8e4a11c0d68f12c6`. The tested PR merge was exactly one commit ahead of the source with `abf1dc5` as merge base. All 14 retained 1280x820 PNGs matched their manifest identities; default/expanded Audio and packaged Home were directly inspected. The hosted package executable was 71,581,365 bytes, SHA-256 `898fd206951392c837c37dcd0b41178320ab1fd23cc7376819a3f4fb920132a3`, launched with exit code 0, and remained `NotSigned`. Optional hosted AMSI/EICAR remained 31/32 because the installed provider returned native result `1`; required gates passed and no detection-efficacy claim is made.
 
-## Services and runtime-lifecycle development gate
+## Services, runtime lifecycle, and notification-area exact gate
 
-The current uncommitted candidate was exercised on the owner-controlled Windows host before exact-source publication:
+Source and tested commit `4207ecb70ef30c09203cb4f0f2b3efedf1ef2bd6` passed the owner-controlled Windows gate:
 
 | Command/gate | Result |
 |---|---:|
-| targeted Release app/test build | Passed, 0 warnings / 0 errors |
-| `Soltex.App.Tests` | 24/24 |
-| live read-only SCM capture | 296 exposed / 296 observed / 0 inaccessible / 0 omitted; about 65 ms |
-| runtime probe schema | 2; full source/tested identities required |
-| startup completion | 2,294.6 ms |
-| navigation | 18 transitions; 49.3 ms mean / 327.6 ms maximum |
-| visible idle CPU | 0.821% normalized |
-| minimize transition CPU | 2.375% normalized; top work was not the UI dispatcher |
+| Release solution build | Passed, 0 warnings / 0 errors |
+| identity policy | 192 tracked text files / 9 reasoned allowlist entries |
+| `Soltex.Security.Tests -RunEicar` | 32/32 |
+| `Soltex.Monitoring.Tests` | 16/16 |
+| `Soltex.Audio.Tests` | 20/20 |
+| `Soltex.App.Tests` | 26/26 |
+| live read-only SCM capture | 296 exposed / 296 observed / 0 inaccessible / 0 omitted; 92.8 ms |
+| runtime startup | 2,997.4 ms |
+| runtime navigation | 18 transitions; 39.1 ms mean / 379.2 ms maximum |
+| visible idle CPU | 0.643% normalized |
+| minimize transition CPU | 2.531% normalized; Performance sampler stopped |
 | minimized steady CPU | 0.000% normalized; Performance sampler stopped |
 | hidden notification-area CPU | 0.000% normalized; Performance sampler stopped |
+| native matrix | 15/15 at 1280x820; no error sidecars |
+| self-contained package | 71,583,560 bytes; Security render exit `0`; `NotSigned` |
 
-This is developmental evidence because the report identities name the last clean commit while the measured service/runtime source was still dirty. It is retained to diagnose lifecycle behavior, not to establish exact-source acceptance. The final exact-source gate must rerun after the implementation commit. Short samples are regression evidence, not hardware benchmark scores or cross-machine guarantees. See [`RUNTIME_AND_SERVICES.md`](RUNTIME_AND_SERVICES.md).
+The owner report `Cannot access a disposed object. Object name: 'Soltex.Security.QuarantineStore'.` identified a real startup/close ownership race. The exact correction tracks startup and active-operation lifetime, cancels accepted shutdown work, drains owned tasks before disposing security resources, keeps close-to-notification-area outside shutdown, and makes controlled render/probe modes require confirmed disposal before a successful exit.
 
-### Disposed-object shutdown regression
-
-The owner-host report `Cannot access a disposed object. Object name: 'Soltex.Security.QuarantineStore'.` identified a real startup/close ownership race in the dirty candidate. The correction tracks startup and active-operation lifetime, cancels accepted shutdown work, drains owned tasks before disposing security resources, keeps close-to-notification-area outside shutdown, and makes controlled render/probe modes wait for cleanup before explicit WPF shutdown.
-
-Diagnostic post-fix evidence on the dirty source:
-
-| Gate | Result |
-|---|---:|
-| Release solution build | Passed, 0 warnings / 0 errors |
-| `Soltex.App.Tests` | 26/26 |
-| private-host Overview render | Exit `0`; 107,788-byte PNG; no error sidecar |
-| private-host Security render | Exit `0`; 134,186-byte PNG; no error sidecar |
-| private-host Settings render | Exit `0`; 121,020-byte PNG; no error sidecar |
-
-The three renders were directly inspected and contained initialized workspace state with no exception dialog. Their task-owned evidence is retained outside the repository under `C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\disposed-race-fix-20260812-0035\private-host-render-final-dirty`. Exact-commit verification, runtime probe, full native matrix, and package smoke remain required after commit.
+A complete diff-focused security scan found and corrected one false-success evidence signal during review. The final scan has zero surviving findings; the resolved candidate remains audit-visible as `SOLTEX-SHUTDOWN-001`. Overview, Services, Security, Settings, and packaged Security pixels were directly inspected and contained initialized state with no exception dialog. Full evidence and nonclaims are recorded in [`evidence/2026-08-12-lifecycle-tray`](evidence/2026-08-12-lifecycle-tray/README.md). Hosted acceptance and owner visual acceptance remain open.
 
 ## Activity candidate owner-host gate
 
