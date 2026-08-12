@@ -255,7 +255,7 @@ public partial class App : Application
             int exitCode = 0;
             try
             {
-                await window.StartupCompleted.WaitAsync(TimeSpan.FromSeconds(20));
+                await window.StartupCompleted.WaitAsync(RuntimeLaunchPolicy.RenderSmokeStartupTimeout);
                 await Task.Delay(TimeSpan.FromMilliseconds(250));
                 window.InvalidateMeasure();
                 window.InvalidateArrange();

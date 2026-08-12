@@ -397,6 +397,8 @@ internal static class Program
             "The runtime-cost probe incorrectly forced software rendering.");
         True(RuntimeLaunchPolicy.UsesSoftwareRendering(["--render-smoke", "image.png"]),
             "Native render smoke did not retain deterministic software rendering.");
+        True(RuntimeLaunchPolicy.RenderSmokeStartupTimeout == TimeSpan.FromSeconds(40),
+            "Render-smoke startup no longer covers the composed bounded protection query while remaining finite.");
     }
 
     private static void ProcessActionsRejectProtectedTargets()

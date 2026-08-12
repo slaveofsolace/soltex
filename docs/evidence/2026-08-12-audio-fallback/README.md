@@ -6,7 +6,7 @@ Owner-host production source: `1d15071a14472dce199796a57966bddbf7be2fc4`
 
 Owner-host strengthened test head: `41c8c37622ef666436024138e6d82f14e1e418da`
 
-Hosted Windows/package acceptance: pending publication
+Hosted Windows/package acceptance: first Windows run passed; first package run retained a bounded cold-start failure; corrected-head rerun pending
 
 This gate covers the bounded Audio device-handoff slice and the shutdown race exposed by its first exact native evidence run. Soltex observes Windows-reported defaults, stores optional playback/recording fallback reminders as direction-scoped fingerprints, and opens the fixed Windows Sound Settings URI. It does not assign default endpoints, route audio, perform automatic failover, create virtual devices, or apply DSP.
 
@@ -106,4 +106,14 @@ negative: C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild
 
 ## Remaining gate
 
-Publish the reconciliation head, require exact hosted Windows and package-smoke workflows, independently re-hash downloaded artifacts, verify source/tested ancestry, and inspect retained hosted Mixer/package pixels. Owner visual acceptance, signed distribution, accessibility/scaling, install/update/uninstall lifecycle, automatic audio switching, routing, and processing remain open.
+The first published reconciliation head `ef5f96629e538e91e90e5d6d79cfe3299d0ea573` passed Windows run `31572129524`, including all required suites, runtime evidence, and the 16-state matrix. Package run `31572129578` published the executable but its cold self-contained Home render exceeded the former 20-second initialization window and exited `1` with a retained `System.TimeoutException` sidecar. The uploaded failure artifact `9131786253` was downloaded and independently matched GitHub's digest `sha256:b54bf4fa45de019dfde9bd8949a758dbf6857bd9c11a2aaf9e1f860ba5e8a92e`; its package was 71,611,423 bytes with SHA-256 `84eeac76273e8c180cbb8ed15014d452db95abc7d57f6379eac1ad212b0a3c87`.
+
+The recovery keeps normal runtime-cost startup at 20 seconds but gives controlled render initialization 40 seconds, covering the composed bounded protection-health and event queries on a cold package. Package CI now independently stops the complete render/cleanup process after 80 seconds and retains a timeout marker. The new bounds are finite and policy-tested; they do not claim faster startup or hide a timeout.
+
+Publish the corrected reconciliation head, require exact hosted Windows and package-smoke workflows, independently re-hash downloaded artifacts, verify source/tested ancestry, and inspect retained hosted Mixer/package pixels. Owner visual acceptance, signed distribution, accessibility/scaling, install/update/uninstall lifecycle, automatic audio switching, routing, and processing remain open.
+
+Failed hosted package evidence was retained at:
+
+```text
+C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\hosted-failed-package-ef5f966
+```

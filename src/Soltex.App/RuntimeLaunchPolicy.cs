@@ -2,6 +2,8 @@ namespace Soltex.App;
 
 internal static class RuntimeLaunchPolicy
 {
+    internal static TimeSpan RenderSmokeStartupTimeout { get; } = TimeSpan.FromSeconds(40);
+
     internal static bool IsRuntimeProbe(IReadOnlyList<string> arguments) =>
         CountOption(arguments, "--runtime-probe") == 1 &&
         CountOption(arguments, "--render-smoke") == 0;
