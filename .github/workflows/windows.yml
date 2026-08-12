@@ -115,7 +115,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           dotnet run --project .\tests\Soltex.Audio.Tests\Soltex.Audio.Tests.csproj --configuration Release --no-build 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\tests-audio.log
-          if ($LASTEXITCODE -ne 0) { throw "Audio endpoint suite failed with exit code $LASTEXITCODE." }
+          if ($LASTEXITCODE -ne 0) { throw "Audio endpoint/session suite failed with exit code $LASTEXITCODE." }
 
       - name: Run WPF control suite
         id: app_tests

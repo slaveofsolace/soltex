@@ -1,21 +1,69 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using Soltex.Audio;
 
 namespace Soltex.App.Views;
 
+internal sealed class AudioSessionChangeRequestedEventArgs : EventArgs
+{
+    internal AudioSessionChangeRequestedEventArgs(
+        AudioSession session,
+        AudioSessionMutationKind kind,
+        double? requestedVolumePercent,
+        bool? requestedMute)
+    {
+        Session = session;
+        Kind = kind;
+        RequestedVolumePercent = requestedVolumePercent;
+        RequestedMute = requestedMute;
+    }
+
+    internal AudioSession Session { get; }
+
+    internal AudioSessionMutationKind Kind { get; }
+
+    internal double? RequestedVolumePercent { get; }
+
+    internal bool? RequestedMute { get; }
+}
+
 public partial class MixerView : UserControl
 {
     private const int PrimaryEndpointLimit = 6;
+    private const int PrimarySessionLimit = 5;
     private EndpointRow[] _morePlayback = [];
     private EndpointRow[] _moreRecording = [];
+    private SessionRow[] _moreSessions = [];
     private bool _moreVisible;
+    private bool _deviceDetailsVisible;
+    private bool _moreSessionsVisible;
+    private bool _sessionControlsBusy;
 
     public MixerView()
     {
         InitializeComponent();
+    }
+
+    internal event EventHandler? RefreshRequested;
+
+    internal event EventHandler<AudioSessionChangeRequestedEventArgs>? SessionChangeRequested;
+
+    public void UpdateSnapshot(
+        AudioEndpointSnapshot endpointSnapshot,
+        AudioSessionSnapshot sessionSnapshot)
+    {
+        UpdateSnapshot(endpointSnapshot);
+        UpdateSessions(sessionSnapshot);
+        RenderState(MergeState(endpointSnapshot.State, sessionSnapshot.State));
+        MixerProvenanceText.Text =
+            $"Windows Core Audio · device read {endpointSnapshot.CaptureDuration.TotalMilliseconds:F0} ms · " +
+            $"session read {sessionSnapshot.CaptureDuration.TotalMilliseconds:F0} ms · " +
+            $"{endpointSnapshot.InaccessibleEndpointCount} device records unavailable · " +
+            $"{sessionSnapshot.InaccessibleSessionCount} session records unavailable · " +
+            $"{sessionSnapshot.OmittedSessionCount} session records omitted";
     }
 
     public void UpdateSnapshot(AudioEndpointSnapshot snapshot)
@@ -93,14 +141,226 @@ public partial class MixerView : UserControl
         StateBreakdownText.Text = "observation unavailable";
         NoPlaybackText.Visibility = Visibility.Visible;
         NoRecordingText.Visibility = Visibility.Visible;
+        _deviceDetailsVisible = false;
+        SessionItems.ItemsSource = Array.Empty<SessionRow>();
+        MoreSessionItems.ItemsSource = Array.Empty<SessionRow>();
+        _moreSessions = [];
+        _moreSessionsVisible = false;
+        NoSessionsText.Visibility = Visibility.Visible;
+        SessionSummaryText.Text = "Active playback-session observation is unavailable.";
+        UpdateMoreSessionsVisibility();
+        SetSessionActionState("UNAVAILABLE", "DangerBrush",
+            "Windows Core Audio sessions could not be reached. No controls were enabled.");
+        UpdateDeviceDetailsVisibility();
         UpdateMoreVisibility();
         MixerProvenanceText.Text = "Windows Core Audio could not be reached. No values were synthesized.";
+    }
+
+    internal void ShowSessionMutationPending(AudioSession session, AudioSessionMutationKind kind)
+    {
+        SetSessionControlsBusy(true);
+        SetSessionActionState(
+            "CHECKING",
+            "WarningBrush",
+            $"Revalidating {session.Name} before the {DescribeMutation(kind)} request.");
+    }
+
+    internal void ShowSessionMutationResult(AudioSessionMutationResult result)
+    {
+        SetSessionControlsBusy(false);
+        string brush = result.Status switch
+        {
+            AudioSessionMutationStatus.Applied => "SignalBrush",
+            AudioSessionMutationStatus.Rejected or AudioSessionMutationStatus.TargetChanged => "WarningBrush",
+            _ => "DangerBrush"
+        };
+        SetSessionActionState(
+            result.Status == AudioSessionMutationStatus.Applied ? "VERIFIED" : "CHECK",
+            brush,
+            result.Message);
+    }
+
+    internal void ShowSessionRefreshFailure()
+    {
+        SetSessionControlsBusy(false);
+        SetSessionActionState(
+            "UNAVAILABLE",
+            "DangerBrush",
+            "Active playback sessions could not be refreshed. Existing controls were disabled.");
+        SessionItems.IsEnabled = false;
+        MoreSessionItems.IsEnabled = false;
+    }
+
+    private void UpdateSessions(AudioSessionSnapshot snapshot)
+    {
+        SessionRow[] rows = snapshot.Sessions
+            .Select(session => new SessionRow(session))
+            .ToArray();
+        SessionRow[] primary = rows.Take(PrimarySessionLimit).ToArray();
+        _moreSessions = rows.Skip(primary.Length).ToArray();
+        SessionItems.ItemsSource = primary;
+        MoreSessionItems.ItemsSource = _moreSessions;
+        NoSessionsText.Visibility = rows.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        SessionSummaryText.Text = DescribeSessions(snapshot);
+        if (_moreSessions.Length == 0)
+        {
+            _moreSessionsVisible = false;
+        }
+
+        UpdateMoreSessionsVisibility();
+        SetSessionControlsBusy(false);
+    }
+
+    private void RefreshAudio_Click(object sender, RoutedEventArgs e)
+    {
+        if (_sessionControlsBusy)
+        {
+            return;
+        }
+
+        SetSessionControlsBusy(true);
+        SetSessionActionState("REFRESHING", "WarningBrush", "Reading current endpoint and app-session state.");
+        RefreshRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void MoreSessions_Click(object sender, RoutedEventArgs e)
+    {
+        _moreSessionsVisible = !_moreSessionsVisible;
+        UpdateMoreSessionsVisibility();
+    }
+
+    private void SessionVolume_Commit(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Slider { Tag: SessionRow row } slider)
+        {
+            RequestSessionChange(row, AudioSessionMutationKind.Volume, slider.Value, null);
+        }
+    }
+
+    private void SessionVolume_CommitKey(object sender, KeyEventArgs e)
+    {
+        if (e.Key is not (Key.Left or Key.Right or Key.Up or Key.Down or
+            Key.Home or Key.End or Key.PageUp or Key.PageDown))
+        {
+            return;
+        }
+
+        if (sender is Slider { Tag: SessionRow row } slider)
+        {
+            RequestSessionChange(row, AudioSessionMutationKind.Volume, slider.Value, null);
+        }
+    }
+
+    private void SessionMute_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: SessionRow row })
+        {
+            RequestSessionChange(row, AudioSessionMutationKind.Mute, null, !row.Session.IsMuted);
+        }
+    }
+
+    private void RequestSessionChange(
+        SessionRow row,
+        AudioSessionMutationKind kind,
+        double? volumePercent,
+        bool? muted)
+    {
+        if (_sessionControlsBusy || !row.CanControl)
+        {
+            return;
+        }
+
+        ShowSessionMutationPending(row.Session, kind);
+        SessionChangeRequested?.Invoke(
+            this,
+            new AudioSessionChangeRequestedEventArgs(row.Session, kind, volumePercent, muted));
+    }
+
+    private void UpdateMoreSessionsVisibility()
+    {
+        bool canShow = _moreSessions.Length > 0;
+        MoreSessionsButton.Visibility = canShow ? Visibility.Visible : Visibility.Collapsed;
+        MoreSessionItems.Visibility = canShow && _moreSessionsVisible
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        MoreSessionsButton.Content = _moreSessionsVisible
+            ? "Show less"
+            : $"Show {_moreSessions.Length} more";
+        MoreSessionsButton.SetCurrentValue(
+            System.Windows.Automation.AutomationProperties.NameProperty,
+            _moreSessionsVisible
+                ? "Hide additional active audio sessions"
+                : $"Show {_moreSessions.Length} additional active audio sessions");
+    }
+
+    private void SetSessionControlsBusy(bool busy)
+    {
+        _sessionControlsBusy = busy;
+        SessionItems.IsEnabled = !busy;
+        MoreSessionItems.IsEnabled = !busy;
+        MoreSessionsButton.IsEnabled = !busy;
+        RefreshAudioButton.IsEnabled = !busy;
+    }
+
+    private void SetSessionActionState(string state, string brushKey, string detail)
+    {
+        SessionActionStateText.Text = state;
+        SessionActionStateText.Foreground = (Brush)FindResource(brushKey);
+        SessionActionDetailText.Text = detail;
+    }
+
+    private static string DescribeSessions(AudioSessionSnapshot snapshot)
+    {
+        int controllable = snapshot.Sessions.Count(session => session.CanControl);
+        string active = snapshot.Sessions.Count == 1
+            ? "1 active playback session"
+            : $"{snapshot.Sessions.Count} active playback sessions";
+        string omitted = snapshot.OmittedSessionCount > 0
+            ? $" · {snapshot.OmittedSessionCount} omitted by bounds"
+            : string.Empty;
+        return $"{active} · {controllable} controllable{omitted}";
+    }
+
+    private static string DescribeMutation(AudioSessionMutationKind kind) =>
+        kind == AudioSessionMutationKind.Volume ? "volume" : "mute";
+
+    private static AudioObservationState MergeState(
+        AudioObservationState endpoints,
+        AudioObservationState sessions)
+    {
+        if (endpoints == AudioObservationState.Unavailable &&
+            sessions == AudioObservationState.Unavailable)
+        {
+            return AudioObservationState.Unavailable;
+        }
+
+        return endpoints == AudioObservationState.Current &&
+            sessions == AudioObservationState.Current
+            ? AudioObservationState.Current
+            : AudioObservationState.Partial;
     }
 
     private void MoreEndpoints_Click(object sender, RoutedEventArgs e)
     {
         _moreVisible = !_moreVisible;
         UpdateMoreVisibility();
+    }
+
+    private void DeviceDetails_Click(object sender, RoutedEventArgs e)
+    {
+        _deviceDetailsVisible = !_deviceDetailsVisible;
+        UpdateDeviceDetailsVisibility();
+    }
+
+    private void UpdateDeviceDetailsVisibility()
+    {
+        EndpointDetailsPanel.Visibility = _deviceDetailsVisible
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        DeviceDetailsButton.Content = _deviceDetailsVisible ? "Hide devices" : "View devices";
+        DeviceDetailsButton.SetCurrentValue(
+            System.Windows.Automation.AutomationProperties.NameProperty,
+            _deviceDetailsVisible ? "Hide audio device details" : "Show audio device details");
     }
 
     private void UpdateMoreVisibility()
@@ -189,6 +449,32 @@ public partial class MixerView : UserControl
     }
 
     private sealed record EndpointPalette(Brush Active, Brush Attention, Brush Quiet, Brush Text, Brush Track);
+
+    private sealed class SessionRow(AudioSession session)
+    {
+        internal AudioSession Session { get; } = session;
+
+        public string Name => Session.Name;
+
+        public string EndpointName => Session.EndpointName;
+
+        public double VolumePercent => Session.VolumePercent;
+
+        public string VolumeText => $"{Session.VolumePercent:F0}%";
+
+        public bool CanControl => Session.CanControl;
+
+        public string MuteActionText => Session.IsMuted ? "Unmute" : "Mute";
+
+        public string MuteAccessibleName =>
+            $"{MuteActionText} {Session.Name}";
+
+        public string VolumeAccessibleName =>
+            $"{Session.Name} volume {Session.VolumePercent:F0} percent";
+
+        public string Tooltip =>
+            $"{Session.Name} · {Session.EndpointName} · {Session.ControlAvailability}";
+    }
 
     private sealed class EndpointRow
     {

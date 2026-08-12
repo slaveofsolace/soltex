@@ -55,11 +55,11 @@ Implemented on the draft branch:
 
 No executable paths, packet contents, destination history, elevation bypass, or generic process-tree termination are introduced.
 
-### Audio observation
+### Audio mixer
 
-Implemented: read-only Windows Core Audio endpoint enumeration, render/capture grouping, state, default assignment, current volume, mute observation, and bounded primary lists.
+Owner-host implementation candidate: bounded Windows Core Audio endpoint enumeration plus active shared-mode render sessions. Soltex inspects at most 128 session slots, exposes at most 24 path-free session rows, and keeps system-sounds, multi-process/transferred, ended, or process-unverifiable sessions read-only. Eligible volume/mute requests revalidate endpoint/session identities plus process ID/start time immediately before the write and require immediate Windows read-back before success. The default UI keeps app controls primary and complete device inventory behind explicit disclosure.
 
-Not yet implemented: per-app sessions, volume/mute writes, app routing, virtual devices, EQ, DSP, or noise suppression.
+Targeted Release builds passed with 0 warnings/errors; standard Audio tests are 20/20, the opt-in task-owned silent-session live-write gate is 21/21, and App/control tests are 19/19. Exact hosted and package acceptance remain pending. Not implemented: endpoint switching, app routing, virtual devices, EQ, DSP, noise suppression, microphone processing, profiles, or Sonar parity.
 
 ### Security companion
 
@@ -94,10 +94,11 @@ The Activity checkpoint `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` passed Window
 
 ## Next stages
 
-1. Add Core Audio session observation and documented volume/mute writes with read-back. Routing remains a separate signed virtual-audio component.
+1. Publish and accept the Core Audio session/read-back candidate through exact-head Windows, package, native-render, and owner-review gates.
 2. Add bounded local historical telemetry only after its storage, retention, migration, and measured-idle-cost contract is independently proven.
-3. Add mTLS/Tailscale device enrollment, capability-scoped agents, revocation, emergency stop, and NAS audit transport. Keep personal Google Drive and work Box in separate permission domains.
-4. Add Windows Graphics Capture, benchmark profiles/provenance, signing, installer lifecycle evidence, accessibility/scaling verification, and owner acceptance.
+3. Add service/startup health plus a notification/background-runtime policy with measured idle/minimized/navigation cost.
+4. Add mTLS/Tailscale device enrollment, capability-scoped agents, revocation, emergency stop, and NAS audit transport. Keep personal Google Drive and work Box in separate permission domains.
+5. Add Windows Graphics Capture, benchmark profiles/provenance, signing, installer lifecycle evidence, accessibility/scaling verification, and owner acceptance.
 
 ## Nonclaims
 

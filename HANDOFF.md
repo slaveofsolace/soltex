@@ -8,7 +8,9 @@ Snapshot: 2026-08-11 (America/Chicago)
 repository: slaveofsolace/soltex
 pull request: #11 (draft)
 branch: sol/soltex-product-rebuild
-validated Activity source head: 0edb327a46aa05a5cc5e804d30ac56cd797e210a
+validated Activity PR head: 4437db80b844dcfe33cd8265e41cb5fcf00bfd76
+local Activity evidence reconciliation: ce584cfdf6b62085f6b5bd45280dd92fb428e72d
+audio candidate: current branch tip; exact publication/evidence binding pending
 isolated worktree: C:\Users\suhai\Documents\soltex-product-rebuild
 protected owner checkout: C:\Users\suhai\Documents\SOL Tools
 protected owner branch/head: main / bf2662de80992cfed761625642f084d3caaa0f04
@@ -33,6 +35,20 @@ No build, test, render-smoke, Soltex, or task-owned PowerShell process remained 
 - Extends preferences, last-workspace restoration, tests, render-smoke routing, documentation, and the native evidence matrix.
 
 The follow-up Settings polish removed an accidental clipped control edge at the canonical viewport without changing behavior.
+
+## Completed Audio candidate
+
+- Added bounded active shared-mode render-session discovery through documented Windows Core Audio interfaces.
+- Inspects at most 128 session slots and exposes at most 24 active, path-free app rows.
+- Keeps system-sounds, multi-process/transferred, ended, and process-unverifiable sessions read-only.
+- Holds only one-way endpoint/session identities in memory; raw identifiers, executable paths, command lines, and icon paths are not exposed, persisted, or logged.
+- Revalidates endpoint/session identities plus process ID/start time immediately before each explicit volume/mute request.
+- Requires immediate Windows volume/mute read-back before showing success and exposes rejection, target drift, unavailability, and mismatch separately.
+- Makes app sessions the primary Audio job and moves full device inventory behind explicit progressive disclosure.
+- Records only the sanitized result of a user-owned request as meaningful Activity.
+- Preserves explicit nonclaims for endpoint switching, routing, virtual devices, EQ, DSP, noise suppression, microphone processing, profiles, and Sonar parity.
+
+Targeted owner-host evidence is green: Release Audio/App builds have 0 warnings/errors, standard Audio is 20/20, opt-in controlled silent-session write/read-back is 21/21, and App/control is 19/19. The controlled write touched only a task-owned silent WinMM session and wrote its already-observed values back unchanged. The default and expanded-device 1280x820 captures were directly inspected; hosted exact-head/package acceptance is still pending.
 
 ## Verification
 
@@ -66,15 +82,15 @@ Exact PR head `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` subsequently passed Win
 
 ## Exact resume step
 
-1. Continue the next product-maturity slice: supported Windows Core Audio session observation on active render endpoints.
-2. Bind sessions through `IAudioSessionManager2`/`IAudioSessionEnumerator`, expose sanitized process identity and current session volume/mute, and keep enumeration bounded.
-3. Add explicit user-owned session volume/mute writes only with immediate Core Audio read-back and visible failure/recovery state.
-4. Add focused COM-layout, bounds, identity-drift, disconnected-session, write/read-back, cancellation, live-overhead, and WPF interaction tests.
-5. Capture and inspect the resulting Audio states before publication. Do not claim routing, EQ, DSP, noise suppression, virtual devices, or Sonar parity.
+1. Bind the Audio candidate to an exact local commit without changing source behavior.
+2. Run the full Release/identity/design/test gate, the opt-in controlled silent-session write/read-back gate, and a fresh complete native matrix at that exact head.
+3. Inspect default and expanded Audio captures, reconcile exact evidence and nonclaims, then publish the branch and wait for both Windows and package-smoke workflows.
+4. After hosted acceptance, continue with service/startup health plus notification/background-runtime policy and idle/minimized/navigation-cost measurements.
 
 ## Remaining product work
 
-- per-app Core Audio session observation and supported read-back controls;
+- hosted/package acceptance and owner visual review for the per-app Core Audio candidate;
+- supported default/fallback endpoint selection, still separate from routing or DSP;
 - bounded historical numeric telemetry with independently proven retention/migration/cost;
 - notification/background-runtime policy and idle/minimized/navigation-churn measurements;
 - service/driver/startup health observation through supported Windows boundaries;

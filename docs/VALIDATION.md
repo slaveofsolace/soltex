@@ -6,6 +6,22 @@ Repository: `slaveofsolace/soltex`
 
 Current draft: `sol/soltex-product-rebuild` / [PR #11](https://github.com/slaveofsolace/soltex/pull/11)
 
+## Audio candidate targeted owner-host gate
+
+The current unpublished Audio candidate was exercised on the owner-controlled Windows host through the verified portable .NET SDK 10.0.302. No Windows security setting, endpoint assignment, third-party session, SteelSeries process, Voicemeeter process, or audible media was changed.
+
+| Command/gate | Result |
+|---|---:|
+| Release `Soltex.Audio` build | Passed, 0 warnings / 0 errors |
+| Release `Soltex.App` build | Passed, 0 warnings / 0 errors |
+| standard `Soltex.Audio.Tests` | 20/20 |
+| opt-in controlled live-write `Soltex.Audio.Tests` | 21/21 |
+| `Soltex.App.Tests` | 19/19 |
+| live session observation | 5 exposed / 28 observed / 0 inaccessible / 0 omitted; about 8 ms provider time |
+| targeted native Mixer captures | default and expanded device inventory passed at 1280x820 and were directly inspected |
+
+The opt-in write gate creates a one-second silent WinMM loop owned by the test process, locates only that process's session, writes its already-observed volume and mute values back unchanged, verifies both through immediate Core Audio read-back, stops the loop, and removes its temporary WAV. The standard suite does not perform any live write. COM GUID/vtable order, bounds, sanitization, identity privacy, rejection, target drift, cancellation, fake read-back match/mismatch, live observation, and measured overhead have focused tests. Exact full-solution, complete-matrix, hosted Windows, and package evidence remain pending for the publication commit.
+
 ## Activity candidate owner-host gate
 
 The Activity source candidate was exercised on the owner-controlled Windows host before publication. The gate used the repository-pinned .NET 10 contract through a verified portable .NET SDK 10.0.302 and did not disable, exclude, or reconfigure Windows security.

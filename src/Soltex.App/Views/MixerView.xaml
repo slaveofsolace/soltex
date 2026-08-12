@@ -64,6 +64,59 @@
                            FontSize="{StaticResource FontMono}" />
             </Grid>
         </DataTemplate>
+
+        <DataTemplate x:Key="AudioSessionTemplate">
+            <Grid Margin="0,0,0,12"
+                  ToolTip="{Binding Tooltip}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="170" />
+                    <ColumnDefinition Width="210" />
+                    <ColumnDefinition Width="54" />
+                    <ColumnDefinition Width="78" />
+                </Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding Name}"
+                               TextTrimming="CharacterEllipsis"
+                               FontWeight="SemiBold" />
+                    <TextBlock Margin="0,3,0,0"
+                               Text="{Binding EndpointName}"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{StaticResource QuietTextBrush}"
+                               FontFamily="{StaticResource MonoFont}"
+                               FontSize="{StaticResource FontMicro}" />
+                </StackPanel>
+                <Slider Grid.Column="1"
+                        Margin="12,0"
+                        Minimum="0"
+                        Maximum="100"
+                        LargeChange="10"
+                        SmallChange="2"
+                        Value="{Binding VolumePercent, Mode=OneWay}"
+                        IsEnabled="{Binding CanControl}"
+                        Tag="{Binding}"
+                        Style="{StaticResource SoltexSliderStyle}"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="{Binding VolumeAccessibleName}"
+                        PreviewMouseLeftButtonUp="SessionVolume_Commit"
+                        PreviewKeyUp="SessionVolume_CommitKey" />
+                <TextBlock Grid.Column="2"
+                           Text="{Binding VolumeText}"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           FontFamily="{StaticResource MonoFont}"
+                           FontSize="{StaticResource FontMono}" />
+                <Button Grid.Column="3"
+                        Margin="12,0,0,0"
+                        MinWidth="66"
+                        Padding="9,5"
+                        Content="{Binding MuteActionText}"
+                        IsEnabled="{Binding CanControl}"
+                        Tag="{Binding}"
+                        Style="{StaticResource SecondaryButton}"
+                        AutomationProperties.Name="{Binding MuteAccessibleName}"
+                        Click="SessionMute_Click" />
+            </Grid>
+        </DataTemplate>
     </UserControl.Resources>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -79,23 +132,22 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel>
                     <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="AUDIO" />
-                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Audio devices" />
+                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Audio mixer" />
                     <TextBlock Margin="0,5,0,0"
                                MaxWidth="720"
                                HorizontalAlignment="Left"
                                Style="{StaticResource MutedTextStyle}"
                                FontSize="{StaticResource FontBody}"
                                TextWrapping="Wrap"
-                               Text="Playback and recording endpoints reported by Windows Core Audio." />
+                               Text="Per-app volume and mute with device context from Windows Core Audio." />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                    <Button x:Name="MoreEndpointsButton"
+                    <Button x:Name="RefreshAudioButton"
                             Margin="0,0,10,0"
-                            Visibility="Collapsed"
                             Style="{StaticResource SecondaryButton}"
-                            Content="Show more"
-                            AutomationProperties.Name="Show more audio endpoints"
-                            Click="MoreEndpoints_Click" />
+                            Content="Refresh"
+                            AutomationProperties.Name="Refresh audio observation"
+                            Click="RefreshAudio_Click" />
                     <Border Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
                             <Ellipse x:Name="MixerStateDot"
@@ -114,6 +166,70 @@
                     </Border>
                 </StackPanel>
             </Grid>
+
+            <!-- Active app sessions are the primary job; device inventory stays below. -->
+            <Border Margin="0,20,0,0" Style="{StaticResource CardStyle}">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Apps using audio" />
+                            <TextBlock x:Name="SessionSummaryText"
+                                       Margin="0,4,0,0"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="Waiting for active playback sessions." />
+                        </StackPanel>
+                        <Button x:Name="MoreSessionsButton"
+                                Grid.Column="1"
+                                Visibility="Collapsed"
+                                Style="{StaticResource SecondaryButton}"
+                                Content="Show more"
+                                AutomationProperties.Name="Show more audio sessions"
+                                Click="MoreSessions_Click" />
+                    </Grid>
+
+                    <ItemsControl x:Name="SessionItems"
+                                  Margin="0,16,0,0"
+                                  ItemTemplate="{StaticResource AudioSessionTemplate}"
+                                  AutomationProperties.Name="Active app audio sessions" />
+                    <TextBlock x:Name="NoSessionsText"
+                               Margin="0,14,0,0"
+                               Foreground="{StaticResource MutedBrush}"
+                               Text="No active shared-mode playback session was observed." />
+                    <ItemsControl x:Name="MoreSessionItems"
+                                  Margin="0,4,0,0"
+                                  Visibility="Collapsed"
+                                  ItemTemplate="{StaticResource AudioSessionTemplate}"
+                                  AutomationProperties.Name="Additional active app audio sessions" />
+
+                    <Border Margin="0,4,0,0"
+                            Padding="0,10,0,0"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="SessionActionStateText"
+                                       Text="READY"
+                                       Foreground="{StaticResource SignalBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMicro}"
+                                       FontWeight="SemiBold" />
+                            <TextBlock x:Name="SessionActionDetailText"
+                                       Grid.Column="1"
+                                       Margin="12,0,0,0"
+                                       Text="Changes are confirmed by an immediate Windows read-back."
+                                       Foreground="{StaticResource QuietTextBrush}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
 
             <!-- Endpoint summary -->
             <Border Margin="0,20,0,0" Style="{StaticResource HeroCardStyle}">
@@ -178,12 +294,34 @@
                                    HorizontalAlignment="Right"
                                    TextAlignment="Right"
                                    TextWrapping="Wrap" />
+                        <Button x:Name="DeviceDetailsButton"
+                                Margin="0,12,0,0"
+                                HorizontalAlignment="Right"
+                                Style="{StaticResource SecondaryButton}"
+                                Content="View devices"
+                                AutomationProperties.Name="Show audio device details"
+                                Click="DeviceDetails_Click" />
                     </StackPanel>
                 </Grid>
             </Border>
 
             <!-- Playback and recording endpoints -->
+            <StackPanel x:Name="EndpointDetailsPanel" Visibility="Collapsed">
             <Grid Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Audio devices" />
+                <Button x:Name="MoreEndpointsButton"
+                        Grid.Column="1"
+                        Visibility="Collapsed"
+                        Style="{StaticResource SecondaryButton}"
+                        Content="Show more"
+                        AutomationProperties.Name="Show more audio endpoints"
+                        Click="MoreEndpoints_Click" />
+            </Grid>
+            <Grid Margin="0,12,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="16" />
@@ -295,6 +433,7 @@
                     </StackPanel>
                 </Grid>
             </Border>
+            </StackPanel>
 
             <Border Margin="0,16,0,0" Style="{StaticResource QuietCardStyle}">
                 <StackPanel>
@@ -303,7 +442,7 @@
                                Style="{StaticResource MutedTextStyle}"
                                TextWrapping="Wrap"
                                LineHeight="19"
-                               Text="This panel reads endpoint identity, state, default assignment, and current volume/mute from Windows Core Audio. It does not set volume, route signal between devices, or apply equalization or other processing. A level is shown only for a connected endpoint; disconnected endpoints report no level rather than a stale one." />
+                               Text="Soltex reads active shared-mode playback sessions plus endpoint identity, state, defaults, and level from Windows Core Audio. App volume and mute are the only writes: the target is revalidated immediately before each change and the observed result is read back before success is shown. Soltex does not route signal, create virtual devices, or apply EQ, effects, or noise processing." />
                     <TextBlock x:Name="MixerProvenanceText"
                                Margin="0,10,0,0"
                                Foreground="{StaticResource QuietTextBrush}"

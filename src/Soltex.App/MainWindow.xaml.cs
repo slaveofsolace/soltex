@@ -91,6 +91,8 @@ public partial class MainWindow : Window
         MonitoringPanel.ProcessActionCompleted += (_, args) =>
             AddActivity(args.Result.Message, "Performance");
         ApplicationsPanel.RefreshRequested += ApplicationsPanel_RefreshRequested;
+        MixerPanel.RefreshRequested += MixerPanel_RefreshRequested;
+        MixerPanel.SessionChangeRequested += MixerPanel_SessionChangeRequested;
         SettingsPanel.PreferencesChanged += SettingsPanel_PreferencesChanged;
         ActivityPanel.ClearRequested += ActivityPanel_ClearRequested;
     }
@@ -347,13 +349,54 @@ public partial class MainWindow : Window
     {
         try
         {
-            AudioEndpointSnapshot snapshot = await AudioEndpointProvider.CaptureAsync();
-            MixerPanel.UpdateSnapshot(snapshot);
+            Task<AudioEndpointSnapshot> endpointCapture = AudioEndpointProvider.CaptureAsync();
+            Task<AudioSessionSnapshot> sessionCapture = AudioSessionProvider.CaptureAsync();
+            await Task.WhenAll(endpointCapture, sessionCapture);
+            MixerPanel.UpdateSnapshot(
+                await endpointCapture,
+                await sessionCapture);
         }
         catch (Exception exception) when (exception is COMException or InvalidOperationException or ExternalException)
         {
             MixerPanel.ShowUnavailable();
         }
+    }
+
+    private async void MixerPanel_RefreshRequested(object? sender, EventArgs e) =>
+        await RefreshAudioAsync();
+
+    private async void MixerPanel_SessionChangeRequested(
+        object? sender,
+        AudioSessionChangeRequestedEventArgs e)
+    {
+        AudioSessionMutationResult result;
+        try
+        {
+            result = e.Kind == AudioSessionMutationKind.Volume
+                ? await AudioSessionController.SetVolumeAsync(
+                    e.Session,
+                    e.RequestedVolumePercent ?? double.NaN)
+                : await AudioSessionController.SetMuteAsync(
+                    e.Session,
+                    e.RequestedMute ?? e.Session.IsMuted);
+        }
+        catch (Exception exception) when (
+            exception is COMException or InvalidOperationException or ExternalException)
+        {
+            result = new AudioSessionMutationResult(
+                e.Kind,
+                AudioSessionMutationStatus.Unavailable,
+                e.Session.Name,
+                e.RequestedVolumePercent,
+                e.RequestedMute,
+                null,
+                null,
+                $"Windows could not apply the requested audio change for {e.Session.Name}.");
+        }
+
+        await RefreshAudioAsync();
+        MixerPanel.ShowSessionMutationResult(result);
+        AddActivity(result.Message, "Audio");
     }
 
     private async void ApplicationsPanel_RefreshRequested(object? sender, EventArgs e) =>
@@ -1293,6 +1336,8 @@ public partial class MainWindow : Window
         if (string.Equals(normalized, "mixer-more", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(MixerPanel, MixerNavButton);
+            MixerPanel.DeviceDetailsButton.RaiseEvent(
+                new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
             MixerPanel.MoreEndpointsButton.RaiseEvent(
                 new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
             _renderSmokeFocusTarget = MixerPanel.MoreEndpointsPanel;

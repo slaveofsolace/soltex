@@ -26,6 +26,9 @@ try {
     & $dotnet run --project (Join-Path $repoRoot 'tests\Soltex.Monitoring.Tests\Soltex.Monitoring.Tests.csproj') --configuration Release --no-build
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+    & $dotnet run --project (Join-Path $repoRoot 'tests\Soltex.Audio.Tests\Soltex.Audio.Tests.csproj') --configuration Release --no-build
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
     & $dotnet run --project (Join-Path $repoRoot 'tests\Soltex.App.Tests\Soltex.App.Tests.csproj') --configuration Release --no-build
     exit $LASTEXITCODE
 }

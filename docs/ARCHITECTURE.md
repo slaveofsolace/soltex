@@ -11,6 +11,11 @@ Soltex.App (WPF, unelevated)
     |     +-- bounded Process name/PID/CPU/memory/thread snapshots
     |     +-- bounded fixed-volume observation
     |     +-- immutable snapshots and copied bounded histories
+    +-- Soltex.Audio
+    |     +-- bounded MMDevice endpoint observation
+    |     +-- active shared-mode render-session observation
+    |     +-- in-memory one-way endpoint/session identities
+    |     +-- guarded per-session volume/mute with immediate read-back
     +-- Soltex.DeviceFabric
     |     +-- sanitized local machine/runtime observation
     |     +-- explicit NotEnrolled state
@@ -52,6 +57,7 @@ Soltex installs no Windows service, background tray process, kernel driver, brow
 - **Native loading boundary:** the security assembly constrains its Windows P/Invoke resolution to System32. AMSI, WSC, WinTrust, Crypt32, and Kernel32 imports cannot be satisfied from the application or current directory.
 - **Monitoring boundary:** `WindowsSecurityChangeMonitor` receives only a WSC change signal. `ProtectionMonitor` serializes refreshes, coalesces signals through a one-slot channel, uses one timeout-cancelled channel wait per cycle, polls at one-minute intervals, retries nonfatal failures with bounded exponential backoff, keeps the last successful observation, emits an explicit recovered state, and isolates subscriber failures so one UI observer cannot stop monitoring.
 - **System-telemetry boundary:** `SystemTelemetryProvider` reads CPU timing from `GetSystemTimes`, physical memory from `GlobalMemoryStatusEx`, process summaries from `System.Diagnostics.Process`, and fixed-volume capacity from `DriveInfo`. One sample observes at most 2,048 processes, exposes at most 32 rows and eight volumes, limits names to 80 sanitized characters, and never reads executable paths. GPU and network readings are explicitly unavailable in this slice. The UI runs one sequential sample loop, cancels on shutdown, retains copied histories of at most 48/72 samples, marks retained values stale during two bounded retries, then becomes unavailable rather than fabricating a value.
+- **Audio boundary:** `AudioEndpointProvider` observes bounded MMDevice endpoint state. `AudioSessionProvider` inspects at most 128 active-render session slots and exposes at most 24 active shared-mode sessions without requesting executable paths, command lines, icon paths, or public raw identifiers. System-sounds, multi-process/transferred, ended, and process-unverifiable sessions remain read-only. An explicit volume/mute request re-enumerates and revalidates one-way endpoint/session identities, process ID, and process start time, uses a unique event-context GUID, and requires immediate `ISimpleAudioVolume` read-back before success.
 - **Local-device boundary:** `LocalDeviceObservationProvider` reads only the bounded machine name and runtime/OS architecture descriptions. It reports `NotEnrolled`; it does not authenticate a device, discover peers, create an agent identity, listen on a socket, or turn the six-capability policy catalog into execution. The Devices surface routes Remote Assist requests to the existing visible external-client flow.
 - **Event boundary:** the Defender Operational reader asks Windows for at most 24 recent allow-listed event IDs in the app and 100 at the library boundary, with a 512 KiB stdout byte ceiling enforced while the child stream is read. It treats only a no-matching-events condition as an empty result, surfaces other provider/access failures, and re-enforces the requested count after deserialization. `DefenderEventLogParser` constructs descriptions from an allow-list of fields and never exposes file, process, or scan-resource paths.
 - **Content-intake boundary:** `FileAssessmentService` normalizes existing non-reparse files, hashes them, checks the exact-hash allow list, and sends at most 16 MiB to AMSI.
@@ -73,12 +79,13 @@ Soltex installs no Windows service, background tray process, kernel driver, brow
 - Audit rotation: 4 MiB plus one prior segment.
 - Security operations run asynchronously and are not shared with future audio/capture threads.
 - System telemetry uses one 300 ms sampling window followed by a two-second delay. Failures retry sequentially with a bounded delay up to ten seconds; no overlapping sampler, whole-disk walk, executable-path query, GPU poller, or network poller is created.
+- Audio session discovery runs only at startup, Audio navigation, manual refresh, or after an explicit session request. It creates no resident audio thread, installs no virtual device, observes at most 128 session slots, and performs no write without a direct user request. The default automated suite is read-only; the opt-in owner-host write check uses only a task-owned silent session and writes its observed values back unchanged.
 - Remote Assist has no polling loop or resident network component. File hashing and Authenticode checks occur only when a client is selected or a user confirms a launch.
 - Update planning has no scheduler or resident downloader. It runs only from explicit input, applies declared byte/time/count ceilings, holds inert artifacts in private staging, and deletes them when the prepared preview is disposed.
 
 ## Future subsystem boundaries
 
-- Audio requires WASAPI/MMDevice work and, for stable system-wide virtual endpoints, a signed SysVAD/APO-derived package or another documented routing architecture.
+- Per-session volume/mute is implemented through supported Core Audio shared-session interfaces. Endpoint switching, routing, processing, and stable system-wide virtual endpoints remain separate work requiring documented APIs and, where necessary, a separately designed/signed SysVAD/APO-derived package or other supported architecture.
 - Clips requires Windows Graphics Capture, D3D11, Media Foundation hardware encoding, a bounded segment ring, and a separate click-through/no-activate overlay.
 - Device Fabric Stage 1 now has a local observation and UI, but a future multi-device fabric still requires capability-bounded Windows/macOS agents, a signed and replay-resistant job protocol, device-local approval policy, OS-backed secret storage, and connector isolation. Tailscale, RustDesk, the NAS, Google Drive, and Box remain separate trust domains. See `docs/PERSONAL_DEVICE_FABRIC.md`.
 - A true antivirus provider is a separate product program, not an extension of the current WPF process.

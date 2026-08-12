@@ -16,7 +16,7 @@ The problem is product structure:
 - most screens are observation-heavy and manipulation-light;
 - missing capabilities dominate the first-view experience;
 - no shared profile, settings, permissions, background-runtime, or notification model ties the modules together;
-- the current Audio page lists endpoints but does not expose Windows audio sessions or supported controls;
+- the original Audio page listed endpoints without Windows audio sessions or supported controls; the current candidate closes that bounded gap without claiming routing or DSP;
 - Device mesh is a model, Capture is empty, Updates is unconfigured, and Remote Assist is only a trusted launcher;
 - runtime evidence is strong for implemented boundaries, but evidence quality is not product completeness.
 
@@ -104,8 +104,10 @@ Required before calling Soltex a real system manager:
 
 ### Stage 2 — Audio that can be used
 
-- enumerate active Windows audio sessions, not only endpoints;
-- support documented session volume and mute controls with immediate read-back;
+Current candidate implemented and owner-host targeted gates passed: active shared-mode render-session enumeration, path-minimized display identity, single-process/system-session admission rules, explicit volume/mute, immediate read-back, visible mismatch/target-change failure, and progressive device disclosure. Standard Audio tests are 20/20; an opt-in controlled silent-session gate is 21/21 and touches no other app's session. Hosted exact-head/package acceptance is still pending.
+
+- retain active Windows audio sessions in addition to endpoints;
+- retain documented session volume and mute controls with immediate read-back;
 - show default-device and fallback-device selection through supported Windows APIs;
 - design a separate, signed virtual-audio component before claiming routing;
 - do not claim EQ, noise reduction, spatial processing, or per-app routing until the actual processing path is measured and verified.
@@ -138,6 +140,6 @@ Required before calling Soltex a real system manager:
 
 ## Completion language
 
-Until those stages have evidence, describe Soltex as a Windows-native personal system workspace with implemented monitoring, security companion, update planning, endpoint observation, and consent-first RustDesk handoff.
+Until those stages have evidence, describe Soltex as a Windows-native personal system workspace with implemented monitoring, security companion, update planning, bounded endpoint/app-session audio controls, and consent-first RustDesk handoff.
 
 Do not call it a SteelSeries GG replacement, production antivirus, production remote-management platform, audio router or DSP suite, recorder, complete task manager, or production update service.

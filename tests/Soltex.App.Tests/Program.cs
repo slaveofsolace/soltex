@@ -27,6 +27,7 @@ internal static class Program
             TimeSpan.FromMilliseconds(150),
             CancellationToken.None).GetAwaiter().GetResult();
         AudioEndpointSnapshot audioSnapshot = AudioEndpointProvider.CaptureAsync().GetAwaiter().GetResult();
+        AudioSessionSnapshot audioSessionSnapshot = CreateAudioSessionSnapshot();
         ApplicationInventorySnapshot applicationSnapshot =
             ApplicationInventoryProvider.CaptureAsync().GetAwaiter().GetResult();
 
@@ -48,7 +49,8 @@ internal static class Program
             ("Activity store bounds, sanitizes, persists, and recovers", ActivityStoreBoundsAndRecovers),
             ("Activity view renders and filters meaningful events", ActivityViewRenders),
             ("Settings view renders working local preferences", SettingsViewRenders),
-            ("Mixer prioritizes active endpoints", () => MixerPrioritizesActiveEndpoints(audioSnapshot)),
+            ("Mixer prioritizes active endpoints and bounded app controls", () =>
+                MixerPrioritizesActiveEndpoints(audioSnapshot, audioSessionSnapshot)),
             ("Devices view renders an explicit unnrolled profile", () => DevicesViewRenders(device)),
             ("Render-smoke uses an unconstrained popup viewport", RenderSmokeUsesCanonicalViewport)
         ];
@@ -502,10 +504,12 @@ internal static class Program
             "The Settings view render was unexpectedly empty.");
     }
 
-    private static void MixerPrioritizesActiveEndpoints(AudioEndpointSnapshot snapshot)
+    private static void MixerPrioritizesActiveEndpoints(
+        AudioEndpointSnapshot snapshot,
+        AudioSessionSnapshot sessionSnapshot)
     {
         MixerView view = new();
-        view.UpdateSnapshot(snapshot);
+        view.UpdateSnapshot(snapshot, sessionSnapshot);
         int activePlayback = snapshot.Render.Count(endpoint => endpoint.State == AudioEndpointState.Active);
         int activeRecording = snapshot.Capture.Count(endpoint => endpoint.State == AudioEndpointState.Active);
         int expectedPrimary = Math.Min(activePlayback, 6) + Math.Min(activeRecording, 6);
@@ -515,6 +519,11 @@ internal static class Program
         True(expectedPrimary <= 12, "Mixer exposed more than twelve endpoints in the primary view.");
         True(view.MorePlaybackItems.Items.Count + view.MoreRecordingItems.Items.Count == moreCount,
             "Mixer lost endpoints while partitioning the primary and additional lists.");
+        True(view.EndpointDetailsPanel.Visibility == Visibility.Collapsed,
+            "Audio device lists must be collapsed on first view.");
+        view.DeviceDetailsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.EndpointDetailsPanel.Visibility == Visibility.Visible,
+            "Audio device lists did not open from their disclosure control.");
         True(view.MoreEndpointsPanel.Visibility == Visibility.Collapsed,
             "Additional audio endpoints must be collapsed on first view.");
         if (moreCount > 0)
@@ -525,6 +534,74 @@ internal static class Program
             True(view.MoreEndpointsPanel.Visibility == Visibility.Visible,
                 "Mixer additional endpoints did not open from their disclosure control.");
         }
+
+
+        True(view.SessionItems.Items.Count == 5,
+            "Mixer did not keep the primary app-session list at five rows.");
+        True(view.MoreSessionItems.Items.Count == 2,
+            "Mixer lost app sessions while partitioning its primary and additional lists.");
+        True(view.MoreSessionItems.Visibility == Visibility.Collapsed,
+            "Additional app sessions must be collapsed on first view.");
+        view.MoreSessionsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.MoreSessionItems.Visibility == Visibility.Visible,
+            "Mixer additional app sessions did not open from their disclosure control.");
+        True(view.SessionSummaryText.Text.Contains("7 active", StringComparison.Ordinal),
+            "Mixer omitted its bounded active-session summary.");
+
+        bool refreshRequested = false;
+        view.RefreshRequested += (_, _) => refreshRequested = true;
+        view.RefreshAudioButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(refreshRequested, "Mixer refresh did not emit a refresh request.");
+        True(!view.RefreshAudioButton.IsEnabled,
+            "Mixer controls stayed enabled while an observation was pending.");
+
+        AudioSession selected = sessionSnapshot.Sessions[0];
+        AudioSessionMutationResult verified = new(
+            AudioSessionMutationKind.Volume,
+            AudioSessionMutationStatus.Applied,
+            selected.Name,
+            46,
+            null,
+            46,
+            false,
+            $"{selected.Name} volume is 46% (verified).");
+        view.ShowSessionMutationResult(verified);
+        True(view.RefreshAudioButton.IsEnabled,
+            "Mixer controls did not recover after the mutation result.");
+        True(view.SessionActionStateText.Text == "VERIFIED",
+            "Mixer did not distinguish verified read-back success.");
+        True(view.SessionActionDetailText.Text.Contains("verified", StringComparison.OrdinalIgnoreCase),
+            "Mixer did not expose the read-back result.");
+
+        byte[] pixels = Render(view, 980, 720);
+        True(CountVisiblePixels(pixels) > 5_000,
+            "The session-enabled Mixer view render was unexpectedly empty.");
+    }
+
+    private static AudioSessionSnapshot CreateAudioSessionSnapshot()
+    {
+        AudioSession[] sessions = Enumerable.Range(1, 7)
+            .Select(index => new AudioSession(
+                $"Audio app {index}",
+                index % 2 == 0 ? "Headset" : "Speakers",
+                0.25 + (index * 0.05),
+                isMuted: index == 3,
+                canControl: index != 7,
+                index == 7 ? "Multi-process or transferred session" : "Volume and mute available",
+                index == 7
+                    ? null
+                    : new AudioSessionIdentity($"endpoint-{index}", $"session-{index}", (uint)(100 + index), 1000 + index)))
+            .ToArray();
+        return new AudioSessionSnapshot(
+            DateTimeOffset.UtcNow,
+            TimeSpan.FromMilliseconds(8),
+            AudioObservationState.Current,
+            sessions,
+            observedSessionCount: 7,
+            inaccessibleSessionCount: 0,
+            omittedSessionCount: 0,
+            "IMMDeviceEnumerator · IAudioSessionManager2 · IAudioSessionControl2 · ISimpleAudioVolume",
+            ["Test fixture: routing and processing are not provided."]);
     }
 
     private static void DevicesViewRenders(LocalDeviceObservation device)

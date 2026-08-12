@@ -29,4 +29,4 @@ reboot-safe: YES
 
 ## Exact resume step
 
-Start the supported Core Audio session/read-back slice from the clean rebuild worktree. Keep session enumeration bounded, sanitize display identity, require explicit writes and immediate read-back, expose failure/recovery, and preserve the routing/EQ/DSP/virtual-device nonclaims.
+The supported Core Audio session/read-back candidate now passes targeted builds, Audio 20/20, opt-in controlled silent-session live write/read-back 21/21, App/control 19/19, and directly inspected default/expanded 1280x820 captures. Next, commit the atomic candidate, run the complete exact-head Release/identity/design/test/native matrix, reconcile evidence, and publish only after the full local gate remains green. Preserve routing/EQ/DSP/virtual-device/Sonar nonclaims.

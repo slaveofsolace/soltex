@@ -8,7 +8,7 @@ The current desktop solution exposes nine visible workspace areas:
 - **Monitoring** — bounded CPU, physical-memory, process, and fixed-volume observation from supported Windows interfaces.
 - **Devices** — a sanitized local profile and exact non-executing capability model, explicitly not enrolled.
 - **Applications** — a bounded, searchable, read-only inventory of installed software and sign-in entries.
-- **Audio** — read-only Windows Core Audio endpoint state; per-app sessions and writes remain staged work.
+- **Audio** — bounded Windows Core Audio endpoint and active app-session state, with guarded per-session volume/mute and immediate read-back.
 - **Security** — the implemented focus: a lightweight companion that cooperates with the antivirus provider registered with Windows, plus bounded local supply-chain verification primitives.
 - **Remote Assist** — a consent-first launcher for a separately installed, Windows-trusted RustDesk client; Soltex does not own or embed the remote-session transport.
 - **Activity** — a bounded local timeline of meaningful Soltex actions and recovery transitions, session-only unless the user explicitly selects retention.
@@ -22,6 +22,8 @@ This is a clean-room product. It is not affiliated with, endorsed by, or derived
 Home is the default WPF surface. The visible workspaces share one restrained graphite/iris design system with bounded sparklines, progress, slider/focus, table, and scrollbar resources. One sequential sampler publishes immutable snapshots and copied 48/72-sample histories, surfaces provenance and unsupported signals, retains last confirmed values briefly as stale, and cancels on shutdown. GPU telemetry is not implemented and remains visibly unavailable.
 
 Activity records only bounded Soltex-owned events such as an explicit process action, scan request/result, quarantine change, Remote Assist launch result, or a telemetry failure/recovery transition. It does not record clicks, browsing, packet contents, command lines, or executable/file paths. The default is memory-only for the current session; 7-day and 30-day local retention require an explicit Settings choice, shortening retention requires confirmation, and Clear Activity requires confirmation before removing visible and saved history. See [`docs/ACTIVITY.md`](docs/ACTIVITY.md).
+
+Audio observes at most 128 active-render session slots and exposes at most 24 active shared-mode sessions. System-sounds, multi-process/transferred, and process-unverifiable sessions stay read-only. A volume or mute request revalidates the endpoint, session instance, process ID, and process start time, then reports success only after immediate Windows read-back. Raw endpoint/session identifiers, executable paths, command lines, and icon paths are never exposed or persisted. See [`docs/AUDIO.md`](docs/AUDIO.md).
 
 The .NET 10 WPF solution builds and executes on Windows. The Security companion currently provides:
 
@@ -115,6 +117,11 @@ dotnet run `
   --no-build
 
 dotnet run `
+  --project .\tests\Soltex.Audio.Tests\Soltex.Audio.Tests.csproj `
+  --configuration Release `
+  --no-build
+
+dotnet run `
   --project .\tests\Soltex.App.Tests\Soltex.App.Tests.csproj `
   --configuration Release `
   --no-build
@@ -157,6 +164,7 @@ Documentation:
 - Documentation map: [`docs/INDEX.md`](docs/INDEX.md).
 - Current status and nonclaims: [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md).
 - Activity privacy, retention, recovery, and deletion contract: [`docs/ACTIVITY.md`](docs/ACTIVITY.md).
+- Core Audio session observation, write admission, read-back, and nonclaims: [`docs/AUDIO.md`](docs/AUDIO.md).
 - Immersive workspace behavior and visual/data boundaries: [`docs/IMMERSIVE_WORKSPACE.md`](docs/IMMERSIVE_WORKSPACE.md).
 - Exact commands and evidence ledger: [`docs/VALIDATION.md`](docs/VALIDATION.md).
 - Frozen Wave B evidence and decision ledger: [`docs/evidence/2026-08-04-immersive-workspace/`](docs/evidence/2026-08-04-immersive-workspace/).
