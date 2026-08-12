@@ -31,9 +31,12 @@ public partial class MonitoringView : UserControl
         NetworkHistoryChart.ScaleLabelFormatter = FormatRateBound;
     }
 
-    private void MonitoringDetails_Click(object sender, RoutedEventArgs e)
+    private void MonitoringDetails_Click(object sender, RoutedEventArgs e) =>
+        SetDetailsVisible(!_detailsVisible);
+
+    internal void SetDetailsVisible(bool visible)
     {
-        _detailsVisible = !_detailsVisible;
+        _detailsVisible = visible;
         MonitoringDetailsPanel.Visibility = _detailsVisible ? Visibility.Visible : Visibility.Collapsed;
         MonitoringDetailsButton.Content = _detailsVisible ? "Hide system detail" : "Show system detail";
         MonitoringDetailsButton.SetCurrentValue(

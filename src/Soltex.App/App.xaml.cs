@@ -40,7 +40,7 @@ public partial class App : Application
             if (!window.TrySelectRenderSmokePanel(panelName))
             {
                 throw new ArgumentException(
-                    "The render-smoke panel must be one of: home, monitoring, monitoring-details, applications, devices, " +
+                    "The render-smoke panel must be one of: home, monitoring, monitoring-details, applications, settings, devices, " +
                     "security, security-activity, remote, update, mixer, mixer-more, clips.");
             }
 

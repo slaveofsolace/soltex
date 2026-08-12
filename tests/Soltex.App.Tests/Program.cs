@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -42,6 +43,8 @@ internal static class Program
             ("Monitoring details are disclosed only on request", MonitoringDetailsAreProgressive),
             ("Application inventory is bounded and path-free", () => ApplicationInventoryIsBounded(applicationSnapshot)),
             ("Applications view renders installed and startup tabs", () => ApplicationsViewRenders(applicationSnapshot)),
+            ("Preference store recovers and round-trips bounded local state", PreferencesRoundTripAndRecovery),
+            ("Settings view renders working local preferences", SettingsViewRenders),
             ("Mixer prioritizes active endpoints", () => MixerPrioritizesActiveEndpoints(audioSnapshot)),
             ("Devices view renders an explicit unnrolled profile", () => DevicesViewRenders(device)),
             ("Render-smoke uses an unconstrained popup viewport", RenderSmokeUsesCanonicalViewport)
@@ -282,6 +285,84 @@ internal static class Program
             "Startup inventory did not open from its explicit tab.");
         True(view.StartupGrid.Items.Count == snapshot.Startup.Count,
             "Applications view lost startup rows.");
+    }
+
+    private static void PreferencesRoundTripAndRecovery()
+    {
+        string directory = Path.Combine(
+            Path.GetTempPath(),
+            "soltex-preferences-tests-" + Guid.NewGuid().ToString("N"));
+        string filePath = Path.Combine(directory, "preferences.json");
+        Directory.CreateDirectory(directory);
+        try
+        {
+            PreferencesStore store = new(filePath);
+            SoltexPreferences expected = new(
+                TelemetryCadence.Quiet,
+                RestoreLastWorkspace: false,
+                OpenPerformanceDetails: true,
+                LastWorkspace: "security");
+            store.Save(expected);
+            PreferencesLoadResult loaded = store.Load();
+            True(!loaded.RecoveredFromInvalid,
+                "A valid preference document was treated as recovered.");
+            True(loaded.Preferences == expected,
+                "Preference round-trip changed a supported value.");
+
+            File.WriteAllText(filePath, "{ invalid", Encoding.UTF8);
+            PreferencesLoadResult invalid = store.Load();
+            True(invalid.RecoveredFromInvalid,
+                "Invalid JSON did not fall back to defaults.");
+            True(invalid.Preferences == SoltexPreferences.Default,
+                "Invalid JSON did not recover the exact defaults.");
+
+            File.WriteAllBytes(
+                filePath,
+                new byte[PreferencesStore.MaximumPreferenceBytes + 1]);
+            PreferencesLoadResult oversized = store.Load();
+            True(oversized.RecoveredFromInvalid,
+                "An oversized preference document did not fail closed.");
+        }
+        finally
+        {
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory);
+            }
+        }
+    }
+
+    private static void SettingsViewRenders()
+    {
+        SettingsView view = new();
+        SoltexPreferences preferences = new(
+            TelemetryCadence.Quiet,
+            RestoreLastWorkspace: false,
+            OpenPerformanceDetails: true,
+            LastWorkspace: "monitoring");
+        view.UpdatePreferences(
+            preferences,
+            recoveredFromInvalid: false,
+            "Preferences loaded from this Windows account.");
+        True((string)view.QuietCadenceButton.Content == "Quiet · 5 s",
+            "Settings omitted the quiet cadence option.");
+        True((string)view.PerformanceDetailsButton.Content == "On",
+            "Settings did not render the Performance detail preference.");
+        True((string)view.RestoreWorkspaceButton.Content == "Off",
+            "Settings did not render the workspace restore preference.");
+
+        SoltexPreferences? changed = null;
+        view.PreferencesChanged += (_, args) => changed = args.Preferences;
+        view.LiveCadenceButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(changed?.TelemetryCadence == TelemetryCadence.Live,
+            "Settings did not emit the selected cadence.");
+        byte[] pixels = Render(view, 980, 720);
+        True(CountVisiblePixels(pixels) > 5_000,
+            "The Settings view render was unexpectedly empty.");
     }
 
     private static void MixerPrioritizesActiveEndpoints(AudioEndpointSnapshot snapshot)

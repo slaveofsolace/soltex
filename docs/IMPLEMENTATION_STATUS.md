@@ -22,16 +22,20 @@ A passing test proves only its named boundary. A rendered image proves layout ex
 
 Implemented on the draft branch:
 
-- compact module-owned navigation: Overview, Performance, Audio, Security, Remote Assist, Device mesh preview, Capture preview, and Updates;
+- compact module-owned navigation: Overview, Performance, Applications, Audio, Security, Remote Assist, Updates, and a separate bottom-rail Settings entry;
 - deep neutral surfaces, restrained electric-iris accent, Segoe UI Variable typography, tighter spacing/radii, Fluent glyphs, and clearer focus hierarchy;
 - preview labels and concise first-view copy so unfinished modules do not masquerade as shipped tools;
 - progressive disclosure retained for provider, event, and overflow detail.
 
-The pre-rebuild exact native matrix was human-inspected. Fresh images from the current candidate still require human review before PR #11 can leave draft.
+Exact native matrices through the accepted Applications workspace were agent-inspected at 1280×820. Human owner visual acceptance remains open, and the current Settings slice still requires its exact-head gate before PR #11 can leave draft.
 
 ### Applications
 
-Implemented on the draft branch: bounded, searchable installed-software and sign-in inventories from documented Windows uninstall, Run/RunOnce, and Startup-folder sources. The page is read-only; command lines, executable paths, uninstall strings, and disable/remove actions are absent.
+Hosted Windows-verified on `04da86e6e38f6a1de99b5de8edd2427792f4bf36`: bounded, searchable installed-software and sign-in inventories from documented Windows uninstall, Run/RunOnce, and Startup-folder sources. The page is read-only; command lines, executable paths, uninstall strings, and disable/remove actions are absent. Its exact native capture was inspected after a task-first visual refinement.
+
+### Settings and local preferences
+
+Implemented, verification pending: Settings owns a working 1/2/5-second telemetry cadence, optional restoration of the last workspace after a normal close, and the default disclosure state for Performance detail. The bounded non-secret document remains on the current Windows account, recovers explicitly after invalid/oversized input, and does not add analytics or a background service.
 
 ### Performance and bounded task action
 
@@ -78,12 +82,12 @@ The process-control candidate at `6466fa58971e154dc487070d4bdf873e2cdf3175` pass
 - Windows artifact `9123371405`: SHA-256 `59426b8cec52e343a2e56789822641d926ab7e1511a5c39eb6ffa5cf99747995`
 - package artifact `9123351960`: SHA-256 `15fd5d67c26122b914ebb5a113e27d7d0d61d0698b4c94a0891f564c4b08579a`
 
-All eleven native 1280×820 captures from that exact Windows run were inspected. The follow-up visual-honesty correction is not covered by those historical runs and requires a new exact-head gate.
+All eleven native 1280×820 captures from that exact Windows run were inspected. The later Applications candidate at `04da86e6e38f6a1de99b5de8edd2427792f4bf36` passed Windows run `31550273188` and package run `31550273340`; its 12-state native matrix included the inspected Applications surface.
 
 ## Next stages
 
-1. Pass exact-head Windows/package workflows; inspect fresh default and expanded native renders.
-2. Add a real Settings/permissions surface and local historical telemetry with explicit retention.
+1. Pass the current Settings exact-head Windows/package workflows and inspect its native render.
+2. Add local historical telemetry with an explicit retention/off policy and one user-owned Activity surface.
 3. Add Core Audio session observation and documented volume/mute writes with read-back. Routing remains a separate signed virtual-audio component.
 4. Add mTLS/Tailscale device enrollment, capability-scoped agents, revocation, emergency stop, and NAS audit transport. Keep personal Google Drive and work Box in separate permission domains.
 5. Add Windows Graphics Capture, benchmark profiles/provenance, signing, installer lifecycle evidence, accessibility/scaling verification, and owner acceptance.

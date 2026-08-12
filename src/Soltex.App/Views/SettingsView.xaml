@@ -1,0 +1,220 @@
+<UserControl x:Class="Soltex.App.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent"
+             Foreground="{StaticResource TextBrush}"
+             FontFamily="{StaticResource UiFont}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="18" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="Preferences" />
+                <TextBlock Margin="0,5,0,0"
+                           Style="{StaticResource PageTitleStyle}"
+                           Text="Settings" />
+                <TextBlock Margin="0,5,0,0"
+                           Style="{StaticResource MutedTextStyle}"
+                           FontSize="{StaticResource FontBody}"
+                           Text="Choose how the local workspace refreshes and reopens." />
+            </StackPanel>
+            <Border Grid.Column="1"
+                    Style="{StaticResource StatusPillStyle}"
+                    VerticalAlignment="Top">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse x:Name="SettingsStateDot"
+                             Width="7"
+                             Height="7"
+                             Fill="{StaticResource SignalBrush}"
+                             VerticalAlignment="Center" />
+                    <TextBlock x:Name="SettingsStateText"
+                               Margin="8,0,0,0"
+                               Text="LOCAL"
+                               Foreground="{StaticResource SignalBrush}"
+                               FontFamily="{StaticResource MonoFont}"
+                               FontSize="{StaticResource FontMicro}"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel MaxWidth="980"
+                        HorizontalAlignment="Left">
+                <TextBlock Style="{StaticResource SectionTitleStyle}"
+                           Text="Performance" />
+                <Border Margin="0,10,0,0"
+                        Style="{StaticResource CardStyle}"
+                        Padding="0">
+                    <StackPanel>
+                        <Grid Margin="18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel MaxWidth="460">
+                                <TextBlock FontSize="{StaticResource FontBody}"
+                                           FontWeight="SemiBold"
+                                           Text="System refresh cadence" />
+                                <TextBlock Margin="0,5,0,0"
+                                           Foreground="{StaticResource MutedBrush}"
+                                           FontSize="{StaticResource FontCaption}"
+                                           TextWrapping="Wrap"
+                                           Text="Controls live CPU, memory, network, storage, and process observation while Soltex is open." />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1"
+                                        Margin="24,0,0,0"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center">
+                                <Button x:Name="LiveCadenceButton"
+                                        MinWidth="86"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Content="Live · 1 s"
+                                        AutomationProperties.Name="Use one second system refresh cadence"
+                                        Click="LiveCadence_Click" />
+                                <Button x:Name="BalancedCadenceButton"
+                                        Margin="8,0,0,0"
+                                        MinWidth="110"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Content="Balanced · 2 s"
+                                        AutomationProperties.Name="Use two second system refresh cadence"
+                                        Click="BalancedCadence_Click" />
+                                <Button x:Name="QuietCadenceButton"
+                                        Margin="8,0,0,0"
+                                        MinWidth="90"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Content="Quiet · 5 s"
+                                        AutomationProperties.Name="Use five second system refresh cadence"
+                                        Click="QuietCadence_Click" />
+                            </StackPanel>
+                        </Grid>
+                        <Border Height="1"
+                                Background="{StaticResource TrackBrush}" />
+                        <Grid Margin="18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel MaxWidth="560">
+                                <TextBlock FontSize="{StaticResource FontBody}"
+                                           FontWeight="SemiBold"
+                                           Text="Open Performance details by default" />
+                                <TextBlock Margin="0,5,0,0"
+                                           Foreground="{StaticResource MutedBrush}"
+                                           FontSize="{StaticResource FontCaption}"
+                                           TextWrapping="Wrap"
+                                           Text="Shows volumes, provider coverage, and the process table when Performance opens." />
+                            </StackPanel>
+                            <Button x:Name="PerformanceDetailsButton"
+                                    Grid.Column="1"
+                                    MinWidth="74"
+                                    Style="{StaticResource SecondaryButton}"
+                                    AutomationProperties.Name="Toggle Performance details default"
+                                    Click="PerformanceDetails_Click" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Margin="0,22,0,0"
+                           Style="{StaticResource SectionTitleStyle}"
+                           Text="Workspace" />
+                <Border Margin="0,10,0,0"
+                        Style="{StaticResource CardStyle}"
+                        Padding="0">
+                    <Grid Margin="18">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel MaxWidth="560">
+                            <TextBlock FontSize="{StaticResource FontBody}"
+                                       FontWeight="SemiBold"
+                                       Text="Restore the last workspace" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontSize="{StaticResource FontCaption}"
+                                       TextWrapping="Wrap"
+                                       Text="Returns to the most recent working module after a normal close." />
+                        </StackPanel>
+                        <Button x:Name="RestoreWorkspaceButton"
+                                Grid.Column="1"
+                                MinWidth="74"
+                                Style="{StaticResource SecondaryButton}"
+                                AutomationProperties.Name="Toggle restoring the last workspace"
+                                Click="RestoreWorkspace_Click" />
+                    </Grid>
+                </Border>
+
+                <TextBlock Margin="0,22,0,0"
+                           Style="{StaticResource SectionTitleStyle}"
+                           Text="Runtime boundaries" />
+                <Border Margin="0,10,0,0"
+                        Style="{StaticResource QuietCardStyle}"
+                        Padding="18">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="12" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Preferences stay on this Windows account." />
+                        <TextBlock Grid.Column="1"
+                                   Foreground="{StaticResource SignalBrush}"
+                                   FontFamily="{StaticResource MonoFont}"
+                                   FontSize="{StaticResource FontMicro}"
+                                   Text="ON DEVICE" />
+                        <TextBlock Grid.Row="2"
+                                   Text="Telemetry sampling stops when Soltex closes." />
+                        <TextBlock Grid.Row="2"
+                                   Grid.Column="1"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontFamily="{StaticResource MonoFont}"
+                                   FontSize="{StaticResource FontMicro}"
+                                   Text="APP LIFETIME" />
+                        <TextBlock Grid.Row="4"
+                                   Text="Product analytics and a background service are not installed." />
+                        <TextBlock Grid.Row="4"
+                                   Grid.Column="1"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   FontFamily="{StaticResource MonoFont}"
+                                   FontSize="{StaticResource FontMicro}"
+                                   Text="NONE" />
+                    </Grid>
+                </Border>
+
+                <Grid Margin="0,18,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="SettingsSaveDetailText"
+                               VerticalAlignment="Center"
+                               Foreground="{StaticResource MutedBrush}"
+                               FontSize="{StaticResource FontCaption}"
+                               Text="Preferences are ready." />
+                    <Button Grid.Column="1"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Reset defaults"
+                            AutomationProperties.Name="Reset Soltex preferences to defaults"
+                            Click="ResetDefaults_Click" />
+                </Grid>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

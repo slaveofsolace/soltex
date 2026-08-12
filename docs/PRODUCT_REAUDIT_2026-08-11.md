@@ -61,7 +61,7 @@ Implemented on the draft rebuild branch: compact module-owned navigation, deep-n
 
 Implemented on the draft rebuild branch: single-row End task, graceful `CloseMainWindow` request first, explicit force-stop confirmation only after the grace window, and revalidation of PID, name, Windows session, and process start time. Soltex, PID 0–4, Session 0, cross-session targets, and named critical Windows/security processes are rejected. Force stop never includes descendants. This is a user-session task action, not an administrator or service manager.
 
-Hosted Windows build/tests and fresh native capture review are still required on the exact commit before this stage can be called accepted.
+Accepted on the draft branch: the bounded process-action candidate passed its exact-head Windows and package workflows, including its native process-table capture. This does not make Soltex an elevated service manager.
 
 ## Rebuild stages
 
@@ -79,15 +79,21 @@ Status: implemented by the first rebuild slice.
 
 ### Stage 1B — Applications inventory
 
-Implemented on the draft rebuild branch: a first-class Applications workspace reads bounded installed-software metadata from documented uninstall registry locations and sign-in entries from Run/RunOnce and Startup folders. It exposes only display name, publisher, version, scope, source, and sign-in mode. It never reads or renders uninstall commands, startup command lines, executable paths, or `Win32_Product`; it is read-only and makes no disable/removal claim.
+Accepted on the draft rebuild branch: a first-class Applications workspace reads bounded installed-software metadata from documented uninstall registry locations and sign-in entries from Run/RunOnce and Startup folders. It exposes only display name, publisher, version, scope, source, and sign-in mode. It never reads or renders uninstall commands, startup command lines, executable paths, or `Win32_Product`; it is read-only and makes no disable/removal claim.
+
+The exact `04da86e6e38f6a1de99b5de8edd2427792f4bf36` Windows and package workflows passed. The native capture was inspected after replacing the stock white search control and equal-card summary with one compact task-first inventory surface.
+
+### Stage 1C — local preferences and Settings
+
+Implemented, verification pending on the current draft head: a Settings workspace owns telemetry cadence, last-workspace restore, and the default Performance-detail state. Preferences are bounded non-secret JSON under the existing per-user product data root, use atomic replacement, recover to explicit defaults after invalid or oversized input, and do not install a service or enable analytics.
 
 ### Stage 1 — Windows control plane
 
 Required before calling Soltex a real system manager:
 
-- add a central Settings and permissions workspace with durable per-user state;
-- add installed-application and startup inventory using documented registry and startup locations;
-- add safe process actions with protected-process rejection, exact confirmation, and recovery reporting;
+- finish exact-head evidence for the central Settings workspace and durable per-user state;
+- extend the accepted installed-application/startup inventory only through documented, path-minimizing sources;
+- retain the accepted safe process action with protected-process rejection, exact confirmation, and recovery reporting;
 - add service, driver, and startup health observation without generic cleanup claims;
 - add notification and background-runtime policy, including a visible off switch;
 - record performance cost while idle, minimized, and under navigation churn.

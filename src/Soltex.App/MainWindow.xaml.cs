@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -41,10 +42,31 @@ public partial class MainWindow : Window
     private RemoteAssistExecutable? _remoteAssistExecutable;
     private AuthenticodeVerificationResult? _remoteAssistTrust;
     private bool _securityActivityVisible;
+    private readonly PreferencesStore _preferencesStore;
+    private SoltexPreferences _preferences = SoltexPreferences.Default;
+    private int _telemetryIntervalMilliseconds = SoltexPreferences.Default.TelemetryIntervalMilliseconds;
+    private string _activeWorkspace = "home";
+    private readonly bool _renderSmokeMode = Environment.GetCommandLineArgs()
+        .Any(argument => string.Equals(
+            argument,
+            "--render-smoke",
+            StringComparison.OrdinalIgnoreCase));
 
     public MainWindow()
     {
         InitializeComponent();
+        _preferencesStore = new PreferencesStore(
+            Path.Combine(_runtime.DataRoot, "preferences.json"));
+        PreferencesLoadResult preferencesLoad = _preferencesStore.Load();
+        _preferences = preferencesLoad.Preferences;
+        Volatile.Write(
+            ref _telemetryIntervalMilliseconds,
+            _preferences.TelemetryIntervalMilliseconds);
+        SettingsPanel.UpdatePreferences(
+            _preferences,
+            preferencesLoad.RecoveredFromInvalid,
+            preferencesLoad.Detail);
+        MonitoringPanel.SetDetailsVisible(_preferences.OpenPerformanceDetails);
         _updateStagingRoot = Path.Combine(_runtime.DataRoot, "update", "staging");
         _updateJournal = new UpdatePlanningJournal(Path.Combine(_runtime.DataRoot, "update", "journal"));
         QuarantineGrid.ItemsSource = _quarantineRows;
@@ -56,10 +78,16 @@ public partial class MainWindow : Window
         DevicesPanel.UpdateObservation(_localDevice);
         DevicesPanel.RemoteAssistRequested += (_, _) => ShowPanel(RemotePanel, RemoteNavButton);
         ApplicationsPanel.RefreshRequested += ApplicationsPanel_RefreshRequested;
+        SettingsPanel.PreferencesChanged += SettingsPanel_PreferencesChanged;
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        if (!_renderSmokeMode && _preferences.RestoreLastWorkspace)
+        {
+            RestoreWorkspace(_preferences.LastWorkspace);
+        }
+
         if (_telemetryCancellation is null)
         {
             _telemetryCancellation = new CancellationTokenSource();
@@ -93,6 +121,11 @@ public partial class MainWindow : Window
 
     private async void Window_Closed(object? sender, EventArgs e)
     {
+        if (!_renderSmokeMode)
+        {
+            SavePreferencesForClose();
+        }
+
         _operationCancellation?.Cancel();
         _telemetryCancellation?.Cancel();
         if (_telemetryLoopTask is not null)
@@ -177,7 +210,10 @@ public partial class MainWindow : Window
                 });
             }
 
-            TimeSpan retryDelay = TimeSpan.FromSeconds(Math.Min(10, 2 + consecutiveFailures * 2));
+            TimeSpan retryDelay = consecutiveFailures == 0
+                ? TimeSpan.FromMilliseconds(
+                    Volatile.Read(ref _telemetryIntervalMilliseconds))
+                : TimeSpan.FromSeconds(Math.Min(10, 2 + consecutiveFailures * 2));
             await Task.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
         }
     }
@@ -979,6 +1015,82 @@ public partial class MainWindow : Window
 
     private void UpdateNav_Click(object sender, RoutedEventArgs e) => ShowPanel(UpdatePanel, UpdateNavButton);
 
+    private void SettingsNav_Click(object sender, RoutedEventArgs e) => ShowPanel(SettingsPanel, SettingsNavButton);
+
+    private void SettingsPanel_PreferencesChanged(
+        object? sender,
+        PreferencesChangedEventArgs e)
+    {
+        _preferences = e.Preferences.Normalize() with
+        {
+            LastWorkspace = _activeWorkspace
+        };
+        Volatile.Write(
+            ref _telemetryIntervalMilliseconds,
+            _preferences.TelemetryIntervalMilliseconds);
+        MonitoringPanel.SetDetailsVisible(_preferences.OpenPerformanceDetails);
+        try
+        {
+            _preferencesStore.Save(_preferences);
+            SettingsPanel.ShowSaved();
+        }
+        catch (Exception exception) when (IsExpectedPreferenceWriteFailure(exception))
+        {
+            SettingsPanel.ShowSaveFailure();
+        }
+    }
+
+    private void SavePreferencesForClose()
+    {
+        _preferences = _preferences with
+        {
+            LastWorkspace = _activeWorkspace
+        };
+        try
+        {
+            _preferencesStore.Save(_preferences);
+        }
+        catch (Exception exception) when (IsExpectedPreferenceWriteFailure(exception))
+        {
+            // Closing must remain available when a local preference cannot be persisted.
+        }
+    }
+
+    private static bool IsExpectedPreferenceWriteFailure(Exception exception) =>
+        exception is IOException or UnauthorizedAccessException or
+            System.Security.SecurityException or InvalidOperationException;
+
+    private void RestoreWorkspace(string workspace)
+    {
+        switch (SoltexPreferences.NormalizeWorkspace(workspace))
+        {
+            case "monitoring":
+                ShowPanel(MonitoringPanel, MonitoringNavButton);
+                break;
+            case "applications":
+                ShowPanel(ApplicationsPanel, ApplicationsNavButton);
+                break;
+            case "mixer":
+                ShowPanel(MixerPanel, MixerNavButton);
+                break;
+            case "security":
+                ShowPanel(SecurityPanel, SecurityNavButton);
+                break;
+            case "remote":
+                ShowPanel(RemotePanel, RemoteNavButton);
+                break;
+            case "updates":
+                ShowPanel(UpdatePanel, UpdateNavButton);
+                break;
+            case "settings":
+                ShowPanel(SettingsPanel, SettingsNavButton);
+                break;
+            default:
+                ShowPanel(HomePanel, HomeNavButton);
+                break;
+        }
+    }
+
     internal bool TrySelectRenderSmokePanel(string panelName)
     {
         string normalized = panelName.Trim();
@@ -1067,6 +1179,12 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (string.Equals(normalized, "settings", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(SettingsPanel, SettingsNavButton);
+            return true;
+        }
+
         return false;
     }
 
@@ -1080,6 +1198,7 @@ public partial class MainWindow : Window
         HomePanel.Visibility = panel == HomePanel ? Visibility.Visible : Visibility.Collapsed;
         MonitoringPanel.Visibility = panel == MonitoringPanel ? Visibility.Visible : Visibility.Collapsed;
         ApplicationsPanel.Visibility = panel == ApplicationsPanel ? Visibility.Visible : Visibility.Collapsed;
+        SettingsPanel.Visibility = panel == SettingsPanel ? Visibility.Visible : Visibility.Collapsed;
         DevicesPanel.Visibility = panel == DevicesPanel ? Visibility.Visible : Visibility.Collapsed;
         MixerPanel.Visibility = panel == MixerPanel ? Visibility.Visible : Visibility.Collapsed;
         ClipsPanel.Visibility = panel == ClipsPanel ? Visibility.Visible : Visibility.Collapsed;
@@ -1096,7 +1215,8 @@ public partial class MainWindow : Window
                      ClipsNavButton,
                      SecurityNavButton,
                      RemoteNavButton,
-                     UpdateNavButton
+                     UpdateNavButton,
+                     SettingsNavButton
                  })
         {
             button.Background = (Brush)FindResource(button == selectedButton ? "SelectedNavBrush" : "NavRestBrush");
@@ -1104,6 +1224,16 @@ public partial class MainWindow : Window
                 ? (Brush)FindResource("AccentBrush")
                 : (Brush)FindResource("MutedBrush");
         }
+
+        _activeWorkspace =
+            panel == MonitoringPanel ? "monitoring" :
+            panel == ApplicationsPanel ? "applications" :
+            panel == MixerPanel ? "mixer" :
+            panel == SecurityPanel ? "security" :
+            panel == RemotePanel ? "remote" :
+            panel == UpdatePanel ? "updates" :
+            panel == SettingsPanel ? "settings" :
+            "home";
 
         panel.BeginAnimation(OpacityProperty, null);
         panel.Opacity = 1;
