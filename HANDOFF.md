@@ -10,7 +10,8 @@ pull request: #11 (draft)
 branch: sol/soltex-product-rebuild
 validated Activity PR head: 4437db80b844dcfe33cd8265e41cb5fcf00bfd76
 local Activity evidence reconciliation: ce584cfdf6b62085f6b5bd45280dd92fb428e72d
-audio candidate: current branch tip; exact publication/evidence binding pending
+validated Audio source head: 3511ba92bde450ffac4e3fad145d9a13b8986e72
+evidence reconciliation: current documentation commit, pending publication
 isolated worktree: C:\Users\suhai\Documents\soltex-product-rebuild
 protected owner checkout: C:\Users\suhai\Documents\SOL Tools
 protected owner branch/head: main / bf2662de80992cfed761625642f084d3caaa0f04
@@ -48,7 +49,7 @@ The follow-up Settings polish removed an accidental clipped control edge at the 
 - Records only the sanitized result of a user-owned request as meaningful Activity.
 - Preserves explicit nonclaims for endpoint switching, routing, virtual devices, EQ, DSP, noise suppression, microphone processing, profiles, and Sonar parity.
 
-Targeted owner-host evidence is green: Release Audio/App builds have 0 warnings/errors, standard Audio is 20/20, opt-in controlled silent-session write/read-back is 21/21, and App/control is 19/19. The controlled write touched only a task-owned silent WinMM session and wrote its already-observed values back unchanged. The default and expanded-device 1280x820 captures were directly inspected; hosted exact-head/package acceptance is still pending.
+Exact-source owner-host evidence is green: full Release/identity/design gates, Security/EICAR 32/32, supply chain 18/18, hardening 12/12, Updates 17/17, Device Fabric 24/24, Monitoring 16/16, standard Audio 20/20, opt-in controlled silent-session write/read-back 21/21, and App/control 19/19. The controlled write touched only a task-owned silent WinMM session and wrote its already-observed values back unchanged. The complete native matrix passed 14/14 at 1280x820; default and expanded-device Audio were directly inspected. Self-contained package identity and launch/render passed; the executable is truthfully unsigned. Hosted exact-head/package acceptance is still pending.
 
 ## Verification
 
@@ -80,11 +81,26 @@ The exact Activity and Settings captures were directly inspected. They show no g
 
 Exact PR head `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` subsequently passed Windows run `31560242046` and package-smoke run `31560242019`. Windows artifact `9127496208` has digest `sha256:0046bc2b99c0e10accf58b3c030025c4802ceee782553a06f7c3881599e969c9`; package artifact `9127485263` has digest `sha256:dfd3b7aed215a2646bac1ad745e431511f5e4de4958b479b9a8d3865865ab30b`. The downloaded Windows ZIP independently matched its digest; its manifest bound source `4437db8` to tested PR merge `4b3fff8`, and all 14 retained PNG sizes, hashes, and 1280×820 dimensions revalidated. Hosted Activity and Settings pixels were directly inspected. The optional hosted AMSI/EICAR run remained 31/32 because the runner's provider returned native result `1`; required gates still passed, and no detection-efficacy claim is made.
 
+Audio source `3511ba92bde450ffac4e3fad145d9a13b8986e72` owner-host evidence:
+
+```text
+functional logs:
+C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\audio-exact-3511ba9-20260811-230454
+
+14-state native packet:
+C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\audio-native-3511ba9-20260811-230647
+
+self-contained package packet:
+C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\audio-package-3511ba9-20260811-230909
+```
+
+The package executable is 71,559,764 bytes with SHA-256 `31ef5e44b895738723b849705247fb2a4756a2a2092ec9aa514eea429aa64ebb`; the package Home render is 1280x820 and launch exited `0`. This is unsigned launch evidence, not trusted-distribution or installer-lifecycle evidence.
+
 ## Exact resume step
 
-1. Bind the Audio candidate to an exact local commit without changing source behavior.
-2. Run the full Release/identity/design/test gate, the opt-in controlled silent-session write/read-back gate, and a fresh complete native matrix at that exact head.
-3. Inspect default and expanded Audio captures, reconcile exact evidence and nonclaims, then publish the branch and wait for both Windows and package-smoke workflows.
+1. Commit this evidence-only reconciliation without changing validated source behavior.
+2. Push `sol/soltex-product-rebuild` and wait for both draft-PR Windows and package-smoke workflows on the exact published reconciliation head.
+3. Download and re-hash retained artifacts, validate source/tested commit ancestry, and inspect hosted default/expanded Audio pixels before acceptance.
 4. After hosted acceptance, continue with service/startup health plus notification/background-runtime policy and idle/minimized/navigation-cost measurements.
 
 ## Remaining product work

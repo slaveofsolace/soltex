@@ -57,9 +57,9 @@ No executable paths, packet contents, destination history, elevation bypass, or 
 
 ### Audio mixer
 
-Owner-host implementation candidate: bounded Windows Core Audio endpoint enumeration plus active shared-mode render sessions. Soltex inspects at most 128 session slots, exposes at most 24 path-free session rows, and keeps system-sounds, multi-process/transferred, ended, or process-unverifiable sessions read-only. Eligible volume/mute requests revalidate endpoint/session identities plus process ID/start time immediately before the write and require immediate Windows read-back before success. The default UI keeps app controls primary and complete device inventory behind explicit disclosure.
+Owner-host exact-source verified on `3511ba92bde450ffac4e3fad145d9a13b8986e72`: bounded Windows Core Audio endpoint enumeration plus active shared-mode render sessions. Soltex inspects at most 128 session slots, exposes at most 24 path-free session rows, and keeps system-sounds, multi-process/transferred, ended, or process-unverifiable sessions read-only. Eligible volume/mute requests revalidate endpoint/session identities plus process ID/start time immediately before the write and require immediate Windows read-back before success. The default UI keeps app controls primary and complete device inventory behind explicit disclosure.
 
-Targeted Release builds passed with 0 warnings/errors; standard Audio tests are 20/20, the opt-in task-owned silent-session live-write gate is 21/21, and App/control tests are 19/19. Exact hosted and package acceptance remain pending. Not implemented: endpoint switching, app routing, virtual devices, EQ, DSP, noise suppression, microphone processing, profiles, or Sonar parity.
+The full Release/identity/design test gate passed; standard Audio is 20/20, the opt-in task-owned silent-session live-write gate is 21/21, App/control is 19/19, the exact native matrix is 14/14, and self-contained package launch/identity passed. Hosted Windows/package acceptance remains pending. Not implemented: endpoint switching, app routing, virtual devices, EQ, DSP, noise suppression, microphone processing, profiles, or Sonar parity.
 
 ### Security companion
 

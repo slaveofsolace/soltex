@@ -1,7 +1,7 @@
 # Audio session controls
 
 Snapshot: 2026-08-11
-Status: implemented on the draft product-rebuild branch; hosted exact-head verification pending
+Status: owner-host exact-source verified at `3511ba92bde450ffac4e3fad145d9a13b8986e72`; hosted exact-head verification pending
 
 ## User capability
 
@@ -39,17 +39,19 @@ If any identity changed, Soltex returns `TargetChanged` without writing. A suppo
 
 ## Evidence
 
-Targeted owner-host gates on the current source candidate:
+Owner-host gates on exact source `3511ba92bde450ffac4e3fad145d9a13b8986e72`:
 
 - Release `Soltex.Audio` and `Soltex.App` builds: 0 warnings, 0 errors;
 - standard Audio suite: 20/20;
 - opt-in controlled live-write Audio suite: 21/21;
 - App/control suite: 19/19;
+- full Release solution, identity, design, Security/EICAR, supply-chain, hardening, Updates, Device Fabric, and Monitoring gates: passed;
 - live read-only session capture: 5 active sessions exposed from 28 observed slots, 0 inaccessible, 0 omitted, about 8 ms provider time on this host;
 - controlled write: a task-owned silent WinMM loop created a session for the test process, wrote its already-observed volume and mute values back unchanged, confirmed both through Core Audio, stopped playback, and removed the temporary fixture;
 - native 1280x820 default and explicitly expanded-device Mixer captures: generated and directly inspected.
+- self-contained `win-x64` package: 71,559,764 bytes, exact SHA-256 recorded, native launch/render passed, truthfully `NotSigned`.
 
-The controlled live-write check is opt-in through `SOLTEX_RUN_AUDIO_WRITE_TEST=1`; the default automated suite never changes a live app's audio. Timing is diagnostic for this host, not a performance guarantee. Hosted exact-head and package evidence remain required before this slice is accepted for merge.
+The controlled live-write check is opt-in through `SOLTEX_RUN_AUDIO_WRITE_TEST=1`; the default automated suite never changes a live app's audio. Timing is diagnostic for this host, not a performance guarantee. Full paths, hashes, and the bookkeeping-retry record are in [`evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md`](evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md). Hosted exact-head and package evidence remain required before this slice is accepted for merge.
 
 ## Nonclaims
 

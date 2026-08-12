@@ -6,9 +6,9 @@ Repository: `slaveofsolace/soltex`
 
 Current draft: `sol/soltex-product-rebuild` / [PR #11](https://github.com/slaveofsolace/soltex/pull/11)
 
-## Audio candidate targeted owner-host gate
+## Audio candidate exact-source owner-host gate
 
-The current unpublished Audio candidate was exercised on the owner-controlled Windows host through the verified portable .NET SDK 10.0.302. No Windows security setting, endpoint assignment, third-party session, SteelSeries process, Voicemeeter process, or audible media was changed.
+Audio source `3511ba92bde450ffac4e3fad145d9a13b8986e72` was exercised on the owner-controlled Windows host through the verified portable .NET SDK 10.0.302. No Windows security setting, endpoint assignment, third-party session, SteelSeries process, Voicemeeter process, or audible media was changed.
 
 | Command/gate | Result |
 |---|---:|
@@ -20,7 +20,11 @@ The current unpublished Audio candidate was exercised on the owner-controlled Wi
 | live session observation | 5 exposed / 28 observed / 0 inaccessible / 0 omitted; about 8 ms provider time |
 | targeted native Mixer captures | default and expanded device inventory passed at 1280x820 and were directly inspected |
 
-The opt-in write gate creates a one-second silent WinMM loop owned by the test process, locates only that process's session, writes its already-observed volume and mute values back unchanged, verifies both through immediate Core Audio read-back, stops the loop, and removes its temporary WAV. The standard suite does not perform any live write. COM GUID/vtable order, bounds, sanitization, identity privacy, rejection, target drift, cancellation, fake read-back match/mismatch, live observation, and measured overhead have focused tests. Exact full-solution, complete-matrix, hosted Windows, and package evidence remain pending for the publication commit.
+The complete exact-source gate also passed Security/EICAR 32/32, supply chain 18/18, hardening 12/12, Updates 17/17, Device Fabric 24/24, Monitoring 16/16, App/control 19/19, identity 181 files/9 allowlist entries, design-token policy across 10 XAML files, and a 14/14 native matrix with every retained image at 1280x820. The first tracked verification completed green but exposed a blank tracker exit-code property; after confirming no process remained, one handle-pinned retry recorded every exit as `0`.
+
+The opt-in write gate creates a one-second silent WinMM loop owned by the test process, locates only that process's session, writes its already-observed volume and mute values back unchanged, verifies both through immediate Core Audio read-back, stops the loop, and removes its temporary WAV. The standard suite does not perform any live write. COM GUID/vtable order, bounds, sanitization, identity privacy, rejection, target drift, cancellation, fake read-back match/mismatch, live observation, and measured overhead have focused tests.
+
+The exact self-contained `win-x64` package is 71,559,764 bytes with SHA-256 `31ef5e44b895738723b849705247fb2a4756a2a2092ec9aa514eea429aa64ebb`; its hidden Home render launch exited `0`, produced 1280x820 evidence, and the executable is truthfully `NotSigned`. Full evidence paths and image identities are recorded in [`evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md`](evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md). Hosted Windows and package evidence remain pending for the published reconciliation head.
 
 ## Activity candidate owner-host gate
 

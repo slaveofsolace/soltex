@@ -104,7 +104,7 @@ Required before calling Soltex a real system manager:
 
 ### Stage 2 — Audio that can be used
 
-Current candidate implemented and owner-host targeted gates passed: active shared-mode render-session enumeration, path-minimized display identity, single-process/system-session admission rules, explicit volume/mute, immediate read-back, visible mismatch/target-change failure, and progressive device disclosure. Standard Audio tests are 20/20; an opt-in controlled silent-session gate is 21/21 and touches no other app's session. Hosted exact-head/package acceptance is still pending.
+Exact source `3511ba92bde450ffac4e3fad145d9a13b8986e72` is owner-host verified: active shared-mode render-session enumeration, path-minimized display identity, single-process/system-session admission rules, explicit volume/mute, immediate read-back, visible mismatch/target-change failure, and progressive device disclosure. Standard Audio is 20/20; an opt-in controlled silent-session gate is 21/21 and touches no other app's session; the complete native matrix and self-contained package gate pass. Hosted exact-head/package acceptance is still pending.
 
 - retain active Windows audio sessions in addition to endpoints;
 - retain documented session volume and mute controls with immediate read-back;
