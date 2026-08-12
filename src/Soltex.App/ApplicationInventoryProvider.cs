@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Security;
+using System.IO;
 using Microsoft.Win32;
 
 namespace Soltex.App;
@@ -44,7 +45,9 @@ internal sealed class ApplicationInventorySnapshot
     internal int InaccessibleSourceCount { get; }
 
     internal string Provenance =>
-        "Windows uninstall registry · Run/RunOnce registry · Startup folders";
+        InaccessibleSourceCount == 0
+            ? "Windows uninstall registry · Run/RunOnce registry · Startup folders"
+            : $"Windows uninstall registry · Run/RunOnce registry · Startup folders · {InaccessibleSourceCount} inaccessible";
 }
 
 internal static class ApplicationInventoryProvider
