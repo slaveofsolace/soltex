@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Microsoft.Win32;
+using Soltex.App.Views;
 using Soltex.Audio;
 using Soltex.DeviceFabric;
 using Soltex.Monitoring;
