@@ -52,7 +52,13 @@ Source and tested commit `4207ecb70ef30c09203cb4f0f2b3efedf1ef2bd6` passed the o
 
 The owner report `Cannot access a disposed object. Object name: 'Soltex.Security.QuarantineStore'.` identified a real startup/close ownership race. The exact correction tracks startup and active-operation lifetime, cancels accepted shutdown work, drains owned tasks before disposing security resources, keeps close-to-notification-area outside shutdown, and makes controlled render/probe modes require confirmed disposal before a successful exit.
 
-A complete diff-focused security scan found and corrected one false-success evidence signal during review. The final scan has zero surviving findings; the resolved candidate remains audit-visible as `SOLTEX-SHUTDOWN-001`. Overview, Services, Security, Settings, and packaged Security pixels were directly inspected and contained initialized state with no exception dialog. Full evidence and nonclaims are recorded in [`evidence/2026-08-12-lifecycle-tray`](evidence/2026-08-12-lifecycle-tray/README.md). Hosted acceptance and owner visual acceptance remain open.
+A complete diff-focused security scan found and corrected one false-success evidence signal during review. The final scan has zero surviving findings; the resolved candidate remains audit-visible as `SOLTEX-SHUTDOWN-001`. Overview, Services, Security, Settings, and packaged Security owner-host pixels were directly inspected and contained initialized state with no exception dialog.
+
+Published source head `6e54fb509ba332191107aa64733db0880e3cac78` then passed Windows run `31568771869` and package-smoke run `31568771855`. Downloaded artifacts `9130547242` and `9130511337` independently matched GitHub digests `sha256:a9b58d12d30160028da00d97509cfcd9334b1ef1841aa3e90676dac7bb09c1a2` and `sha256:99f9c680cb37e97fece68250c6865b3799c986ac9aa5c7d85083c5d6e39b770c`. The tested PR merge `ebd163553b3229099c371cd79b8967ace2b1ab55` was exactly one commit ahead with `6e54fb5` as merge base.
+
+The hosted Release build had zero warnings/errors. Required suites passed: Security 31/31, supply chain 18/18, hardening 12/12, Updates 17/17, Device Fabric 24/24, Monitoring 16/16, Audio 20/20, and App/control 26/26. Optional EICAR/AMSI remained 31/32 because the installed runner provider returned native result `1`; this is an interoperability nonconfirmation, not efficacy evidence. All 15 retained 1280x820 PNGs matched their recorded lengths and hashes; Services, Security, Settings, and packaged Home were directly inspected without an exception dialog. The hosted package launched with exit `0`, was 71,605,238 bytes with SHA-256 `236959aae3abe37a35130b68515c1472730118a6e6c8f60c9315f1ca0107e8b9`, and remained `NotSigned`.
+
+Full evidence and nonclaims are recorded in [`evidence/2026-08-12-lifecycle-tray`](evidence/2026-08-12-lifecycle-tray/README.md). Owner visual acceptance remains open.
 
 ## Activity candidate owner-host gate
 

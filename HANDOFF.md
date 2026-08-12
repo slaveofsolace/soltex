@@ -8,7 +8,7 @@ Snapshot: 2026-08-12 (America/Chicago)
 repository: slaveofsolace/soltex
 pull request: #11 (draft)
 branch: sol/soltex-product-rebuild
-clean published base: abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183
+accepted published evidence head: 6e54fb509ba332191107aa64733db0880e3cac78
 exact owner-host source: 4207ecb70ef30c09203cb4f0f2b3efedf1ef2bd6
 isolated implementation worktree: C:\Users\suhai\Documents\soltex-product-rebuild
 protected owner checkout: C:\Users\suhai\Documents\SOL Tools
@@ -78,17 +78,18 @@ C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\lifecycle
 
 The user-reported `QuarantineStore` disposed-object dialog was a real shutdown race. It is fixed at `4207ecb`: accepted shutdown drains owned work before disposal; a drain miss skips disposal and reports failure; controlled evidence waits for initialized state and confirmed cleanup. A complete diff-focused security scan has zero surviving findings. The false-success cleanup candidate found during review was corrected and retained as rejected audit row `SOLTEX-SHUTDOWN-001`.
 
+Published source head `6e54fb509ba332191107aa64733db0880e3cac78` has accepted hosted evidence. Windows run `31568771869` and package-smoke run `31568771855` completed successfully. Downloaded artifacts `9130547242` and `9130511337` matched GitHub digests exactly; all 15 retained PNG identities and 1280x820 dimensions revalidated. GitHub confirms tested PR merge `ebd163553b3229099c371cd79b8967ace2b1ab55` is exactly one commit ahead with the source as merge base. Services, Security, Settings, and packaged Home were directly inspected without the reported dialog. The hosted package launched `0`, remained `NotSigned`, and matched SHA-256 `236959aae3abe37a35130b68515c1472730118a6e6c8f60c9315f1ca0107e8b9`. Optional hosted EICAR/AMSI remained 31/32 because the runner provider returned result `1`; no efficacy claim is made.
+
 ## Exact resume step
 
-1. Commit this exact evidence-ledger reconciliation without changing the accepted source.
-2. Push `sol/soltex-product-rebuild` without force and update draft PR #11.
-3. Wait for exact published Windows/package workflows.
-4. Download and re-hash artifacts, verify PR merge ancestry, and inspect hosted Services/Security/package pixels.
-5. Record hosted acceptance or the exact remaining blocker before beginning the next bounded product slice.
+1. Commit and publish this hosted acceptance ledger without changing the accepted source.
+2. Confirm the docs-only head workflows remain green and update draft PR #11 metadata without creating another repository-only evidence loop.
+3. Begin the next bounded product slice: supported default/fallback audio endpoint selection, explicitly separate from app routing or DSP.
+4. Preserve the protected owner checkout, exact capability nonclaims, and owner visual-acceptance boundary.
 
 ## Remaining product work
 
-- hosted acceptance plus owner visual review for the Services/runtime/notification-area slice;
+- owner visual review for the Services/runtime/notification-area slice;
 - supported default/fallback audio endpoint selection, still separate from routing or DSP;
 - bounded historical numeric telemetry with retention, migration, and measured storage/runtime cost;
 - deeper startup/driver observation without generic cleanup claims;

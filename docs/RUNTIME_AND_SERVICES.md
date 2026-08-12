@@ -2,7 +2,7 @@
 
 Snapshot: 2026-08-12
 
-Status: exact-source owner-host accepted at `4207ecb70ef30c09203cb4f0f2b3efedf1ef2bd6`; hosted acceptance pending
+Status: exact-source owner-host accepted at `4207ecb70ef30c09203cb4f0f2b3efedf1ef2bd6`; published hosted source `6e54fb509ba332191107aa64733db0880e3cac78` accepted through Windows run `31568771869` and package run `31568771855`; owner visual acceptance pending
 
 ## User capability
 
@@ -66,6 +66,14 @@ The one-time minimize transition was attributed to a worker/runtime thread, not 
 
 ```text
 C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\lifecycle-tray-exact-4207ecb-20260812-0055
+```
+
+Published hosted evidence independently bound source `6e54fb509ba332191107aa64733db0880e3cac78` to tested PR merge `ebd163553b3229099c371cd79b8967ace2b1ab55`, exactly one commit ahead with the source as merge base. All 15 retained 1280x820 captures matched their manifests. Hosted schema-2 runtime evidence recorded 1,040.5 ms startup, 19.2 ms mean / 150.8 ms maximum across 18 transitions, 4.617% visible-idle CPU, 21.472% minimize-transition CPU, and 0.000% minimized-steady/hidden CPU on the four-logical-processor runner. These values are not directly comparable to owner-host values or hardware benchmarks.
+
+The downloaded hosted artifacts and selective pixel inspection are retained at:
+
+```text
+C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\hosted-6e54fb5
 ```
 
 ## Nonclaims

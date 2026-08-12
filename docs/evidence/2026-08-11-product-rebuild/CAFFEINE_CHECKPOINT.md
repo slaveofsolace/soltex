@@ -9,7 +9,7 @@ protected branch/head: main / bf2662de80992cfed761625642f084d3caaa0f04
 protected dirty ownership: pre-existing user/mixed legacy-identity work; preserved untouched
 implementation worktree: C:\Users\suhai\Documents\soltex-product-rebuild
 implementation branch: sol/soltex-product-rebuild
-clean published base: abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183
+accepted published evidence head: 6e54fb509ba332191107aa64733db0880e3cac78
 exact owner-host source: 4207ecb70ef30c09203cb4f0f2b3efedf1ef2bd6
 active task-owned process: none
 reboot-safe: YES
@@ -36,8 +36,11 @@ reboot-safe: YES
 - Exact native matrix passed 15/15; Overview, Services, Security, and Settings were inspected; no error sidecars or exception dialogs were present.
 - Exact self-contained package is 71,583,560 bytes, SHA-256 `761822A48D3FD9A56A99E91C9368FA4AD513777BB2C44A6E0563C4BE4A445459`; packaged Security render exited 0; package remains unsigned.
 - Complete diff-focused security scan: zero surviving findings; corrected/rejected audit candidate `SOLTEX-SHUTDOWN-001`.
+- Published Windows run `31568771869` and package run `31568771855` passed at source head `6e54fb509ba332191107aa64733db0880e3cac78`; tested merge `ebd163553b3229099c371cd79b8967ace2b1ab55` is exactly one commit ahead with the source as merge base.
+- Downloaded artifacts `9130547242` and `9130511337` matched GitHub digests exactly; all 15 retained PNG identities and dimensions revalidated; Services, Security, Settings, and packaged Home were directly inspected without an exception dialog.
+- Hosted package launch exited 0 and matched SHA-256 `236959aae3abe37a35130b68515c1472730118a6e6c8f60c9315f1ca0107e8b9`; package remains unsigned. Optional hosted EICAR/AMSI remained 31/32 with provider result `1`, so no efficacy claim is made.
 - No task-owned runtime remained after package-render PID 44620 exited successfully.
 
 ## Exact resume step
 
-Commit this evidence-ledger-only reconciliation, push `sol/soltex-product-rebuild` without force, wait for exact hosted Windows/package workflows, then download/re-hash artifacts, verify PR merge ancestry, and inspect hosted Services/Security/package pixels. Preserve the protected owner checkout and all product nonclaims.
+Commit and push this hosted-acceptance ledger without force, confirm the docs-only head workflows remain green, then begin supported default/fallback audio endpoint selection as a bounded read-mostly slice separate from routing or DSP. Preserve the protected owner checkout and all product nonclaims.

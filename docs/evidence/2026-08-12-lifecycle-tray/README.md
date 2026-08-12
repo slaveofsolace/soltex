@@ -2,7 +2,11 @@
 
 Snapshot: 2026-08-12
 
-Source and tested commit: `4207ecb70ef30c09203cb4f0f2b3efedf1ef2bd6`
+Owner-host source and tested commit: `4207ecb70ef30c09203cb4f0f2b3efedf1ef2bd6`
+
+Published source head: `6e54fb509ba332191107aa64733db0880e3cac78`
+
+Hosted tested PR merge: `ebd163553b3229099c371cd79b8967ace2b1ab55`
 
 This gate closes the owner-host acceptance portion of the bounded Services/runtime slice and the user-reported shutdown regression:
 
@@ -81,12 +85,42 @@ error sidecar: absent
 
 Replacing the Windows Forms notification resource with direct shell interop removed about 10.55 MiB from the earlier self-contained comparison package while preserving focused native-lifecycle tests. The package is unsigned and must not be represented as trusted public distribution.
 
+## Published hosted gate
+
+Draft PR #11 source head `6e54fb509ba332191107aa64733db0880e3cac78` passed Windows run `31568771869` and package-smoke run `31568771855`. GitHub's compare boundary reports tested merge `ebd163553b3229099c371cd79b8967ace2b1ab55` exactly one commit ahead, with the source head as merge base.
+
+Downloaded artifacts were independently re-hashed before extraction:
+
+| Artifact | GitHub ID | Bytes | SHA-256 |
+|---|---:|---:|---|
+| `soltex-windows-evidence-31568771869-1` | `9130547242` | 2,151,378 | `a9b58d12d30160028da00d97509cfcd9334b1ef1841aa3e90676dac7bb09c1a2` |
+| `soltex-package-smoke-31568771855-1` | `9130511337` | 65,872,981 | `99f9c680cb37e97fece68250c6865b3799c986ac9aa5c7d85083c5d6e39b770c` |
+
+The hosted Release build completed with zero warnings and zero errors. Required suites passed: Security 31/31, supply chain 18/18, hardening 12/12, Updates 17/17, Device Fabric 24/24, Monitoring 16/16, Audio 20/20, and App/control 26/26. Optional EICAR/AMSI was 31/32 because the installed hosted provider returned native result `1`; provider interoperability therefore remains unconfirmed on that runner. This does not overturn the required gates or establish detection efficacy.
+
+All 15 retained native PNGs independently matched their manifest lengths and SHA-256 values and were exactly 1280x820. Services, Security, Settings, and packaged Home were directly inspected; they were initialized and contained no exception dialog. This remains agent inspection, not owner visual acceptance.
+
+Hosted runtime schema 2 recorded startup at 1,040.5 ms, 18 navigation transitions at 19.2 ms mean / 150.8 ms maximum, visible-idle CPU at 4.617%, minimize-transition CPU at 21.472%, and minimized-steady/hidden-notification-area CPU at 0.000% on the four-logical-processor runner. Transition work was attributed to a worker/runtime thread. These short runner samples are regression evidence only.
+
+The hosted package launched with exit code `0` and retained exact identity:
+
+```text
+file: Soltex.exe
+length: 71,605,238 bytes
+sha256: 236959AAE3ABE37A35130B68515C1472730118A6E6C8F60C9315F1CA0107E8B9
+Authenticode: NotSigned
+Home render: 110,765 bytes
+Home render sha256: 2EEF4902E46EEB234667A666DD3675B3896E27275AD3926D853EA18FA030720F
+launch exit: 0
+```
+
 ## External evidence root
 
 ```text
 C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\lifecycle-tray-exact-4207ecb-20260812-0055
+C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\hosted-6e54fb5
 ```
 
 ## Remaining gate
 
-The branch and draft PR still require exact published Windows/package workflows, downloaded-artifact digest checks, PR merge-ancestry verification, and hosted pixel inspection. Owner visual acceptance also remains open.
+Owner visual acceptance remains open. The package is also unsigned; accessibility/scaling, signed install/update/uninstall, and broader product-maturity gates remain separate work.
