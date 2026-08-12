@@ -362,9 +362,19 @@
       "id": "ev_candidate_matrix",
       "kind": "ARTIFACT",
       "access": "INSPECTED_CURRENT",
-      "locator": "C:/Users/suhai/Documents/soltex-product-rebuild/artifacts/ui-rework-preview-20260812",
-      "captured_at": "2026-08-12T19:40:00Z",
-      "integrity": "Sixteen 1280 by 820 working-candidate native states were directly inspected. The first bounded batch ended after 13 frames with no process remaining; the final three states were captured once in a separate bounded continuation.",
+      "locator": "C:/Users/suhai/.codex/visualizations/2026/08/12/soltex-product-rebuild/quiet-instrument-deck-exact-d342977-20260812-031629",
+      "captured_at": "2026-08-12T08:17:48Z",
+      "integrity": "Sixteen 1280 by 820 native states are bound to source and tested commit d3429777c7baff67f08f1e78cc5540d71f58da03; zero error sidecars; manifest SHA-256 13BFBB211675118DDB558FE906F12D63BCAC8A436B1E638BE2D70F46EB682EDE.",
+      "supports_claim_ids": ["claim_design_direction"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "ev_install_recovery",
+      "kind": "ARTIFACT",
+      "access": "INSPECTED_CURRENT",
+      "locator": "docs/evidence/2026-08-12-design-system-rework/INSTALL_RECOVERY.md",
+      "captured_at": "2026-08-12T08:25:00Z",
+      "integrity": "The stale August 5 installed binary was replaced by the exact d342977 publish; installed/published hashes match, state matched immediately before and after upgrade, and three Security shutdown cycles exited zero without sidecars or residual processes.",
       "supports_claim_ids": ["claim_design_direction"],
       "contradicts_claim_ids": []
     }
@@ -558,19 +568,19 @@
       "production": false,
       "external_state_change": true,
       "irreversible": false,
-      "monitoring": "The diff, design guard, full required suites, and all 16 reference-viewport states were reviewed; exact-commit capture and owner acceptance remain the next gates.",
+      "monitoring": "The diff, design guard, full required suites, exact-commit 16-state matrix, and installed lifecycle recovery were reviewed; owner acceptance and broader accessibility remain the next gates.",
       "rollback": {
         "kind": "COMPENSATING_ACTION",
         "procedure": "Use bounded file-level inverse patches or a new corrective commit on the isolated branch; never reset or clean the owner checkout.",
         "preconditions": ["Identify exact task-owned files and current branch identity"],
         "verification": "Confirm expected Git diff, rebuild, rerun affected tests, and recapture corrected native states.",
-        "evidence_ids": ["ev_test_suites", "ev_candidate_matrix"],
+        "evidence_ids": ["ev_test_suites", "ev_candidate_matrix", "ev_install_recovery"],
         "irreversible_residue": "Published Git history remains if a pushed commit is later corrected."
       },
       "recovery": {
         "procedure": "Restore the last verified theme/workspace state using a bounded corrective commit and relaunch the native capture harness.",
         "owner": "Soltex implementation task",
-        "evidence_ids": ["ev_candidate_matrix"]
+        "evidence_ids": ["ev_candidate_matrix", "ev_install_recovery"]
       },
       "mitigation_consequence_node_ids": ["state_workbench_migration"]
     }
@@ -597,13 +607,13 @@
     "recovery": {
       "status": "PASS",
       "signal": "A bounded capture batch timeout left no owned process and resumed only the three missing states; build and lifecycle-dependent shutdown tests remained green.",
-      "evidence_ids": ["ev_test_suites", "ev_candidate_matrix"],
-      "rationale": "The observed failure was retained and recovered without overlapping work or discarding source."
+      "evidence_ids": ["ev_test_suites", "ev_candidate_matrix", "ev_install_recovery"],
+      "rationale": "The observed capture timeout recovered without overlap, and the stale installed binary was upgraded with exact state-preservation and repeated shutdown evidence."
     }
   },
   "closure": {
     "status": "BOUNDED",
-    "summary": "Quiet Instrument Deck is implemented and passes the bounded working-candidate build, regression, policy, and 16-state native gate; exact-commit binding and owner visual/accessibility acceptance remain open.",
+    "summary": "Quiet Instrument Deck is implemented and passes the bounded exact-commit build, regression, policy, 16-state native, and installed lifecycle-recovery gates; owner visual/accessibility acceptance remains open.",
     "residual_risks": [
       "WPF scaling and high-contrast behavior may expose layout or token defects not visible at the reference viewport.",
       "Keyboard focus restoration and UI Automation quality require dedicated evidence.",

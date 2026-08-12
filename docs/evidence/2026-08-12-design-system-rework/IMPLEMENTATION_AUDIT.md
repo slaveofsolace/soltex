@@ -4,6 +4,8 @@ Date: 2026-08-12
 
 Baseline: `sol/soltex-product-rebuild` at `1facf373ca4c27077818908e8e5498eb453e1275`
 
+Implemented source: `d3429777c7baff67f08f1e78cc5540d71f58da03`
+
 Human acceptance: **PENDING**
 
 ## Cold-eye baseline
@@ -42,8 +44,8 @@ labels, and equal-weight dark cards produced a familiar generated-dashboard look
 
 ## Native endpoint review
 
-All states below rendered successfully at 1280×820 from the working candidate
-and were directly inspected:
+All states below rendered successfully at 1280 by 820 from exact commit
+`d3429777c7baff67f08f1e78cc5540d71f58da03` and were directly inspected:
 
 | State | Result |
 |---|---|
@@ -60,10 +62,18 @@ and were directly inspected:
 | Updates | Preview/journal/recovery local modes, no persistent boundary essay |
 
 Agent cold-eye inspection found no gross clipping, hidden common-path command, or
-obvious default-view breach of the 75-word explanatory-copy budget. This is not
-owner acceptance or an accessibility conformance result.
+obvious default-view breach of the 75-word explanatory-copy budget. The exact
+matrix contains 16 states, no error sidecars, and manifest SHA-256
+`13BFBB211675118DDB558FE906F12D63BCAC8A436B1E638BE2D70F46EB682EDE`.
+This is not owner acceptance or an accessibility conformance result.
 
-## Verification completed before final source freeze
+External evidence root:
+
+```text
+C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\quiet-instrument-deck-exact-d342977-20260812-031629
+```
+
+## Verification completed on the frozen source
 
 - design-token guard: passed across 10 XAML files;
 - identity policy: passed across 195 tracked text files;
@@ -80,6 +90,17 @@ owner acceptance or an accessibility conformance result.
 The opt-in EICAR interoperability check was not rerun for a presentation-only
 change. No security-protection or detection-efficacy claim depends on this UI
 slice.
+
+## Installed-copy recovery
+
+The user-reported `Soltex.Security.QuarantineStore` disposed-object dialog came
+from the installed August 5 executable at commit `8a7b4a76`, which predates the
+shutdown correction at `4207ecb`. Exact source `d342977` was published and
+installed in place as the per-user `1.0.1` package. The installed executable
+matches the published executable byte for byte, and three independent Security
+initialize/render/shutdown cycles exited `0` without an error sidecar or
+remaining process. Existing authenticated security state matched before and
+immediately after the upgrade. See [`INSTALL_RECOVERY.md`](INSTALL_RECOVERY.md).
 
 ## Remaining visual gates
 

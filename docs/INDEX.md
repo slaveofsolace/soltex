@@ -13,6 +13,7 @@ Design and architecture:
 
 - [Design system](DESIGN_SYSTEM.md) — tokens, components, and the enforced visual language.
 - [2026-08-12 UI implementation audit](evidence/2026-08-12-design-system-rework/IMPLEMENTATION_AUDIT.md) — before/after findings, native state matrix, and nonclaims.
+- [2026-08-12 stale-install recovery](evidence/2026-08-12-design-system-rework/INSTALL_RECOVERY.md) — disposed-quarantine incident attribution, upgrade identity, state preservation, and installed shutdown evidence.
 - [Architecture](ARCHITECTURE.md)
 - [Threat model](THREAT_MODEL.md)
 - [Supply-chain security](SUPPLY_CHAIN_SECURITY.md)
