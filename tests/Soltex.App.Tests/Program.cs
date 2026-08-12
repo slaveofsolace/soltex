@@ -38,7 +38,7 @@ internal static class Program
         [
             ("Shared theme exposes required control resources", ThemeResourcesAreAvailable),
             ("Telemetry runs only in visible live workspaces", TelemetryRunsOnlyInLiveWorkspaces),
-            ("Telemetry loop ownership survives concurrent stop and restart", TelemetryLoopOwnershipIsSerialized),
+            ("Telemetry loop ownership serializes duplicate stop and queued restart", TelemetryLoopOwnershipIsSerialized),
             ("Background runtime remains explicit and fail-closed", BackgroundRuntimeIsExplicit),
             ("Notification-area resource has a bounded show-hide-dispose lifecycle", NotificationAreaLifecycleIsBounded),
             ("Owned startup work drains before resource disposal", OwnedStartupWorkDrains),
@@ -161,26 +161,71 @@ internal static class Program
         TelemetryLoopOwner owner = new();
         TaskCompletionSource<bool> firstStarted = new(
             TaskCreationOptions.RunContinuationsAsynchronously);
+        TaskCompletionSource<bool> firstCancellationObserved = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        TaskCompletionSource<bool> releaseFirstLoop = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
         owner.StartAsync(async cancellationToken =>
         {
             firstStarted.TrySetResult(true);
-            await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                firstCancellationObserved.TrySetResult(true);
+                await releaseFirstLoop.Task;
+                throw;
+            }
         }).GetAwaiter().GetResult();
         firstStarted.Task.GetAwaiter().GetResult();
         True(owner.IsActive, "Telemetry ownership did not report its first loop as active.");
 
         Task firstStop = owner.StopAsync();
+        firstCancellationObserved.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
         Task duplicateStop = owner.StopAsync();
+        True(!duplicateStop.IsCompleted,
+            "A duplicate telemetry stop bypassed the in-flight owner's serialized cleanup.");
+        releaseFirstLoop.TrySetResult(true);
         Task.WhenAll(firstStop, duplicateStop).GetAwaiter().GetResult();
         True(!owner.IsActive, "Concurrent telemetry stop left a disposed source published as active.");
 
-        TaskCompletionSource<bool> restarted = new(
+        TaskCompletionSource<bool> secondStarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        TaskCompletionSource<bool> secondCancellationObserved = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        TaskCompletionSource<bool> releaseSecondLoop = new(
             TaskCreationOptions.RunContinuationsAsynchronously);
         owner.StartAsync(async cancellationToken =>
         {
+            secondStarted.TrySetResult(true);
+            try
+            {
+                await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                secondCancellationObserved.TrySetResult(true);
+                await releaseSecondLoop.Task;
+                throw;
+            }
+        }).GetAwaiter().GetResult();
+        secondStarted.Task.GetAwaiter().GetResult();
+
+        Task secondStop = owner.StopAsync();
+        secondCancellationObserved.Task.WaitAsync(TimeSpan.FromSeconds(2)).GetAwaiter().GetResult();
+        TaskCompletionSource<bool> restarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        Task queuedRestart = owner.StartAsync(async cancellationToken =>
+        {
             restarted.TrySetResult(true);
             await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
-        }).GetAwaiter().GetResult();
+        });
+        True(!queuedRestart.IsCompleted && !restarted.Task.IsCompleted,
+            "A telemetry restart bypassed cleanup of the previous owned loop.");
+        releaseSecondLoop.TrySetResult(true);
+        Task.WhenAll(secondStop, queuedRestart).GetAwaiter().GetResult();
         restarted.Task.GetAwaiter().GetResult();
         True(owner.IsActive, "Telemetry ownership could not restart after a completed stop.");
         owner.StopAsync().GetAwaiter().GetResult();
