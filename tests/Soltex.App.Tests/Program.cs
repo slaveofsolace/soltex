@@ -4,6 +4,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Soltex.App;
@@ -39,6 +40,8 @@ internal static class Program
             ("Telemetry runs only in visible live workspaces", TelemetryRunsOnlyInLiveWorkspaces),
             ("Background runtime remains explicit and fail-closed", BackgroundRuntimeIsExplicit),
             ("Notification-area resource has a bounded show-hide-dispose lifecycle", NotificationAreaLifecycleIsBounded),
+            ("Owned startup work drains before resource disposal", OwnedStartupWorkDrains),
+            ("Shutdown evidence requires confirmed resource disposal", ShutdownEvidenceRequiresDisposal),
             ("Runtime CPU cost math is processor-normalized and bounded", RuntimeCostMathIsBounded),
             ("Runtime probe launch parsing is bounded and conflict-aware", RuntimeLaunchParsingIsBounded),
             ("Process actions reject Windows and Soltex targets", ProcessActionsRejectProtectedTargets),
@@ -185,7 +188,14 @@ internal static class Program
 
     private static void NotificationAreaLifecycleIsBounded()
     {
-        using NotificationAreaController controller = new();
+        HwndSourceParameters parameters = new("Soltex notification-area lifecycle test")
+        {
+            Width = 1,
+            Height = 1,
+            WindowStyle = unchecked((int)0x80000000)
+        };
+        using HwndSource source = new(parameters);
+        using NotificationAreaController controller = new(source.Handle);
         True(controller.IsAvailable,
             "The Windows notification-area resource was unavailable after construction.");
         controller.SetVisible(visible: true);
@@ -237,6 +247,56 @@ internal static class Program
         Near(30, threadCpu[11].TotalMilliseconds, 0.001);
         Near(0, threadCpu[12].TotalMilliseconds, 0.001);
         Near(5, threadCpu[13].TotalMilliseconds, 0.001);
+    }
+
+    private static void OwnedStartupWorkDrains()
+    {
+        True(OwnedTaskDrain.WaitAsync(
+                TimeSpan.FromSeconds(1),
+                Task.CompletedTask).GetAwaiter().GetResult(),
+            "Completed startup work was not recognized as drained.");
+
+        TaskCompletionSource cancelled = new();
+        cancelled.SetCanceled();
+        True(OwnedTaskDrain.WaitAsync(
+                TimeSpan.FromSeconds(1),
+                cancelled.Task).GetAwaiter().GetResult(),
+            "Cancelled startup work was not recognized as drained.");
+
+        True(OwnedTaskDrain.WaitAsync(
+                TimeSpan.FromSeconds(1),
+                Task.FromException(new InvalidOperationException("fixture")))
+            .GetAwaiter().GetResult(),
+            "Faulted startup work was not recognized as drained.");
+
+        TaskCompletionSource pending = new();
+        True(!OwnedTaskDrain.WaitAsync(
+                TimeSpan.FromMilliseconds(20),
+                pending.Task).GetAwaiter().GetResult(),
+            "Pending startup work ignored the shutdown-drain bound.");
+        pending.TrySetResult();
+    }
+
+    private static void ShutdownEvidenceRequiresDisposal()
+    {
+        True(ShutdownCompletionPolicy.ResourcesWereDisposed(
+                completionSignaled: true,
+                Task.FromResult(true)),
+            "A confirmed resource-disposal signal was rejected.");
+        True(!ShutdownCompletionPolicy.ResourcesWereDisposed(
+                completionSignaled: true,
+                Task.FromResult(false)),
+            "An abandoned cleanup was accepted as successful shutdown.");
+        True(!ShutdownCompletionPolicy.ResourcesWereDisposed(
+                completionSignaled: false,
+                Task.FromResult(true)),
+            "An unobserved completion was accepted as successful shutdown.");
+        TaskCompletionSource<bool> pending = new();
+        True(!ShutdownCompletionPolicy.ResourcesWereDisposed(
+                completionSignaled: true,
+                pending.Task),
+            "Pending cleanup was accepted as successful shutdown.");
+        pending.TrySetResult(true);
     }
 
     private static void RuntimeLaunchParsingIsBounded()

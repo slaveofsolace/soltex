@@ -16,6 +16,12 @@ Settings also owns an explicit close behavior:
 
 Soltex installs no background service. Performance sampling runs only while Home or Performance is visible in a non-minimized window. It stops when the window is hidden, minimized, or closing. Security Center change observation and the bounded Imports watcher remain active while the explicitly opted-in desktop process remains open.
 
+The notification icon uses the documented Unicode `Shell_NotifyIconW` boundary directly and associates callbacks with Soltex's existing owned WPF window. It adds, versions, modifies, focuses, and removes one icon; re-adds it after the taskbar is recreated; and restores the main window if the icon becomes unavailable while hidden. This avoids carrying the complete Windows Forms runtime solely for one notification icon. In a development package comparison, the native boundary reduced the self-contained executable by 10,555,559 bytes (82,136,859 to 71,581,300) while preserving the tested show/hide/dispose lifecycle. Final exact-source package evidence remains required.
+
+Accepted window close now has an explicit ownership boundary. Soltex cancels the active user operation and telemetry loop, waits up to 20 seconds for those tasks and startup to drain, and only then disposes the import monitor, protection monitor, update journal, and security runtime. A timeout skips disposal of resources that may still be referenced and lets process termination reclaim them; it does not race a live task against `QuarantineStore` disposal. Close-to-notification-area is still a cancelled close and does not enter shutdown.
+
+Controlled render and runtime-probe modes use explicit WPF application shutdown. Render evidence waits up to 20 seconds for complete workspace initialization before capture, then waits up to 25 seconds for resource cleanup after closing the window. Initialization, capture, abandoned cleanup, or cleanup timeout produces a nonzero exit and an error sidecar. Development regression evidence for the final dirty candidate includes a zero-warning Release build, 26/26 focused app tests, and clean private-.NET-host renders of Overview, Security, and Settings; all three exited `0`, produced nonempty PNGs, and produced no error sidecar. That evidence diagnoses the reported disposed-object race but is not exact-commit acceptance.
+
 ## Read-only Service Control Manager boundary
 
 `WindowsServiceInventoryProvider` uses the documented Windows Service Control Manager APIs with query-only access:
@@ -73,4 +79,5 @@ This is not a service manager, driver inventory, startup optimizer, health diagn
 - [QUERY_SERVICE_CONFIGW](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-query_service_configw)
 - [CloseServiceHandle](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-closeservicehandle)
 - [WPF application shutdown modes](https://learn.microsoft.com/en-us/dotnet/api/system.windows.application.shutdownmode)
-- [Windows Forms NotifyIcon](https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.notifyicon)
+- [Shell_NotifyIconW](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shell_notifyiconw)
+- [NOTIFYICONDATA](https://learn.microsoft.com/en-us/windows/win32/api/shellapi/ns-shellapi-notifyicondataw)

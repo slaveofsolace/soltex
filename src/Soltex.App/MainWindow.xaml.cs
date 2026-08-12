@@ -35,8 +35,10 @@ public partial class MainWindow : Window
     private readonly string _updateStagingRoot;
     private readonly LocalDeviceObservation _localDevice = LocalDeviceObservationProvider.Capture();
     private CancellationTokenSource? _operationCancellation;
+    private Task _activeOperationDrained = Task.CompletedTask;
     private CancellationTokenSource? _telemetryCancellation;
     private Task? _telemetryLoopTask;
+    private Task? _startupTask;
     private ImportFolderMonitor? _importMonitor;
     private ProtectionMonitor? _protectionMonitor;
     private ProtectionMonitorState? _lastMonitorState;
@@ -51,6 +53,7 @@ public partial class MainWindow : Window
     private SoltexPreferences _preferences = SoltexPreferences.Default;
     private int _telemetryIntervalMilliseconds = SoltexPreferences.Default.TelemetryIntervalMilliseconds;
     private string _activeWorkspace = "home";
+    private bool _shutdownStarted;
     private readonly bool _renderSmokeMode = RuntimeLaunchPolicy.UsesControlledRuntime(
         Environment.GetCommandLineArgs());
 
@@ -61,7 +64,7 @@ public partial class MainWindow : Window
 
     internal event EventHandler? CloseBehaviorChanged;
 
-    internal event EventHandler? ShutdownCompleted;
+    internal event EventHandler<ShutdownCompletedEventArgs>? ShutdownCompleted;
 
     internal Task StartupCompleted => _startupCompleted.Task;
 
@@ -127,60 +130,84 @@ public partial class MainWindow : Window
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        _startupTask ??= InitializeWorkspaceAsync();
         try
         {
-            if (!_renderSmokeMode && _preferences.RestoreLastWorkspace)
-            {
-                RestoreWorkspace(_preferences.LastWorkspace);
-            }
-
-            if (_telemetryCancellation is null)
-            {
-                _telemetryCancellation = new CancellationTokenSource();
-                _telemetryLoopTask = RunTelemetryLoopAsync(_telemetryCancellation.Token);
-            }
-
-            Task audioRefresh = RefreshAudioAsync();
-            Task applicationRefresh = RefreshApplicationsAsync();
-
-            _importMonitor = new ImportFolderMonitor(
-                _runtime.ImportsPath,
-                _runtime.Assessor,
-                HandleImportAssessmentAsync);
-            _protectionMonitor = new ProtectionMonitor(
-                _runtime.Defender,
-                new WindowsSecurityChangeMonitor());
-            _protectionMonitor.Updated += OnProtectionMonitorUpdated;
-            await Task.WhenAll(
-                RefreshAllAsync(),
-                RefreshUpdateJournalAsync(),
-                audioRefresh,
-                applicationRefresh);
-            _protectionMonitor.Start();
-            AddActivity("Soltex import guard is active.", "Security");
-            if (_runtime.DataRootKind == ProductDataRootKind.LegacyCompatibility)
-            {
-                AddActivity(
-                    "Soltex is using the existing compatible data location; no files were moved.",
-                    "Security");
-            }
-
-            AddActivity(
-                _protectionMonitor.ChangeNotificationsAvailable
-                    ? "Windows Security change notifications are active."
-                    : "Windows Security notifications are unavailable; bounded polling remains active.",
-                "Security");
-            _startupCompleted.TrySetResult(true);
+            await _startupTask;
+        }
+        catch (OperationCanceledException) when (_shutdownStarted)
+        {
+            _startupCompleted.TrySetCanceled();
+        }
+        catch (Exception) when (_shutdownStarted)
+        {
+            _startupCompleted.TrySetCanceled();
         }
         catch (Exception exception)
         {
             _startupCompleted.TrySetException(exception);
-            throw;
+            if (!_renderSmokeMode)
+            {
+                throw;
+            }
         }
+    }
+
+    private async Task InitializeWorkspaceAsync()
+    {
+        if (!_renderSmokeMode && _preferences.RestoreLastWorkspace)
+        {
+            RestoreWorkspace(_preferences.LastWorkspace);
+        }
+
+        if (_telemetryCancellation is null)
+        {
+            _telemetryCancellation = new CancellationTokenSource();
+            _telemetryLoopTask = RunTelemetryLoopAsync(_telemetryCancellation.Token);
+        }
+
+        Task audioRefresh = RefreshAudioAsync();
+        Task applicationRefresh = RefreshApplicationsAsync();
+
+        _importMonitor = new ImportFolderMonitor(
+            _runtime.ImportsPath,
+            _runtime.Assessor,
+            HandleImportAssessmentAsync);
+        _protectionMonitor = new ProtectionMonitor(
+            _runtime.Defender,
+            new WindowsSecurityChangeMonitor());
+        _protectionMonitor.Updated += OnProtectionMonitorUpdated;
+        await Task.WhenAll(
+            RefreshAllAsync(),
+            RefreshUpdateJournalAsync(),
+            audioRefresh,
+            applicationRefresh);
+        if (_shutdownStarted)
+        {
+            _startupCompleted.TrySetCanceled();
+            return;
+        }
+
+        _protectionMonitor.Start();
+        AddActivity("Soltex import guard is active.", "Security");
+        if (_runtime.DataRootKind == ProductDataRootKind.LegacyCompatibility)
+        {
+            AddActivity(
+                "Soltex is using the existing compatible data location; no files were moved.",
+                "Security");
+        }
+
+        AddActivity(
+            _protectionMonitor.ChangeNotificationsAvailable
+                ? "Windows Security change notifications are active."
+                : "Windows Security notifications are unavailable; bounded polling remains active.",
+            "Security");
+        _startupCompleted.TrySetResult(true);
     }
 
     private async void Window_Closed(object? sender, EventArgs e)
     {
+        _shutdownStarted = true;
         if (!_renderSmokeMode)
         {
             SavePreferencesForClose();
@@ -188,16 +215,20 @@ public partial class MainWindow : Window
 
         _operationCancellation?.Cancel();
         _telemetryCancellation?.Cancel();
-        if (_telemetryLoopTask is not null)
+        bool ownedWorkDrained = await OwnedTaskDrain.WaitAsync(
+            TimeSpan.FromSeconds(20),
+            _activeOperationDrained,
+            _startupTask,
+            _telemetryLoopTask);
+        if (!ownedWorkDrained)
         {
-            try
-            {
-                await _telemetryLoopTask;
-            }
-            catch (OperationCanceledException)
-            {
-                // Normal bounded shutdown.
-            }
+            // Do not dispose state that an in-flight task may still reference.
+            // The owning App will treat an evidence-mode cleanup timeout as a
+            // failed run; normal application shutdown is already in progress.
+            ShutdownCompleted?.Invoke(
+                this,
+                new ShutdownCompletedEventArgs(resourcesDisposed: false));
+            return;
         }
 
         if (_importMonitor is not null)
@@ -211,11 +242,12 @@ public partial class MainWindow : Window
             await _protectionMonitor.DisposeAsync();
         }
 
-        _operationCancellation?.Dispose();
         _telemetryCancellation?.Dispose();
         _updateJournal.Dispose();
         _runtime.Dispose();
-        ShutdownCompleted?.Invoke(this, EventArgs.Empty);
+        ShutdownCompleted?.Invoke(
+            this,
+            new ShutdownCompletedEventArgs(resourcesDisposed: true));
     }
 
     private async Task RunTelemetryLoopAsync(CancellationToken cancellationToken)
@@ -594,33 +626,52 @@ public partial class MainWindow : Window
 
     private async Task RunBusyAsync(Func<CancellationToken, Task> action)
     {
-        if (_operationCancellation is not null)
+        if (_operationCancellation is not null || _shutdownStarted)
         {
             return;
         }
 
-        _operationCancellation = new CancellationTokenSource();
+        CancellationTokenSource cancellation = new();
+        TaskCompletionSource<bool> drained = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        _operationCancellation = cancellation;
+        _activeOperationDrained = drained.Task;
         SetBusy(true);
         try
         {
-            await action(_operationCancellation.Token);
+            await action(cancellation.Token);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            AddActivity(
-                "Operation cancelled. A Defender scan already accepted by Windows may continue in the background.",
-                "Security");
+            if (!_shutdownStarted)
+            {
+                AddActivity(
+                    "Operation cancelled. A Defender scan already accepted by Windows may continue in the background.",
+                    "Security");
+            }
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException or InvalidOperationException)
         {
-            AddActivity("Operation failed: " + exception.Message, "Security");
-            MessageBox.Show(this, exception.Message, "Soltex Security", MessageBoxButton.OK, MessageBoxImage.Warning);
+            if (!_shutdownStarted)
+            {
+                AddActivity("Operation failed: " + exception.Message, "Security");
+                MessageBox.Show(this, exception.Message, "Soltex Security", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
         finally
         {
-            _operationCancellation.Dispose();
-            _operationCancellation = null;
-            SetBusy(false);
+            if (ReferenceEquals(_operationCancellation, cancellation))
+            {
+                _operationCancellation = null;
+            }
+
+            cancellation.Dispose();
+            if (!_shutdownStarted)
+            {
+                SetBusy(false);
+            }
+
+            drained.TrySetResult(true);
         }
     }
 

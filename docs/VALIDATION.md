@@ -47,6 +47,22 @@ The current uncommitted candidate was exercised on the owner-controlled Windows 
 
 This is developmental evidence because the report identities name the last clean commit while the measured service/runtime source was still dirty. It is retained to diagnose lifecycle behavior, not to establish exact-source acceptance. The final exact-source gate must rerun after the implementation commit. Short samples are regression evidence, not hardware benchmark scores or cross-machine guarantees. See [`RUNTIME_AND_SERVICES.md`](RUNTIME_AND_SERVICES.md).
 
+### Disposed-object shutdown regression
+
+The owner-host report `Cannot access a disposed object. Object name: 'Soltex.Security.QuarantineStore'.` identified a real startup/close ownership race in the dirty candidate. The correction tracks startup and active-operation lifetime, cancels accepted shutdown work, drains owned tasks before disposing security resources, keeps close-to-notification-area outside shutdown, and makes controlled render/probe modes wait for cleanup before explicit WPF shutdown.
+
+Diagnostic post-fix evidence on the dirty source:
+
+| Gate | Result |
+|---|---:|
+| Release solution build | Passed, 0 warnings / 0 errors |
+| `Soltex.App.Tests` | 26/26 |
+| private-host Overview render | Exit `0`; 107,788-byte PNG; no error sidecar |
+| private-host Security render | Exit `0`; 134,186-byte PNG; no error sidecar |
+| private-host Settings render | Exit `0`; 121,020-byte PNG; no error sidecar |
+
+The three renders were directly inspected and contained initialized workspace state with no exception dialog. Their task-owned evidence is retained outside the repository under `C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\disposed-race-fix-20260812-0035\private-host-render-final-dirty`. Exact-commit verification, runtime probe, full native matrix, and package smoke remain required after commit.
+
 ## Activity candidate owner-host gate
 
 The Activity source candidate was exercised on the owner-controlled Windows host before publication. The gate used the repository-pinned .NET 10 contract through a verified portable .NET SDK 10.0.302 and did not disable, exclude, or reconfigure Windows security.

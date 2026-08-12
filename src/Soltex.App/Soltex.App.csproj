@@ -4,16 +4,11 @@
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <UseWPF>true</UseWPF>
-    <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>Soltex.App</RootNamespace>
     <AssemblyName>Soltex</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Soltex.ico</ApplicationIcon>
   </PropertyGroup>
-  <ItemGroup>
-    <Using Remove="System.Drawing" />
-    <Using Remove="System.Windows.Forms" />
-  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Soltex.RemoteAssist\Soltex.RemoteAssist.csproj" />
     <ProjectReference Include="..\Soltex.Security\Soltex.Security.csproj" />

@@ -27,6 +27,7 @@ public partial class MainWindow
         base.OnClosing(e);
         if (!e.Cancel)
         {
+            _shutdownStarted = true;
             _telemetryLifecycleClosing = true;
             QueueTelemetryReconcile();
         }

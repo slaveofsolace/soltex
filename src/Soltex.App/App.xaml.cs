@@ -43,6 +43,7 @@ public partial class App : Application
         base.OnStartup(e);
         MainWindow window = new();
         MainWindow = window;
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         if (RuntimeLaunchPolicy.IsRuntimeProbe(e.Args))
         {
@@ -91,7 +92,6 @@ public partial class App : Application
 
     private void StartNormalRuntime(MainWindow window)
     {
-        ShutdownMode = ShutdownMode.OnExplicitShutdown;
         _ownedMainWindow = window;
         window.Closing += MainWindow_Closing;
         window.CloseBehaviorChanged += MainWindow_CloseBehaviorChanged;
@@ -99,9 +99,11 @@ public partial class App : Application
 
         try
         {
-            _notificationArea = new NotificationAreaController();
+            nint windowHandle = new WindowInteropHelper(window).EnsureHandle();
+            _notificationArea = new NotificationAreaController(windowHandle);
             _notificationArea.OpenRequested += NotificationArea_OpenRequested;
             _notificationArea.ExitRequested += NotificationArea_ExitRequested;
+            _notificationArea.AvailabilityChanged += NotificationArea_AvailabilityChanged;
         }
         catch (Exception exception) when (exception is ExternalException or
                                            InvalidOperationException or
@@ -148,11 +150,28 @@ public partial class App : Application
     private void MainWindow_CloseBehaviorChanged(object? sender, EventArgs e) =>
         SyncNotificationAreaVisibility();
 
-    private void MainWindow_ShutdownCompleted(object? sender, EventArgs e)
+    private void NotificationArea_AvailabilityChanged(object? sender, EventArgs e)
+    {
+        if (_ownedMainWindow is null || _notificationArea?.IsAvailable == true)
+        {
+            return;
+        }
+
+        _ownedMainWindow.SetNotificationAreaAvailability(available: false);
+        if (!_ownedMainWindow.IsVisible)
+        {
+            _ownedMainWindow.Show();
+            _ownedMainWindow.Activate();
+        }
+    }
+
+    private void MainWindow_ShutdownCompleted(
+        object? sender,
+        ShutdownCompletedEventArgs e)
     {
         _notificationArea?.Dispose();
         _notificationArea = null;
-        Shutdown(Environment.ExitCode);
+        Shutdown(e.ResourcesDisposed ? Environment.ExitCode : 1);
     }
 
     private void NotificationArea_OpenRequested(object? sender, EventArgs e)
@@ -202,6 +221,7 @@ public partial class App : Application
                 : CloseBehavior.Exit,
             _notificationArea.IsAvailable);
         _notificationArea.SetVisible(visible);
+        _ownedMainWindow.SetNotificationAreaAvailability(_notificationArea.IsAvailable);
     }
 
     private void RenderSmokeSnapshot(MainWindow window, string outputPath)
@@ -219,18 +239,24 @@ public partial class App : Application
         RenderSmokeCapture.ConfigureWindow(window);
         window.Left = -32_000;
         window.Top = -32_000;
+        TaskCompletionSource<bool> shutdownCompleted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        window.ShutdownCompleted += (_, args) =>
+            shutdownCompleted.TrySetResult(args.ResourcesDisposed);
         window.Show();
 
         DispatcherTimer timer = new(DispatcherPriority.ContextIdle, Dispatcher)
         {
             Interval = TimeSpan.FromSeconds(3)
         };
-        timer.Tick += (_, _) =>
+        timer.Tick += async (_, _) =>
         {
             timer.Stop();
             int exitCode = 0;
             try
             {
+                await window.StartupCompleted.WaitAsync(TimeSpan.FromSeconds(20));
+                await Task.Delay(TimeSpan.FromMilliseconds(250));
                 window.InvalidateMeasure();
                 window.InvalidateArrange();
                 window.InvalidateVisual();
@@ -243,15 +269,44 @@ public partial class App : Application
                 using FileStream stream = new(fullOutputPath, FileMode.Create, FileAccess.Write, FileShare.None);
                 encoder.Save(stream);
             }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException)
+            catch (Exception exception)
             {
                 exitCode = 1;
-                File.WriteAllText(fullOutputPath + ".error.txt", exception.ToString());
+                try
+                {
+                    File.WriteAllText(fullOutputPath + ".error.txt", exception.ToString());
+                }
+                catch (Exception writeException) when (writeException is IOException or UnauthorizedAccessException)
+                {
+                    // The nonzero process exit still fails the evidence run.
+                }
             }
             finally
             {
                 Environment.ExitCode = exitCode;
                 window.Close();
+                bool cleanupSignaled = await OwnedTaskDrain.WaitAsync(
+                    TimeSpan.FromSeconds(25),
+                    shutdownCompleted.Task);
+                bool resourcesDisposed = ShutdownCompletionPolicy.ResourcesWereDisposed(
+                    cleanupSignaled,
+                    shutdownCompleted.Task);
+                if (!resourcesDisposed)
+                {
+                    exitCode = 1;
+                    Environment.ExitCode = exitCode;
+                    try
+                    {
+                        File.WriteAllText(
+                            fullOutputPath + ".error.txt",
+                            "Soltex render cleanup did not dispose all owned resources within the shutdown bound.");
+                    }
+                    catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+                    {
+                        // The nonzero process exit still fails the evidence run.
+                    }
+                }
+
                 Shutdown(exitCode);
             }
         };
@@ -266,9 +321,10 @@ public partial class App : Application
     {
         int exitCode = 0;
         string? fullOutputPath = null;
-        TaskCompletionSource shutdownCompleted = new(
+        TaskCompletionSource<bool> shutdownCompleted = new(
             TaskCreationOptions.RunContinuationsAsynchronously);
-        window.ShutdownCompleted += (_, _) => shutdownCompleted.TrySetResult();
+        window.ShutdownCompleted += (_, args) =>
+            shutdownCompleted.TrySetResult(args.ResourcesDisposed);
         string? progressPath = null;
         try
         {
@@ -342,7 +398,31 @@ public partial class App : Application
         {
             Environment.ExitCode = exitCode;
             window.Close();
-            await Task.WhenAny(shutdownCompleted.Task, Task.Delay(TimeSpan.FromSeconds(5)));
+            bool cleanupSignaled = await OwnedTaskDrain.WaitAsync(
+                TimeSpan.FromSeconds(25),
+                shutdownCompleted.Task);
+            bool resourcesDisposed = ShutdownCompletionPolicy.ResourcesWereDisposed(
+                cleanupSignaled,
+                shutdownCompleted.Task);
+            if (!resourcesDisposed)
+            {
+                exitCode = 1;
+                Environment.ExitCode = exitCode;
+                if (!string.IsNullOrWhiteSpace(fullOutputPath))
+                {
+                    try
+                    {
+                        File.WriteAllText(
+                            fullOutputPath + ".error.txt",
+                            "Soltex runtime-probe cleanup did not dispose all owned resources within the shutdown bound.");
+                    }
+                    catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+                    {
+                        // The nonzero process exit still fails the evidence run.
+                    }
+                }
+            }
+
             Shutdown(exitCode);
         }
     }
