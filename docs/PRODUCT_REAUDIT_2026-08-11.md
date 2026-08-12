@@ -85,13 +85,17 @@ The exact `04da86e6e38f6a1de99b5de8edd2427792f4bf36` Windows and package workflo
 
 ### Stage 1C — local preferences and Settings
 
-Implemented, verification pending on the current draft head: a Settings workspace owns telemetry cadence, last-workspace restore, and the default Performance-detail state. Preferences are bounded non-secret JSON under the existing per-user product data root, use atomic replacement, recover to explicit defaults after invalid or oversized input, and do not install a service or enable analytics.
+Accepted on the draft branch at `5c4a16de85b0b63bff4779769193a1e94411c77c`: Settings owns telemetry cadence, last-workspace restore, and the default Performance-detail state. Preferences are bounded non-secret JSON under the existing per-user product data root, use atomic replacement, recover to explicit defaults after invalid or oversized input, and do not install a service or enable analytics. The exact Windows/package gates passed and the native Settings capture was inspected.
+
+### Stage 1D — privacy-bounded Activity
+
+Implemented and owner-host verified on source head `2337cb09a146dac50c4adf0a9c04ef81526ae99c`: one searchable timeline stores at most 120 sanitized meaningful events, defaults to session-only memory, and adds explicit 7-day/30-day retention. Shortening retention and clearing history require main-window confirmation. Invalid, oversized, expired, future, and overflow state recovers explicitly; writes are atomic and storage/deletion failures remain visible. The Release build, focused suites, and 14-state native matrix passed locally, and the Activity/Settings pixels were inspected. Exact-head hosted/package acceptance remains open.
 
 ### Stage 1 — Windows control plane
 
 Required before calling Soltex a real system manager:
 
-- finish exact-head evidence for the central Settings workspace and durable per-user state;
+- finish exact-head hosted/package evidence for the privacy-bounded Activity workspace;
 - extend the accepted installed-application/startup inventory only through documented, path-minimizing sources;
 - retain the accepted safe process action with protected-process rejection, exact confirmation, and recovery reporting;
 - add service, driver, and startup health observation without generic cleanup claims;
