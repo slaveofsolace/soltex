@@ -258,6 +258,18 @@ internal static class Program
     {
         ApplicationsView view = new();
         view.UpdateSnapshot(snapshot);
+        True(view.InventorySummaryText.Text.Contains("installed", StringComparison.Ordinal),
+            "Applications view omitted the compact inventory summary.");
+        True(ReferenceEquals(view.InventorySearchBox.Style, Application.Current.FindResource("FieldStyle")),
+            "Applications search must use the shared field style.");
+        True(view.SearchHintText.Visibility == Visibility.Visible,
+            "Applications search hint must be visible when the field is empty.");
+        view.InventorySearchBox.Text = "__soltex_no_inventory_match__";
+        True(view.SearchHintText.Visibility == Visibility.Collapsed,
+            "Applications search hint did not clear after input.");
+        True(view.InventoryEmptyText.Visibility == Visibility.Visible,
+            "Applications empty state did not appear for a query with no matches.");
+        view.InventorySearchBox.Clear();
         byte[] pixels = Render(view, 980, 720);
         True(CountVisiblePixels(pixels) > 5_000,
             "The Applications view render was unexpectedly empty.");

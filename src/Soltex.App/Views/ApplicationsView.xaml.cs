@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -23,6 +24,7 @@ public partial class ApplicationsView : UserControl
         InventoryStateDot.Fill = (Brush)FindResource("WarningBrush");
         InventoryStateText.Foreground = (Brush)FindResource("WarningBrush");
         InventoryStateText.Text = "READING";
+        InventorySummaryText.Text = "Reading installed software and sign-in entries…";
         InventoryProvenanceText.Text = "Reading supported Windows application sources…";
     }
 
@@ -30,26 +32,26 @@ public partial class ApplicationsView : UserControl
     {
         _snapshot = snapshot;
         RefreshInventoryButton.IsEnabled = true;
-        InstalledCountText.Text = snapshot.Installed.Count.ToString(System.Globalization.CultureInfo.CurrentCulture);
-        PublisherCountText.Text = snapshot.Installed
+        int publisherCount = snapshot.Installed
             .Select(item => item.Publisher)
             .Where(publisher => !string.Equals(
                 publisher,
                 "Unknown publisher",
                 StringComparison.OrdinalIgnoreCase))
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Count()
-            .ToString(System.Globalization.CultureInfo.CurrentCulture);
-        StartupCountText.Text = snapshot.Startup.Count.ToString(System.Globalization.CultureInfo.CurrentCulture);
+            .Count();
+        InventorySummaryText.Text = string.Format(
+            CultureInfo.CurrentCulture,
+            "{0:N0} installed · {1:N0} publishers · {2:N0} sign-in entries",
+            snapshot.Installed.Count,
+            publisherCount,
+            snapshot.Startup.Count);
 
         bool complete = snapshot.InaccessibleSourceCount == 0;
         Brush stateBrush = (Brush)FindResource(complete ? "SignalBrush" : "WarningBrush");
         InventoryStateDot.Fill = stateBrush;
         InventoryStateText.Foreground = stateBrush;
         InventoryStateText.Text = complete ? "CURRENT" : "PARTIAL";
-        InventoryCoverageText.Text = complete
-            ? "READ ONLY"
-            : $"{snapshot.InaccessibleSourceCount} SOURCE ISSUE{(snapshot.InaccessibleSourceCount == 1 ? string.Empty : "S")}";
         InventoryProvenanceText.Text =
             $"Updated {snapshot.CapturedAtUtc.ToLocalTime():t} · {snapshot.CaptureDuration.TotalMilliseconds:F0} ms · {snapshot.Provenance}";
         ApplyFilter();
@@ -60,9 +62,7 @@ public partial class ApplicationsView : UserControl
         _snapshot = null;
         InstalledGrid.ItemsSource = Array.Empty<InstalledRow>();
         StartupGrid.ItemsSource = Array.Empty<StartupRow>();
-        InstalledCountText.Text = "—";
-        PublisherCountText.Text = "—";
-        StartupCountText.Text = "—";
+        InventorySummaryText.Text = "Application inventory is unavailable.";
         RefreshInventoryButton.IsEnabled = true;
         InventoryStateDot.Fill = (Brush)FindResource("DangerBrush");
         InventoryStateText.Foreground = (Brush)FindResource("DangerBrush");
@@ -70,6 +70,7 @@ public partial class ApplicationsView : UserControl
         InventoryCoverageText.Text = "READ FAILED";
         InventoryProvenanceText.Text =
             "Windows did not expose a bounded application inventory. No values were synthesized.";
+        InventoryEmptyText.Text = "Application inventory could not be read.";
         InventoryEmptyText.Visibility = Visibility.Visible;
     }
 
@@ -94,12 +95,16 @@ public partial class ApplicationsView : UserControl
         InstalledTabButton.Foreground = (Brush)FindResource(showStartup ? "MutedBrush" : "AccentBrush");
         StartupTabButton.Background = (Brush)FindResource(showStartup ? "SelectedNavBrush" : "NavRestBrush");
         StartupTabButton.Foreground = (Brush)FindResource(showStartup ? "AccentBrush" : "MutedBrush");
+        InventoryEmptyText.Text = showStartup
+            ? "No startup entries match your search."
+            : "No installed applications match your search.";
         ApplyFilter();
     }
 
     private void ApplyFilter()
     {
         string query = InventorySearchBox.Text.Trim();
+        SearchHintText.Visibility = query.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         if (_snapshot is null)
         {
             InventoryEmptyText.Visibility = Visibility.Visible;
@@ -110,20 +115,27 @@ public partial class ApplicationsView : UserControl
             .Where(item =>
                 query.Length == 0 ||
                 item.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                item.Publisher.Contains(query, StringComparison.OrdinalIgnoreCase))
+                item.Publisher.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.Version.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.Scope.Contains(query, StringComparison.OrdinalIgnoreCase))
             .Select(item => new InstalledRow(item))
             .ToArray();
         StartupRow[] startup = _snapshot.Startup
             .Where(item =>
                 query.Length == 0 ||
                 item.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                item.Source.Contains(query, StringComparison.OrdinalIgnoreCase))
+                item.Scope.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.Source.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.Mode.Contains(query, StringComparison.OrdinalIgnoreCase))
             .Select(item => new StartupRow(item))
             .ToArray();
         InstalledGrid.ItemsSource = installed;
         StartupGrid.ItemsSource = startup;
         int visibleCount = _showStartup ? startup.Length : installed.Length;
         InventoryEmptyText.Visibility = visibleCount == 0 ? Visibility.Visible : Visibility.Collapsed;
+        InventoryCoverageText.Text = _snapshot.InaccessibleSourceCount == 0
+            ? $"READ ONLY · {visibleCount:N0} SHOWN"
+            : $"PARTIAL · READ ONLY · {visibleCount:N0} SHOWN";
     }
 
     private sealed class InstalledRow(InstalledApplicationObservation item)
