@@ -89,7 +89,7 @@ Accepted on the draft branch at `5c4a16de85b0b63bff4779769193a1e94411c77c`: Sett
 
 ### Stage 1D — privacy-bounded Activity
 
-Implemented and owner-host verified on source head `2337cb09a146dac50c4adf0a9c04ef81526ae99c`: one searchable timeline stores at most 120 sanitized meaningful events, defaults to session-only memory, and adds explicit 7-day/30-day retention. Shortening retention and clearing history require main-window confirmation. Invalid, oversized, expired, future, and overflow state recovers explicitly; writes are atomic and storage/deletion failures remain visible. The Release build, focused suites, and 14-state native matrix passed locally, and the Activity/Settings pixels were inspected. Exact-head hosted/package acceptance remains open.
+Implemented and owner-host verified on source head `0edb327a46aa05a5cc5e804d30ac56cd797e210a`: one searchable timeline stores at most 120 sanitized meaningful events, defaults to session-only memory, and adds explicit 7-day/30-day retention. Shortening retention and clearing history require main-window confirmation. Invalid, oversized, expired, future, and overflow state recovers explicitly; writes are atomic and storage/deletion failures remain visible. The Release build, focused suites, and 14-state native matrix passed locally, and the Activity/Settings pixels were inspected. Exact-head hosted/package acceptance remains open.
 
 ### Stage 1 — Windows control plane
 

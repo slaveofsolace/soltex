@@ -8,7 +8,7 @@ Snapshot: 2026-08-11 (America/Chicago)
 repository: slaveofsolace/soltex
 pull request: #11 (draft)
 branch: sol/soltex-product-rebuild
-validated Activity source head: 2337cb09a146dac50c4adf0a9c04ef81526ae99c
+validated Activity source head: 0edb327a46aa05a5cc5e804d30ac56cd797e210a
 isolated worktree: C:\Users\suhai\Documents\soltex-product-rebuild
 protected owner checkout: C:\Users\suhai\Documents\SOL Tools
 protected owner branch/head: main / bf2662de80992cfed761625642f084d3caaa0f04
@@ -47,7 +47,7 @@ Soltex.App.Tests: 19/19
 targeted post-polish app build: 0 warnings / 0 errors
 targeted post-polish app tests: 19/19
 exact-head native matrix: 14/14 at 1280x820
-render manifest source/tested SHA: 2337cb09a146dac50c4adf0a9c04ef81526ae99c
+render manifest source/tested SHA: regeneration pending after unpublished commit-identity repair
 ```
 
 Durable local evidence:
@@ -57,7 +57,7 @@ final full verification transcript:
 C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\activity-final-source-verify-20260811-221629.transcript.log
 
 exact-head native packet:
-C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\activity-native-2337cb0-20260811-222304
+regeneration pending after unpublished commit-identity repair
 ```
 
 The exact Activity and Settings captures were directly inspected. They show no gross clipping, broken assets, stock gradient/glass/card-grid treatment, or P0 generic-AI design tell. This is agent inspection at one software-rendered native viewport, not owner visual acceptance, accessibility conformance, DPI/scaling proof, or packaging evidence.
