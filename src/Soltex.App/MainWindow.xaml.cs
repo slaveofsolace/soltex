@@ -81,7 +81,9 @@ public partial class MainWindow : Window
             {
                 RestoreLastWorkspace = false,
                 ActivityRetention = ActivityRetention.SessionOnly,
-                CloseBehavior = CloseBehavior.Exit
+                CloseBehavior = CloseBehavior.Exit,
+                PreferredPlaybackEndpointKey = string.Empty,
+                PreferredRecordingEndpointKey = string.Empty
             };
         }
         Volatile.Write(
@@ -91,6 +93,9 @@ public partial class MainWindow : Window
             _preferences,
             preferencesLoad.RecoveredFromInvalid,
             preferencesLoad.Detail);
+        MixerPanel.UpdateEndpointPreferences(
+            _preferences.PreferredPlaybackEndpointKey,
+            _preferences.PreferredRecordingEndpointKey);
         NotificationAreaAvailable = OperatingSystem.IsWindows();
         SettingsPanel.UpdateNotificationAreaAvailability(NotificationAreaAvailable);
         _activityStore = new LocalActivityStore(
@@ -118,6 +123,9 @@ public partial class MainWindow : Window
         ApplicationsPanel.RefreshRequested += ApplicationsPanel_RefreshRequested;
         MixerPanel.RefreshRequested += MixerPanel_RefreshRequested;
         MixerPanel.SessionChangeRequested += MixerPanel_SessionChangeRequested;
+        MixerPanel.EndpointPreferenceRequested += MixerPanel_EndpointPreferenceRequested;
+        MixerPanel.ClearEndpointPreferencesRequested += MixerPanel_ClearEndpointPreferencesRequested;
+        MixerPanel.OpenSoundSettingsRequested += MixerPanel_OpenSoundSettingsRequested;
         SettingsPanel.PreferencesChanged += SettingsPanel_PreferencesChanged;
         ActivityPanel.ClearRequested += ActivityPanel_ClearRequested;
     }
@@ -469,6 +477,93 @@ public partial class MainWindow : Window
 
         await RefreshAudioAsync();
         MixerPanel.ShowSessionMutationResult(result);
+        AddActivity(result.Message, "Audio");
+    }
+
+    private void MixerPanel_EndpointPreferenceRequested(
+        object? sender,
+        AudioEndpointPreferenceRequestedEventArgs e)
+    {
+        AudioEndpoint endpoint = e.Endpoint;
+        string preferenceKey =
+            SoltexPreferences.NormalizeEndpointPreferenceKey(endpoint.PreferenceKey);
+        if (endpoint.State != AudioEndpointState.Active ||
+            !Enum.IsDefined(endpoint.Direction) ||
+            preferenceKey.Length == 0 ||
+            !string.Equals(preferenceKey, endpoint.PreferenceKey, StringComparison.Ordinal))
+        {
+            MixerPanel.ShowEndpointPreferenceResult(
+                saved: false,
+                "Only a current, active audio endpoint can be remembered. No Windows audio setting was changed.");
+            return;
+        }
+
+        SoltexPreferences requested = endpoint.Direction == AudioEndpointDirection.Render
+            ? _preferences with
+            {
+                PreferredPlaybackEndpointKey = preferenceKey,
+                LastWorkspace = _activeWorkspace
+            }
+            : _preferences with
+            {
+                PreferredRecordingEndpointKey = preferenceKey,
+                LastWorkspace = _activeWorkspace
+            };
+        string direction = endpoint.Direction == AudioEndpointDirection.Render
+            ? "playback"
+            : "recording";
+        SaveAudioEndpointPreferences(
+            requested,
+            $"{endpoint.Name} is remembered as the {direction} fallback reminder.",
+            $"Remembered {endpoint.Name} as the {direction} fallback reminder.");
+    }
+
+    private void MixerPanel_ClearEndpointPreferencesRequested(object? sender, EventArgs e) =>
+        SaveAudioEndpointPreferences(
+            _preferences with
+            {
+                PreferredPlaybackEndpointKey = string.Empty,
+                PreferredRecordingEndpointKey = string.Empty,
+                LastWorkspace = _activeWorkspace
+            },
+            "Audio fallback reminders were cleared from this Windows account.",
+            "Cleared the saved audio fallback reminders.");
+
+    private void SaveAudioEndpointPreferences(
+        SoltexPreferences requested,
+        string successDetail,
+        string activityDetail)
+    {
+        SoltexPreferences normalized = requested.Normalize();
+        try
+        {
+            _preferencesStore.Save(normalized);
+            _preferences = normalized;
+            MixerPanel.UpdateEndpointPreferences(
+                _preferences.PreferredPlaybackEndpointKey,
+                _preferences.PreferredRecordingEndpointKey);
+            MixerPanel.ShowEndpointPreferenceResult(saved: true, detail: successDetail);
+            SettingsPanel.UpdatePreferences(
+                _preferences,
+                recoveredFromInvalid: false,
+                "Audio fallback preferences are saved on this Windows account.");
+            AddActivity(activityDetail, "Audio");
+        }
+        catch (Exception exception) when (IsExpectedPreferenceWriteFailure(exception))
+        {
+            MixerPanel.UpdateEndpointPreferences(
+                _preferences.PreferredPlaybackEndpointKey,
+                _preferences.PreferredRecordingEndpointKey);
+            MixerPanel.ShowEndpointPreferenceResult(
+                saved: false,
+                "The fallback reminder could not be saved. No Windows audio setting was changed.");
+        }
+    }
+
+    private void MixerPanel_OpenSoundSettingsRequested(object? sender, EventArgs e)
+    {
+        WindowsSoundSettingsLaunchResult result = WindowsSoundSettingsLauncher.Open();
+        MixerPanel.ShowSoundSettingsResult(result);
         AddActivity(result.Message, "Audio");
     }
 
@@ -1450,6 +1545,15 @@ public partial class MainWindow : Window
             string.Equals(normalized, "updates", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(UpdatePanel, UpdateNavButton);
+            return true;
+        }
+
+        if (string.Equals(normalized, "mixer-devices", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(MixerPanel, MixerNavButton);
+            MixerPanel.DeviceDetailsButton.RaiseEvent(
+                new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+            _renderSmokeFocusTarget = MixerPanel.EndpointPreferenceDetailText;
             return true;
         }
 

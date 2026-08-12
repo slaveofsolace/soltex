@@ -39,8 +39,10 @@ reboot-safe: YES
 - Published Windows run `31568771869` and package run `31568771855` passed at source head `6e54fb509ba332191107aa64733db0880e3cac78`; tested merge `ebd163553b3229099c371cd79b8967ace2b1ab55` is exactly one commit ahead with the source as merge base.
 - Downloaded artifacts `9130547242` and `9130511337` matched GitHub digests exactly; all 15 retained PNG identities and dimensions revalidated; Services, Security, Settings, and packaged Home were directly inspected without an exception dialog.
 - Hosted package launch exited 0 and matched SHA-256 `236959aae3abe37a35130b68515c1472730118a6e6c8f60c9315f1ca0107e8b9`; package remains unsigned. Optional hosted EICAR/AMSI remained 31/32 with provider result `1`, so no efficacy claim is made.
+- Docs-only reconciliation head `5e03e60179c4d5d08f246903808edbe9aabd663d` passed Windows run `31569439185` and package run `31569439187`.
+- Current task-owned candidate adds direction-scoped endpoint fingerprints, schema-3 fallback reminders, a fixed `ms-settings:sound` handoff, and a separate `mixer-devices` evidence state. Working-tree build, Audio 21/21, App/control 28/28, and direct expanded-Mixer pixels are green; exact-source and hosted acceptance remain pending.
 - No task-owned runtime remained after package-render PID 44620 exited successfully.
 
 ## Exact resume step
 
-Commit and push this hosted-acceptance ledger without force, confirm the docs-only head workflows remain green, then begin supported default/fallback audio endpoint selection as a bounded read-mostly slice separate from routing or DSP. Preserve the protected owner checkout and all product nonclaims.
+Freeze the Audio default/fallback candidate as one source commit, run the exact full verifier plus 16-state native/package gates, inspect retained Mixer pixels, then publish by fast-forward and reconcile exact hosted artifacts. Preserve the protected owner checkout, Windows-owned default selection, and all routing/DSP/product nonclaims.

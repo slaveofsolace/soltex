@@ -30,6 +30,12 @@ internal sealed class AudioSessionChangeRequestedEventArgs : EventArgs
     internal bool? RequestedMute { get; }
 }
 
+internal sealed class AudioEndpointPreferenceRequestedEventArgs(
+    AudioEndpoint endpoint) : EventArgs
+{
+    internal AudioEndpoint Endpoint { get; } = endpoint;
+}
+
 public partial class MixerView : UserControl
 {
     private const int PrimaryEndpointLimit = 6;
@@ -41,6 +47,10 @@ public partial class MixerView : UserControl
     private bool _deviceDetailsVisible;
     private bool _moreSessionsVisible;
     private bool _sessionControlsBusy;
+    private AudioEndpointSnapshot? _lastEndpointSnapshot;
+    private AudioObservationState? _lastSessionState;
+    private string _preferredPlaybackEndpointKey = string.Empty;
+    private string _preferredRecordingEndpointKey = string.Empty;
 
     public MixerView()
     {
@@ -51,10 +61,31 @@ public partial class MixerView : UserControl
 
     internal event EventHandler<AudioSessionChangeRequestedEventArgs>? SessionChangeRequested;
 
+    internal event EventHandler<AudioEndpointPreferenceRequestedEventArgs>? EndpointPreferenceRequested;
+
+    internal event EventHandler? ClearEndpointPreferencesRequested;
+
+    internal event EventHandler? OpenSoundSettingsRequested;
+
+    internal void UpdateEndpointPreferences(string playbackKey, string recordingKey)
+    {
+        _preferredPlaybackEndpointKey = SoltexPreferences.NormalizeEndpointPreferenceKey(playbackKey);
+        _preferredRecordingEndpointKey = SoltexPreferences.NormalizeEndpointPreferenceKey(recordingKey);
+        if (_lastEndpointSnapshot is not null)
+        {
+            UpdateSnapshot(_lastEndpointSnapshot);
+        }
+        else
+        {
+            UpdatePreferenceStatus(null);
+        }
+    }
+
     public void UpdateSnapshot(
         AudioEndpointSnapshot endpointSnapshot,
         AudioSessionSnapshot sessionSnapshot)
     {
+        _lastSessionState = sessionSnapshot.State;
         UpdateSnapshot(endpointSnapshot);
         UpdateSessions(sessionSnapshot);
         RenderState(MergeState(endpointSnapshot.State, sessionSnapshot.State));
@@ -68,6 +99,7 @@ public partial class MixerView : UserControl
 
     public void UpdateSnapshot(AudioEndpointSnapshot snapshot)
     {
+        _lastEndpointSnapshot = snapshot;
         RenderState(snapshot.State);
 
         EndpointPalette palette = new(
@@ -77,8 +109,14 @@ public partial class MixerView : UserControl
             Text: (Brush)FindResource("TextBrush"),
             Track: (Brush)FindResource("TrackBrush"));
 
-        EndpointRow[] playback = BuildRows(snapshot.Render, palette);
-        EndpointRow[] recording = BuildRows(snapshot.Capture, palette);
+        EndpointRow[] playback = BuildRows(
+            snapshot.Render,
+            palette,
+            _preferredPlaybackEndpointKey);
+        EndpointRow[] recording = BuildRows(
+            snapshot.Capture,
+            palette,
+            _preferredRecordingEndpointKey);
         EndpointRow[] activePlayback = playback.Where(row => row.IsActive).ToArray();
         EndpointRow[] activeRecording = recording.Where(row => row.IsActive).ToArray();
         EndpointRow[] primaryPlayback = activePlayback.Take(PrimaryEndpointLimit).ToArray();
@@ -113,16 +151,22 @@ public partial class MixerView : UserControl
         DefaultPlaybackText.Text = DescribeDefault(snapshot.Render);
         DefaultRecordingText.Text = DescribeDefault(snapshot.Capture);
         StateBreakdownText.Text = DescribeStates(snapshot.Endpoints);
+        UpdatePreferenceStatus(snapshot);
 
         MixerProvenanceText.Text =
             $"{snapshot.Provenance} · captured {snapshot.CapturedAtUtc.ToLocalTime():T} · " +
             $"provider {snapshot.CaptureDuration.TotalMilliseconds:F0} ms · " +
             $"{snapshot.InaccessibleEndpointCount} inaccessible · " +
             string.Join(" · ", snapshot.Limitations);
+        if (_lastSessionState is AudioObservationState sessionState)
+        {
+            RenderState(MergeState(snapshot.State, sessionState));
+        }
     }
 
     public void ShowUnavailable()
     {
+        _lastSessionState = AudioObservationState.Unavailable;
         Brush danger = (Brush)FindResource("DangerBrush");
         SetStatePill(danger, "UNAVAILABLE");
         PlaybackItems.ItemsSource = Array.Empty<EndpointRow>();
@@ -139,6 +183,7 @@ public partial class MixerView : UserControl
         DefaultPlaybackText.Text = "Unavailable";
         DefaultRecordingText.Text = "Unavailable";
         StateBreakdownText.Text = "observation unavailable";
+        UpdatePreferenceStatus(null);
         NoPlaybackText.Visibility = Visibility.Visible;
         NoRecordingText.Visibility = Visibility.Visible;
         _deviceDetailsVisible = false;
@@ -352,6 +397,95 @@ public partial class MixerView : UserControl
         UpdateDeviceDetailsVisibility();
     }
 
+    private void EndpointPreference_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: EndpointRow row })
+        {
+            RequestEndpointPreference(row.Endpoint);
+        }
+    }
+
+    internal void RequestEndpointPreference(AudioEndpoint endpoint)
+    {
+        ArgumentNullException.ThrowIfNull(endpoint);
+        string currentKey = endpoint.Direction == AudioEndpointDirection.Render
+            ? _preferredPlaybackEndpointKey
+            : _preferredRecordingEndpointKey;
+        string normalizedKey = SoltexPreferences.NormalizeEndpointPreferenceKey(endpoint.PreferenceKey);
+        if (endpoint.State != AudioEndpointState.Active ||
+            normalizedKey.Length == 0 ||
+            !string.Equals(normalizedKey, endpoint.PreferenceKey, StringComparison.Ordinal) ||
+            string.Equals(normalizedKey, currentKey, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        EndpointPreferenceStateText.Text = "SAVING";
+        EndpointPreferenceStateText.Foreground = (Brush)FindResource("WarningBrush");
+        EndpointPreferenceDetailText.Text = $"Remembering {endpoint.Name} as a fallback reminder.";
+        EndpointPreferenceRequested?.Invoke(
+            this,
+            new AudioEndpointPreferenceRequestedEventArgs(endpoint));
+    }
+
+    private void ClearEndpointPreferences_Click(object sender, RoutedEventArgs e) =>
+        ClearEndpointPreferencesRequested?.Invoke(this, EventArgs.Empty);
+
+    private void OpenSoundSettings_Click(object sender, RoutedEventArgs e) =>
+        OpenSoundSettingsRequested?.Invoke(this, EventArgs.Empty);
+
+    internal void ShowEndpointPreferenceResult(bool saved, string detail)
+    {
+        EndpointPreferenceStateText.Text = saved ? "REMEMBERED" : "CHECK";
+        EndpointPreferenceStateText.Foreground =
+            (Brush)FindResource(saved ? "SignalBrush" : "DangerBrush");
+        EndpointPreferenceDetailText.Text = detail;
+    }
+
+    internal void ShowSoundSettingsResult(WindowsSoundSettingsLaunchResult result)
+    {
+        EndpointPreferenceStateText.Text = result.Started ? "WINDOWS" : "CHECK";
+        EndpointPreferenceStateText.Foreground =
+            (Brush)FindResource(result.Started ? "SignalBrush" : "DangerBrush");
+        EndpointPreferenceDetailText.Text = result.Message;
+    }
+
+    private void UpdatePreferenceStatus(AudioEndpointSnapshot? snapshot)
+    {
+        bool hasPlayback = !string.IsNullOrEmpty(_preferredPlaybackEndpointKey);
+        bool hasRecording = !string.IsNullOrEmpty(_preferredRecordingEndpointKey);
+        ClearEndpointPreferencesButton.IsEnabled = hasPlayback || hasRecording;
+        if (!hasPlayback && !hasRecording)
+        {
+            EndpointPreferenceStateText.Text = "OPTIONAL";
+            EndpointPreferenceStateText.Foreground = (Brush)FindResource("QuietTextBrush");
+            EndpointPreferenceDetailText.Text =
+                "No fallback reminders saved. Windows remains the owner of system default selection.";
+            return;
+        }
+
+        bool playbackReady = hasPlayback && snapshot?.Render.Any(endpoint =>
+            endpoint.State == AudioEndpointState.Active &&
+            string.Equals(
+                endpoint.PreferenceKey,
+                _preferredPlaybackEndpointKey,
+                StringComparison.Ordinal)) == true;
+        bool recordingReady = hasRecording && snapshot?.Capture.Any(endpoint =>
+            endpoint.State == AudioEndpointState.Active &&
+            string.Equals(
+                endpoint.PreferenceKey,
+                _preferredRecordingEndpointKey,
+                StringComparison.Ordinal)) == true;
+        int saved = (hasPlayback ? 1 : 0) + (hasRecording ? 1 : 0);
+        int ready = (playbackReady ? 1 : 0) + (recordingReady ? 1 : 0);
+        EndpointPreferenceStateText.Text = ready == saved ? "READY" : "CHECK";
+        EndpointPreferenceStateText.Foreground =
+            (Brush)FindResource(ready == saved ? "SignalBrush" : "WarningBrush");
+        EndpointPreferenceDetailText.Text = ready == saved
+            ? $"{saved} saved fallback {(saved == 1 ? "device is" : "devices are")} currently active."
+            : $"{ready} of {saved} saved fallback devices are currently active.";
+    }
+
     private void UpdateDeviceDetailsVisibility()
     {
         EndpointDetailsPanel.Visibility = _deviceDetailsVisible
@@ -386,12 +520,15 @@ public partial class MixerView : UserControl
 
     // Connected endpoints first, then the default, then by name. A machine can
     // report dozens of absent endpoints; the ones in use must not be buried.
-    private static EndpointRow[] BuildRows(IEnumerable<AudioEndpoint> endpoints, EndpointPalette palette) =>
+    private static EndpointRow[] BuildRows(
+        IEnumerable<AudioEndpoint> endpoints,
+        EndpointPalette palette,
+        string preferredKey) =>
         endpoints
             .OrderBy(endpoint => StateRank(endpoint.State))
             .ThenByDescending(endpoint => endpoint.IsDefault)
             .ThenBy(endpoint => endpoint.Name, StringComparer.CurrentCultureIgnoreCase)
-            .Select(endpoint => new EndpointRow(endpoint, palette))
+            .Select(endpoint => new EndpointRow(endpoint, palette, preferredKey))
             .ToArray();
 
     private static int StateRank(AudioEndpointState state) => state switch
@@ -480,12 +617,17 @@ public partial class MixerView : UserControl
     {
         private readonly AudioEndpoint _endpoint;
         private readonly EndpointPalette _palette;
+        private readonly bool _isPreferred;
 
-        internal EndpointRow(AudioEndpoint endpoint, EndpointPalette palette)
+        internal EndpointRow(AudioEndpoint endpoint, EndpointPalette palette, string preferredKey)
         {
             _endpoint = endpoint;
             _palette = palette;
+            _isPreferred = !string.IsNullOrEmpty(preferredKey) &&
+                string.Equals(endpoint.PreferenceKey, preferredKey, StringComparison.Ordinal);
         }
+
+        internal AudioEndpoint Endpoint => _endpoint;
 
         internal bool IsActive => _endpoint.State == AudioEndpointState.Active;
 
@@ -506,7 +648,20 @@ public partial class MixerView : UserControl
 
         public Visibility DefaultVisibility => _endpoint.IsDefault ? Visibility.Visible : Visibility.Collapsed;
 
+        public Visibility PreferredVisibility => _isPreferred ? Visibility.Visible : Visibility.Collapsed;
+
         public Visibility MuteVisibility => _endpoint.IsMuted == true ? Visibility.Visible : Visibility.Collapsed;
+
+        public bool CanSelectAsPreference =>
+            IsActive &&
+            SoltexPreferences.NormalizeEndpointPreferenceKey(_endpoint.PreferenceKey).Length > 0 &&
+            !_isPreferred;
+
+        public string PreferenceActionText => _isPreferred ? "Preferred" : "Prefer";
+
+        public string PreferenceAccessibleName => _isPreferred
+            ? $"{_endpoint.Name} is the saved fallback reminder"
+            : $"Remember {_endpoint.Name} as the fallback reminder";
 
         // A disconnected endpoint still reports a stored level. Showing it as a
         // confident green bar implies the device is doing something, so the

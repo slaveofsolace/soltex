@@ -90,6 +90,7 @@ $matrix = @(
     [ordered]@{ id = 'settings-default'; panel = 'settings'; state = 'default'; file = 'settings-current-source.png' },
     [ordered]@{ id = 'devices-default'; panel = 'devices'; state = 'default'; file = 'devices-current-source.png' },
     [ordered]@{ id = 'mixer-default'; panel = 'mixer'; state = 'default'; file = 'mixer-current-source.png' },
+    [ordered]@{ id = 'mixer-devices'; panel = 'mixer-devices'; state = 'expanded'; file = 'mixer-devices-current-source.png' },
     [ordered]@{ id = 'mixer-more'; panel = 'mixer-more'; state = 'expanded'; file = 'mixer-more-current-source.png' },
     [ordered]@{ id = 'clips-default'; panel = 'clips'; state = 'default'; file = 'clips-current-source.png' },
     [ordered]@{ id = 'security-default'; panel = 'security'; state = 'default'; file = 'security-current-source.png' },

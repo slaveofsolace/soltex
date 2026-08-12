@@ -81,7 +81,7 @@ PR head `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` passed Windows run `315602420
 
 The downloaded Windows ZIP independently matched its GitHub digest. Its render manifest binds source head `4437db8` to tested PR merge `4b3fff8`, records 14 native 1280×820 states, and all retained file lengths, SHA-256 values, and dimensions independently matched. Hosted Activity and Settings captures were directly inspected. Required suites passed: Security 31/31, supply chain 18/18, hardening 12/12, update 17/17, Device Fabric 24/24, monitoring 16/16, audio 10/10, and app/control 19/19. The optional hosted AMSI/EICAR run remained 31/32 because the runner's installed provider returned native result `1`; this is an interoperability nonconfirmation, not an efficacy test.
 
-The current render matrix contains 14 native states: nine visible default workspaces, the two collapsed preview workspaces retained for source-level evaluation, and three progressive-disclosure states. Capture still fails closed on stale targets, source/tested-commit mismatch, missing output, error sidecars, empty images, and non-1280×820 output.
+The current render matrix contains 16 native states: eleven default workspaces and five progressive-disclosure states, including separate Audio device-management and full endpoint-inventory captures. Capture still fails closed on stale targets, source/tested-commit mismatch, missing output, error sidecars, empty images, and non-1280×820 output.
 
 Merged baseline: `main` at `61639bfe7ea3a7191fcb6c70ea1f2a699aa77248` (PR #9)
 

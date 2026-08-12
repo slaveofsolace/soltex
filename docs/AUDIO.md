@@ -1,7 +1,9 @@
-# Audio session controls
+# Audio session controls and device handoff
 
 Snapshot: 2026-08-12
 Status: owner-host exact-source verified at `3511ba92bde450ffac4e3fad145d9a13b8986e72`; hosted Windows/package accepted on PR head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183`
+
+Current branch candidate: local fallback reminders plus a user-mediated Windows Sound settings handoff; exact-source publication evidence pending
 
 ## User capability
 
@@ -14,6 +16,8 @@ For an eligible app session, Soltex exposes two direct controls:
 
 Soltex reports success only after Windows returns the requested state through an immediate `ISimpleAudioVolume` read-back. A rejected, ended, changed, inaccessible, or mismatched session remains visibly non-successful.
 
+Device management stays behind **Manage devices**. An active playback or recording endpoint can be remembered as a fallback reminder. This does not switch the Windows default. Soltex exposes one fixed **Windows Sound** action so the user can make the system-owned choice in Settings and then refresh the observation.
+
 ## Observation bounds and privacy
 
 - At most 32 active render endpoints are inspected for sessions.
@@ -21,7 +25,7 @@ Soltex reports success only after Windows returns the requested state through an
 - Only active shared-mode render sessions are shown. Inactive and expired sessions are not retained as history.
 - Display names are control-character stripped, whitespace-normalized, path-like values rejected, and limited to 80 characters.
 - Soltex never requests or displays executable paths, command lines, session icon paths, or raw session identifiers.
-- Raw endpoint and session-instance identifiers are reduced to SHA-256 identities held only in the current process. They are not exposed, persisted, or written to Activity.
+- Raw endpoint and session-instance identifiers are never exposed or written to Activity. Session identities remain process-only. When the user explicitly saves a fallback reminder, Soltex persists only a direction-scoped, lowercase SHA-256 endpoint fingerprint in the bounded local preference document; the raw Windows endpoint ID and friendly name are not persisted there.
 - System-sounds, multi-process/transferred, ended, and process-unverifiable sessions remain read-only.
 
 ## Write admission and recovery
@@ -36,6 +40,20 @@ Every explicit write re-enumerates current active render endpoints and revalidat
 6. owning process start time.
 
 If any identity changed, Soltex returns `TargetChanged` without writing. A supported write uses a unique Core Audio event-context GUID and immediately reads both master volume and mute state. The UI refreshes from Windows after the request and records only the sanitized result as a meaningful Audio event.
+
+## Default and fallback boundary
+
+`IMMDeviceEnumerator::GetDefaultAudioEndpoint` observes the current default for the requested direction and role; it does not assign that role. Microsoft documents that an application cannot change the system-assigned device role. Soltex therefore does not bind the undocumented `IPolicyConfig` interfaces used by some third-party utilities.
+
+The supported workflow is deliberately user-mediated:
+
+1. Soltex shows the current Windows-reported defaults.
+2. The user may save one playback and one recording fallback reminder from active endpoints.
+3. Preference schema 3 stores only the two normalized 64-character fingerprints and recovers invalid values to empty.
+4. **Windows Sound** launches the fixed `ms-settings:sound` URI with no user-controlled command, argument, or executable input.
+5. Windows owns the actual default-device choice; the user returns to Soltex and refreshes.
+
+A reminder reports only whether the saved endpoint is currently active. It does not perform failover, background switching, routing, or recovery automation.
 
 ## Evidence
 
@@ -57,7 +75,7 @@ Hosted acceptance on published PR head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183
 
 ## Nonclaims
 
-This slice does not implement endpoint switching, per-app routing, loopback, audio capture, virtual endpoints, EQ, DSP, compression, spatial processing, noise suppression, microphone processing, profiles, or a SteelSeries Sonar replacement. Stable routing or processing would require a separately designed, signed, installed, and independently tested Windows audio component.
+This slice does not assign Windows default endpoints, perform automatic failover, implement per-app routing, loopback, audio capture, virtual endpoints, EQ, DSP, compression, spatial processing, noise suppression, microphone processing, profiles, or a SteelSeries Sonar replacement. Stable routing or processing would require a separately designed, signed, installed, and independently tested Windows audio component.
 
 ## Primary Windows references
 
@@ -66,3 +84,6 @@ This slice does not implement endpoint switching, per-app routing, loopback, aud
 - [`IAudioSessionControl2::GetProcessId`](https://learn.microsoft.com/en-us/windows/win32/api/audiopolicy/nf-audiopolicy-iaudiosessioncontrol2-getprocessid)
 - [`ISimpleAudioVolume`](https://learn.microsoft.com/en-us/windows/win32/api/audioclient/nn-audioclient-isimpleaudiovolume)
 - [`ISimpleAudioVolume::SetMasterVolume`](https://learn.microsoft.com/en-us/windows/win32/api/audioclient/nf-audioclient-isimpleaudiovolume-setmastervolume)
+- [`IMMDeviceEnumerator::GetDefaultAudioEndpoint`](https://learn.microsoft.com/en-us/windows/win32/api/mmdeviceapi/nf-mmdeviceapi-immdeviceenumerator-getdefaultaudioendpoint)
+- [Using a Communication Device](https://learn.microsoft.com/en-us/windows/win32/coreaudio/using-the-communication-device)
+- [Launch Windows Settings](https://learn.microsoft.com/en-us/windows/apps/develop/launch/launch-settings)

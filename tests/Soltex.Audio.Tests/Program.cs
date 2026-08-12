@@ -7,6 +7,7 @@ using Soltex.Audio;
 List<(string Name, Func<Task> Test)> tests =
 [
     ("Endpoint names are sanitized and length-bounded", NameSanitizationIsBoundedAsync),
+    ("Endpoint preference fingerprints are bounded and direction-scoped", EndpointPreferenceKeysAreBoundedAsync),
     ("Volume scalar is clamped to a 0-100 percent range", VolumePercentIsClampedAsync),
     ("State classification reports unavailable when enumeration fails", ClassificationReportsUnavailableAsync),
     ("State classification reports current with no endpoints and no failures", ClassificationReportsCurrentWithNoEndpointsAsync),
@@ -181,6 +182,42 @@ static Task SessionNamesAndIdentityAreBoundedAsync()
         "The one-way session identity became part of the public model.");
     True(!publicProperties.Contains("ProcessId", StringComparer.Ordinal),
         "The process ID became part of the public session surface.");
+    return Task.CompletedTask;
+}
+
+static Task EndpointPreferenceKeysAreBoundedAsync()
+{
+    const string endpointId = "{0.0.0.00000000}.{11111111-2222-3333-4444-555555555555}";
+    string playback = AudioEndpointProvider.CreatePreferenceKey(
+        AudioEndpointDirection.Render,
+        endpointId);
+    string repeated = AudioEndpointProvider.CreatePreferenceKey(
+        AudioEndpointDirection.Render,
+        endpointId);
+    string recording = AudioEndpointProvider.CreatePreferenceKey(
+        AudioEndpointDirection.Capture,
+        endpointId);
+    Equal(64, playback.Length);
+    Equal(playback, repeated);
+    True(playback.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f'),
+        "Endpoint preference fingerprint is not lowercase hexadecimal.");
+    True(!playback.Contains(endpointId, StringComparison.Ordinal),
+        "Endpoint preference fingerprint exposed the raw endpoint ID.");
+    True(!string.Equals(playback, recording, StringComparison.Ordinal),
+        "Playback and recording preference fingerprints were not direction-scoped.");
+    bool oversizedRejected = false;
+    try
+    {
+        _ = AudioEndpointProvider.CreatePreferenceKey(
+            AudioEndpointDirection.Render,
+            new string('x', AudioEndpointProvider.MaximumEndpointIdentifierLength + 1));
+    }
+    catch (ArgumentOutOfRangeException)
+    {
+        oversizedRejected = true;
+    }
+
+    True(oversizedRejected, "Oversized endpoint identity input was not rejected.");
     return Task.CompletedTask;
 }
 

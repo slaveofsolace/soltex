@@ -62,6 +62,8 @@ internal static class Program
             ("Settings view renders working local preferences", SettingsViewRenders),
             ("Mixer prioritizes active endpoints and bounded app controls", () =>
                 MixerPrioritizesActiveEndpoints(audioSnapshot, audioSessionSnapshot)),
+            ("Mixer keeps fallback reminders local and user mediated", MixerFallbackRemindersAreBounded),
+            ("Windows Sound handoff uses one fixed supported URI", WindowsSoundHandoffIsFixed),
             ("Devices view renders an explicit unenrolled profile", () => DevicesViewRenders(device)),
             ("Render-smoke uses an unconstrained popup viewport", RenderSmokeUsesCanonicalViewport)
         ];
@@ -552,6 +554,8 @@ internal static class Program
                 OpenPerformanceDetails: true,
                 ActivityRetention: ActivityRetention.SevenDays,
                 CloseBehavior: CloseBehavior.NotificationArea,
+                PreferredPlaybackEndpointKey: new string('a', 64),
+                PreferredRecordingEndpointKey: new string('b', 64),
                 LastWorkspace: "security");
             store.Save(expected);
             PreferencesLoadResult loaded = store.Load();
@@ -569,6 +573,25 @@ internal static class Program
             True(!migrated.RecoveredFromInvalid &&
                  migrated.Preferences.CloseBehavior == CloseBehavior.Exit,
                 "Schema-one preferences did not migrate to the safe Exit behavior.");
+            True(
+                migrated.Preferences.PreferredPlaybackEndpointKey.Length == 0 &&
+                migrated.Preferences.PreferredRecordingEndpointKey.Length == 0,
+                "Legacy preferences did not migrate to empty audio fallback reminders.");
+
+            File.WriteAllText(
+                filePath,
+                "{\"schemaVersion\":3,\"telemetryCadence\":\"Balanced\",\"restoreLastWorkspace\":true," +
+                "\"openPerformanceDetails\":false,\"activityRetention\":\"SessionOnly\"," +
+                "\"closeBehavior\":\"Exit\",\"preferredPlaybackEndpointKey\":\"not-an-endpoint-key\"," +
+                "\"preferredRecordingEndpointKey\":\"\",\"lastWorkspace\":\"mixer\"}",
+                Encoding.UTF8);
+            PreferencesLoadResult invalidEndpointKey = store.Load();
+            True(invalidEndpointKey.RecoveredFromInvalid,
+                "A malformed audio fallback fingerprint was not reported as recovered.");
+            True(
+                invalidEndpointKey.Preferences.PreferredPlaybackEndpointKey.Length == 0 &&
+                invalidEndpointKey.Preferences.LastWorkspace == "mixer",
+                "Malformed audio fallback state did not recover only the unsupported value.");
 
             File.WriteAllText(filePath, "{ invalid", Encoding.UTF8);
             PreferencesLoadResult invalid = store.Load();
@@ -736,6 +759,8 @@ internal static class Program
             OpenPerformanceDetails: true,
             ActivityRetention: ActivityRetention.ThirtyDays,
             CloseBehavior: CloseBehavior.Exit,
+            PreferredPlaybackEndpointKey: string.Empty,
+            PreferredRecordingEndpointKey: string.Empty,
             LastWorkspace: "monitoring");
         view.UpdateNotificationAreaAvailability(available: true);
         view.UpdatePreferences(
@@ -838,6 +863,94 @@ internal static class Program
         byte[] pixels = Render(view, 980, 720);
         True(CountVisiblePixels(pixels) > 5_000,
             "The session-enabled Mixer view render was unexpectedly empty.");
+    }
+
+    private static void MixerFallbackRemindersAreBounded()
+    {
+        string playbackDefaultKey = new('a', 64);
+        string playbackFallbackKey = new('b', 64);
+        string recordingKey = new('c', 64);
+        AudioEndpoint[] endpoints =
+        [
+            new("Speakers", AudioEndpointDirection.Render, AudioEndpointState.Active,
+                IsDefault: true, VolumeScalar: 0.42, IsMuted: false,
+                PreferenceKey: playbackDefaultKey),
+            new("Headset", AudioEndpointDirection.Render, AudioEndpointState.Active,
+                IsDefault: false, VolumeScalar: 0.35, IsMuted: false,
+                PreferenceKey: playbackFallbackKey),
+            new("Microphone", AudioEndpointDirection.Capture, AudioEndpointState.Active,
+                IsDefault: true, VolumeScalar: 0.60, IsMuted: false,
+                PreferenceKey: recordingKey)
+        ];
+        AudioEndpointSnapshot endpointSnapshot = new(
+            DateTimeOffset.UtcNow,
+            TimeSpan.FromMilliseconds(2),
+            AudioObservationState.Current,
+            endpoints,
+            inaccessibleEndpointCount: 0,
+            provenance: "IMMDeviceEnumerator",
+            limitations: ["System default assignment remains Windows-owned."]);
+        MixerView view = new();
+        view.UpdateEndpointPreferences(string.Empty, string.Empty);
+        view.UpdateSnapshot(endpointSnapshot, CreateAudioSessionSnapshot());
+        True(!view.ClearEndpointPreferencesButton.IsEnabled,
+            "Mixer enabled clearing when no fallback reminder was saved.");
+        True(view.EndpointPreferenceStateText.Text == "OPTIONAL",
+            "Mixer implied that an unset fallback reminder was active.");
+
+        AudioEndpoint? requested = null;
+        view.EndpointPreferenceRequested += (_, args) => requested = args.Endpoint;
+        view.RequestEndpointPreference(endpoints[1]);
+        True(ReferenceEquals(requested, endpoints[1]),
+            "Mixer did not emit the explicitly selected fallback endpoint.");
+        True(view.EndpointPreferenceStateText.Text == "SAVING",
+            "Mixer presented an unpersisted fallback reminder as saved.");
+
+        view.UpdateEndpointPreferences(playbackFallbackKey, recordingKey);
+        view.ShowEndpointPreferenceResult(
+            saved: true,
+            "Fallback reminders are saved on this Windows account.");
+        True(view.ClearEndpointPreferencesButton.IsEnabled,
+            "Mixer did not expose clearing after fallback reminders were saved.");
+        True(view.EndpointPreferenceStateText.Text == "REMEMBERED",
+            "Mixer did not distinguish a persisted fallback reminder.");
+
+        requested = null;
+        view.RequestEndpointPreference(endpoints[1]);
+        True(requested is null,
+            "Mixer re-emitted an already saved fallback reminder.");
+
+        AudioSessionSnapshot unavailableSessions = new(
+            DateTimeOffset.UtcNow,
+            TimeSpan.FromMilliseconds(1),
+            AudioObservationState.Unavailable,
+            Array.Empty<AudioSession>(),
+            observedSessionCount: 0,
+            inaccessibleSessionCount: 1,
+            omittedSessionCount: 0,
+            provenance: "IAudioSessionManager2",
+            limitations: ["Session observation unavailable."]);
+        view.UpdateSnapshot(endpointSnapshot, unavailableSessions);
+        True(view.MixerStateText.Text == "PARTIAL",
+            "Mixer did not preserve partial truth when endpoint observation outlived session observation.");
+        view.UpdateEndpointPreferences(playbackFallbackKey, recordingKey);
+        True(view.MixerStateText.Text == "PARTIAL",
+            "Refreshing fallback reminder state overwrote the merged audio observation state.");
+    }
+
+    private static void WindowsSoundHandoffIsFixed()
+    {
+        WindowsSoundSettingsLaunchPlan plan = WindowsSoundSettingsLauncher.CreatePlan();
+        True(plan.FileName == "ms-settings:sound",
+            "Windows Sound handoff changed away from the fixed supported URI.");
+        True(plan.UseShellExecute && !plan.ErrorDialog,
+            "Windows Sound handoff did not use the bounded URI launch plan.");
+
+        FakeWindowsSoundSettingsLaunchBackend backend = new();
+        WindowsSoundSettingsLaunchResult result = WindowsSoundSettingsLauncher.Open(backend);
+        True(result.Started, "The fixed Windows Sound handoff did not report launch dispatch.");
+        True(backend.Plan == plan,
+            "The Windows Sound launcher dispatched a plan other than the reviewed fixed plan.");
     }
 
     private static AudioSessionSnapshot CreateAudioSessionSnapshot()
@@ -980,4 +1093,11 @@ internal static class Program
                 $"Expected {expected}, observed {actual} (tolerance {tolerance}).");
         }
     }
+}
+
+internal sealed class FakeWindowsSoundSettingsLaunchBackend : IWindowsSoundSettingsLaunchBackend
+{
+    internal WindowsSoundSettingsLaunchPlan? Plan { get; private set; }
+
+    public void Launch(WindowsSoundSettingsLaunchPlan plan) => Plan = plan;
 }

@@ -28,7 +28,9 @@ public enum AudioObservationState
 
 /// <summary>
 /// One observed audio endpoint. Volume is the endpoint's current master scalar as
-/// reported by Windows; Soltex reads it and does not set it.
+/// reported by Windows; Soltex reads it and does not set it. PreferenceKey is a
+/// bounded, direction-scoped SHA-256 fingerprint; the raw Windows endpoint ID is
+/// not exposed by this model.
 /// </summary>
 public sealed record AudioEndpoint(
     string Name,
@@ -36,7 +38,8 @@ public sealed record AudioEndpoint(
     AudioEndpointState State,
     bool IsDefault,
     double? VolumeScalar,
-    bool? IsMuted)
+    bool? IsMuted,
+    string PreferenceKey = "")
 {
     /// <summary>Volume as a whole percentage, or null when the endpoint did not report one.</summary>
     public double? VolumePercent => VolumeScalar is double scalar

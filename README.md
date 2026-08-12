@@ -8,7 +8,7 @@ The current desktop solution exposes nine visible workspace areas:
 - **Monitoring** — bounded CPU, physical-memory, process, and fixed-volume observation from supported Windows interfaces.
 - **Devices** — a sanitized local profile and exact non-executing capability model, explicitly not enrolled.
 - **Applications** — bounded, searchable, read-only installed-software, sign-in, and Win32 service inventories.
-- **Audio** — bounded Windows Core Audio endpoint and active app-session state, with guarded per-session volume/mute and immediate read-back.
+- **Audio** — bounded Windows Core Audio endpoint and active app-session state, guarded per-session volume/mute with immediate read-back, local fallback reminders, and a user-mediated Windows Sound handoff.
 - **Security** — the implemented focus: a lightweight companion that cooperates with the antivirus provider registered with Windows, plus bounded local supply-chain verification primitives.
 - **Remote Assist** — a consent-first launcher for a separately installed, Windows-trusted RustDesk client; Soltex does not own or embed the remote-session transport.
 - **Activity** — a bounded local timeline of meaningful Soltex actions and recovery transitions, session-only unless the user explicitly selects retention.

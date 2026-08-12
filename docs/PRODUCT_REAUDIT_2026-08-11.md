@@ -110,7 +110,7 @@ Exact source `3511ba92bde450ffac4e3fad145d9a13b8986e72` is owner-host verified a
 
 - retain active Windows audio sessions in addition to endpoints;
 - retain documented session volume and mute controls with immediate read-back;
-- show default-device and fallback-device selection through supported Windows APIs;
+- retain current-default observation, local fallback reminders, and the supported user-mediated Windows Sound handoff; do not bind undocumented default-assignment interfaces;
 - design a separate, signed virtual-audio component before claiming routing;
 - do not claim EQ, noise reduction, spatial processing, or per-app routing until the actual processing path is measured and verified.
 

@@ -80,17 +80,32 @@ The user-reported `QuarantineStore` disposed-object dialog was a real shutdown r
 
 Published source head `6e54fb509ba332191107aa64733db0880e3cac78` has accepted hosted evidence. Windows run `31568771869` and package-smoke run `31568771855` completed successfully. Downloaded artifacts `9130547242` and `9130511337` matched GitHub digests exactly; all 15 retained PNG identities and 1280x820 dimensions revalidated. GitHub confirms tested PR merge `ebd163553b3229099c371cd79b8967ace2b1ab55` is exactly one commit ahead with the source as merge base. Services, Security, Settings, and packaged Home were directly inspected without the reported dialog. The hosted package launched `0`, remained `NotSigned`, and matched SHA-256 `236959aae3abe37a35130b68515c1472730118a6e6c8f60c9315f1ca0107e8b9`. Optional hosted EICAR/AMSI remained 31/32 because the runner provider returned result `1`; no efficacy claim is made.
 
+### Audio defaults and fallback reminders (candidate)
+
+The current task-owned working tree adds a bounded, user-mediated device workflow without claiming a system-default setter:
+
+- active endpoint IDs are reduced to direction-scoped 64-character fingerprints; raw IDs never reach the public model or preference file;
+- preference schema 3 stores at most one playback and one recording fallback reminder and migrates older schemas to empty reminders;
+- only an active, fingerprinted endpoint can be remembered; missing/invalid values remain visibly unset or unavailable;
+- **Manage devices** progressively discloses reminder controls and complete endpoint inventory;
+- **Windows Sound** dispatches only the fixed `ms-settings:sound` URI; Windows and the user own the actual default-device choice;
+- no undocumented `IPolicyConfig`, automatic switching, routing, virtual device, DSP, or background audio worker is introduced;
+- the evidence matrix adds `mixer-devices` separately from the existing full `mixer-more` inventory state.
+
+Pre-commit working-tree checks passed a zero-warning Release build, Audio 21/21, App/control 28/28, and direct 1280x820 inspection of the expanded device workflow. Exact-source, full-suite, package, and hosted acceptance remain pending.
+
 ## Exact resume step
 
-1. Commit and publish this hosted acceptance ledger without changing the accepted source.
-2. Confirm the docs-only head workflows remain green and update draft PR #11 metadata without creating another repository-only evidence loop.
-3. Begin the next bounded product slice: supported default/fallback audio endpoint selection, explicitly separate from app routing or DSP.
-4. Preserve the protected owner checkout, exact capability nonclaims, and owner visual-acceptance boundary.
+1. Freeze the Audio default/fallback candidate as one source commit after the focused review boundary.
+2. Run the exact Release/identity/design/full-suite/native-16-state/package gates at that source commit.
+3. Inspect default, device-management, full-inventory, and packaged Mixer pixels; record exact hashes and failure/recovery results.
+4. Publish by fast-forward, wait for exact hosted Windows/package workflows, re-hash downloaded artifacts, and update draft PR #11 metadata.
+5. Preserve the protected owner checkout, Windows-owned default-selection boundary, and all routing/DSP/owner-acceptance nonclaims.
 
 ## Remaining product work
 
 - owner visual review for the Services/runtime/notification-area slice;
-- supported default/fallback audio endpoint selection, still separate from routing or DSP;
+- exact-source, hosted, and owner acceptance for the user-mediated audio default/fallback workflow;
 - bounded historical numeric telemetry with retention, migration, and measured storage/runtime cost;
 - deeper startup/driver observation without generic cleanup claims;
 - mTLS/private-mesh device enrollment, revocation, emergency stop, and isolated personal/work connectors;

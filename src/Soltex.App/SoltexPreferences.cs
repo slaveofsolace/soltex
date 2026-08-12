@@ -31,9 +31,11 @@ internal sealed record SoltexPreferences(
     bool OpenPerformanceDetails,
     ActivityRetention ActivityRetention,
     CloseBehavior CloseBehavior,
+    string PreferredPlaybackEndpointKey,
+    string PreferredRecordingEndpointKey,
     string LastWorkspace)
 {
-    internal const int CurrentSchemaVersion = 2;
+    internal const int CurrentSchemaVersion = 3;
 
     internal static SoltexPreferences Default { get; } =
         new(
@@ -42,6 +44,8 @@ internal sealed record SoltexPreferences(
             false,
             global::Soltex.App.ActivityRetention.SessionOnly,
             global::Soltex.App.CloseBehavior.Exit,
+            string.Empty,
+            string.Empty,
             "home");
 
     internal int TelemetryIntervalMilliseconds => TelemetryCadence switch
@@ -62,7 +66,18 @@ internal sealed record SoltexPreferences(
             Enum.IsDefined(CloseBehavior)
                 ? CloseBehavior
                 : global::Soltex.App.CloseBehavior.Exit,
+            NormalizeEndpointPreferenceKey(PreferredPlaybackEndpointKey),
+            NormalizeEndpointPreferenceKey(PreferredRecordingEndpointKey),
             NormalizeWorkspace(LastWorkspace));
+
+    internal static string NormalizeEndpointPreferenceKey(string? value)
+    {
+        string candidate = value?.Trim().ToLowerInvariant() ?? string.Empty;
+        return candidate.Length == 64 && candidate.All(character =>
+            character is >= '0' and <= '9' or >= 'a' and <= 'f')
+                ? candidate
+                : string.Empty;
+    }
 
     internal static string NormalizeWorkspace(string? value)
     {
@@ -131,7 +146,7 @@ internal sealed class PreferencesStore
 
             PreferencesDocument? document =
                 JsonSerializer.Deserialize<PreferencesDocument>(json, SerializerOptions);
-            if (document is null || document.SchemaVersion is not (1 or SoltexPreferences.CurrentSchemaVersion))
+            if (document is null || document.SchemaVersion is not (1 or 2 or SoltexPreferences.CurrentSchemaVersion))
             {
                 return Recovered("The saved preferences use an unsupported schema.");
             }
@@ -161,10 +176,24 @@ internal sealed class PreferencesStore
                     out closeBehavior) &&
                  Enum.IsDefined(closeBehavior));
             string workspace = SoltexPreferences.NormalizeWorkspace(document.LastWorkspace);
+            string preferredPlayback =
+                SoltexPreferences.NormalizeEndpointPreferenceKey(document.PreferredPlaybackEndpointKey);
+            string preferredRecording =
+                SoltexPreferences.NormalizeEndpointPreferenceKey(document.PreferredRecordingEndpointKey);
             bool normalized =
                 !validCadence ||
                 (!retentionMissing && !validRetention) ||
                 (!closeBehaviorMissing && !validCloseBehavior) ||
+                (!string.IsNullOrWhiteSpace(document.PreferredPlaybackEndpointKey) &&
+                 !string.Equals(
+                     preferredPlayback,
+                     document.PreferredPlaybackEndpointKey.Trim(),
+                     StringComparison.OrdinalIgnoreCase)) ||
+                (!string.IsNullOrWhiteSpace(document.PreferredRecordingEndpointKey) &&
+                 !string.Equals(
+                     preferredRecording,
+                     document.PreferredRecordingEndpointKey.Trim(),
+                     StringComparison.OrdinalIgnoreCase)) ||
                 !string.Equals(
                     workspace,
                     document.LastWorkspace?.Trim(),
@@ -179,17 +208,19 @@ internal sealed class PreferencesStore
                 validCloseBehavior && !closeBehaviorMissing
                     ? closeBehavior
                     : global::Soltex.App.CloseBehavior.Exit,
+                preferredPlayback,
+                preferredRecording,
                 workspace);
             bool migrated =
-                document.SchemaVersion == 1 || closeBehaviorMissing;
+                document.SchemaVersion < SoltexPreferences.CurrentSchemaVersion || closeBehaviorMissing;
             return new PreferencesLoadResult(
                 preferences,
                 normalized,
                 normalized
                     ? "Unsupported preference values were reset to safe defaults."
                     : migrated
-                        ? "Preferences loaded; close behavior remains Exit until explicitly changed."
-                    : "Preferences loaded from this Windows account.");
+                        ? "Preferences loaded; new lifecycle and audio-device preferences remain at safe defaults."
+                        : "Preferences loaded from this Windows account.");
         }
         catch (Exception exception) when (IsExpectedReadFailure(exception))
         {
@@ -208,6 +239,8 @@ internal sealed class PreferencesStore
             normalized.OpenPerformanceDetails,
             normalized.ActivityRetention.ToString(),
             normalized.CloseBehavior.ToString(),
+            normalized.PreferredPlaybackEndpointKey,
+            normalized.PreferredRecordingEndpointKey,
             normalized.LastWorkspace);
         string json = JsonSerializer.Serialize(document, SerializerOptions);
         if (Encoding.UTF8.GetByteCount(json) > MaximumPreferenceBytes)
@@ -250,5 +283,7 @@ internal sealed class PreferencesStore
         bool OpenPerformanceDetails,
         string? ActivityRetention,
         string? CloseBehavior,
+        string? PreferredPlaybackEndpointKey,
+        string? PreferredRecordingEndpointKey,
         string LastWorkspace);
 }

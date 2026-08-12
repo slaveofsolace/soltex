@@ -16,6 +16,7 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="86" />
                     <ColumnDefinition Width="46" />
+                    <ColumnDefinition Width="94" />
                 </Grid.ColumnDefinitions>
                 <StackPanel VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
@@ -29,6 +30,14 @@
                                 Visibility="{Binding DefaultVisibility}">
                             <TextBlock Text="DEFAULT"
                                        Foreground="{StaticResource SignalBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMicro}" />
+                        </Border>
+                        <Border Margin="8,0,0,0"
+                                Style="{StaticResource StatusPillStyle}"
+                                Visibility="{Binding PreferredVisibility}">
+                            <TextBlock Text="PREFERRED"
+                                       Foreground="{StaticResource AccentBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Border>
@@ -62,6 +71,16 @@
                            VerticalAlignment="Center"
                            FontFamily="{StaticResource MonoFont}"
                            FontSize="{StaticResource FontMono}" />
+                <Button Grid.Column="3"
+                        Margin="12,0,0,0"
+                        MinWidth="78"
+                        Padding="9,5"
+                        Content="{Binding PreferenceActionText}"
+                        IsEnabled="{Binding CanSelectAsPreference}"
+                        Tag="{Binding}"
+                        Style="{StaticResource SecondaryButton}"
+                        AutomationProperties.Name="{Binding PreferenceAccessibleName}"
+                        Click="EndpointPreference_Click" />
             </Grid>
         </DataTemplate>
 
@@ -298,7 +317,7 @@
                                 Margin="0,12,0,0"
                                 HorizontalAlignment="Right"
                                 Style="{StaticResource SecondaryButton}"
-                                Content="View devices"
+                                Content="Manage devices"
                                 AutomationProperties.Name="Show audio device details"
                                 Click="DeviceDetails_Click" />
                     </StackPanel>
@@ -313,14 +332,48 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Audio devices" />
-                <Button x:Name="MoreEndpointsButton"
-                        Grid.Column="1"
-                        Visibility="Collapsed"
-                        Style="{StaticResource SecondaryButton}"
-                        Content="Show more"
-                        AutomationProperties.Name="Show more audio endpoints"
-                        Click="MoreEndpoints_Click" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button x:Name="OpenSoundSettingsButton"
+                            Margin="0,0,10,0"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Windows Sound"
+                            AutomationProperties.Name="Open Windows Sound settings"
+                            Click="OpenSoundSettings_Click" />
+                    <Button x:Name="ClearEndpointPreferencesButton"
+                            Margin="0,0,10,0"
+                            IsEnabled="False"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Clear reminders"
+                            AutomationProperties.Name="Clear saved audio fallback reminders"
+                            Click="ClearEndpointPreferences_Click" />
+                    <Button x:Name="MoreEndpointsButton"
+                            Visibility="Collapsed"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Show more"
+                            AutomationProperties.Name="Show more audio endpoints"
+                            Click="MoreEndpoints_Click" />
+                </StackPanel>
             </Grid>
+            <Border Margin="0,12,0,0" Style="{StaticResource QuietCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="EndpointPreferenceStateText"
+                               Text="OPTIONAL"
+                               Foreground="{StaticResource QuietTextBrush}"
+                               FontFamily="{StaticResource MonoFont}"
+                               FontSize="{StaticResource FontMicro}"
+                               FontWeight="SemiBold" />
+                    <TextBlock x:Name="EndpointPreferenceDetailText"
+                               Grid.Column="1"
+                               Margin="12,0,0,0"
+                               Text="No fallback reminders saved. Windows remains the owner of system default selection."
+                               Foreground="{StaticResource QuietTextBrush}"
+                               TextWrapping="Wrap" />
+                </Grid>
+            </Border>
             <Grid Margin="0,12,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -442,7 +495,7 @@
                                Style="{StaticResource MutedTextStyle}"
                                TextWrapping="Wrap"
                                LineHeight="19"
-                               Text="Soltex reads active shared-mode playback sessions plus endpoint identity, state, defaults, and level from Windows Core Audio. App volume and mute are the only writes: the target is revalidated immediately before each change and the observed result is read back before success is shown. Soltex does not route signal, create virtual devices, or apply EQ, effects, or noise processing." />
+                               Text="Soltex reads active shared-mode playback sessions plus endpoint identity, state, defaults, and level from Windows Core Audio. App volume and mute are the only direct audio writes: the target is revalidated immediately before each change and the observed result is read back before success is shown. Fallback reminders retain only a local endpoint fingerprint; Windows Sound settings remain the supported owner of system default selection. Soltex does not route signal, create virtual devices, or apply EQ, effects, or noise processing." />
                     <TextBlock x:Name="MixerProvenanceText"
                                Margin="0,10,0,0"
                                Foreground="{StaticResource QuietTextBrush}"
