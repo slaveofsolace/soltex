@@ -9,7 +9,8 @@ repository: slaveofsolace/soltex
 pull request: #11 (draft)
 branch: sol/soltex-product-rebuild
 accepted published evidence head: 6e54fb509ba332191107aa64733db0880e3cac78
-exact owner-host source: 4207ecb70ef30c09203cb4f0f2b3efedf1ef2bd6
+latest accepted owner-host source: 1d15071a14472dce199796a57966bddbf7be2fc4
+latest strengthened test head: 41c8c37622ef666436024138e6d82f14e1e418da
 isolated implementation worktree: C:\Users\suhai\Documents\soltex-product-rebuild
 protected owner checkout: C:\Users\suhai\Documents\SOL Tools
 protected owner branch/head: main / bf2662de80992cfed761625642f084d3caaa0f04
@@ -80,9 +81,9 @@ The user-reported `QuarantineStore` disposed-object dialog was a real shutdown r
 
 Published source head `6e54fb509ba332191107aa64733db0880e3cac78` has accepted hosted evidence. Windows run `31568771869` and package-smoke run `31568771855` completed successfully. Downloaded artifacts `9130547242` and `9130511337` matched GitHub digests exactly; all 15 retained PNG identities and 1280x820 dimensions revalidated. GitHub confirms tested PR merge `ebd163553b3229099c371cd79b8967ace2b1ab55` is exactly one commit ahead with the source as merge base. Services, Security, Settings, and packaged Home were directly inspected without the reported dialog. The hosted package launched `0`, remained `NotSigned`, and matched SHA-256 `236959aae3abe37a35130b68515c1472730118a6e6c8f60c9315f1ca0107e8b9`. Optional hosted EICAR/AMSI remained 31/32 because the runner provider returned result `1`; no efficacy claim is made.
 
-### Audio defaults and fallback reminders (candidate)
+### Audio defaults and fallback reminders (owner-host accepted; hosted pending)
 
-The current task-owned working tree adds a bounded, user-mediated device workflow without claiming a system-default setter:
+Production source `1d15071a14472dce199796a57966bddbf7be2fc4` adds a bounded, user-mediated device workflow without claiming a system-default setter:
 
 - active endpoint IDs are reduced to direction-scoped 64-character fingerprints; raw IDs never reach the public model or preference file;
 - preference schema 3 stores at most one playback and one recording fallback reminder and migrates older schemas to empty reminders;
@@ -92,20 +93,19 @@ The current task-owned working tree adds a bounded, user-mediated device workflo
 - no undocumented `IPolicyConfig`, automatic switching, routing, virtual device, DSP, or background audio worker is introduced;
 - the evidence matrix adds `mixer-devices` separately from the existing full `mixer-more` inventory state.
 
-Pre-commit working-tree checks passed a zero-warning Release build, Audio 21/21, App/control 28/28, and direct 1280x820 inspection of the expanded device workflow. Exact-source, full-suite, package, and hosted acceptance remain pending.
+Owner-host acceptance passed a zero-warning Release build, identity/design policy, Security/EICAR 32/32, Monitoring 16/16, Audio 21/21, App/control 29/29 on strengthened test head `41c8c37`, 16/16 native states, an exact runtime probe, and self-contained Home/device renders. The first exact native attempt exposed and preserved a disposed telemetry-token race; the accepted source serializes start/stop/disposal and completed the full matrix without recurrence. Default, device-management, full-inventory, and packaged-device pixels were directly inspected. The package is 71,589,791 bytes, SHA-256 `83a0a29347d8160dcd86f41ad828bd444eb3ec3dfb45b3317f8a3ddf092c9911`, and truthfully `NotSigned`. Full evidence is in `docs/evidence/2026-08-12-audio-fallback/README.md`. Hosted acceptance remains pending.
 
 ## Exact resume step
 
-1. Freeze the Audio default/fallback candidate as one source commit after the focused review boundary.
-2. Run the exact Release/identity/design/full-suite/native-16-state/package gates at that source commit.
-3. Inspect default, device-management, full-inventory, and packaged Mixer pixels; record exact hashes and failure/recovery results.
-4. Publish by fast-forward, wait for exact hosted Windows/package workflows, re-hash downloaded artifacts, and update draft PR #11 metadata.
-5. Preserve the protected owner checkout, Windows-owned default-selection boundary, and all routing/DSP/owner-acceptance nonclaims.
+1. Commit the exact owner-host evidence ledger without changing the accepted production source.
+2. Publish by fast-forward and wait for exact hosted Windows/package workflows.
+3. Verify source/tested ancestry, independently re-hash downloaded artifacts, inspect hosted Mixer/package pixels, and update draft PR #11 metadata.
+4. Preserve the protected owner checkout, Windows-owned default-selection boundary, and all routing/DSP/owner-acceptance nonclaims.
 
 ## Remaining product work
 
 - owner visual review for the Services/runtime/notification-area slice;
-- exact-source, hosted, and owner acceptance for the user-mediated audio default/fallback workflow;
+- hosted and owner acceptance for the user-mediated audio default/fallback workflow;
 - bounded historical numeric telemetry with retention, migration, and measured storage/runtime cost;
 - deeper startup/driver observation without generic cleanup claims;
 - mTLS/private-mesh device enrollment, revocation, emergency stop, and isolated personal/work connectors;

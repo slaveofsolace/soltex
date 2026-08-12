@@ -6,6 +6,14 @@ Repository: `slaveofsolace/soltex`
 
 Current draft: `sol/soltex-product-rebuild` / [PR #11](https://github.com/slaveofsolace/soltex/pull/11)
 
+## Audio fallback and lifecycle owner-host gate
+
+Production source `1d15071a14472dce199796a57966bddbf7be2fc4` and strengthened test head `41c8c37622ef666436024138e6d82f14e1e418da` passed the owner-controlled Windows gate. Release built with 0 warnings/errors; identity scanned 194 tracked text files with 9 reasoned allowlist entries; design-token policy passed 10 XAML files; Security/EICAR was 32/32, Monitoring 16/16, Audio 21/21, and App/control 29/29.
+
+The first exact native attempt at `975e48c` failed after its first frame with a disposed telemetry cancellation source. It was preserved as negative evidence and not accepted. Source `1d15071` consolidates cancellation/task start, stop, await, and disposal behind one serialized owner. Three repetition renders, the exact 16/16 native matrix, and the exact runtime probe then exited cleanly. Runtime observed 2,036.1 ms startup, 15.7 ms mean navigation, 0.576% visible-idle CPU, 0.022% minimized-steady CPU, and 0.000% hidden CPU; Performance sampling was suspended when minimized or hidden.
+
+The self-contained package is 71,589,791 bytes with SHA-256 `83a0a29347d8160dcd86f41ad828bd444eb3ec3dfb45b3317f8a3ddf092c9911`, remains `NotSigned`, and rendered packaged Home plus packaged Audio-device states with exit `0`. Default, device-management, full-inventory, and packaged-device pixels were directly inspected. Full evidence is recorded in [`evidence/2026-08-12-audio-fallback`](evidence/2026-08-12-audio-fallback/README.md). Hosted Windows/package acceptance of the new reconciliation head remains pending.
+
 ## Audio candidate exact-source owner-host gate
 
 Audio source `3511ba92bde450ffac4e3fad145d9a13b8986e72` was exercised on the owner-controlled Windows host through the verified portable .NET SDK 10.0.302. No Windows security setting, endpoint assignment, third-party session, SteelSeries process, Voicemeeter process, or audible media was changed.
