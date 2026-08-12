@@ -7,7 +7,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="18" />
+            <RowDefinition Height="14" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -53,11 +53,11 @@
                         HorizontalAlignment="Left">
                 <TextBlock Style="{StaticResource SectionTitleStyle}"
                            Text="Performance" />
-                <Border Margin="0,10,0,0"
+                <Border Margin="0,8,0,0"
                         Style="{StaticResource CardStyle}"
                         Padding="0">
                     <StackPanel>
-                        <Grid Margin="18">
+                        <Grid Margin="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -100,7 +100,7 @@
                         </Grid>
                         <Border Height="1"
                                 Background="{StaticResource TrackBrush}" />
-                        <Grid Margin="18">
+                        <Grid Margin="16">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -125,13 +125,13 @@
                     </StackPanel>
                 </Border>
 
-                <TextBlock Margin="0,22,0,0"
+                <TextBlock Margin="0,18,0,0"
                            Style="{StaticResource SectionTitleStyle}"
                            Text="Workspace" />
-                <Border Margin="0,10,0,0"
+                <Border Margin="0,8,0,0"
                         Style="{StaticResource CardStyle}"
                         Padding="0">
-                    <Grid Margin="18">
+                    <Grid Margin="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -155,13 +155,13 @@
                     </Grid>
                 </Border>
 
-                <TextBlock Margin="0,22,0,0"
+                <TextBlock Margin="0,18,0,0"
                            Style="{StaticResource SectionTitleStyle}"
                            Text="Activity" />
-                <Border Margin="0,10,0,0"
+                <Border Margin="0,8,0,0"
                         Style="{StaticResource CardStyle}"
                         Padding="0">
-                    <Grid Margin="18">
+                    <Grid Margin="16">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
@@ -204,12 +204,12 @@
                     </Grid>
                 </Border>
 
-                <TextBlock Margin="0,22,0,0"
+                <TextBlock Margin="0,18,0,0"
                            Style="{StaticResource SectionTitleStyle}"
                            Text="Runtime boundaries" />
-                <Border Margin="0,10,0,0"
+                <Border Margin="0,8,0,0"
                         Style="{StaticResource QuietCardStyle}"
-                        Padding="18">
+                        Padding="16">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
