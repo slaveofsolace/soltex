@@ -1,0 +1,175 @@
+<UserControl x:Class="Soltex.App.Views.ApplicationsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent"
+             Foreground="{StaticResource TextBrush}"
+             FontFamily="{StaticResource UiFont}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="18" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="10" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="SYSTEM" />
+                <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Applications" />
+                <TextBlock Margin="0,5,0,0"
+                           Style="{StaticResource MutedTextStyle}"
+                           FontSize="{StaticResource FontBody}"
+                           Text="Installed software and sign-in entries from supported Windows sources." />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                <Button x:Name="RefreshInventoryButton"
+                        Margin="0,0,10,0"
+                        Style="{StaticResource SecondaryButton}"
+                        Content="Refresh"
+                        AutomationProperties.Name="Refresh application inventory"
+                        Click="Refresh_Click" />
+                <Border Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse x:Name="InventoryStateDot"
+                                 Width="7"
+                                 Height="7"
+                                 Fill="{StaticResource WarningBrush}"
+                                 VerticalAlignment="Center" />
+                        <TextBlock x:Name="InventoryStateText"
+                                   Margin="8,0,0,0"
+                                   Text="WAITING"
+                                   Foreground="{StaticResource WarningBrush}"
+                                   FontFamily="{StaticResource MonoFont}"
+                                   FontSize="{StaticResource FontMicro}"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Style="{StaticResource CardStyle}" Padding="15">
+                <StackPanel>
+                    <TextBlock Text="Installed" Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}" />
+                    <TextBlock x:Name="InstalledCountText" Margin="0,6,0,0" Text="—" FontSize="{StaticResource FontDisplaySm}" FontWeight="SemiBold" />
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Style="{StaticResource CardStyle}" Padding="15">
+                <StackPanel>
+                    <TextBlock Text="Publishers" Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}" />
+                    <TextBlock x:Name="PublisherCountText" Margin="0,6,0,0" Text="—" FontSize="{StaticResource FontDisplaySm}" FontWeight="SemiBold" />
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="4" Style="{StaticResource CardStyle}" Padding="15">
+                <StackPanel>
+                    <TextBlock Text="Sign-in entries" Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}" />
+                    <TextBlock x:Name="StartupCountText" Margin="0,6,0,0" Text="—" FontSize="{StaticResource FontDisplaySm}" FontWeight="SemiBold" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="4" Style="{StaticResource QuietCardStyle}" Padding="10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="InstalledTabButton"
+                        MinWidth="96"
+                        Style="{StaticResource SecondaryButton}"
+                        Content="Installed"
+                        AutomationProperties.Name="Show installed applications"
+                        Click="InstalledTab_Click" />
+                <Button x:Name="StartupTabButton"
+                        Grid.Column="1"
+                        Margin="8,0,0,0"
+                        MinWidth="96"
+                        Style="{StaticResource SecondaryButton}"
+                        Content="Startup"
+                        AutomationProperties.Name="Show startup applications"
+                        Click="StartupTab_Click" />
+                <TextBox x:Name="InventorySearchBox"
+                         Grid.Column="3"
+                         MinWidth="240"
+                         HorizontalAlignment="Stretch"
+                         VerticalContentAlignment="Center"
+                         AutomationProperties.Name="Search applications by name or publisher"
+                         TextChanged="InventorySearch_TextChanged" />
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="6">
+            <DataGrid x:Name="InstalledGrid"
+                      EnableRowVirtualization="True"
+                      EnableColumnVirtualization="True"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      AutomationProperties.Name="Installed applications">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Application" Binding="{Binding Name}" Width="2*" />
+                    <DataGridTextColumn Header="Publisher" Binding="{Binding Publisher}" Width="1.5*" />
+                    <DataGridTextColumn Header="Version" Binding="{Binding Version}" Width="1*" />
+                    <DataGridTextColumn Header="Scope" Binding="{Binding Scope}" Width="1*" />
+                </DataGrid.Columns>
+            </DataGrid>
+            <DataGrid x:Name="StartupGrid"
+                      Visibility="Collapsed"
+                      EnableRowVirtualization="True"
+                      EnableColumnVirtualization="True"
+                      VirtualizingPanel.IsVirtualizing="True"
+                      VirtualizingPanel.VirtualizationMode="Recycling"
+                      AutomationProperties.Name="Startup applications">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Entry" Binding="{Binding Name}" Width="2*" />
+                    <DataGridTextColumn Header="Scope" Binding="{Binding Scope}" Width="1*" />
+                    <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="1.4*" />
+                    <DataGridTextColumn Header="Mode" Binding="{Binding Mode}" Width="1.2*" />
+                </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock x:Name="InventoryEmptyText"
+                       Visibility="Collapsed"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Foreground="{StaticResource MutedBrush}"
+                       FontSize="{StaticResource FontBody}"
+                       Text="No applications match this view." />
+        </Grid>
+
+        <Grid Grid.Row="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="InventoryProvenanceText"
+                       Foreground="{StaticResource QuietTextBrush}"
+                       FontSize="{StaticResource FontCaption}"
+                       TextTrimming="CharacterEllipsis"
+                       Text="Waiting for a bounded Windows inventory." />
+            <TextBlock x:Name="InventoryCoverageText"
+                       Grid.Column="1"
+                       Margin="14,0,0,0"
+                       Foreground="{StaticResource MutedBrush}"
+                       FontFamily="{StaticResource MonoFont}"
+                       FontSize="{StaticResource FontMicro}"
+                       Text="READ ONLY" />
+        </Grid>
+    </Grid>
+</UserControl>

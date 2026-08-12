@@ -29,6 +29,10 @@ Implemented on the draft branch:
 
 The pre-rebuild exact native matrix was human-inspected. Fresh images from the current candidate still require human review before PR #11 can leave draft.
 
+### Applications
+
+Implemented on the draft branch: bounded, searchable installed-software and sign-in inventories from documented Windows uninstall, Run/RunOnce, and Startup-folder sources. The page is read-only; command lines, executable paths, uninstall strings, and disable/remove actions are absent.
+
 ### Performance and bounded task action
 
 Implemented on the draft branch:
@@ -79,7 +83,7 @@ All eleven native 1280×820 captures from that exact Windows run were inspected.
 ## Next stages
 
 1. Pass exact-head Windows/package workflows; inspect fresh default and expanded native renders.
-2. Add a real Settings/permissions surface and read-only installed/startup Applications inventory.
+2. Add a real Settings/permissions surface and local historical telemetry with explicit retention.
 3. Add Core Audio session observation and documented volume/mute writes with read-back. Routing remains a separate signed virtual-audio component.
 4. Add mTLS/Tailscale device enrollment, capability-scoped agents, revocation, emergency stop, and NAS audit transport. Keep personal Google Drive and work Box in separate permission domains.
 5. Add Windows Graphics Capture, benchmark profiles/provenance, signing, installer lifecycle evidence, accessibility/scaling verification, and owner acceptance.

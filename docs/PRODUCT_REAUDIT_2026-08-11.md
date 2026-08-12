@@ -77,6 +77,10 @@ Status: implemented by the first rebuild slice.
 - retain all existing security and consent boundaries;
 - continue exact 11-state native render evidence.
 
+### Stage 1B — Applications inventory
+
+Implemented on the draft rebuild branch: a first-class Applications workspace reads bounded installed-software metadata from documented uninstall registry locations and sign-in entries from Run/RunOnce and Startup folders. It exposes only display name, publisher, version, scope, source, and sign-in mode. It never reads or renders uninstall commands, startup command lines, executable paths, or `Win32_Product`; it is read-only and makes no disable/removal claim.
+
 ### Stage 1 — Windows control plane
 
 Required before calling Soltex a real system manager:

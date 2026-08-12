@@ -61,6 +61,13 @@
                             <TextBlock Grid.Column="1" Text="Performance" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
+                    <Button x:Name="ApplicationsNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Applications" Click="ApplicationsNav_Click">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE71D;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Text="Applications" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                        </Grid>
+                    </Button>
                     <TextBlock Margin="10,17,0,6" Text="CONTROL" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" FontWeight="SemiBold" />
                     <Button x:Name="MixerNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Audio" Click="MixerNav_Click">
                         <Grid>
@@ -142,6 +149,7 @@
               TextElement.FontFamily="{StaticResource UiFont}">
             <views:HomeView x:Name="HomePanel" />
             <views:MonitoringView x:Name="MonitoringPanel" Visibility="Collapsed" />
+            <views:ApplicationsView x:Name="ApplicationsPanel" Visibility="Collapsed" />
             <views:DevicesView x:Name="DevicesPanel" Visibility="Collapsed" />
 
             <Grid x:Name="SecurityPanel" Visibility="Collapsed">

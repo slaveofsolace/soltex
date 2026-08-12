@@ -25,6 +25,8 @@ internal static class Program
             TimeSpan.FromMilliseconds(150),
             CancellationToken.None).GetAwaiter().GetResult();
         AudioEndpointSnapshot audioSnapshot = AudioEndpointProvider.CaptureAsync().GetAwaiter().GetResult();
+        ApplicationInventorySnapshot applicationSnapshot =
+            ApplicationInventoryProvider.CaptureAsync().GetAwaiter().GetResult();
 
         List<(string Name, Action Test)> tests =
         [
@@ -38,6 +40,8 @@ internal static class Program
             ("Home view renders a live snapshot", () => HomeViewRenders(snapshot, device)),
             ("Monitoring view renders provenance and bounded rows", () => MonitoringViewRenders(snapshot)),
             ("Monitoring details are disclosed only on request", MonitoringDetailsAreProgressive),
+            ("Application inventory is bounded and path-free", () => ApplicationInventoryIsBounded(applicationSnapshot)),
+            ("Applications view renders installed and startup tabs", () => ApplicationsViewRenders(applicationSnapshot)),
             ("Mixer prioritizes active endpoints", () => MixerPrioritizesActiveEndpoints(audioSnapshot)),
             ("Devices view renders an explicit unnrolled profile", () => DevicesViewRenders(device)),
             ("Render-smoke uses an unconstrained popup viewport", RenderSmokeUsesCanonicalViewport)
@@ -221,6 +225,51 @@ internal static class Program
         view.MonitoringDetailsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         True(view.MonitoringDetailsPanel.Visibility == Visibility.Collapsed,
             "Monitoring detail did not close from its disclosure control.");
+    }
+
+    private static void ApplicationInventoryIsBounded(ApplicationInventorySnapshot snapshot)
+    {
+        True(snapshot.CaptureDuration < TimeSpan.FromSeconds(5),
+            "Application inventory exceeded five seconds.");
+        True(snapshot.Installed.Count <= ApplicationInventoryProvider.MaximumInstalledApplicationCount,
+            "Installed application inventory exceeded its bound.");
+        True(snapshot.Startup.Count <= ApplicationInventoryProvider.MaximumStartupApplicationCount,
+            "Startup inventory exceeded its bound.");
+        foreach (InstalledApplicationObservation application in snapshot.Installed)
+        {
+            True(application.Name.Length is > 0 and <= ApplicationInventoryProvider.MaximumLabelLength,
+                "Installed application name is outside bounds.");
+            True(!application.Name.Any(char.IsControl),
+                "Installed application name contains control characters.");
+        }
+        foreach (StartupApplicationObservation startup in snapshot.Startup)
+        {
+            True(startup.Name.Length is > 0 and <= ApplicationInventoryProvider.MaximumLabelLength,
+                "Startup entry name is outside bounds.");
+            True(!startup.Name.Any(char.IsControl),
+                "Startup entry name contains control characters.");
+        }
+        True(
+            ApplicationInventoryProvider.SanitizeLabel("  App\r\nName  ") == "AppName",
+            "Application labels were not sanitized deterministically.");
+    }
+
+    private static void ApplicationsViewRenders(ApplicationInventorySnapshot snapshot)
+    {
+        ApplicationsView view = new();
+        view.UpdateSnapshot(snapshot);
+        byte[] pixels = Render(view, 980, 720);
+        True(CountVisiblePixels(pixels) > 5_000,
+            "The Applications view render was unexpectedly empty.");
+        True(view.InstalledGrid.Items.Count == snapshot.Installed.Count,
+            "Applications view lost installed rows.");
+        True(view.StartupGrid.Visibility == Visibility.Collapsed,
+            "Startup inventory must be quiet on first view.");
+        view.StartupTabButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.StartupGrid.Visibility == Visibility.Visible,
+            "Startup inventory did not open from its explicit tab.");
+        True(view.StartupGrid.Items.Count == snapshot.Startup.Count,
+            "Applications view lost startup rows.");
     }
 
     private static void MixerPrioritizesActiveEndpoints(AudioEndpointSnapshot snapshot)

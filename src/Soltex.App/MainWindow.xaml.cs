@@ -55,6 +55,7 @@ public partial class MainWindow : Window
         SetRemoteAssistExecutable(RemoteAssistExecutableLocator.FindInstalled());
         DevicesPanel.UpdateObservation(_localDevice);
         DevicesPanel.RemoteAssistRequested += (_, _) => ShowPanel(RemotePanel, RemoteNavButton);
+        ApplicationsPanel.RefreshRequested += ApplicationsPanel_RefreshRequested;
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
@@ -66,6 +67,7 @@ public partial class MainWindow : Window
         }
 
         _ = RefreshAudioAsync();
+        _ = RefreshApplicationsAsync();
 
         _importMonitor = new ImportFolderMonitor(
             _runtime.ImportsPath,
@@ -293,6 +295,28 @@ public partial class MainWindow : Window
         catch (Exception exception) when (exception is COMException or InvalidOperationException or ExternalException)
         {
             MixerPanel.ShowUnavailable();
+        }
+    }
+
+    private async void ApplicationsPanel_RefreshRequested(object? sender, EventArgs e) =>
+        await RefreshApplicationsAsync();
+
+    private async Task RefreshApplicationsAsync()
+    {
+        ApplicationsPanel.ShowLoading();
+        try
+        {
+            ApplicationInventorySnapshot snapshot =
+                await ApplicationInventoryProvider.CaptureAsync();
+            ApplicationsPanel.UpdateSnapshot(snapshot);
+        }
+        catch (Exception exception) when (exception is IOException or
+                                           UnauthorizedAccessException or
+                                           System.Security.SecurityException or
+                                           PlatformNotSupportedException or
+                                           InvalidOperationException)
+        {
+            ApplicationsPanel.ShowUnavailable();
         }
     }
 
@@ -933,6 +957,12 @@ public partial class MainWindow : Window
 
     private void MonitoringNav_Click(object sender, RoutedEventArgs e) => ShowPanel(MonitoringPanel, MonitoringNavButton);
 
+    private async void ApplicationsNav_Click(object sender, RoutedEventArgs e)
+    {
+        ShowPanel(ApplicationsPanel, ApplicationsNavButton);
+        await RefreshApplicationsAsync();
+    }
+
     private void DevicesNav_Click(object sender, RoutedEventArgs e) => ShowPanel(DevicesPanel, DevicesNavButton);
 
     private async void MixerNav_Click(object sender, RoutedEventArgs e)
@@ -971,6 +1001,14 @@ public partial class MainWindow : Window
             string.Equals(normalized, "monitor", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(MonitoringPanel, MonitoringNavButton);
+            return true;
+        }
+
+        if (string.Equals(normalized, "applications", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(normalized, "apps", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(ApplicationsPanel, ApplicationsNavButton);
+            _ = RefreshApplicationsAsync();
             return true;
         }
 
@@ -1041,6 +1079,7 @@ public partial class MainWindow : Window
     {
         HomePanel.Visibility = panel == HomePanel ? Visibility.Visible : Visibility.Collapsed;
         MonitoringPanel.Visibility = panel == MonitoringPanel ? Visibility.Visible : Visibility.Collapsed;
+        ApplicationsPanel.Visibility = panel == ApplicationsPanel ? Visibility.Visible : Visibility.Collapsed;
         DevicesPanel.Visibility = panel == DevicesPanel ? Visibility.Visible : Visibility.Collapsed;
         MixerPanel.Visibility = panel == MixerPanel ? Visibility.Visible : Visibility.Collapsed;
         ClipsPanel.Visibility = panel == ClipsPanel ? Visibility.Visible : Visibility.Collapsed;
@@ -1051,6 +1090,7 @@ public partial class MainWindow : Window
                  {
                      HomeNavButton,
                      MonitoringNavButton,
+                     ApplicationsNavButton,
                      DevicesNavButton,
                      MixerNavButton,
                      ClipsNavButton,
