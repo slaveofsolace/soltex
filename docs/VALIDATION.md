@@ -1,6 +1,6 @@
 # Validation and evidence
 
-Snapshot: 2026-08-11
+Snapshot: 2026-08-12
 
 Repository: `slaveofsolace/soltex`
 
@@ -24,7 +24,28 @@ The complete exact-source gate also passed Security/EICAR 32/32, supply chain 18
 
 The opt-in write gate creates a one-second silent WinMM loop owned by the test process, locates only that process's session, writes its already-observed volume and mute values back unchanged, verifies both through immediate Core Audio read-back, stops the loop, and removes its temporary WAV. The standard suite does not perform any live write. COM GUID/vtable order, bounds, sanitization, identity privacy, rejection, target drift, cancellation, fake read-back match/mismatch, live observation, and measured overhead have focused tests.
 
-The exact self-contained `win-x64` package is 71,559,764 bytes with SHA-256 `31ef5e44b895738723b849705247fb2a4756a2a2092ec9aa514eea429aa64ebb`; its hidden Home render launch exited `0`, produced 1280x820 evidence, and the executable is truthfully `NotSigned`. Full evidence paths and image identities are recorded in [`evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md`](evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md). Hosted Windows and package evidence remain pending for the published reconciliation head.
+The exact self-contained `win-x64` owner-host package is 71,559,764 bytes with SHA-256 `31ef5e44b895738723b849705247fb2a4756a2a2092ec9aa514eea429aa64ebb`; its hidden Home render launch exited `0`, produced 1280x820 evidence, and the executable is truthfully `NotSigned`. Full evidence paths and image identities are recorded in [`evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md`](evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md).
+
+Published PR head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183` then passed Windows run `31562540695` and package-smoke run `31562540694`. Downloaded artifacts `9128308988` and `9128281441` independently matched GitHub digests `sha256:dd0c089596cbbdd09f79140bf9251770dcf18e482ec46bbef3ccd5aa6537e386` and `sha256:ff0df6759cd4b9ff1c8387d174c74d347f5774b1bb446f9e8e4a11c0d68f12c6`. The tested PR merge was exactly one commit ahead of the source with `abf1dc5` as merge base. All 14 retained 1280x820 PNGs matched their manifest identities; default/expanded Audio and packaged Home were directly inspected. The hosted package executable was 71,581,365 bytes, SHA-256 `898fd206951392c837c37dcd0b41178320ab1fd23cc7376819a3f4fb920132a3`, launched with exit code 0, and remained `NotSigned`. Optional hosted AMSI/EICAR remained 31/32 because the installed provider returned native result `1`; required gates passed and no detection-efficacy claim is made.
+
+## Services and runtime-lifecycle development gate
+
+The current uncommitted candidate was exercised on the owner-controlled Windows host before exact-source publication:
+
+| Command/gate | Result |
+|---|---:|
+| targeted Release app/test build | Passed, 0 warnings / 0 errors |
+| `Soltex.App.Tests` | 24/24 |
+| live read-only SCM capture | 296 exposed / 296 observed / 0 inaccessible / 0 omitted; about 65 ms |
+| runtime probe schema | 2; full source/tested identities required |
+| startup completion | 2,294.6 ms |
+| navigation | 18 transitions; 49.3 ms mean / 327.6 ms maximum |
+| visible idle CPU | 0.821% normalized |
+| minimize transition CPU | 2.375% normalized; top work was not the UI dispatcher |
+| minimized steady CPU | 0.000% normalized; Performance sampler stopped |
+| hidden notification-area CPU | 0.000% normalized; Performance sampler stopped |
+
+This is developmental evidence because the report identities name the last clean commit while the measured service/runtime source was still dirty. It is retained to diagnose lifecycle behavior, not to establish exact-source acceptance. The final exact-source gate must rerun after the implementation commit. Short samples are regression evidence, not hardware benchmark scores or cross-machine guarantees. See [`RUNTIME_AND_SERVICES.md`](RUNTIME_AND_SERVICES.md).
 
 ## Activity candidate owner-host gate
 

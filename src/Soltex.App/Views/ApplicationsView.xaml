@@ -28,7 +28,7 @@
                 <TextBlock Margin="0,5,0,0"
                            Style="{StaticResource MutedTextStyle}"
                            FontSize="{StaticResource FontBody}"
-                           Text="Find installed software and review what starts at sign-in." />
+                           Text="Find software, review sign-in entries, and observe Windows service state." />
                 <TextBlock x:Name="InventorySummaryText"
                            Margin="0,9,0,0"
                            Foreground="{StaticResource TextSecondaryBrush}"
@@ -71,6 +71,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="360" />
                 </Grid.ColumnDefinitions>
@@ -88,12 +89,20 @@
                         Content="Startup"
                         AutomationProperties.Name="Show startup applications"
                         Click="StartupTab_Click" />
-                <Grid Grid.Column="3">
+                <Button x:Name="ServicesTabButton"
+                        Grid.Column="2"
+                        Margin="8,0,0,0"
+                        MinWidth="104"
+                        Style="{StaticResource SecondaryButton}"
+                        Content="Services"
+                        AutomationProperties.Name="Show read-only Windows services"
+                        Click="ServicesTab_Click" />
+                <Grid Grid.Column="4">
                     <TextBox x:Name="InventorySearchBox"
                              Height="38"
                              Style="{StaticResource FieldStyle}"
                              VerticalContentAlignment="Center"
-                             AutomationProperties.Name="Search applications by name, publisher, version, or scope"
+                             AutomationProperties.Name="Search the visible application, startup, or service inventory"
                              TextChanged="InventorySearch_TextChanged" />
                     <TextBlock x:Name="SearchHintText"
                                Margin="14,0"
@@ -137,6 +146,24 @@
                         <DataGridTextColumn Header="Scope" Binding="{Binding Scope}" Width="1*" />
                         <DataGridTextColumn Header="Source" Binding="{Binding Source}" Width="1.4*" />
                         <DataGridTextColumn Header="Mode" Binding="{Binding Mode}" Width="1.2*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+                <DataGrid x:Name="ServicesGrid"
+                          Visibility="Collapsed"
+                          EnableRowVirtualization="True"
+                          EnableColumnVirtualization="True"
+                          VirtualizingPanel.IsVirtualizing="True"
+                          VirtualizingPanel.VirtualizationMode="Recycling"
+                          AutomationProperties.Name="Read-only Windows services">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Service" Binding="{Binding DisplayName}" Width="2*" />
+                        <DataGridTextColumn Header="State" Binding="{Binding Status}" Width="1*" />
+                        <DataGridTextColumn Header="Start" Binding="{Binding StartMode}" Width="1*" />
+                        <DataGridTextColumn x:Name="ServiceAttentionColumn"
+                                            Header="Attention"
+                                            Binding="{Binding Signal}"
+                                            Visibility="Collapsed"
+                                            Width="1*" />
                     </DataGrid.Columns>
                 </DataGrid>
                 <TextBlock x:Name="InventoryEmptyText"

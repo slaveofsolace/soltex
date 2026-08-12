@@ -126,6 +126,20 @@ jobs:
             Tee-Object -FilePath .\artifacts\validation\tests-app-controls.log
           if ($LASTEXITCODE -ne 0) { throw "WPF control suite failed with exit code $LASTEXITCODE." }
 
+      - name: Measure native runtime lifecycle cost
+        id: runtime_cost
+        shell: pwsh
+        env:
+          SOLTEX_SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\eng\measure-runtime.ps1 `
+            -OutputDirectory .\artifacts\validation `
+            -Configuration Release `
+            -SourceHeadSha $env:SOLTEX_SOURCE_HEAD_SHA `
+            -TestedCommitSha $env:GITHUB_SHA `
+            -DotnetPath (Get-Command dotnet -ErrorAction Stop).Source
+
       - name: Run opt-in EICAR interoperability suite
         id: eicar
         continue-on-error: true
@@ -168,6 +182,7 @@ jobs:
             monitoring_tests = '${{ steps.monitoring_tests.outcome }}'
             audio_tests = '${{ steps.audio_tests.outcome }}'
             app_tests = '${{ steps.app_tests.outcome }}'
+            runtime_cost = '${{ steps.runtime_cost.outcome }}'
             render_matrix = '${{ steps.render_matrix.outcome }}'
             eicar = '${{ steps.eicar.outcome }}'
           }

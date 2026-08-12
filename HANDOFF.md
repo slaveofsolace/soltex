@@ -1,6 +1,6 @@
 # Soltex handoff
 
-Snapshot: 2026-08-11 (America/Chicago)
+Snapshot: 2026-08-12 (America/Chicago)
 
 ## Repository and ownership
 
@@ -8,111 +8,83 @@ Snapshot: 2026-08-11 (America/Chicago)
 repository: slaveofsolace/soltex
 pull request: #11 (draft)
 branch: sol/soltex-product-rebuild
-validated Activity PR head: 4437db80b844dcfe33cd8265e41cb5fcf00bfd76
-local Activity evidence reconciliation: ce584cfdf6b62085f6b5bd45280dd92fb428e72d
-validated Audio source head: 3511ba92bde450ffac4e3fad145d9a13b8986e72
-evidence reconciliation: current documentation commit, pending publication
-isolated worktree: C:\Users\suhai\Documents\soltex-product-rebuild
+clean published base: abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183
+isolated implementation worktree: C:\Users\suhai\Documents\soltex-product-rebuild
 protected owner checkout: C:\Users\suhai\Documents\SOL Tools
 protected owner branch/head: main / bf2662de80992cfed761625642f084d3caaa0f04
 ```
 
-The protected owner checkout is a physical directory with substantial pre-existing legacy-identity modified and untracked work. It remains user/mixed-owned and was not reset, cleaned, stashed, discarded, overwritten, or used for the rebuild implementation. All current product work occurred in the isolated worktree.
+The protected owner checkout is a physical directory with substantial pre-existing user/mixed dirty work. It has not been reset, cleaned, stashed, discarded, overwritten, or used for rebuild edits. All current product changes are task-owned in the isolated worktree.
 
-No build, test, render-smoke, Soltex, or task-owned PowerShell process remained active at this checkpoint. The tree is reboot-safe.
+No task-owned build, test, render-smoke, runtime-probe, Soltex, or PowerShell process remained active after the last probe.
 
-## Completed Activity slice
+## Accepted product slices
 
-- Added a first-class searchable Activity workspace under Maintenance.
-- Records meaningful Soltex-owned actions and failure/recovery transitions, not clicks or browsing.
-- Defaults to session-only memory and creates no Activity file.
-- Adds explicit 7-day and 30-day per-account retention in Settings.
-- Requires confirmation before shortening retained history or clearing visible/saved history.
-- Bounds retained state to 120 entries and 256 KiB.
-- Sanitizes control characters, whitespace, drive-root text, and UNC-like text in untrusted area/summary fields.
-- Rejects unknown/invalid schemas, invalid JSON, oversized input, future/expired entries, and overflow.
-- Uses same-directory temporary write plus atomic replacement and reports storage/deletion failure as `CHECK`.
-- Connects meaningful Security, Performance/process-action, Remote Assist, quarantine, import-monitor, and recovery events while keeping the authenticated security audit log separate.
-- Extends preferences, last-workspace restoration, tests, render-smoke routing, documentation, and the native evidence matrix.
+### Activity
 
-The follow-up Settings polish removed an accidental clipped control edge at the canonical viewport without changing behavior.
+PR head `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` has accepted owner-host and hosted Windows/package evidence. Activity is a bounded searchable timeline of meaningful Soltex actions and recovery transitions. It defaults to session-only memory, offers explicit 7-day/30-day retention, sanitizes path-like text, bounds storage to 120 entries/256 KiB, uses atomic persistence, and requires confirmation before shortening retention or clearing history.
 
-## Completed Audio candidate
+### Audio
 
-- Added bounded active shared-mode render-session discovery through documented Windows Core Audio interfaces.
-- Inspects at most 128 session slots and exposes at most 24 active, path-free app rows.
-- Keeps system-sounds, multi-process/transferred, ended, and process-unverifiable sessions read-only.
-- Holds only one-way endpoint/session identities in memory; raw identifiers, executable paths, command lines, and icon paths are not exposed, persisted, or logged.
-- Revalidates endpoint/session identities plus process ID/start time immediately before each explicit volume/mute request.
-- Requires immediate Windows volume/mute read-back before showing success and exposes rejection, target drift, unavailability, and mismatch separately.
-- Makes app sessions the primary Audio job and moves full device inventory behind explicit progressive disclosure.
-- Records only the sanitized result of a user-owned request as meaningful Activity.
-- Preserves explicit nonclaims for endpoint switching, routing, virtual devices, EQ, DSP, noise suppression, microphone processing, profiles, and Sonar parity.
+Owner-host exact source `3511ba92bde450ffac4e3fad145d9a13b8986e72` and published reconciliation head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183` have accepted evidence. The slice adds bounded active shared-mode Windows Core Audio sessions, guarded per-session volume/mute, target revalidation, and immediate read-back. System, transferred, ended, or process-unverifiable sessions remain read-only. Raw identifiers, paths, command lines, and icon paths are neither exposed nor persisted.
 
-Exact-source owner-host evidence is green: full Release/identity/design gates, Security/EICAR 32/32, supply chain 18/18, hardening 12/12, Updates 17/17, Device Fabric 24/24, Monitoring 16/16, standard Audio 20/20, opt-in controlled silent-session write/read-back 21/21, and App/control 19/19. The controlled write touched only a task-owned silent WinMM session and wrote its already-observed values back unchanged. The complete native matrix passed 14/14 at 1280x820; default and expanded-device Audio were directly inspected. Self-contained package identity and launch/render passed; the executable is truthfully unsigned. Hosted exact-head/package acceptance is still pending.
+Hosted Windows run `31562540695` and package-smoke run `31562540694` passed. Downloaded artifacts `9128308988` and `9128281441` independently matched their GitHub digests. All 14 retained PNG identities revalidated; default/expanded Audio and packaged Home were directly inspected. The package executable launched with exit code 0 and remained unsigned. Optional hosted AMSI/EICAR remained 31/32 because the installed provider returned native result `1`; required gates passed and no efficacy claim is made.
 
-## Verification
+## Current task-owned candidate
 
-Owner-controlled Windows host, .NET SDK 10.0.302, Release configuration:
+The current dirty worktree adds the next system-lifecycle slice:
+
+- a third Applications tab for bounded, searchable, read-only Win32 Services;
+- query-only SCM rights, driver exclusion, no binary paths, and no service mutation;
+- a schema-2 preference migration with default Exit and explicit Notification-area close behavior;
+- fail-closed notification-area resource handling with only Open Soltex and Exit Soltex;
+- no installed service or hidden executor;
+- cancellation of Performance sampling when hidden, minimized, or closing;
+- released navigation animation clocks and cleared workspace animations before minimize;
+- a fresh-output runtime probe with exact commit identities, state-separated CPU/memory/lifecycle samples, per-thread attribution, and 18-transition navigation timing;
+- a fifteenth native evidence state for progressively disclosed Services;
+- required runtime-cost evidence in the Windows workflow.
+
+Focused owner-host development checks are green:
 
 ```text
-solution build: passed
-identity policy: passed (176 tracked text files; 9 reasoned allowlist entries)
-Soltex.Security.Tests: 31/31
-Soltex.Monitoring.Tests: 16/16
-Soltex.App.Tests: 19/19
-targeted post-polish app build: 0 warnings / 0 errors
-targeted post-polish app tests: 19/19
-exact-head native matrix: 14/14 at 1280x820
-render manifest source/tested SHA: c88d995a89cbbb46ce481e21900927bf57192af6
+targeted Release build: 0 warnings / 0 errors
+Soltex.App.Tests: 24/24
+live Services: Current; 296 exposed / 296 observed / 0 inaccessible / 0 omitted; about 65 ms
+startup: 2294.6 ms
+navigation: 18 transitions; 49.3 ms mean / 327.6 ms maximum
+visible idle CPU: 0.821% normalized
+minimize transition CPU: 2.375% normalized
+minimized steady CPU: 0.000% normalized
+hidden notification-area CPU: 0.000% normalized
 ```
 
-Durable local evidence:
+The transition and steady numbers are deliberately separate. The one-time minimize transition was attributed to a worker/runtime thread, not the WPF dispatcher. This development report is not exact-source acceptance because it measured task-owned dirty source while its identity fields still named the prior clean commit.
+
+Development runtime evidence:
 
 ```text
-final full verification transcript:
-C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\activity-final-source-verify-20260811-221629.transcript.log
-
-exact-head native packet:
-C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\activity-native-c88d995-20260811-222807
+C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\runtime-probe-lifecycle-fix-20260812-000034
 ```
-
-The exact Activity and Settings captures were directly inspected. They show no gross clipping, broken assets, stock gradient/glass/card-grid treatment, or P0 generic-AI design tell. This is agent inspection at one software-rendered native viewport, not owner visual acceptance, accessibility conformance, DPI/scaling proof, or packaging evidence.
-
-Exact PR head `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` subsequently passed Windows run `31560242046` and package-smoke run `31560242019`. Windows artifact `9127496208` has digest `sha256:0046bc2b99c0e10accf58b3c030025c4802ceee782553a06f7c3881599e969c9`; package artifact `9127485263` has digest `sha256:dfd3b7aed215a2646bac1ad745e431511f5e4de4958b479b9a8d3865865ab30b`. The downloaded Windows ZIP independently matched its digest; its manifest bound source `4437db8` to tested PR merge `4b3fff8`, and all 14 retained PNG sizes, hashes, and 1280×820 dimensions revalidated. Hosted Activity and Settings pixels were directly inspected. The optional hosted AMSI/EICAR run remained 31/32 because the runner's provider returned native result `1`; required gates still passed, and no detection-efficacy claim is made.
-
-Audio source `3511ba92bde450ffac4e3fad145d9a13b8986e72` owner-host evidence:
-
-```text
-functional logs:
-C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\audio-exact-3511ba9-20260811-230454
-
-14-state native packet:
-C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\audio-native-3511ba9-20260811-230647
-
-self-contained package packet:
-C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\audio-package-3511ba9-20260811-230909
-```
-
-The package executable is 71,559,764 bytes with SHA-256 `31ef5e44b895738723b849705247fb2a4756a2a2092ec9aa514eea429aa64ebb`; the package Home render is 1280x820 and launch exited `0`. This is unsigned launch evidence, not trusted-distribution or installer-lifecycle evidence.
 
 ## Exact resume step
 
-1. Commit this evidence-only reconciliation without changing validated source behavior.
-2. Push `sol/soltex-product-rebuild` and wait for both draft-PR Windows and package-smoke workflows on the exact published reconciliation head.
-3. Download and re-hash retained artifacts, validate source/tested commit ancestry, and inspect hosted default/expanded Audio pixels before acceptance.
-4. After hosted acceptance, continue with service/startup health plus notification/background-runtime policy and idle/minimized/navigation-cost measurements.
+1. Finish the bounded source/document review and targeted native Services/Settings recapture.
+2. Run the focused Release build/tests and repository policy checks.
+3. Commit the service/runtime source slice on `sol/soltex-product-rebuild` without touching the protected owner checkout.
+4. On that exact commit, run the full Release verification, runtime probe, 15-state native matrix, and self-contained package gate.
+5. Inspect the exact Services/Settings/runtime evidence, reconcile this handoff and validation ledger, commit evidence documentation, and push without force.
+6. Wait for exact published Windows/package workflows, download/re-hash artifacts, verify PR merge ancestry, and inspect hosted pixels before accepting the slice.
 
 ## Remaining product work
 
-- hosted/package acceptance and owner visual review for the per-app Core Audio candidate;
-- supported default/fallback endpoint selection, still separate from routing or DSP;
-- bounded historical numeric telemetry with independently proven retention/migration/cost;
-- notification/background-runtime policy and idle/minimized/navigation-churn measurements;
-- service/driver/startup health observation through supported Windows boundaries;
-- enrolled mTLS/private-mesh agents with revocation, emergency stop, and separate personal/work permission domains;
-- Windows Graphics Capture, benchmark provenance/cancellation, and measured game impact;
-- signed distribution and install/repair/upgrade/rollback/uninstall evidence;
-- keyboard/UI Automation, high contrast, reduced motion, 100–200% scaling, representative viewport, and owner visual acceptance matrices.
+- exact-source and hosted acceptance plus owner visual review for the Services/runtime candidate;
+- supported default/fallback audio endpoint selection, still separate from routing or DSP;
+- bounded historical numeric telemetry with retention, migration, and measured storage/runtime cost;
+- deeper startup/driver observation without generic cleanup claims;
+- mTLS/private-mesh device enrollment, revocation, emergency stop, and isolated personal/work connectors;
+- Windows Graphics Capture and benchmark provenance/cancellation with measured game impact;
+- signed distribution plus install/repair/upgrade/rollback/uninstall evidence;
+- keyboard/UI Automation, high contrast, reduced motion, 100-200% scaling, representative viewport, and owner visual acceptance matrices.
 
-Soltex remains a Windows-native personal system workspace. It is not a SteelSeries GG/Sonar replacement, AppControl replacement, registered antivirus, unattended correction platform, production remote-management agent, signed public release, or production-ready.
+Soltex is a Windows-native personal system workspace. It is not a SteelSeries GG/Sonar replacement, AppControl replacement, registered antivirus, unattended correction platform, production remote-management agent, signed public release, or production-ready.

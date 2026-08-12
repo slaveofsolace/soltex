@@ -19,14 +19,21 @@ internal enum ActivityRetention
     ThirtyDays
 }
 
+internal enum CloseBehavior
+{
+    Exit,
+    NotificationArea
+}
+
 internal sealed record SoltexPreferences(
     TelemetryCadence TelemetryCadence,
     bool RestoreLastWorkspace,
     bool OpenPerformanceDetails,
     ActivityRetention ActivityRetention,
+    CloseBehavior CloseBehavior,
     string LastWorkspace)
 {
-    internal const int CurrentSchemaVersion = 1;
+    internal const int CurrentSchemaVersion = 2;
 
     internal static SoltexPreferences Default { get; } =
         new(
@@ -34,6 +41,7 @@ internal sealed record SoltexPreferences(
             true,
             false,
             global::Soltex.App.ActivityRetention.SessionOnly,
+            global::Soltex.App.CloseBehavior.Exit,
             "home");
 
     internal int TelemetryIntervalMilliseconds => TelemetryCadence switch
@@ -51,6 +59,9 @@ internal sealed record SoltexPreferences(
             Enum.IsDefined(ActivityRetention)
                 ? ActivityRetention
                 : global::Soltex.App.ActivityRetention.SessionOnly,
+            Enum.IsDefined(CloseBehavior)
+                ? CloseBehavior
+                : global::Soltex.App.CloseBehavior.Exit,
             NormalizeWorkspace(LastWorkspace));
 
     internal static string NormalizeWorkspace(string? value)
@@ -120,8 +131,7 @@ internal sealed class PreferencesStore
 
             PreferencesDocument? document =
                 JsonSerializer.Deserialize<PreferencesDocument>(json, SerializerOptions);
-            if (document is null ||
-                document.SchemaVersion != SoltexPreferences.CurrentSchemaVersion)
+            if (document is null || document.SchemaVersion is not (1 or SoltexPreferences.CurrentSchemaVersion))
             {
                 return Recovered("The saved preferences use an unsupported schema.");
             }
@@ -141,10 +151,20 @@ internal sealed class PreferencesStore
                     ignoreCase: true,
                     out retention) &&
                  Enum.IsDefined(retention));
+            bool closeBehaviorMissing = string.IsNullOrWhiteSpace(document.CloseBehavior);
+            CloseBehavior closeBehavior = global::Soltex.App.CloseBehavior.Exit;
+            bool validCloseBehavior =
+                closeBehaviorMissing ||
+                (Enum.TryParse(
+                    document.CloseBehavior,
+                    ignoreCase: true,
+                    out closeBehavior) &&
+                 Enum.IsDefined(closeBehavior));
             string workspace = SoltexPreferences.NormalizeWorkspace(document.LastWorkspace);
             bool normalized =
                 !validCadence ||
                 (!retentionMissing && !validRetention) ||
+                (!closeBehaviorMissing && !validCloseBehavior) ||
                 !string.Equals(
                     workspace,
                     document.LastWorkspace?.Trim(),
@@ -156,12 +176,19 @@ internal sealed class PreferencesStore
                 validRetention && !retentionMissing
                     ? retention
                     : global::Soltex.App.ActivityRetention.SessionOnly,
+                validCloseBehavior && !closeBehaviorMissing
+                    ? closeBehavior
+                    : global::Soltex.App.CloseBehavior.Exit,
                 workspace);
+            bool migrated =
+                document.SchemaVersion == 1 || closeBehaviorMissing;
             return new PreferencesLoadResult(
                 preferences,
                 normalized,
                 normalized
                     ? "Unsupported preference values were reset to safe defaults."
+                    : migrated
+                        ? "Preferences loaded; close behavior remains Exit until explicitly changed."
                     : "Preferences loaded from this Windows account.");
         }
         catch (Exception exception) when (IsExpectedReadFailure(exception))
@@ -180,6 +207,7 @@ internal sealed class PreferencesStore
             normalized.RestoreLastWorkspace,
             normalized.OpenPerformanceDetails,
             normalized.ActivityRetention.ToString(),
+            normalized.CloseBehavior.ToString(),
             normalized.LastWorkspace);
         string json = JsonSerializer.Serialize(document, SerializerOptions);
         if (Encoding.UTF8.GetByteCount(json) > MaximumPreferenceBytes)
@@ -221,5 +249,6 @@ internal sealed class PreferencesStore
         bool RestoreLastWorkspace,
         bool OpenPerformanceDetails,
         string? ActivityRetention,
+        string? CloseBehavior,
         string LastWorkspace);
 }

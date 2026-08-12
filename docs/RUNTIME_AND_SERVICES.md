@@ -1,0 +1,76 @@
+# Runtime lifecycle and Windows services
+
+Snapshot: 2026-08-12
+
+Status: implemented on the draft product-rebuild branch; exact-source owner-host and hosted acceptance pending
+
+## User capability
+
+The Applications workspace has three quiet, searchable views: Installed, Startup, and Services. Services shows display name, current state, start mode, and a narrow attention signal. It is observation only.
+
+Settings also owns an explicit close behavior:
+
+- **Exit** is the default and ends the Soltex desktop process;
+- **Notification area** is opt-in, keeps the same desktop process open after its window closes, and exposes only Open Soltex and Exit Soltex commands;
+- if the notification-area resource cannot be created, Soltex fails closed to Exit.
+
+Soltex installs no background service. Performance sampling runs only while Home or Performance is visible in a non-minimized window. It stops when the window is hidden, minimized, or closing. Security Center change observation and the bounded Imports watcher remain active while the explicitly opted-in desktop process remains open.
+
+## Read-only Service Control Manager boundary
+
+`WindowsServiceInventoryProvider` uses the documented Windows Service Control Manager APIs with query-only access:
+
+- `OpenSCManagerW` requests only `SC_MANAGER_ENUMERATE_SERVICE`;
+- `EnumServicesStatusExW` requests Win32 services in all current states and excludes drivers;
+- `OpenServiceW` requests only `SERVICE_QUERY_CONFIG`;
+- `QueryServiceConfigW` reads only the start type used by the model;
+- every SCM handle is closed through `CloseServiceHandle`.
+
+The provider exposes at most 512 sorted rows from at most 2,048 observed entries. Enumeration is limited to the Windows-documented 256 KiB maximum buffer and each configuration query to 64 KiB. Labels are whitespace/control-character normalized, bounded, and replaced if path-like. Executable paths, service accounts, dependencies, descriptions, command lines, and raw configuration pointers never enter the public model. Inaccessible or omitted records produce Partial or Unavailable state; Soltex does not infer missing values.
+
+The attention column is deliberately conservative. It reports a transition state, or Review only when an automatic stopped service also reports an unusual nonzero exit code. A stopped manual service is not labeled as a problem.
+
+Soltex cannot start, stop, pause, enable, disable, reconfigure, delete, or install a service in this slice.
+
+## Runtime-cost evidence contract
+
+`eng/measure-runtime.ps1` launches the already-built WPF assembly through `dotnet exec`, tracks one process for at most 45 seconds, requires fresh output, and binds the JSON report to full source and tested commit identities. Schema 2 records:
+
+- startup completion time;
+- visible-idle, minimize-transition, minimized-steady, and hidden-notification-area samples;
+- normalized whole-process CPU, working set, private memory, handles, and thread count;
+- Performance-sampler state;
+- dispatcher-thread and top-thread CPU attribution;
+- 18 workspace transitions with mean and maximum elapsed time.
+
+The minimize-transition sample is kept separate from minimized steady state. Soltex releases workspace animation clocks when they complete and clears remaining workspace animations before minimize. This avoids describing one-time transition work as continuous background cost while still retaining the transition measurement.
+
+Development evidence from the dirty pre-commit candidate on the owner host is diagnostic, not exact-source acceptance:
+
+| Measure | Observed |
+|---|---:|
+| startup completion | 2,294.6 ms |
+| 18 navigation transitions | 49.3 ms mean / 327.6 ms maximum |
+| visible idle CPU | 0.821% normalized |
+| minimize transition CPU | 2.375% normalized |
+| minimized steady CPU | 0.000% normalized |
+| hidden notification-area CPU | 0.000% normalized |
+
+The one-time minimize transition was attributed to a worker/runtime thread, not the WPF dispatcher. That observation does not identify the worker implementation or prove the same timing on another machine. The exact report is retained outside the repository at:
+
+```text
+C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\runtime-probe-lifecycle-fix-20260812-000034
+```
+
+## Nonclaims
+
+This is not a service manager, driver inventory, startup optimizer, health diagnosis engine, historical performance database, independent benchmark, resident agent, or unattended correction system. Short samples are regression evidence, not cross-machine performance scores. Notification-area mode is not a Windows service and does not survive sign-out or reboot unless a separate future startup policy is explicitly designed and approved.
+
+## Primary Windows references
+
+- [EnumServicesStatusExW](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-enumservicesstatusexw)
+- [QueryServiceConfigW](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-queryserviceconfigw)
+- [QUERY_SERVICE_CONFIGW](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/ns-winsvc-query_service_configw)
+- [CloseServiceHandle](https://learn.microsoft.com/en-us/windows/win32/api/winsvc/nf-winsvc-closeservicehandle)
+- [WPF application shutdown modes](https://learn.microsoft.com/en-us/dotnet/api/system.windows.application.shutdownmode)
+- [Windows Forms NotifyIcon](https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.notifyicon)

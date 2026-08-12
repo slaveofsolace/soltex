@@ -1,7 +1,7 @@
 # Audio session controls
 
-Snapshot: 2026-08-11
-Status: owner-host exact-source verified at `3511ba92bde450ffac4e3fad145d9a13b8986e72`; hosted exact-head verification pending
+Snapshot: 2026-08-12
+Status: owner-host exact-source verified at `3511ba92bde450ffac4e3fad145d9a13b8986e72`; hosted Windows/package accepted on PR head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183`
 
 ## User capability
 
@@ -51,7 +51,9 @@ Owner-host gates on exact source `3511ba92bde450ffac4e3fad145d9a13b8986e72`:
 - native 1280x820 default and explicitly expanded-device Mixer captures: generated and directly inspected.
 - self-contained `win-x64` package: 71,559,764 bytes, exact SHA-256 recorded, native launch/render passed, truthfully `NotSigned`.
 
-The controlled live-write check is opt-in through `SOLTEX_RUN_AUDIO_WRITE_TEST=1`; the default automated suite never changes a live app's audio. Timing is diagnostic for this host, not a performance guarantee. Full paths, hashes, and the bookkeeping-retry record are in [`evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md`](evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md). Hosted exact-head and package evidence remain required before this slice is accepted for merge.
+The controlled live-write check is opt-in through `SOLTEX_RUN_AUDIO_WRITE_TEST=1`; the default automated suite never changes a live app's audio. Timing is diagnostic for this host, not a performance guarantee. Full paths, hashes, and the bookkeeping-retry record are in [`evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md`](evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md).
+
+Hosted acceptance on published PR head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183` passed Windows run `31562540695` and package-smoke run `31562540694`. Downloaded artifacts `9128308988` and `9128281441` independently matched GitHub digests `sha256:dd0c089596cbbdd09f79140bf9251770dcf18e482ec46bbef3ccd5aa6537e386` and `sha256:ff0df6759cd4b9ff1c8387d174c74d347f5774b1bb446f9e8e4a11c0d68f12c6`. All 14 manifest-bound 1280x820 PNGs revalidated byte-for-byte; default and expanded Audio plus packaged Home were directly inspected. The packaged executable was 71,581,365 bytes, SHA-256 `898fd206951392c837c37dcd0b41178320ab1fd23cc7376819a3f4fb920132a3`, launched with exit code 0, and remained truthfully unsigned. The optional hosted AMSI/EICAR provider check remained 31/32 with native result `1`; required gates passed and this does not support a detection-efficacy claim.
 
 ## Nonclaims
 

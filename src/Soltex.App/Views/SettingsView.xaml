@@ -157,6 +157,49 @@
 
                 <TextBlock Margin="0,18,0,0"
                            Style="{StaticResource SectionTitleStyle}"
+                           Text="Window behavior" />
+                <Border Margin="0,8,0,0"
+                        Style="{StaticResource CardStyle}"
+                        Padding="0">
+                    <Grid Margin="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel MaxWidth="520" HorizontalAlignment="Left">
+                            <TextBlock FontSize="{StaticResource FontBody}"
+                                       FontWeight="SemiBold"
+                                       Text="When the window closes" />
+                            <TextBlock x:Name="NotificationAreaDetailText"
+                                       Margin="0,5,0,0"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       FontSize="{StaticResource FontCaption}"
+                                       TextWrapping="Wrap"
+                                       Text="Exit ends the Soltex process. Notification-area mode is opt-in." />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Margin="24,0,0,0"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Button x:Name="ExitOnCloseButton"
+                                    MinWidth="78"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Exit"
+                                    AutomationProperties.Name="Exit Soltex when its window closes"
+                                    Click="ExitOnClose_Click" />
+                            <Button x:Name="NotificationAreaButton"
+                                    Margin="8,0,0,0"
+                                    MinWidth="146"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Notification area"
+                                    AutomationProperties.Name="Keep Soltex in the notification area when its window closes"
+                                    Click="NotificationArea_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <TextBlock Margin="0,18,0,0"
+                           Style="{StaticResource SectionTitleStyle}"
                            Text="Activity" />
                 <Border Margin="0,8,0,0"
                         Style="{StaticResource CardStyle}"
@@ -229,21 +272,23 @@
                                    FontSize="{StaticResource FontMicro}"
                                    Text="ON DEVICE" />
                         <TextBlock Grid.Row="2"
-                                   Text="Telemetry sampling stops when Soltex closes." />
+                                   Text="Performance sampling pauses when minimized or hidden." />
                         <TextBlock Grid.Row="2"
                                    Grid.Column="1"
                                    Foreground="{StaticResource TextSecondaryBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="{StaticResource FontMicro}"
-                                   Text="APP LIFETIME" />
-                        <TextBlock Grid.Row="4"
-                                   Text="Product analytics and a background service are not installed." />
-                        <TextBlock Grid.Row="4"
+                                   Text="SUSPENDS" />
+                        <TextBlock x:Name="BackgroundRuntimeText"
+                                   Grid.Row="4"
+                                   Text="Closing Soltex ends this desktop process; no service is installed." />
+                        <TextBlock x:Name="BackgroundRuntimeStateText"
+                                   Grid.Row="4"
                                    Grid.Column="1"
                                    Foreground="{StaticResource TextSecondaryBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="{StaticResource FontMicro}"
-                                   Text="NONE" />
+                                   Text="EXIT" />
                     </Grid>
                 </Border>
 

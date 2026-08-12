@@ -95,16 +95,18 @@ Accepted on exact PR head `4437db80b844dcfe33cd8265e41cb5fcf00bfd76`: one search
 
 Required before calling Soltex a real system manager:
 
-- extend Audio only through supported Core Audio session observation and confirmed read-back controls;
-- extend the accepted installed-application/startup inventory only through documented, path-minimizing sources;
+- retain accepted Audio only through supported Core Audio session observation and confirmed read-back controls;
+- retain the installed-application/startup inventory and current read-only service candidate only through documented, path-minimizing sources;
 - retain the accepted safe process action with protected-process rejection, exact confirmation, and recovery reporting;
-- add service, driver, and startup health observation without generic cleanup claims;
-- add notification and background-runtime policy, including a visible off switch;
-- record performance cost while idle, minimized, and under navigation churn.
+- add driver and deeper startup health observation without generic cleanup claims;
+- publish the current explicit Exit/notification-area policy, including fail-closed behavior and no-service boundary;
+- publish exact-source performance cost while idle, during minimize transition, minimized steady, hidden, and under navigation churn.
+
+Current implementation candidate: the Applications surface now includes a progressively disclosed, query-only Win32 Services table. Drivers, binary paths, and mutations are excluded. Exit remains the default close behavior; notification-area mode is explicit and keeps only the same desktop process open. Performance sampling stops while hidden or minimized. A development probe separated one-time minimize transition cost from steady minimized cost and observed 0% normalized CPU for both minimized steady and hidden states on this owner host. Exact-source and hosted acceptance remain pending; see [`RUNTIME_AND_SERVICES.md`](RUNTIME_AND_SERVICES.md).
 
 ### Stage 2 — Audio that can be used
 
-Exact source `3511ba92bde450ffac4e3fad145d9a13b8986e72` is owner-host verified: active shared-mode render-session enumeration, path-minimized display identity, single-process/system-session admission rules, explicit volume/mute, immediate read-back, visible mismatch/target-change failure, and progressive device disclosure. Standard Audio is 20/20; an opt-in controlled silent-session gate is 21/21 and touches no other app's session; the complete native matrix and self-contained package gate pass. Hosted exact-head/package acceptance is still pending.
+Exact source `3511ba92bde450ffac4e3fad145d9a13b8986e72` is owner-host verified and PR head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183` has accepted hosted Windows/package evidence: active shared-mode render-session enumeration, path-minimized display identity, single-process/system-session admission rules, explicit volume/mute, immediate read-back, visible mismatch/target-change failure, and progressive device disclosure. Standard Audio is 20/20; an opt-in controlled silent-session gate is 21/21 and touches no other app's session; exact native and self-contained package gates passed. Hosted artifacts re-hashed exactly and the relevant pixels were inspected.
 
 - retain active Windows audio sessions in addition to endpoints;
 - retain documented session volume and mute controls with immediate read-back;

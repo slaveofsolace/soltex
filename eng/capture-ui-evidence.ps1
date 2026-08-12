@@ -85,6 +85,7 @@ $matrix = @(
     [ordered]@{ id = 'monitoring-default'; panel = 'monitoring'; state = 'default'; file = 'monitoring-current-source.png' },
     [ordered]@{ id = 'monitoring-details'; panel = 'monitoring-details'; state = 'expanded'; file = 'monitoring-details-current-source.png' },
     [ordered]@{ id = 'applications-default'; panel = 'applications'; state = 'default'; file = 'applications-current-source.png' },
+    [ordered]@{ id = 'applications-services'; panel = 'applications-services'; state = 'expanded'; file = 'applications-services-current-source.png' },
     [ordered]@{ id = 'activity-default'; panel = 'activity'; state = 'default'; file = 'activity-current-source.png' },
     [ordered]@{ id = 'settings-default'; panel = 'settings'; state = 'default'; file = 'settings-current-source.png' },
     [ordered]@{ id = 'devices-default'; panel = 'devices'; state = 'default'; file = 'devices-current-source.png' },

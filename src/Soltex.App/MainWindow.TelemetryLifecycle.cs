@@ -10,25 +10,44 @@ public partial class MainWindow
     private bool _telemetryReconcileQueued;
     private bool _telemetryLifecycleClosing;
 
+    internal bool IsPerformanceSamplingActive => _telemetryCancellation is not null;
+
     protected override void OnInitialized(EventArgs e)
     {
         base.OnInitialized(e);
         Loaded += TelemetryLifecycle_Loaded;
         StateChanged += TelemetryLifecycle_StateChanged;
+        IsVisibleChanged += TelemetryLifecycle_IsVisibleChanged;
         HomePanel.IsVisibleChanged += TelemetryPanel_IsVisibleChanged;
         MonitoringPanel.IsVisibleChanged += TelemetryPanel_IsVisibleChanged;
     }
 
     protected override void OnClosing(CancelEventArgs e)
     {
-        _telemetryLifecycleClosing = true;
         base.OnClosing(e);
+        if (!e.Cancel)
+        {
+            _telemetryLifecycleClosing = true;
+            QueueTelemetryReconcile();
+        }
     }
 
     private void TelemetryLifecycle_Loaded(object sender, RoutedEventArgs e) =>
         QueueTelemetryReconcile();
 
-    private void TelemetryLifecycle_StateChanged(object? sender, EventArgs e) =>
+    private void TelemetryLifecycle_StateChanged(object? sender, EventArgs e)
+    {
+        if (WindowState == WindowState.Minimized)
+        {
+            StopWorkspaceAnimations();
+        }
+
+        QueueTelemetryReconcile();
+    }
+
+    private void TelemetryLifecycle_IsVisibleChanged(
+        object sender,
+        DependencyPropertyChangedEventArgs e) =>
         QueueTelemetryReconcile();
 
     private void TelemetryPanel_IsVisibleChanged(
@@ -69,6 +88,7 @@ public partial class MainWindow
         {
             bool shouldRun = TelemetryActivityPolicy.ShouldRun(
                 IsLoaded,
+                IsVisible,
                 _telemetryLifecycleClosing,
                 WindowState,
                 HomePanel.IsVisible,

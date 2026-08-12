@@ -1,6 +1,6 @@
 # Implementation status
 
-Snapshot: 2026-08-11  
+Snapshot: 2026-08-12
 Product: **Soltex**  
 Repository: `slaveofsolace/soltex`  
 Canonical baseline: `main` at `9e424a47f1cf23d8a174162d3561f5b27dbb7551`  
@@ -33,9 +33,13 @@ Exact native matrices through the Activity checkpoint were agent-inspected at 12
 
 Hosted Windows-verified on `04da86e6e38f6a1de99b5de8edd2427792f4bf36`: bounded, searchable installed-software and sign-in inventories from documented Windows uninstall, Run/RunOnce, and Startup-folder sources. The page is read-only; command lines, executable paths, uninstall strings, and disable/remove actions are absent. Its exact native capture was inspected after a task-first visual refinement.
 
+The current draft adds a third progressive Services view through query-only Service Control Manager access. It excludes drivers and binary paths, exposes state/start mode for at most 512 path-free Win32 service rows, and provides no start, stop, enable, disable, configuration, delete, or install action. Owner-host development capture observed 296/296 services with 0 inaccessible and 0 omitted in about 65 ms. Exact-source and hosted acceptance are pending.
+
 ### Settings and local preferences
 
 Hosted Windows-verified on `5c4a16de85b0b63bff4779769193a1e94411c77c`: Settings owns a working 1/2/5-second telemetry cadence, optional restoration of the last workspace after a normal close, and the default disclosure state for Performance detail. The bounded non-secret document remains on the current Windows account, recovers explicitly after invalid/oversized input, and does not add analytics or a background service.
+
+The current draft migrates preferences to schema 2 and adds an explicit close policy. Exit remains the default. Notification-area mode is opt-in, exposes only Open and Exit, fails closed when unavailable, and keeps the same desktop process open without installing a service. Performance sampling stops while hidden or minimized.
 
 ### Activity and local privacy
 
@@ -57,9 +61,9 @@ No executable paths, packet contents, destination history, elevation bypass, or 
 
 ### Audio mixer
 
-Owner-host exact-source verified on `3511ba92bde450ffac4e3fad145d9a13b8986e72`: bounded Windows Core Audio endpoint enumeration plus active shared-mode render sessions. Soltex inspects at most 128 session slots, exposes at most 24 path-free session rows, and keeps system-sounds, multi-process/transferred, ended, or process-unverifiable sessions read-only. Eligible volume/mute requests revalidate endpoint/session identities plus process ID/start time immediately before the write and require immediate Windows read-back before success. The default UI keeps app controls primary and complete device inventory behind explicit disclosure.
+Owner-host exact-source verified on `3511ba92bde450ffac4e3fad145d9a13b8986e72` and hosted Windows/package accepted on PR head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183`: bounded Windows Core Audio endpoint enumeration plus active shared-mode render sessions. Soltex inspects at most 128 session slots, exposes at most 24 path-free session rows, and keeps system-sounds, multi-process/transferred, ended, or process-unverifiable sessions read-only. Eligible volume/mute requests revalidate endpoint/session identities plus process ID/start time immediately before the write and require immediate Windows read-back before success. The default UI keeps app controls primary and complete device inventory behind explicit disclosure.
 
-The full Release/identity/design test gate passed; standard Audio is 20/20, the opt-in task-owned silent-session live-write gate is 21/21, App/control is 19/19, the exact native matrix is 14/14, and self-contained package launch/identity passed. Hosted Windows/package acceptance remains pending. Not implemented: endpoint switching, app routing, virtual devices, EQ, DSP, noise suppression, microphone processing, profiles, or Sonar parity.
+The full Release/identity/design test gate passed; standard Audio is 20/20, the opt-in task-owned silent-session live-write gate is 21/21, App/control is 19/19, the exact native matrix is 14/14, and self-contained package launch/identity passed. Hosted Windows and package runs also passed, downloaded artifacts re-hashed exactly, and hosted Audio/package pixels were inspected. Not implemented: endpoint switching, app routing, virtual devices, EQ, DSP, noise suppression, microphone processing, profiles, or Sonar parity.
 
 ### Security companion
 
@@ -92,11 +96,13 @@ The Settings checkpoint `5c4a16de85b0b63bff4779769193a1e94411c77c` passed Window
 
 The Activity checkpoint `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` passed Windows run `31560242046` and package-smoke run `31560242019`. Windows artifact `9127496208` has digest `sha256:0046bc2b99c0e10accf58b3c030025c4802ceee782553a06f7c3881599e969c9`; package artifact `9127485263` has digest `sha256:dfd3b7aed215a2646bac1ad745e431511f5e4de4958b479b9a8d3865865ab30b`. The 14-state manifest and retained PNG identities were independently revalidated, and hosted Activity/Settings captures were inspected. Optional hosted AMSI/EICAR remained 31/32 because that runner's installed provider returned native result `1`; required gates passed.
 
+The Audio reconciliation head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183` passed Windows run `31562540695` and package-smoke run `31562540694`. Downloaded artifacts `9128308988` and `9128281441` matched their recorded GitHub digests. All 14 native PNG identities revalidated; default/expanded Audio and packaged Home were directly inspected. The packaged executable launched with exit code 0 and remained unsigned.
+
 ## Next stages
 
-1. Publish and accept the Core Audio session/read-back candidate through exact-head Windows, package, native-render, and owner-review gates.
+1. Publish and accept the read-only Services/notification-area/runtime-cost slice through exact-head Windows, package, native-render, and owner-review gates.
 2. Add bounded local historical telemetry only after its storage, retention, migration, and measured-idle-cost contract is independently proven.
-3. Add service/startup health plus a notification/background-runtime policy with measured idle/minimized/navigation cost.
+3. Add supported default/fallback audio endpoint selection without claiming routing or DSP.
 4. Add mTLS/Tailscale device enrollment, capability-scoped agents, revocation, emergency stop, and NAS audit transport. Keep personal Google Drive and work Box in separate permission domains.
 5. Add Windows Graphics Capture, benchmark profiles/provenance, signing, installer lifecycle evidence, accessibility/scaling verification, and owner acceptance.
 

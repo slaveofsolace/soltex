@@ -45,14 +45,25 @@ public partial class MainWindow : Window
     private bool _securityActivityVisible;
     private readonly PreferencesStore _preferencesStore;
     private readonly LocalActivityStore _activityStore;
+    private readonly SemaphoreSlim _applicationRefreshGate = new(1, 1);
+    private readonly TaskCompletionSource<bool> _startupCompleted = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
     private SoltexPreferences _preferences = SoltexPreferences.Default;
     private int _telemetryIntervalMilliseconds = SoltexPreferences.Default.TelemetryIntervalMilliseconds;
     private string _activeWorkspace = "home";
-    private readonly bool _renderSmokeMode = Environment.GetCommandLineArgs()
-        .Any(argument => string.Equals(
-            argument,
-            "--render-smoke",
-            StringComparison.OrdinalIgnoreCase));
+    private readonly bool _renderSmokeMode = RuntimeLaunchPolicy.UsesControlledRuntime(
+        Environment.GetCommandLineArgs());
+
+    internal bool NotificationAreaAvailable { get; private set; }
+
+    internal bool KeepsRunningInNotificationArea =>
+        _preferences.CloseBehavior == CloseBehavior.NotificationArea;
+
+    internal event EventHandler? CloseBehaviorChanged;
+
+    internal event EventHandler? ShutdownCompleted;
+
+    internal Task StartupCompleted => _startupCompleted.Task;
 
     public MainWindow()
     {
@@ -61,6 +72,15 @@ public partial class MainWindow : Window
             Path.Combine(_runtime.DataRoot, "preferences.json"));
         PreferencesLoadResult preferencesLoad = _preferencesStore.Load();
         _preferences = preferencesLoad.Preferences;
+        if (_renderSmokeMode)
+        {
+            _preferences = _preferences with
+            {
+                RestoreLastWorkspace = false,
+                ActivityRetention = ActivityRetention.SessionOnly,
+                CloseBehavior = CloseBehavior.Exit
+            };
+        }
         Volatile.Write(
             ref _telemetryIntervalMilliseconds,
             _preferences.TelemetryIntervalMilliseconds);
@@ -68,6 +88,8 @@ public partial class MainWindow : Window
             _preferences,
             preferencesLoad.RecoveredFromInvalid,
             preferencesLoad.Detail);
+        NotificationAreaAvailable = OperatingSystem.IsWindows();
+        SettingsPanel.UpdateNotificationAreaAvailability(NotificationAreaAvailable);
         _activityStore = new LocalActivityStore(
             Path.Combine(_runtime.DataRoot, "activity.json"));
         ActivityLoadResult activityLoad =
@@ -97,46 +119,64 @@ public partial class MainWindow : Window
         ActivityPanel.ClearRequested += ActivityPanel_ClearRequested;
     }
 
+    internal void SetNotificationAreaAvailability(bool available)
+    {
+        NotificationAreaAvailable = available;
+        SettingsPanel.UpdateNotificationAreaAvailability(available);
+    }
+
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        if (!_renderSmokeMode && _preferences.RestoreLastWorkspace)
+        try
         {
-            RestoreWorkspace(_preferences.LastWorkspace);
-        }
+            if (!_renderSmokeMode && _preferences.RestoreLastWorkspace)
+            {
+                RestoreWorkspace(_preferences.LastWorkspace);
+            }
 
-        if (_telemetryCancellation is null)
-        {
-            _telemetryCancellation = new CancellationTokenSource();
-            _telemetryLoopTask = RunTelemetryLoopAsync(_telemetryCancellation.Token);
-        }
+            if (_telemetryCancellation is null)
+            {
+                _telemetryCancellation = new CancellationTokenSource();
+                _telemetryLoopTask = RunTelemetryLoopAsync(_telemetryCancellation.Token);
+            }
 
-        _ = RefreshAudioAsync();
-        _ = RefreshApplicationsAsync();
+            Task audioRefresh = RefreshAudioAsync();
+            Task applicationRefresh = RefreshApplicationsAsync();
 
-        _importMonitor = new ImportFolderMonitor(
-            _runtime.ImportsPath,
-            _runtime.Assessor,
-            HandleImportAssessmentAsync);
-        _protectionMonitor = new ProtectionMonitor(
-            _runtime.Defender,
-            new WindowsSecurityChangeMonitor());
-        _protectionMonitor.Updated += OnProtectionMonitorUpdated;
-        await RefreshAllAsync();
-        await RefreshUpdateJournalAsync();
-        _protectionMonitor.Start();
-        AddActivity("Soltex import guard is active.", "Security");
-        if (_runtime.DataRootKind == ProductDataRootKind.LegacyCompatibility)
-        {
+            _importMonitor = new ImportFolderMonitor(
+                _runtime.ImportsPath,
+                _runtime.Assessor,
+                HandleImportAssessmentAsync);
+            _protectionMonitor = new ProtectionMonitor(
+                _runtime.Defender,
+                new WindowsSecurityChangeMonitor());
+            _protectionMonitor.Updated += OnProtectionMonitorUpdated;
+            await Task.WhenAll(
+                RefreshAllAsync(),
+                RefreshUpdateJournalAsync(),
+                audioRefresh,
+                applicationRefresh);
+            _protectionMonitor.Start();
+            AddActivity("Soltex import guard is active.", "Security");
+            if (_runtime.DataRootKind == ProductDataRootKind.LegacyCompatibility)
+            {
+                AddActivity(
+                    "Soltex is using the existing compatible data location; no files were moved.",
+                    "Security");
+            }
+
             AddActivity(
-                "Soltex is using the existing compatible data location; no files were moved.",
+                _protectionMonitor.ChangeNotificationsAvailable
+                    ? "Windows Security change notifications are active."
+                    : "Windows Security notifications are unavailable; bounded polling remains active.",
                 "Security");
+            _startupCompleted.TrySetResult(true);
         }
-
-        AddActivity(
-            _protectionMonitor.ChangeNotificationsAvailable
-                ? "Windows Security change notifications are active."
-                : "Windows Security notifications are unavailable; bounded polling remains active.",
-            "Security");
+        catch (Exception exception)
+        {
+            _startupCompleted.TrySetException(exception);
+            throw;
+        }
     }
 
     private async void Window_Closed(object? sender, EventArgs e)
@@ -175,6 +215,7 @@ public partial class MainWindow : Window
         _telemetryCancellation?.Dispose();
         _updateJournal.Dispose();
         _runtime.Dispose();
+        ShutdownCompleted?.Invoke(this, EventArgs.Empty);
     }
 
     private async Task RunTelemetryLoopAsync(CancellationToken cancellationToken)
@@ -404,12 +445,22 @@ public partial class MainWindow : Window
 
     private async Task RefreshApplicationsAsync()
     {
+        if (!await _applicationRefreshGate.WaitAsync(0))
+        {
+            return;
+        }
+
         ApplicationsPanel.ShowLoading();
         try
         {
-            ApplicationInventorySnapshot snapshot =
-                await ApplicationInventoryProvider.CaptureAsync();
-            ApplicationsPanel.UpdateSnapshot(snapshot);
+            Task<ApplicationInventorySnapshot> applicationCapture =
+                ApplicationInventoryProvider.CaptureAsync();
+            Task<WindowsServiceInventorySnapshot> serviceCapture =
+                WindowsServiceInventoryProvider.CaptureAsync();
+            await Task.WhenAll(applicationCapture, serviceCapture);
+            ApplicationsPanel.UpdateSnapshot(
+                await applicationCapture,
+                await serviceCapture);
         }
         catch (Exception exception) when (exception is IOException or
                                            UnauthorizedAccessException or
@@ -418,6 +469,10 @@ public partial class MainWindow : Window
                                            InvalidOperationException)
         {
             ApplicationsPanel.ShowUnavailable();
+        }
+        finally
+        {
+            _applicationRefreshGate.Release();
         }
     }
 
@@ -1156,6 +1211,8 @@ public partial class MainWindow : Window
             }
         }
 
+        bool closeBehaviorChanged =
+            requested.CloseBehavior != _preferences.CloseBehavior;
         _preferences = requested;
         Volatile.Write(
             ref _telemetryIntervalMilliseconds,
@@ -1179,6 +1236,11 @@ public partial class MainWindow : Window
         catch (Exception exception) when (IsExpectedPreferenceWriteFailure(exception))
         {
             SettingsPanel.ShowSaveFailure();
+        }
+
+        if (closeBehaviorChanged)
+        {
+            CloseBehaviorChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -1291,11 +1353,18 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (string.Equals(normalized, "applications-services", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(ApplicationsPanel, ApplicationsNavButton);
+            ApplicationsPanel.ShowServicesForEvidence();
+            _renderSmokeFocusTarget = ApplicationsPanel.ServicesGrid;
+            return true;
+        }
+
         if (string.Equals(normalized, "applications", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(normalized, "apps", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(ApplicationsPanel, ApplicationsNavButton);
-            _ = RefreshApplicationsAsync();
             return true;
         }
 
@@ -1429,8 +1498,31 @@ public partial class MainWindow : Window
                 OpacityProperty,
                 new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(160))
                 {
-                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                    FillBehavior = FillBehavior.Stop
                 });
+        }
+    }
+
+    private void StopWorkspaceAnimations()
+    {
+        foreach (UIElement panel in new UIElement[]
+                 {
+                     HomePanel,
+                     MonitoringPanel,
+                     ApplicationsPanel,
+                     DevicesPanel,
+                     MixerPanel,
+                     ClipsPanel,
+                     SecurityPanel,
+                     RemotePanel,
+                     ActivityPanel,
+                     UpdatePanel,
+                     SettingsPanel
+                 })
+        {
+            panel.BeginAnimation(OpacityProperty, null);
+            panel.Opacity = 1;
         }
     }
 

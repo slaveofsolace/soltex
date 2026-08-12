@@ -8,12 +8,13 @@ namespace Soltex.App.Views;
 public partial class ApplicationsView : UserControl
 {
     private ApplicationInventorySnapshot? _snapshot;
-    private bool _showStartup;
+    private WindowsServiceInventorySnapshot? _serviceSnapshot;
+    private InventoryTab _activeTab;
 
     public ApplicationsView()
     {
         InitializeComponent();
-        SetTab(showStartup: false);
+        SetTab(InventoryTab.Installed);
     }
 
     internal event EventHandler? RefreshRequested;
@@ -24,13 +25,16 @@ public partial class ApplicationsView : UserControl
         InventoryStateDot.Fill = (Brush)FindResource("WarningBrush");
         InventoryStateText.Foreground = (Brush)FindResource("WarningBrush");
         InventoryStateText.Text = "READING";
-        InventorySummaryText.Text = "Reading installed software and sign-in entries…";
-        InventoryProvenanceText.Text = "Reading supported Windows application sources…";
+        InventorySummaryText.Text = "Reading software, sign-in entries, and Windows services…";
+        InventoryProvenanceText.Text = "Reading bounded, supported Windows inventory sources…";
     }
 
-    internal void UpdateSnapshot(ApplicationInventorySnapshot snapshot)
+    internal void UpdateSnapshot(
+        ApplicationInventorySnapshot snapshot,
+        WindowsServiceInventorySnapshot serviceSnapshot)
     {
         _snapshot = snapshot;
+        _serviceSnapshot = serviceSnapshot;
         RefreshInventoryButton.IsEnabled = true;
         int publisherCount = snapshot.Installed
             .Select(item => item.Publisher)
@@ -42,43 +46,58 @@ public partial class ApplicationsView : UserControl
             .Count();
         InventorySummaryText.Text = string.Format(
             CultureInfo.CurrentCulture,
-            "{0:N0} installed · {1:N0} publishers · {2:N0} sign-in entries",
+            "{0:N0} installed · {1:N0} publishers · {2:N0} sign-in · {3:N0} services",
             snapshot.Installed.Count,
             publisherCount,
-            snapshot.Startup.Count);
+            snapshot.Startup.Count,
+            serviceSnapshot.Services.Count);
 
-        bool complete = snapshot.InaccessibleSourceCount == 0;
+        bool complete =
+            snapshot.InaccessibleSourceCount == 0 &&
+            serviceSnapshot.State == ServiceInventoryState.Current;
         Brush stateBrush = (Brush)FindResource(complete ? "SignalBrush" : "WarningBrush");
         InventoryStateDot.Fill = stateBrush;
         InventoryStateText.Foreground = stateBrush;
         InventoryStateText.Text = complete ? "CURRENT" : "PARTIAL";
         InventoryProvenanceText.Text =
-            $"Updated {snapshot.CapturedAtUtc.ToLocalTime():t} · {snapshot.CaptureDuration.TotalMilliseconds:F0} ms · {snapshot.Provenance}";
+            $"Updated {snapshot.CapturedAtUtc.ToLocalTime():t} · apps {snapshot.CaptureDuration.TotalMilliseconds:F0} ms · services {serviceSnapshot.CaptureDuration.TotalMilliseconds:F0} ms · supported Windows sources";
+        ServiceAttentionColumn.Visibility = serviceSnapshot.Services.Any(item =>
+            !string.IsNullOrWhiteSpace(item.Signal))
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         ApplyFilter();
     }
 
     internal void ShowUnavailable()
     {
         _snapshot = null;
+        _serviceSnapshot = null;
         InstalledGrid.ItemsSource = Array.Empty<InstalledRow>();
         StartupGrid.ItemsSource = Array.Empty<StartupRow>();
-        InventorySummaryText.Text = "Application inventory is unavailable.";
+        ServicesGrid.ItemsSource = Array.Empty<ServiceRow>();
+        ServiceAttentionColumn.Visibility = Visibility.Collapsed;
+        InventorySummaryText.Text = "System inventory is unavailable.";
         RefreshInventoryButton.IsEnabled = true;
         InventoryStateDot.Fill = (Brush)FindResource("DangerBrush");
         InventoryStateText.Foreground = (Brush)FindResource("DangerBrush");
         InventoryStateText.Text = "UNAVAILABLE";
         InventoryCoverageText.Text = "READ FAILED";
         InventoryProvenanceText.Text =
-            "Windows did not expose a bounded application inventory. No values were synthesized.";
-        InventoryEmptyText.Text = "Application inventory could not be read.";
+            "Windows did not expose a bounded inventory. No values were synthesized.";
+        InventoryEmptyText.Text = "System inventory could not be read.";
         InventoryEmptyText.Visibility = Visibility.Visible;
     }
 
+    internal void ShowServicesForEvidence() => SetTab(InventoryTab.Services);
+
     private void InstalledTab_Click(object sender, RoutedEventArgs e) =>
-        SetTab(showStartup: false);
+        SetTab(InventoryTab.Installed);
 
     private void StartupTab_Click(object sender, RoutedEventArgs e) =>
-        SetTab(showStartup: true);
+        SetTab(InventoryTab.Startup);
+
+    private void ServicesTab_Click(object sender, RoutedEventArgs e) =>
+        SetTab(InventoryTab.Services);
 
     private void InventorySearch_TextChanged(object sender, TextChangedEventArgs e) =>
         ApplyFilter();
@@ -86,18 +105,23 @@ public partial class ApplicationsView : UserControl
     private void Refresh_Click(object sender, RoutedEventArgs e) =>
         RefreshRequested?.Invoke(this, EventArgs.Empty);
 
-    private void SetTab(bool showStartup)
+    private void SetTab(InventoryTab tab)
     {
-        _showStartup = showStartup;
-        InstalledGrid.Visibility = showStartup ? Visibility.Collapsed : Visibility.Visible;
-        StartupGrid.Visibility = showStartup ? Visibility.Visible : Visibility.Collapsed;
-        InstalledTabButton.Background = (Brush)FindResource(showStartup ? "NavRestBrush" : "SelectedNavBrush");
-        InstalledTabButton.Foreground = (Brush)FindResource(showStartup ? "MutedBrush" : "AccentBrush");
-        StartupTabButton.Background = (Brush)FindResource(showStartup ? "SelectedNavBrush" : "NavRestBrush");
-        StartupTabButton.Foreground = (Brush)FindResource(showStartup ? "AccentBrush" : "MutedBrush");
-        InventoryEmptyText.Text = showStartup
-            ? "No startup entries match your search."
-            : "No installed applications match your search.";
+        _activeTab = tab;
+        InstalledGrid.Visibility = tab == InventoryTab.Installed ? Visibility.Visible : Visibility.Collapsed;
+        StartupGrid.Visibility = tab == InventoryTab.Startup ? Visibility.Visible : Visibility.Collapsed;
+        ServicesGrid.Visibility = tab == InventoryTab.Services ? Visibility.Visible : Visibility.Collapsed;
+        SetSelected(InstalledTabButton, tab == InventoryTab.Installed);
+        SetSelected(StartupTabButton, tab == InventoryTab.Startup);
+        SetSelected(ServicesTabButton, tab == InventoryTab.Services);
+        InventoryEmptyText.Text = tab switch
+        {
+            InventoryTab.Startup => "No startup entries match your search.",
+            InventoryTab.Services when _serviceSnapshot?.State == ServiceInventoryState.Unavailable =>
+                "Windows service inventory is unavailable.",
+            InventoryTab.Services => "No Windows services match your search.",
+            _ => "No installed applications match your search."
+        };
         ApplyFilter();
     }
 
@@ -105,7 +129,7 @@ public partial class ApplicationsView : UserControl
     {
         string query = InventorySearchBox.Text.Trim();
         SearchHintText.Visibility = query.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
-        if (_snapshot is null)
+        if (_snapshot is null || _serviceSnapshot is null)
         {
             InventoryEmptyText.Visibility = Visibility.Visible;
             return;
@@ -129,13 +153,38 @@ public partial class ApplicationsView : UserControl
                 item.Mode.Contains(query, StringComparison.OrdinalIgnoreCase))
             .Select(item => new StartupRow(item))
             .ToArray();
+        ServiceRow[] services = _serviceSnapshot.Services
+            .Where(item =>
+                query.Length == 0 ||
+                item.DisplayName.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.Status.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.StartMode.Contains(query, StringComparison.OrdinalIgnoreCase) ||
+                item.Signal.Contains(query, StringComparison.OrdinalIgnoreCase))
+            .Select(item => new ServiceRow(item))
+            .ToArray();
         InstalledGrid.ItemsSource = installed;
         StartupGrid.ItemsSource = startup;
-        int visibleCount = _showStartup ? startup.Length : installed.Length;
+        ServicesGrid.ItemsSource = services;
+        int visibleCount = _activeTab switch
+        {
+            InventoryTab.Startup => startup.Length,
+            InventoryTab.Services => services.Length,
+            _ => installed.Length
+        };
         InventoryEmptyText.Visibility = visibleCount == 0 ? Visibility.Visible : Visibility.Collapsed;
-        InventoryCoverageText.Text = _snapshot.InaccessibleSourceCount == 0
+        bool complete = _activeTab == InventoryTab.Services
+            ? _serviceSnapshot.State == ServiceInventoryState.Current
+            : _snapshot.InaccessibleSourceCount == 0;
+        InventoryCoverageText.Text = complete
             ? $"READ ONLY · {visibleCount:N0} SHOWN"
             : $"PARTIAL · READ ONLY · {visibleCount:N0} SHOWN";
+    }
+
+    private void SetSelected(Button button, bool selected)
+    {
+        button.Background = (Brush)FindResource(selected ? "SelectedNavBrush" : "NavRestBrush");
+        button.Foreground = (Brush)FindResource(selected ? "AccentBrush" : "MutedBrush");
     }
 
     private sealed class InstalledRow(InstalledApplicationObservation item)
@@ -158,5 +207,23 @@ public partial class ApplicationsView : UserControl
         public string Source => item.Source;
 
         public string Mode => item.Mode;
+    }
+
+    private sealed class ServiceRow(WindowsServiceObservation item)
+    {
+        public string DisplayName => item.DisplayName;
+
+        public string Status => item.Status;
+
+        public string StartMode => item.StartMode;
+
+        public string Signal => item.Signal;
+    }
+
+    private enum InventoryTab
+    {
+        Installed,
+        Startup,
+        Services
     }
 }

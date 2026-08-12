@@ -30,11 +30,17 @@ internal static class Program
         AudioSessionSnapshot audioSessionSnapshot = CreateAudioSessionSnapshot();
         ApplicationInventorySnapshot applicationSnapshot =
             ApplicationInventoryProvider.CaptureAsync().GetAwaiter().GetResult();
+        WindowsServiceInventorySnapshot serviceSnapshot =
+            WindowsServiceInventoryProvider.CaptureAsync().GetAwaiter().GetResult();
 
         List<(string Name, Action Test)> tests =
         [
             ("Shared theme exposes required control resources", ThemeResourcesAreAvailable),
             ("Telemetry runs only in visible live workspaces", TelemetryRunsOnlyInLiveWorkspaces),
+            ("Background runtime remains explicit and fail-closed", BackgroundRuntimeIsExplicit),
+            ("Notification-area resource has a bounded show-hide-dispose lifecycle", NotificationAreaLifecycleIsBounded),
+            ("Runtime CPU cost math is processor-normalized and bounded", RuntimeCostMathIsBounded),
+            ("Runtime probe launch parsing is bounded and conflict-aware", RuntimeLaunchParsingIsBounded),
             ("Process actions reject Windows and Soltex targets", ProcessActionsRejectProtectedTargets),
             ("Process actions reject identity drift", ProcessActionsRejectIdentityDrift),
             ("Process actions admit only the selected user-session process", ProcessActionsAdmitBoundedTarget),
@@ -44,14 +50,16 @@ internal static class Program
             ("Monitoring view renders provenance and bounded rows", () => MonitoringViewRenders(snapshot)),
             ("Monitoring details are disclosed only on request", MonitoringDetailsAreProgressive),
             ("Application inventory is bounded and path-free", () => ApplicationInventoryIsBounded(applicationSnapshot)),
-            ("Applications view renders installed and startup tabs", () => ApplicationsViewRenders(applicationSnapshot)),
+            ("Windows service inventory is bounded and read-only", () => ServiceInventoryIsBounded(serviceSnapshot)),
+            ("Applications view progressively discloses startup and services", () =>
+                ApplicationsViewRenders(applicationSnapshot, serviceSnapshot)),
             ("Preference store recovers and round-trips bounded local state", PreferencesRoundTripAndRecovery),
             ("Activity store bounds, sanitizes, persists, and recovers", ActivityStoreBoundsAndRecovers),
             ("Activity view renders and filters meaningful events", ActivityViewRenders),
             ("Settings view renders working local preferences", SettingsViewRenders),
             ("Mixer prioritizes active endpoints and bounded app controls", () =>
                 MixerPrioritizesActiveEndpoints(audioSnapshot, audioSessionSnapshot)),
-            ("Devices view renders an explicit unnrolled profile", () => DevicesViewRenders(device)),
+            ("Devices view renders an explicit unenrolled profile", () => DevicesViewRenders(device)),
             ("Render-smoke uses an unconstrained popup viewport", RenderSmokeUsesCanonicalViewport)
         ];
 
@@ -94,6 +102,7 @@ internal static class Program
     {
         True(TelemetryActivityPolicy.ShouldRun(
             isLoaded: true,
+            isVisible: true,
             isClosing: false,
             WindowState.Normal,
             homeVisible: true,
@@ -101,6 +110,7 @@ internal static class Program
             "Home should keep telemetry active.");
         True(TelemetryActivityPolicy.ShouldRun(
             isLoaded: true,
+            isVisible: true,
             isClosing: false,
             WindowState.Maximized,
             homeVisible: false,
@@ -108,6 +118,7 @@ internal static class Program
             "Monitoring should keep telemetry active.");
         True(!TelemetryActivityPolicy.ShouldRun(
             isLoaded: true,
+            isVisible: true,
             isClosing: false,
             WindowState.Normal,
             homeVisible: false,
@@ -115,6 +126,7 @@ internal static class Program
             "Hidden live workspaces must suspend telemetry.");
         True(!TelemetryActivityPolicy.ShouldRun(
             isLoaded: true,
+            isVisible: true,
             isClosing: false,
             WindowState.Minimized,
             homeVisible: true,
@@ -122,11 +134,130 @@ internal static class Program
             "A minimized window must suspend telemetry.");
         True(!TelemetryActivityPolicy.ShouldRun(
             isLoaded: true,
+            isVisible: true,
             isClosing: true,
             WindowState.Normal,
             homeVisible: true,
             monitoringVisible: false),
             "Closing must prevent telemetry restart.");
+        True(!TelemetryActivityPolicy.ShouldRun(
+            isLoaded: true,
+            isVisible: false,
+            isClosing: false,
+            WindowState.Normal,
+            homeVisible: true,
+            monitoringVisible: false),
+            "A hidden notification-area window must suspend performance telemetry.");
+    }
+
+    private static void BackgroundRuntimeIsExplicit()
+    {
+        True(!BackgroundRuntimePolicy.ShouldHideOnClose(
+            renderSmokeMode: false,
+            explicitExitRequested: false,
+            CloseBehavior.Exit,
+            notificationAreaAvailable: true),
+            "The default Exit policy unexpectedly hid the window.");
+        True(BackgroundRuntimePolicy.ShouldHideOnClose(
+            renderSmokeMode: false,
+            explicitExitRequested: false,
+            CloseBehavior.NotificationArea,
+            notificationAreaAvailable: true),
+            "Explicit notification-area mode did not retain the process.");
+        True(!BackgroundRuntimePolicy.ShouldHideOnClose(
+            renderSmokeMode: false,
+            explicitExitRequested: true,
+            CloseBehavior.NotificationArea,
+            notificationAreaAvailable: true),
+            "Explicit Exit was ignored by notification-area mode.");
+        True(!BackgroundRuntimePolicy.ShouldHideOnClose(
+            renderSmokeMode: false,
+            explicitExitRequested: false,
+            CloseBehavior.NotificationArea,
+            notificationAreaAvailable: false),
+            "An unavailable notification area did not fail closed to Exit.");
+        True(!BackgroundRuntimePolicy.ShouldShowNotificationArea(
+            renderSmokeMode: true,
+            CloseBehavior.NotificationArea,
+            notificationAreaAvailable: true),
+            "Render smoke attempted to create a notification-area surface.");
+    }
+
+    private static void NotificationAreaLifecycleIsBounded()
+    {
+        using NotificationAreaController controller = new();
+        True(controller.IsAvailable,
+            "The Windows notification-area resource was unavailable after construction.");
+        controller.SetVisible(visible: true);
+        True(controller.IsVisible,
+            "The notification-area resource did not expose its visible state.");
+        controller.SetVisible(visible: false);
+        True(!controller.IsVisible,
+            "The notification-area resource did not hide synchronously.");
+    }
+
+    private static void RuntimeCostMathIsBounded()
+    {
+        Near(
+            12.5,
+            RuntimeCostMath.NormalizeCpuPercent(
+                TimeSpan.FromSeconds(1),
+                TimeSpan.FromSeconds(2),
+                processorCount: 4),
+            0.001);
+        Near(
+            0,
+            RuntimeCostMath.NormalizeCpuPercent(
+                TimeSpan.FromSeconds(-1),
+                TimeSpan.FromSeconds(2),
+                processorCount: 4),
+            0.001);
+        Near(
+            100,
+            RuntimeCostMath.NormalizeCpuPercent(
+                TimeSpan.FromSeconds(20),
+                TimeSpan.FromSeconds(1),
+                processorCount: 1),
+            0.001);
+        True(RuntimeCostProbe.ValidateCommit(new string('A', 40)) == new string('a', 40),
+            "Runtime evidence did not normalize a valid commit identity.");
+
+        IReadOnlyDictionary<int, TimeSpan> threadCpu = RuntimeCostProbe.CalculateThreadCpu(
+            new Dictionary<int, TimeSpan>
+            {
+                [11] = TimeSpan.FromMilliseconds(100),
+                [12] = TimeSpan.FromMilliseconds(20)
+            },
+            new Dictionary<int, TimeSpan>
+            {
+                [11] = TimeSpan.FromMilliseconds(130),
+                [12] = TimeSpan.FromMilliseconds(10),
+                [13] = TimeSpan.FromMilliseconds(5)
+            });
+        Near(30, threadCpu[11].TotalMilliseconds, 0.001);
+        Near(0, threadCpu[12].TotalMilliseconds, 0.001);
+        Near(5, threadCpu[13].TotalMilliseconds, 0.001);
+    }
+
+    private static void RuntimeLaunchParsingIsBounded()
+    {
+        True(RuntimeLaunchPolicy.IsRuntimeProbe(["--runtime-probe"]),
+            "The standalone runtime-probe option was not recognized.");
+        True(RuntimeLaunchPolicy.IsRuntimeProbe(["--future-option", "--runtime-probe"]),
+            "A harmless unrelated option prevented runtime-probe dispatch.");
+        True(!RuntimeLaunchPolicy.IsRuntimeProbe(["--runtime-probe", "--runtime-probe"]),
+            "Duplicate runtime-probe options were accepted.");
+        True(!RuntimeLaunchPolicy.IsRuntimeProbe(["--runtime-probe", "--render-smoke"]),
+            "Conflicting deterministic runtime modes were accepted.");
+        True(RuntimeLaunchPolicy.HasControlledRuntimeOption(
+                ["--runtime-probe", "--render-smoke"]),
+            "A conflicting controlled-runtime request could fall through to normal startup.");
+        True(!RuntimeLaunchPolicy.HasControlledRuntimeOption(["--ordinary-option"]),
+            "An ordinary option was mistaken for a controlled runtime request.");
+        True(!RuntimeLaunchPolicy.UsesSoftwareRendering(["--runtime-probe"]),
+            "The runtime-cost probe incorrectly forced software rendering.");
+        True(RuntimeLaunchPolicy.UsesSoftwareRendering(["--render-smoke", "image.png"]),
+            "Native render smoke did not retain deterministic software rendering.");
     }
 
     private static void ProcessActionsRejectProtectedTargets()
@@ -262,10 +393,52 @@ internal static class Program
             "Application labels were not sanitized deterministically.");
     }
 
-    private static void ApplicationsViewRenders(ApplicationInventorySnapshot snapshot)
+    private static void ServiceInventoryIsBounded(WindowsServiceInventorySnapshot snapshot)
+    {
+        Console.WriteLine(
+            $"      state={snapshot.State}; exposed={snapshot.Services.Count}; observed={snapshot.ObservedServiceCount}; " +
+            $"inaccessible={snapshot.InaccessibleConfigurationCount}; omitted={snapshot.OmittedServiceCount}; " +
+            $"capture_ms={snapshot.CaptureDuration.TotalMilliseconds:F1}");
+        True(snapshot.CaptureDuration < TimeSpan.FromSeconds(5),
+            "Windows service inventory exceeded five seconds.");
+        True(snapshot.Services.Count <= WindowsServiceInventoryProvider.MaximumServiceCount,
+            "Windows service inventory exceeded its public bound.");
+        True(snapshot.ObservedServiceCount <= WindowsServiceInventoryProvider.MaximumObservedServiceCount,
+            "Windows service inventory exceeded its observation bound.");
+        True(snapshot.Provenance.Contains("Service Control Manager", StringComparison.Ordinal),
+            "Windows service provenance was omitted.");
+        foreach (WindowsServiceObservation service in snapshot.Services)
+        {
+            True(service.Name.Length is > 0 and <= WindowsServiceInventoryProvider.MaximumNameLength,
+                "A service name is outside bounds.");
+            True(service.DisplayName.Length is > 0 and <= WindowsServiceInventoryProvider.MaximumDisplayNameLength,
+                "A service display name is outside bounds.");
+            True(!service.Name.Any(char.IsControl) && !service.DisplayName.Any(char.IsControl),
+                "A service label contains control characters.");
+            True(!service.DisplayName.Contains(":\\", StringComparison.Ordinal),
+                "A service display name exposed a drive-qualified path.");
+        }
+
+        True(
+            WindowsServiceInventoryProvider.SanitizeLabel(
+                @"C:\private\service.exe",
+                WindowsServiceInventoryProvider.MaximumDisplayNameLength,
+                "Fallback") == "Fallback",
+            "Service labels did not reject a drive-qualified path.");
+        True(WindowsServiceInventoryProvider.ClassifySignal(1, "Automatic", 1067, 0) == "Review",
+            "An automatic stopped service with an unusual exit error was not distinguished.");
+        True(WindowsServiceInventoryProvider.ClassifySignal(1, "Manual", 1067, 0).Length == 0,
+            "A manual stopped service was overstated as unhealthy.");
+        True(WindowsServiceInventoryProvider.ClassifySignal(1, "Automatic", 1077, 0).Length == 0,
+            "A service not started since boot was overstated as unhealthy.");
+    }
+
+    private static void ApplicationsViewRenders(
+        ApplicationInventorySnapshot snapshot,
+        WindowsServiceInventorySnapshot serviceSnapshot)
     {
         ApplicationsView view = new();
-        view.UpdateSnapshot(snapshot);
+        view.UpdateSnapshot(snapshot, serviceSnapshot);
         True(view.InventorySummaryText.Text.Contains("installed", StringComparison.Ordinal),
             "Applications view omitted the compact inventory summary.");
         True(ReferenceEquals(view.InventorySearchBox.Style, Application.Current.FindResource("FieldStyle")),
@@ -290,6 +463,17 @@ internal static class Program
             "Startup inventory did not open from its explicit tab.");
         True(view.StartupGrid.Items.Count == snapshot.Startup.Count,
             "Applications view lost startup rows.");
+        view.ServicesTabButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.ServicesGrid.Visibility == Visibility.Visible,
+            "Windows services did not open from their explicit tab.");
+        True(view.ServicesGrid.Items.Count == serviceSnapshot.Services.Count,
+            "Applications view lost service rows.");
+        Visibility expectedAttention = serviceSnapshot.Services.Any(item =>
+            !string.IsNullOrWhiteSpace(item.Signal))
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        True(view.ServiceAttentionColumn.Visibility == expectedAttention,
+            "The service attention column did not follow meaningful signal availability.");
     }
 
     private static void PreferencesRoundTripAndRecovery()
@@ -307,6 +491,7 @@ internal static class Program
                 RestoreLastWorkspace: false,
                 OpenPerformanceDetails: true,
                 ActivityRetention: ActivityRetention.SevenDays,
+                CloseBehavior: CloseBehavior.NotificationArea,
                 LastWorkspace: "security");
             store.Save(expected);
             PreferencesLoadResult loaded = store.Load();
@@ -314,6 +499,16 @@ internal static class Program
                 "A valid preference document was treated as recovered.");
             True(loaded.Preferences == expected,
                 "Preference round-trip changed a supported value.");
+
+            File.WriteAllText(
+                filePath,
+                "{\"schemaVersion\":1,\"telemetryCadence\":\"Balanced\",\"restoreLastWorkspace\":true," +
+                "\"openPerformanceDetails\":false,\"activityRetention\":\"SessionOnly\",\"lastWorkspace\":\"home\"}",
+                Encoding.UTF8);
+            PreferencesLoadResult migrated = store.Load();
+            True(!migrated.RecoveredFromInvalid &&
+                 migrated.Preferences.CloseBehavior == CloseBehavior.Exit,
+                "Schema-one preferences did not migrate to the safe Exit behavior.");
 
             File.WriteAllText(filePath, "{ invalid", Encoding.UTF8);
             PreferencesLoadResult invalid = store.Load();
@@ -480,7 +675,9 @@ internal static class Program
             RestoreLastWorkspace: false,
             OpenPerformanceDetails: true,
             ActivityRetention: ActivityRetention.ThirtyDays,
+            CloseBehavior: CloseBehavior.Exit,
             LastWorkspace: "monitoring");
+        view.UpdateNotificationAreaAvailability(available: true);
         view.UpdatePreferences(
             preferences,
             recoveredFromInvalid: false,
@@ -493,12 +690,17 @@ internal static class Program
             "Settings did not render the workspace restore preference.");
         True((string)view.ThirtyDayActivityButton.Content == "30 days",
             "Settings omitted the explicit Activity retention option.");
+        True(view.ExitOnCloseButton.Foreground == Application.Current.FindResource("AccentBrush"),
+            "Settings did not render Exit as the default close behavior.");
 
         SoltexPreferences? changed = null;
         view.PreferencesChanged += (_, args) => changed = args.Preferences;
         view.LiveCadenceButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         True(changed?.TelemetryCadence == TelemetryCadence.Live,
             "Settings did not emit the selected cadence.");
+        view.NotificationAreaButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(changed?.CloseBehavior == CloseBehavior.NotificationArea,
+            "Settings did not emit the explicit notification-area behavior.");
         byte[] pixels = Render(view, 980, 720);
         True(CountVisiblePixels(pixels) > 5_000,
             "The Settings view render was unexpectedly empty.");
@@ -707,6 +909,15 @@ internal static class Program
         if (!condition)
         {
             throw new InvalidOperationException(message);
+        }
+    }
+
+    private static void Near(double expected, double actual, double tolerance)
+    {
+        if (Math.Abs(expected - actual) > tolerance)
+        {
+            throw new InvalidOperationException(
+                $"Expected {expected}, observed {actual} (tolerance {tolerance}).");
         }
     }
 }

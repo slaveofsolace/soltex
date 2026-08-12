@@ -7,13 +7,13 @@ The current desktop solution exposes nine visible workspace areas:
 - **Home** — a real local summary with explicit partial/unavailable signals.
 - **Monitoring** — bounded CPU, physical-memory, process, and fixed-volume observation from supported Windows interfaces.
 - **Devices** — a sanitized local profile and exact non-executing capability model, explicitly not enrolled.
-- **Applications** — a bounded, searchable, read-only inventory of installed software and sign-in entries.
+- **Applications** — bounded, searchable, read-only installed-software, sign-in, and Win32 service inventories.
 - **Audio** — bounded Windows Core Audio endpoint and active app-session state, with guarded per-session volume/mute and immediate read-back.
 - **Security** — the implemented focus: a lightweight companion that cooperates with the antivirus provider registered with Windows, plus bounded local supply-chain verification primitives.
 - **Remote Assist** — a consent-first launcher for a separately installed, Windows-trusted RustDesk client; Soltex does not own or embed the remote-session transport.
 - **Activity** — a bounded local timeline of meaningful Soltex actions and recovery transitions, session-only unless the user explicitly selects retention.
 - **Updates** — a non-installing signed planner that authenticates bounded release artifacts and stops at an exact human-readable preview.
-- **Settings** — working local preferences for telemetry cadence, workspace restoration, detail disclosure, and Activity retention.
+- **Settings** — working local preferences for telemetry cadence, workspace restoration, detail disclosure, Activity retention, and explicit close behavior.
 
 This is a clean-room product. It is not affiliated with, endorsed by, or derived from SteelSeries, Malwarebytes, Zen Browser, AppControl, NZXT, or RustDesk. It contains no copied binaries, signatures, detection models, private protocols, branding, or UI assets from those products. RustDesk remains a separately licensed external program.
 
@@ -24,6 +24,8 @@ Home is the default WPF surface. The visible workspaces share one restrained gra
 Activity records only bounded Soltex-owned events such as an explicit process action, scan request/result, quarantine change, Remote Assist launch result, or a telemetry failure/recovery transition. It does not record clicks, browsing, packet contents, command lines, or executable/file paths. The default is memory-only for the current session; 7-day and 30-day local retention require an explicit Settings choice, shortening retention requires confirmation, and Clear Activity requires confirmation before removing visible and saved history. See [`docs/ACTIVITY.md`](docs/ACTIVITY.md).
 
 Audio observes at most 128 active-render session slots and exposes at most 24 active shared-mode sessions. System-sounds, multi-process/transferred, and process-unverifiable sessions stay read-only. A volume or mute request revalidates the endpoint, session instance, process ID, and process start time, then reports success only after immediate Windows read-back. Raw endpoint/session identifiers, executable paths, command lines, and icon paths are never exposed or persisted. See [`docs/AUDIO.md`](docs/AUDIO.md).
+
+Applications can also observe bounded Win32 service state and start mode through query-only Service Control Manager access. Drivers and binary paths are excluded, and no service action is exposed. Closing Soltex exits by default; keeping the desktop process in the notification area is an explicit, reversible preference that suspends Performance sampling while hidden. Soltex installs no background service. See [`docs/RUNTIME_AND_SERVICES.md`](docs/RUNTIME_AND_SERVICES.md).
 
 The .NET 10 WPF solution builds and executes on Windows. The Security companion currently provides:
 
@@ -165,6 +167,7 @@ Documentation:
 - Current status and nonclaims: [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md).
 - Activity privacy, retention, recovery, and deletion contract: [`docs/ACTIVITY.md`](docs/ACTIVITY.md).
 - Core Audio session observation, write admission, read-back, and nonclaims: [`docs/AUDIO.md`](docs/AUDIO.md).
+- Runtime lifecycle, service-inventory bounds, and measured-cost contract: [`docs/RUNTIME_AND_SERVICES.md`](docs/RUNTIME_AND_SERVICES.md).
 - Immersive workspace behavior and visual/data boundaries: [`docs/IMMERSIVE_WORKSPACE.md`](docs/IMMERSIVE_WORKSPACE.md).
 - Exact commands and evidence ledger: [`docs/VALIDATION.md`](docs/VALIDATION.md).
 - Frozen Wave B evidence and decision ledger: [`docs/evidence/2026-08-04-immersive-workspace/`](docs/evidence/2026-08-04-immersive-workspace/).

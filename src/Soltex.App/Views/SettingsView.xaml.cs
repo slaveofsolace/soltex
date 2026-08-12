@@ -12,6 +12,7 @@ internal sealed class PreferencesChangedEventArgs(SoltexPreferences preferences)
 public partial class SettingsView : UserControl
 {
     private SoltexPreferences _preferences = SoltexPreferences.Default;
+    private bool _notificationAreaAvailable;
 
     public SettingsView()
     {
@@ -20,6 +21,18 @@ public partial class SettingsView : UserControl
     }
 
     internal event EventHandler<PreferencesChangedEventArgs>? PreferencesChanged;
+
+    internal void UpdateNotificationAreaAvailability(bool available)
+    {
+        _notificationAreaAvailable = available;
+        NotificationAreaButton.IsEnabled = available;
+        NotificationAreaButton.SetCurrentValue(
+            System.Windows.Automation.AutomationProperties.HelpTextProperty,
+            available
+                ? "Available for this Windows session"
+                : "Unavailable for this Windows session; closing exits Soltex");
+        RenderPreferences();
+    }
 
     internal void UpdatePreferences(
         SoltexPreferences preferences,
@@ -68,6 +81,23 @@ public partial class SettingsView : UserControl
             RestoreLastWorkspace = !_preferences.RestoreLastWorkspace
         });
 
+    private void ExitOnClose_Click(object sender, RoutedEventArgs e) =>
+        Commit(_preferences with
+        {
+            CloseBehavior = CloseBehavior.Exit
+        });
+
+    private void NotificationArea_Click(object sender, RoutedEventArgs e)
+    {
+        if (_notificationAreaAvailable)
+        {
+            Commit(_preferences with
+            {
+                CloseBehavior = CloseBehavior.NotificationArea
+            });
+        }
+    }
+
     private void SessionActivity_Click(object sender, RoutedEventArgs e) =>
         Commit(_preferences with
         {
@@ -113,6 +143,14 @@ public partial class SettingsView : UserControl
         SetToggle(PerformanceDetailsButton, _preferences.OpenPerformanceDetails);
         SetToggle(RestoreWorkspaceButton, _preferences.RestoreLastWorkspace);
         SetSelected(
+            ExitOnCloseButton,
+            _preferences.CloseBehavior == CloseBehavior.Exit ||
+            !_notificationAreaAvailable);
+        SetSelected(
+            NotificationAreaButton,
+            _preferences.CloseBehavior == CloseBehavior.NotificationArea &&
+            _notificationAreaAvailable);
+        SetSelected(
             SessionActivityButton,
             _preferences.ActivityRetention == ActivityRetention.SessionOnly);
         SetSelected(
@@ -121,6 +159,18 @@ public partial class SettingsView : UserControl
         SetSelected(
             ThirtyDayActivityButton,
             _preferences.ActivityRetention == ActivityRetention.ThirtyDays);
+        bool background =
+            _preferences.CloseBehavior == CloseBehavior.NotificationArea &&
+            _notificationAreaAvailable;
+        NotificationAreaDetailText.Text = !_notificationAreaAvailable
+            ? "The Windows notification area is unavailable in this session. Closing exits Soltex."
+            : background
+                ? "Close hides the window. Use the Soltex icon to reopen or explicitly exit."
+                : "Exit ends the Soltex process. Notification-area mode is opt-in.";
+        BackgroundRuntimeText.Text = background
+            ? "This desktop process may remain open; no background service is installed."
+            : "Closing Soltex ends this desktop process; no background service is installed.";
+        BackgroundRuntimeStateText.Text = background ? "OPT-IN" : "EXIT";
     }
 
     private void SetSelected(Button button, bool selected)
