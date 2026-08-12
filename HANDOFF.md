@@ -97,9 +97,9 @@ Owner-host acceptance passed a zero-warning Release build, identity/design polic
 
 ## Exact resume step
 
-1. Freeze the bounded cold-package render recovery after sequential zero-warning/full-suite verification.
-2. Rerun exact native/runtime/package owner-host gates at that source, then publish by fast-forward.
-3. Require corrected-head hosted Windows/package workflows; verify source/tested ancestry, independently re-hash artifacts, inspect hosted Mixer/package pixels, and update draft PR #11 metadata.
+1. Commit the exact cold-package recovery evidence ledger; production recovery source is `03595226d809b75ac40afeb2ba7b1c1126dfac33`.
+2. Publish by fast-forward and require corrected-head hosted Windows/package workflows.
+3. Verify source/tested ancestry, independently re-hash corrected artifacts, inspect hosted Mixer/package pixels, and update draft PR #11 metadata.
 4. Preserve failed package run `31572129578` and artifact `9131786253` as negative evidence; do not relabel it as accepted.
 5. Preserve the protected owner checkout, Windows-owned default-selection boundary, and all routing/DSP/owner-acceptance nonclaims.
 

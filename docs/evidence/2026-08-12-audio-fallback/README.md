@@ -108,7 +108,9 @@ negative: C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild
 
 The first published reconciliation head `ef5f96629e538e91e90e5d6d79cfe3299d0ea573` passed Windows run `31572129524`, including all required suites, runtime evidence, and the 16-state matrix. Package run `31572129578` published the executable but its cold self-contained Home render exceeded the former 20-second initialization window and exited `1` with a retained `System.TimeoutException` sidecar. The uploaded failure artifact `9131786253` was downloaded and independently matched GitHub's digest `sha256:b54bf4fa45de019dfde9bd8949a758dbf6857bd9c11a2aaf9e1f860ba5e8a92e`; its package was 71,611,423 bytes with SHA-256 `84eeac76273e8c180cbb8ed15014d452db95abc7d57f6379eac1ad212b0a3c87`.
 
-The recovery keeps normal runtime-cost startup at 20 seconds but gives controlled render initialization 40 seconds, covering the composed bounded protection-health and event queries on a cold package. Package CI now independently stops the complete render/cleanup process after 80 seconds and retains a timeout marker. The new bounds are finite and policy-tested; they do not claim faster startup or hide a timeout.
+The recovery source `03595226d809b75ac40afeb2ba7b1c1126dfac33` keeps normal runtime-cost startup at 20 seconds but gives controlled render initialization 40 seconds, covering the composed bounded protection-health and event queries on a cold package. Package CI now independently stops the complete render/cleanup process after 80 seconds and retains a timeout marker. The new bounds are finite and policy-tested; they do not claim faster startup or hide a timeout.
+
+The exact sequential owner-host recovery gate returned to 0 warnings/errors and passed Security/EICAR 32/32, Monitoring 16/16, Audio 21/21, App/control 29/29, 16/16 native states, and runtime lifecycle. Normal startup completed in 2,077.2 ms under the unchanged strict probe. The self-contained package render exited `0` in 4,950.2 ms with no sidecar. Its exact identity is 71,589,832 bytes, SHA-256 `8a461e4dec0753240054939630ca3eed685835cc3a8d2f0ba55ca1cdb454ee2d`, Authenticode `NotSigned`; retained Home is 106,005 bytes with SHA-256 `2330d7d6600151de2b5ac822e26e1a2a271b7c79a5c50e5d175ae2dd1290531a`.
 
 Publish the corrected reconciliation head, require exact hosted Windows and package-smoke workflows, independently re-hash downloaded artifacts, verify source/tested ancestry, and inspect retained hosted Mixer/package pixels. Owner visual acceptance, signed distribution, accessibility/scaling, install/update/uninstall lifecycle, automatic audio switching, routing, and processing remain open.
 
@@ -116,4 +118,5 @@ Failed hosted package evidence was retained at:
 
 ```text
 C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\hosted-failed-package-ef5f966
+C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\cold-package-recovery-exact-0359522-20260812-0225
 ```
