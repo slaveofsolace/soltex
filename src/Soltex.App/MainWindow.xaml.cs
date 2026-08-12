@@ -36,8 +36,7 @@ public partial class MainWindow : Window
     private readonly LocalDeviceObservation _localDevice = LocalDeviceObservationProvider.Capture();
     private CancellationTokenSource? _operationCancellation;
     private Task _activeOperationDrained = Task.CompletedTask;
-    private CancellationTokenSource? _telemetryCancellation;
-    private Task? _telemetryLoopTask;
+    private readonly TelemetryLoopOwner _telemetryLoop = new();
     private Task? _startupTask;
     private ImportFolderMonitor? _importMonitor;
     private ProtectionMonitor? _protectionMonitor;
@@ -168,11 +167,7 @@ public partial class MainWindow : Window
             RestoreWorkspace(_preferences.LastWorkspace);
         }
 
-        if (_telemetryCancellation is null)
-        {
-            _telemetryCancellation = new CancellationTokenSource();
-            _telemetryLoopTask = RunTelemetryLoopAsync(_telemetryCancellation.Token);
-        }
+        await _telemetryLoop.StartAsync(RunTelemetryLoopAsync);
 
         Task audioRefresh = RefreshAudioAsync();
         Task applicationRefresh = RefreshApplicationsAsync();
@@ -222,12 +217,11 @@ public partial class MainWindow : Window
         }
 
         _operationCancellation?.Cancel();
-        _telemetryCancellation?.Cancel();
+        await _telemetryLoop.StopAsync();
         bool ownedWorkDrained = await OwnedTaskDrain.WaitAsync(
             TimeSpan.FromSeconds(20),
             _activeOperationDrained,
-            _startupTask,
-            _telemetryLoopTask);
+            _startupTask);
         if (!ownedWorkDrained)
         {
             // Do not dispose state that an in-flight task may still reference.
@@ -250,7 +244,6 @@ public partial class MainWindow : Window
             await _protectionMonitor.DisposeAsync();
         }
 
-        _telemetryCancellation?.Dispose();
         _updateJournal.Dispose();
         _runtime.Dispose();
         ShutdownCompleted?.Invoke(

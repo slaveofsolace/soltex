@@ -38,6 +38,7 @@ internal static class Program
         [
             ("Shared theme exposes required control resources", ThemeResourcesAreAvailable),
             ("Telemetry runs only in visible live workspaces", TelemetryRunsOnlyInLiveWorkspaces),
+            ("Telemetry loop ownership survives concurrent stop and restart", TelemetryLoopOwnershipIsSerialized),
             ("Background runtime remains explicit and fail-closed", BackgroundRuntimeIsExplicit),
             ("Notification-area resource has a bounded show-hide-dispose lifecycle", NotificationAreaLifecycleIsBounded),
             ("Owned startup work drains before resource disposal", OwnedStartupWorkDrains),
@@ -153,6 +154,37 @@ internal static class Program
             homeVisible: true,
             monitoringVisible: false),
             "A hidden notification-area window must suspend performance telemetry.");
+    }
+
+    private static void TelemetryLoopOwnershipIsSerialized()
+    {
+        TelemetryLoopOwner owner = new();
+        TaskCompletionSource<bool> firstStarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        owner.StartAsync(async cancellationToken =>
+        {
+            firstStarted.TrySetResult(true);
+            await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+        }).GetAwaiter().GetResult();
+        firstStarted.Task.GetAwaiter().GetResult();
+        True(owner.IsActive, "Telemetry ownership did not report its first loop as active.");
+
+        Task firstStop = owner.StopAsync();
+        Task duplicateStop = owner.StopAsync();
+        Task.WhenAll(firstStop, duplicateStop).GetAwaiter().GetResult();
+        True(!owner.IsActive, "Concurrent telemetry stop left a disposed source published as active.");
+
+        TaskCompletionSource<bool> restarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        owner.StartAsync(async cancellationToken =>
+        {
+            restarted.TrySetResult(true);
+            await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+        }).GetAwaiter().GetResult();
+        restarted.Task.GetAwaiter().GetResult();
+        True(owner.IsActive, "Telemetry ownership could not restart after a completed stop.");
+        owner.StopAsync().GetAwaiter().GetResult();
+        True(!owner.IsActive, "Telemetry ownership did not release its restarted loop.");
     }
 
     private static void BackgroundRuntimeIsExplicit()
