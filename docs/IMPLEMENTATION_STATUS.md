@@ -35,6 +35,14 @@ Implemented on the draft branch:
 - progressive disclosure retained inside the owning work area for provider,
   event, and overflow detail.
 
+The current accessibility contract gives all 86 interactive controls across 11
+shipping XAML files a programmatic name, cycles keyboard focus inside the modal
+command palette, announces empty command results and Remote Assist state changes
+politely, and honors the Windows client-area animation preference. The contract
+is enforced by the canonical verifier and Windows workflow. Live UI Automation,
+keyboard-only, high-contrast, assistive-technology, and multi-scale acceptance
+remain open.
+
 Exact native matrices through the Activity checkpoint were agent-inspected at 1280×820 on both the owner host and hosted Windows runner. Human owner visual acceptance remains open, so PR #11 remains draft.
 
 ### Applications
@@ -71,7 +79,11 @@ storage workloads sequentially; it is cancelable, cleans scratch on every exit,
 suspends live telemetry while visible, and saves at most one bounded path-free
 result. It deliberately has no synthetic score, cross-machine rank, GPU load, or
 stability verdict. The production profile and UI/storage recovery paths pass
-focused owner-host tests; commit-bound complete acceptance is pending.
+focused owner-host tests. Exact source `48e806092cb160e9edaef09e06552dfdbfea0530`
+passed 180/180 repository tests, an 18-state native matrix, runtime lifecycle,
+self-contained package smoke, and hosted Windows/package workflows. Defensive
+filesystem hardening was applied; real-world exploitability was not dynamically
+established because policy-safe validation was intentionally not attempted.
 
 No executable paths, packet contents, destination history, elevation bypass, or generic process-tree termination are introduced.
 
@@ -121,6 +133,18 @@ The Settings checkpoint `5c4a16de85b0b63bff4779769193a1e94411c77c` passed Window
 The Activity checkpoint `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` passed Windows run `31560242046` and package-smoke run `31560242019`. Windows artifact `9127496208` has digest `sha256:0046bc2b99c0e10accf58b3c030025c4802ceee782553a06f7c3881599e969c9`; package artifact `9127485263` has digest `sha256:dfd3b7aed215a2646bac1ad745e431511f5e4de4958b479b9a8d3865865ab30b`. The 14-state manifest and retained PNG identities were independently revalidated, and hosted Activity/Settings captures were inspected. Optional hosted AMSI/EICAR remained 31/32 because that runner's installed provider returned native result `1`; required gates passed.
 
 The Audio reconciliation head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183` passed Windows run `31562540695` and package-smoke run `31562540694`. Downloaded artifacts `9128308988` and `9128281441` matched their recorded GitHub digests. All 14 native PNG identities revalidated; default/expanded Audio and packaged Home were directly inspected. The packaged executable launched with exit code 0 and remained unsigned.
+
+The benchmark productization source `48e806092cb160e9edaef09e06552dfdbfea0530`
+passed Windows run `31707485320` and package-smoke run `31707485323`. Windows
+artifact `9183904205` has digest
+`sha256:187f5cc0c631bfc72ff8c7c55ab1757f8a88773e610add809a0f3ccea63a29db`;
+package artifact `9183835063` has digest
+`sha256:de16c68e7cf12866ee6814150f221c984a8079dcee7f145eba0e42f3a6e9847f`.
+All 18 retained native PNG identities revalidated and representative Benchmark,
+Security, command-palette, and packaged Home captures were inspected. Required
+gates passed. Optional hosted AMSI/EICAR remained 31/32 because the runner's
+installed provider returned native result `1`; this is provider-interoperability
+evidence, not an antivirus-efficacy verdict.
 
 ## Next stages
 

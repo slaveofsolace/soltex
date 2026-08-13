@@ -46,10 +46,18 @@ Dependency: current Quiet Instrument Deck candidate.
 
 Agent work:
 
-- run keyboard traversal/focus restoration and UI Automation checks;
+- completed in source: explicit programmatic names for all 86 interactive
+  controls, modal command-palette focus cycling, polite live announcements, and
+  reduced-motion enforcement through the Windows client-area animation setting;
+- completed in automation: an accessibility contract verifier wired into the
+  canonical verifier and Windows workflow;
+- completed in regression evidence: fresh native 1280×820 Command Palette,
+  Activity, and Remote Assist captures with no observed clipping or state
+  ambiguity;
+- run live keyboard traversal/focus restoration and UI Automation client checks;
 - capture 100%, 125%, 150%, and 200% scaling plus 1366×768, 1440p, and 4K;
-- inspect high contrast, reduced motion, busy, error, recovery, and confirmation
-  states;
+- inspect high contrast, Narrator/independent screen-reader behavior, busy,
+  error, recovery, and confirmation states;
 - fix any clipping or state ambiguity and retain exact native evidence.
 
 Owner work:

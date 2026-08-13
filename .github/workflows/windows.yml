@@ -45,6 +45,14 @@ jobs:
           .\eng\verify-design-tokens.ps1 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\design-tokens.log
 
+      - name: Verify keyboard and automation contracts
+        id: accessibility
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\eng\verify-accessibility-contracts.ps1 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\accessibility-contracts.log
+
       - name: Build Release
         id: build
         shell: pwsh

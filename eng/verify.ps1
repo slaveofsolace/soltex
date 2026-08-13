@@ -8,6 +8,7 @@ $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
 & (Join-Path $PSScriptRoot 'verify-identity.ps1')
 & (Join-Path $PSScriptRoot 'verify-design-tokens.ps1')
+& (Join-Path $PSScriptRoot 'verify-accessibility-contracts.ps1')
 
 if ([string]::IsNullOrWhiteSpace($DotnetPath)) {
     $repoDotnet = Join-Path $repoRoot '.dotnet\dotnet.exe'

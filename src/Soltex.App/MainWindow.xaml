@@ -359,7 +359,10 @@
                                     <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Quarantine" />
                                     <TextBlock x:Name="QuarantineCount" Grid.Column="1" Text="0 items" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
                                 </Grid>
-                                <DataGrid x:Name="QuarantineGrid" Grid.Row="2" SelectionMode="Single">
+                                <DataGrid x:Name="QuarantineGrid"
+                                          Grid.Row="2"
+                                          SelectionMode="Single"
+                                          AutomationProperties.Name="Quarantined local files">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="File" Binding="{Binding FileName}" Width="2*" />
                                         <DataGridTextColumn Header="Detection" Binding="{Binding Detection}" Width="2*" />
@@ -387,6 +390,7 @@
                                          BorderThickness="0"
                                          Foreground="{StaticResource TextBrush}"
                                          FontSize="{StaticResource FontCaption}"
+                                         AutomationProperties.Name="Recent Soltex security activity"
                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                     <ListBox.ItemTemplate>
                                         <DataTemplate>
@@ -502,9 +506,20 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Connect to a peer" />
-                            <TextBlock x:Name="RemoteSessionStatus" Grid.Row="2" Text="No launch requested" Foreground="{StaticResource SignalBrush}" FontWeight="SemiBold" />
+                            <TextBlock x:Name="RemoteSessionStatus"
+                                       Grid.Row="2"
+                                       Text="No launch requested"
+                                       Foreground="{StaticResource SignalBrush}"
+                                       FontWeight="SemiBold"
+                                       AutomationProperties.Name="Remote Assist session status"
+                                       AutomationProperties.LiveSetting="Polite" />
                             <TextBlock x:Name="RemoteSessionDetail" Grid.Row="4" Text="RustDesk remains the visible owner of any session." Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
-                            <TextBox x:Name="RemotePeerIdInput" Grid.Row="6" Style="{StaticResource FieldStyle}" MaxLength="64" ToolTip="RustDesk peer ID" />
+                            <TextBox x:Name="RemotePeerIdInput"
+                                     Grid.Row="6"
+                                     Style="{StaticResource FieldStyle}"
+                                     MaxLength="64"
+                                     ToolTip="RustDesk peer ID"
+                                     AutomationProperties.Name="RustDesk peer ID" />
                             <Grid Grid.Row="8">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <TextBlock x:Name="RemotePeerHint" Text="3–64 letters, numbers, hyphens, or underscores" Style="{StaticResource MutedTextStyle}" VerticalAlignment="Center" />
@@ -638,7 +653,10 @@
                                 </StackPanel>
                                 <TextBlock x:Name="UpdateJournalCount" Grid.Column="1" Text="0 entries" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
                             </Grid>
-                            <DataGrid x:Name="UpdateJournalGrid" Grid.Row="2" SelectionMode="Single">
+                            <DataGrid x:Name="UpdateJournalGrid"
+                                      Grid.Row="2"
+                                      SelectionMode="Single"
+                                      AutomationProperties.Name="Authenticated update planning journal">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="When" Binding="{Binding When}" Width="135" />
                                     <DataGridTextColumn Header="Phase" Binding="{Binding Phase}" Width="135" />
@@ -719,6 +737,8 @@
               Background="{StaticResource ModalScrimBrush}"
               Visibility="Collapsed"
               AutomationProperties.Name="Command palette"
+              KeyboardNavigation.TabNavigation="Cycle"
+              KeyboardNavigation.ControlTabNavigation="Cycle"
               MouseLeftButtonDown="CommandPaletteOverlay_MouseLeftButtonDown">
             <Border Width="620"
                     MaxHeight="640"
@@ -783,6 +803,7 @@
                                Margin="8,18"
                                Text="No matching Soltex tool"
                                Foreground="{StaticResource MutedBrush}"
+                               AutomationProperties.LiveSetting="Polite"
                                Visibility="Collapsed" />
                     <Grid Grid.Row="4">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
