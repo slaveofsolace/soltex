@@ -15,7 +15,8 @@ Built and working:
 - virtualized installed-app, startup, and read-only service inventory;
 - guarded process termination workflow;
 - Core Audio endpoint/session observation plus per-app volume and mute with
-  immediate read-back;
+  immediate read-back, one bounded recoverable mix snapshot, and supported
+  Windows Sound handoff;
 - provider-neutral Windows protection health, Defender scan orchestration,
   intelligence update request, redacted events, import guard, AMSI intake,
   authenticated quarantine, and security audit;
@@ -24,6 +25,8 @@ Built and working:
 - authenticated non-installing update planner and recovery journal;
 - local preferences, close-to-tray lifecycle, packaging definition, and test
   infrastructure.
+- bounded searchable workspace commands through `Ctrl+K` and direct
+  `Ctrl+1`-`Ctrl+9` routes.
 
 Explicit previews or absent systems:
 

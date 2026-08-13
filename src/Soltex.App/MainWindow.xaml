@@ -12,7 +12,8 @@
         Foreground="{StaticResource TextBrush}"
         FontFamily="{StaticResource UiFont}"
         Loaded="Window_Loaded"
-        Closed="Window_Closed">
+        Closed="Window_Closed"
+        PreviewKeyDown="Window_PreviewKeyDown">
 
     <Grid Background="{StaticResource CanvasBrush}">
         <Grid.ColumnDefinitions>
@@ -124,6 +125,18 @@
                 </StackPanel>
 
                 <StackPanel Grid.Row="3">
+                    <Button x:Name="CommandPaletteButton"
+                            Margin="0,0,0,8"
+                            Style="{StaticResource NavButton}"
+                            AutomationProperties.Name="Open command palette"
+                            Click="CommandPaletteButton_Click">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE721;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Text="Find a tool" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="2" Text="Ctrl+K" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                        </Grid>
+                    </Button>
                     <Button x:Name="SettingsNavButton"
                             Margin="0,0,0,10"
                             Style="{StaticResource NavButton}"
@@ -154,7 +167,7 @@
                     <Grid Margin="3,10,3,0">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <TextBlock Text="Local workspace" Foreground="{StaticResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" />
-                        <TextBlock Grid.Column="1" Text="v1 preview" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                        <TextBlock x:Name="ShellBuildText" Grid.Column="1" Text="1.0.0" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                     </Grid>
                 </StackPanel>
             </Grid>
@@ -368,7 +381,22 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
                                 <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Soltex activity" />
-                                <ListBox x:Name="ActivityList" Grid.Row="2" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextBrush}" FontSize="{StaticResource FontCaption}" />
+                                <ListBox x:Name="ActivityList"
+                                         Grid.Row="2"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Foreground="{StaticResource TextBrush}"
+                                         FontSize="{StaticResource FontCaption}"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Margin="0,2,8,7"
+                                                       Text="{Binding}"
+                                                       TextWrapping="Wrap"
+                                                       LineHeight="18" />
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
                                 <Button Grid.Row="4" HorizontalAlignment="Left" Style="{StaticResource SecondaryButton}" Content="Protected imports" Click="OpenImports_Click" />
                             </Grid>
                         </Grid>
@@ -683,6 +711,86 @@
                     </Border>
                 </StackPanel>
             </Grid>
+        </Grid>
+
+        <Grid x:Name="CommandPaletteOverlay"
+              Grid.ColumnSpan="2"
+              Panel.ZIndex="100"
+              Background="{StaticResource ModalScrimBrush}"
+              Visibility="Collapsed"
+              AutomationProperties.Name="Command palette"
+              MouseLeftButtonDown="CommandPaletteOverlay_MouseLeftButtonDown">
+            <Border Width="620"
+                    MaxHeight="640"
+                    Margin="0,86,0,0"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Top"
+                    Background="{StaticResource ElevatedBrush}"
+                    BorderBrush="{StaticResource AccentDimBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusLg}"
+                    Padding="18"
+                    MouseLeftButtonDown="CommandPaletteSurface_MouseLeftButtonDown">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="&#xE721;" FontFamily="{StaticResource IconFont}" FontSize="18" Foreground="{StaticResource AccentFocusBrush}" VerticalAlignment="Center" />
+                        <TextBox x:Name="CommandSearchBox"
+                                 Grid.Column="1"
+                                 Margin="12,0,0,0"
+                                 Style="{StaticResource FieldStyle}"
+                                 FontSize="16"
+                                 AutomationProperties.Name="Find a Soltex tool"
+                                 TextChanged="CommandSearchBox_TextChanged"
+                                 PreviewKeyDown="CommandSearchBox_PreviewKeyDown" />
+                    </Grid>
+                    <ListBox x:Name="CommandPaletteList"
+                             Grid.Row="2"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             MaxHeight="460"
+                             ItemContainerStyle="{StaticResource CommandPaletteItemStyle}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             AutomationProperties.Name="Soltex tools"
+                             PreviewKeyDown="CommandPaletteList_PreviewKeyDown"
+                             MouseLeftButtonUp="CommandPaletteList_MouseLeftButtonUp">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="10,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Label}" FontWeight="SemiBold" Foreground="{StaticResource TextBrightBrush}" />
+                                        <TextBlock Margin="0,3,0,0" Text="{Binding Group}" Foreground="{StaticResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding Shortcut}" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock x:Name="CommandEmptyText"
+                               Grid.Row="2"
+                               Margin="8,18"
+                               Text="No matching Soltex tool"
+                               Foreground="{StaticResource MutedBrush}"
+                               Visibility="Collapsed" />
+                    <Grid Grid.Row="4">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="Type to filter · Enter to open" Foreground="{StaticResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" />
+                        <TextBlock Grid.Column="1" Text="Esc to close" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                    </Grid>
+                </Grid>
+            </Border>
         </Grid>
     </Grid>
 </Window>

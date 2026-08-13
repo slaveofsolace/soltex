@@ -1,0 +1,162 @@
+{
+  "schema_version": "2.0.0",
+  "ledger_id": "ledger_soltex_productization",
+  "created_at": "2026-08-12T23:27:00Z",
+  "depth": "DEEP",
+  "iteration": 2,
+  "root": {
+    "kind": "DECISION",
+    "node_id": "root_productization",
+    "statement": "Select and verify the smallest end-to-end product slices that materially move Soltex from engineering console to dependable daily-use Windows utility.",
+    "source_state": "Exact-head installed Soltex is functional and visually coherent but cold-eye review found weak cross-module flow, clipped Security activity, passive sparse states, and no recoverable Audio mix recall.",
+    "target_state": "The native app exposes fast navigation and at least one deep, recoverable, read-back-backed workflow while preserving security, privacy, lifecycle, and performance boundaries.",
+    "conditions": [
+      "Do not copy proprietary SteelSeries expression or change SteelSeries settings.",
+      "Do not weaken Windows Security, add exclusions, or claim replacement antivirus behavior.",
+      "Do not overwrite the protected owner checkout or its dirty files.",
+      "Keep human visual acceptance separate from automated verification."
+    ],
+    "boundary": "The isolated sol/soltex-product-rebuild worktree, its existing local Windows runtime, branch-scoped GitHub evidence, and the already-installed read-only SteelSeries GG reference.",
+    "objective_claim_id": "claim_objective",
+    "invariant_ids": ["inv_owner_tree", "inv_security", "inv_reference", "inv_honesty"],
+    "uncertainty_changes_decision": true
+  },
+  "project_model": {
+    "status": "READY",
+    "facets": {
+      "intent": {"summary": "Finish Soltex as a coherent native system utility with large-company product maturity.", "knowledge": "KNOWN", "load_bearing": true, "claim_ids": ["claim_objective"], "unknown_disposition": "Human taste acceptance remains reserved."},
+      "decision": {"summary": "Prioritize product-shell flow plus a recoverable Audio workflow before broadening feature count.", "knowledge": "KNOWN", "load_bearing": true, "claim_ids": ["claim_gap", "claim_reference"], "unknown_disposition": "Reopen if runtime evidence shows a higher-severity functional failure."},
+      "acceptance_contract": {"summary": "Working controls, persistent state, recovery, accessibility, installed evidence, honest nonclaims, and human visual review.", "knowledge": "KNOWN", "load_bearing": true, "claim_ids": ["claim_objective", "claim_boundary"], "unknown_disposition": "The owner must provide subjective final visual acceptance."},
+      "mechanism": {"summary": "WPF shell navigation, bounded local stores, Windows Core Audio read-back, and existing native render-smoke and test suites.", "knowledge": "KNOWN", "load_bearing": true, "claim_ids": ["claim_runtime"], "unknown_disposition": "New write paths require focused failure and recovery tests."},
+      "current_state_history": {"summary": "Implementation worktree is clean at 4d7f21d; installed app was reviewed before source interpretation; protected owner checkout remains dirty and untouched.", "knowledge": "KNOWN", "load_bearing": true, "claim_ids": ["claim_runtime", "claim_boundary"], "unknown_disposition": "Re-anchor before each publication or install mutation."},
+      "people_incentives": {"summary": "The owner values daily utility and product polish over decorative parity claims; SteelSeries remains a reference publisher only.", "knowledge": "KNOWN", "load_bearing": false, "claim_ids": ["claim_reference"], "unknown_disposition": "Owner selects final taste acceptance."},
+      "lifecycle_recovery": {"summary": "Existing shutdown ownership is tested; new persisted Audio state must be bounded, atomic, clearable, and safe on corruption.", "knowledge": "KNOWN", "load_bearing": true, "claim_ids": ["claim_boundary"], "unknown_disposition": "Verify installed close/reopen and malformed-state recovery before closure."}
+    },
+    "invariants": [
+      {"id": "inv_owner_tree", "statement": "Protected owner-checkout dirty work remains untouched.", "owner": "User", "status": "PRESERVED", "hard_gate": true, "evidence_ids": ["ev_git_anchor"]},
+      {"id": "inv_security", "statement": "Soltex cooperates with Defender and Malwarebytes and never disables protections or adds exclusions.", "owner": "Soltex maintainers", "status": "PRESERVED", "hard_gate": true, "evidence_ids": ["ev_source_audit"]},
+      {"id": "inv_reference", "statement": "SteelSeries GG contributes general product principles only; proprietary expression stays outside the repository.", "owner": "Soltex maintainers", "status": "PRESERVED", "hard_gate": true, "evidence_ids": ["ev_gg_runtime"]},
+      {"id": "inv_honesty", "statement": "Unsupported capabilities remain explicit and are not simulated.", "owner": "Soltex maintainers", "status": "PRESERVED", "hard_gate": true, "evidence_ids": ["ev_soltex_runtime"]}
+    ],
+    "dependencies": [
+      {"id": "dep_windows", "name": "Supported Windows APIs", "role": "Provide telemetry, Core Audio, lifecycle, and Windows Security interoperability.", "claim_ids": ["claim_runtime"]},
+      {"id": "dep_github", "name": "GitHub branch CI", "role": "Provide exact-head build and packaging verification after local gates.", "claim_ids": ["claim_unknown_release"]}
+    ],
+    "stakeholders": [
+      {"id": "stakeholder_owner", "name": "Soltex owner", "role": "Decision owner and final visual acceptance owner.", "claim_ids": ["claim_objective"]}
+    ]
+  },
+  "authority": {
+    "scope": "Inspect, modify, test, package, and branch-publish the isolated Soltex worktree without changing unrelated local or third-party state.",
+    "decision_owner": "User",
+    "authorized_actions": ["Edit the isolated Soltex branch.", "Run bounded local builds, tests, native captures, and installer recovery checks.", "Push verified changes to the existing feature branch and update its pull request."],
+    "forbidden_actions": ["Modify or discard the protected owner checkout.", "Change SteelSeries GG settings or copy its proprietary expression.", "Disable Windows security controls or add exclusions.", "Claim production readiness or parity without evidence."],
+    "human_reserved_decisions": ["Final visual acceptance.", "Production code-signing identity and release-channel activation.", "Residual-risk acceptance."],
+    "external_state_allowed": true,
+    "hard_gates": [
+      {"id": "gate_authority", "category": "AUTHORITY", "status": "CLEAR", "rationale": "The user explicitly authorized finishing the tool end-to-end within the established project.", "claim_ids": ["claim_objective"]},
+      {"id": "gate_safety", "category": "SAFETY", "status": "CLEAR", "rationale": "Planned changes are bounded app controls and local state; no stress, driver, or protection-disabling work is in scope.", "claim_ids": ["claim_boundary"]},
+      {"id": "gate_privacy", "category": "PRIVACY_SECURITY_LEGAL", "status": "CLEAR", "rationale": "Audio snapshots retain only displayed app and endpoint labels plus levels; no raw Core Audio IDs or paths are persisted. GG is reference-only.", "claim_ids": ["claim_boundary", "claim_reference"]},
+      {"id": "gate_external", "category": "IRREVERSIBLE_EXTERNAL_STATE", "status": "CLEAR", "rationale": "Only the existing feature branch and draft PR may be updated after verification; no release publication is authorized by this gate.", "claim_ids": ["claim_boundary"]},
+      {"id": "gate_production", "category": "DESTRUCTIVE_PRODUCTION", "status": "NOT_APPLICABLE", "rationale": "No production deployment or destructive source operation is part of the current slice.", "claim_ids": ["claim_boundary"]},
+      {"id": "gate_human", "category": "HUMAN_RESERVED", "status": "CLEAR", "rationale": "Implementation may proceed while final visual acceptance and production signing/release decisions remain explicitly reserved to the owner.", "claim_ids": ["claim_unknown_release"]},
+      {"id": "gate_rollback", "category": "ROLLBACK_FAILURE", "status": "CLEAR", "rationale": "Source changes are isolated and reviewable; new local Audio snapshot state is explicitly clearable and must recover from malformed input.", "claim_ids": ["claim_boundary"]}
+    ]
+  },
+  "companion_findings": {
+    "lead_skill": "HUMAN_CORTEX",
+    "applicable_domains": ["VISUAL", "UI", "AUDIO", "RUNTIME_EXPERIENCE", "ACCESSIBILITY_COMFORT"],
+    "observation_input": "BOTH",
+    "cold_eye_status": "COMPLETED",
+    "cold_eye_before_source_inspection": true,
+    "findings": [
+      {"id": "finding_hierarchy", "source_skill": "HUMAN_EYE", "domain": "UI", "label": "OBSERVED", "verdict": "REVISE", "statement": "The shell is coherent but cross-module navigation is slow and several pages expose large passive areas.", "evidence_ids": ["ev_soltex_runtime"]},
+      {"id": "finding_security_wrap", "source_skill": "HUMAN_EYE", "domain": "VISUAL", "label": "OBSERVED", "verdict": "KEEP", "statement": "The prior Security activity overflow is replaced with wrapped bounded rows and directly inspected in native capture.", "evidence_ids": ["ev_native_productization"]},
+      {"id": "finding_audio_recovery", "source_skill": "HUMAN_EYE", "domain": "AUDIO", "label": "OBSERVED", "verdict": "KEEP", "statement": "The Mixer now owns a bounded capture, exact-match apply, partial-result, and confirmed-clear recovery path.", "evidence_ids": ["ev_canonical_verify", "ev_native_productization"]},
+      {"id": "finding_reference_depth", "source_skill": "HUMAN_EYE", "domain": "RUNTIME_EXPERIENCE", "label": "OBSERVED", "verdict": "KEEP", "statement": "GG demonstrates that task depth, persistent state, and immediate feedback create maturity more effectively than decorative styling.", "evidence_ids": ["ev_gg_runtime"]}
+    ],
+    "completion_axes": {
+      "functional_implementation": {"status": "PASS", "signal": "Command routing, Security wrapping, Audio snapshot capture/apply/clear, persistence bounds, and shutdown ownership are implemented.", "evidence_ids": ["ev_canonical_verify", "ev_source_productization"], "rationale": "All repository suites pass after direct source review."},
+      "runtime_integration": {"status": "PASS", "signal": "The exact working-tree WPF build rendered command, Mixer, and Security states successfully.", "evidence_ids": ["ev_native_productization"], "rationale": "Native render-smoke exercises the built source; installed upgrade is still a separate package gate."},
+      "player_eye_presentation": {"status": "PASS", "signal": "Direct inspection found no remaining P1 hierarchy, selection, overflow, or truthful-state defect in the changed views.", "evidence_ids": ["ev_native_productization"], "rationale": "Agent cold-eye acceptance only; owner acceptance remains unknown."},
+      "evidence_regression_coverage": {"status": "PASS", "signal": "The command palette is included in the native matrix and the canonical verifier now runs all eight repository suites plus identity and design policy.", "evidence_ids": ["ev_canonical_verify", "ev_native_productization"], "rationale": "Full current-source local gate passed."},
+      "human_acceptance": {"status": "UNKNOWN", "signal": "No owner acceptance has been recorded for the new slice.", "evidence_ids": [], "rationale": "Human visual acceptance cannot be automated."}
+    }
+  },
+  "claims": [
+    {"id": "claim_objective", "label": "PROPOSED", "statement": "The requested outcome is an end-to-end, daily-use Soltex product with large-company maturity rather than another styling-only pass.", "evidence_ids": [], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Direct user request."}},
+    {"id": "claim_runtime", "label": "OBSERVED", "statement": "The current installed build exposes working native telemetry, app inventory, Core Audio session controls, Defender-cooperating status, Remote Assist handoff, Activity, settings, and update planning.", "evidence_ids": ["ev_soltex_runtime", "ev_source_audit"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Direct installed runtime and current-source inspection."}},
+    {"id": "claim_gap", "label": "OBSERVED", "statement": "Cross-module friction, clipped Security activity, and missing Audio state recall were the highest-priority bounded product gaps and are repaired in the current working tree.", "evidence_ids": ["ev_soltex_runtime", "ev_canonical_verify", "ev_native_productization"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Before-and-after cold-eye inspection plus full repository verification."}},
+    {"id": "claim_reference", "label": "OBSERVED", "statement": "SteelSeries GG supports clean-room principles of focused task depth, persistent state, and immediate feedback, but it is not reusable source or expression for Soltex.", "evidence_ids": ["ev_gg_runtime"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Direct reference inspection plus rights boundary."}},
+    {"id": "claim_boundary", "label": "OBSERVED", "statement": "The isolated worktree remains anchored at 4d7f21d with task-owned productization changes; the owner checkout remains at bf2662de with 33 protected dirty entries untouched.", "evidence_ids": ["ev_git_anchor"], "contradiction_claim_ids": [], "confidence": {"level": "HIGH", "basis": "Current Git and filesystem probe."}},
+    {"id": "claim_unknown_release", "label": "UNKNOWN", "statement": "Production signing, configured update release source, and final human visual acceptance are not established.", "evidence_ids": ["ev_soltex_runtime"], "contradiction_claim_ids": [], "confidence": {"level": "LOW", "basis": "Installed Updates UI exposes the boundary, but the owner-controlled release decisions remain unresolved."}}
+  ],
+  "evidence": [
+    {"id": "ev_git_anchor", "kind": "LOG", "access": "INSPECTED_CURRENT", "locator": "git status and process anchor recorded in CAFFEINE_CHECKPOINT.md", "captured_at": "2026-08-12T23:27:00Z", "integrity": "Implementation HEAD 4d7f21d95d56a21f345eba7ada0dff957531f247; owner HEAD bf2662de80992cfed761625642f084d3caaa0f04.", "supports_claim_ids": ["claim_boundary"], "contradicts_claim_ids": []},
+    {"id": "ev_soltex_runtime", "kind": "ARTIFACT", "access": "INSPECTED_CURRENT", "locator": "Installed Soltex Computer Use cold-eye review on Overview, Performance, Applications, Audio, Security, Remote Assist, Activity, Updates, and Settings", "captured_at": "2026-08-12T23:26:00Z", "integrity": "Visible installed Windows runtime; no security or audio settings were changed.", "supports_claim_ids": ["claim_runtime", "claim_gap", "claim_unknown_release"], "contradicts_claim_ids": []},
+    {"id": "ev_gg_runtime", "kind": "ARTIFACT", "access": "INSPECTED_CURRENT", "locator": "Already-installed SteelSeries GG visible UI, Engine and Sonar Mixer/Game views", "captured_at": "2026-08-12T23:25:00Z", "integrity": "Reference-only inspection; settings unchanged; no payload copied.", "supports_claim_ids": ["claim_reference"], "contradicts_claim_ids": []},
+    {"id": "ev_source_audit", "kind": "SOURCE", "access": "INSPECTED_CURRENT", "locator": "src/Soltex.App, src/Soltex.Audio, lifecycle and current evidence documentation at HEAD 4d7f21d", "captured_at": "2026-08-12T23:27:00Z", "integrity": "Git exact-head current-source inspection.", "supports_claim_ids": ["claim_runtime"], "contradicts_claim_ids": []},
+    {"id": "ev_source_productization", "kind": "SOURCE", "access": "INSPECTED_CURRENT", "locator": "Current working-tree productization diff and IMPLEMENTATION_AUDIT.md", "captured_at": "2026-08-13T00:10:00Z", "integrity": "Task-owned isolated-worktree diff; no protected owner-checkout mutation.", "supports_claim_ids": ["claim_runtime", "claim_gap", "claim_boundary"], "contradicts_claim_ids": []},
+    {"id": "ev_canonical_verify", "kind": "LOG", "access": "INSPECTED_CURRENT", "locator": "canonical-verify-after-hardening.log", "captured_at": "2026-08-13T00:04:00Z", "integrity": "Pinned .NET 10.0.302; Release build 0 warnings and 0 errors; 171 of 171 named tests passed including opt-in in-memory EICAR.", "supports_claim_ids": ["claim_runtime", "claim_gap", "claim_boundary"], "contradicts_claim_ids": []},
+    {"id": "ev_native_productization", "kind": "ARTIFACT", "access": "INSPECTED_CURRENT", "locator": "command-palette.png, mixer.png, and security.png under the task visualization directory", "captured_at": "2026-08-12T23:51:00Z", "integrity": "Exact working-tree native WPF render-smoke at 1280 x 820; directly inspected after token and hierarchy correction.", "supports_claim_ids": ["claim_runtime", "claim_gap"], "contradicts_claim_ids": []}
+  ],
+  "hypotheses": [
+    {"id": "hyp_shell", "statement": "A searchable keyboard command surface and explicit shortcuts will reduce cross-module friction without increasing visible information density.", "mechanism": "Ctrl+K offers one focused overlay over the existing navigation model and routes through the same ShowPanel state transition.", "status": "SUPPORTED", "supporting_claim_ids": ["claim_gap"], "contradicting_claim_ids": [], "distinguishing_prediction": "Keyboard and click tests can reach every visible workspace and focus returns safely after dismissal.", "falsifier": "The overlay traps focus, duplicates state, or makes 1280 x 820 containment worse.", "decision_if_true": "Ship the command surface and keep the sidebar quiet.", "test_ids": ["test_shell"], "confidence": {"level": "HIGH", "basis": "Bounded catalog tests, shared routing, and native command-surface capture passed."}},
+    {"id": "hyp_audio", "statement": "A single bounded Audio mix snapshot provides meaningful recovery and product depth without pretending to be an EQ or virtual audio router.", "mechanism": "Persist displayed app and endpoint labels plus volume/mute, re-observe live sessions, apply only exact controllable matches, and require Core Audio read-back for each write.", "status": "SUPPORTED", "supporting_claim_ids": ["claim_gap", "claim_runtime"], "contradicting_claim_ids": [], "distinguishing_prediction": "Store tests recover from invalid data and planner/controller tests report verified, missing, and failed entries explicitly.", "falsifier": "The snapshot can target ambiguous sessions, persists raw identifiers, or hides partial failure.", "decision_if_true": "Expose capture, apply, and confirmed clear controls in Audio.", "test_ids": ["test_audio"], "confidence": {"level": "HIGH", "basis": "Persistence, matching, recovery, privacy, action-state, and native UI tests passed."}}
+  ],
+  "tests": [
+    {"id": "test_shell", "question": "Can every workspace be reached and dismissed through the command surface with correct focus and no layout regression?", "kind": "EXPERIMENT", "discriminates_hypothesis_ids": ["hyp_shell"], "predicted_outcomes": [{"hypothesis_id": "hyp_shell", "outcome": "Focused navigation works by keyboard and click in native render-smoke."}], "expected_decision_value": "HIGH", "cost": "LOW", "risk": "LOW", "authorization_status": "AUTHORIZED", "status": "PASS", "evidence_ids": ["ev_canonical_verify", "ev_native_productization"], "changes_decision_if": "Any focus trap or containment regression removes or redesigns the overlay."},
+    {"id": "test_audio", "question": "Does Audio mix snapshot capture, bounded persistence, exact matching, partial failure reporting, clear, and malformed-state recovery work without persisting raw identities?", "kind": "EXPERIMENT", "discriminates_hypothesis_ids": ["hyp_audio"], "predicted_outcomes": [{"hypothesis_id": "hyp_audio", "outcome": "Focused tests pass and native UI exposes only truthful snapshot states."}], "expected_decision_value": "HIGH", "cost": "MEDIUM", "risk": "LOW", "authorization_status": "AUTHORIZED", "status": "PASS", "evidence_ids": ["ev_canonical_verify", "ev_native_productization"], "changes_decision_if": "Ambiguous matching, unbounded state, or hidden partial failure blocks the feature."},
+    {"id": "test_product_slice", "question": "Which proposed productization mechanism materially improves the exact native runtime without crossing its boundary?", "kind": "EXPERIMENT", "discriminates_hypothesis_ids": ["hyp_shell", "hyp_audio"], "predicted_outcomes": [{"hypothesis_id": "hyp_shell", "outcome": "All workspaces become directly reachable through a focus-safe command query without adding persistent visual density."}, {"hypothesis_id": "hyp_audio", "outcome": "A captured mix can be matched and reported as verified, partial, or unavailable without persisting raw identities."}], "expected_decision_value": "HIGH", "cost": "MEDIUM", "risk": "LOW", "authorization_status": "AUTHORIZED", "status": "PASS", "evidence_ids": ["ev_canonical_verify", "ev_native_productization"], "changes_decision_if": "A mechanism that fails its distinct runtime prediction is removed independently rather than holding the other slice."}
+  ],
+  "trace": {
+    "bounds": {"max_depth": 3, "max_nodes": 8, "stop_rule": "Expand only product gaps that change daily task completion, safety, recovery, or human acceptance."},
+    "nodes": [
+      {"id": "root_productization", "kind": "ROOT", "statement": "Current app is real but not yet a mature daily-use product.", "claim_id": "claim_gap", "depth": 0, "terminal": false, "closure_reason": "EXPANDED"},
+      {"id": "state_shell_friction", "kind": "STATE", "statement": "Sidebar-only navigation slows task switching and hides shortcuts.", "claim_id": "claim_gap", "depth": 1, "terminal": false, "closure_reason": "EXPANDED"},
+      {"id": "state_audio_no_recall", "kind": "STATE", "statement": "Verified Audio writes have no user-owned recall path.", "claim_id": "claim_gap", "depth": 1, "terminal": false, "closure_reason": "EXPANDED"},
+      {"id": "mitigation_shell", "kind": "MITIGATION", "statement": "Add one searchable keyboard command surface over the existing workspace router.", "claim_id": "claim_gap", "depth": 2, "terminal": true, "closure_reason": "BOUNDED"},
+      {"id": "mitigation_audio", "kind": "MITIGATION", "statement": "Add a bounded local Audio mix snapshot with exact live matching and per-write read-back.", "claim_id": "claim_runtime", "depth": 2, "terminal": true, "closure_reason": "BOUNDED"}
+    ],
+    "edges": [
+      {"id": "edge_root_shell", "relation": "FORWARD", "source_node_id": "root_productization", "target_node_id": "state_shell_friction", "source_delta": "A technically complete module set still lacks product-level flow.", "mechanism_status": "KNOWN", "mechanism": "Cold-eye navigation exposed repeated pointer travel and no searchable route.", "conditions": ["Representative modules remain visible in the existing sidebar."], "lag": "Immediate.", "target_delta": "Cross-module friction is isolated as one bounded product gap.", "affected_refs": ["stakeholder_owner"], "supporting_claim_ids": ["claim_gap"], "contradicting_claim_ids": [], "detection": {"signal": "Installed runtime interaction path.", "latency": "Immediate.", "failure_to_detect": "Static source alone cannot prove the interaction cost."}, "falsifier": "A current runtime already exposes a fast global command route.", "confidence": {"level": "HIGH", "basis": "Direct cold-eye inspection."}},
+      {"id": "edge_root_audio", "relation": "FORWARD", "source_node_id": "root_productization", "target_node_id": "state_audio_no_recall", "source_delta": "The Audio module verifies individual writes but lacks recovery across several app sessions.", "mechanism_status": "KNOWN", "mechanism": "Current UI and source expose only per-session volume and mute mutations.", "conditions": ["Core Audio sessions are active and controllable."], "lag": "Immediate after a user changes several sessions.", "target_delta": "Missing recall is isolated as one bounded product gap.", "affected_refs": ["stakeholder_owner", "dep_windows"], "supporting_claim_ids": ["claim_gap", "claim_runtime"], "contradicting_claim_ids": [], "detection": {"signal": "Installed Audio view and current source event surface.", "latency": "Immediate.", "failure_to_detect": "An unexposed hidden store would invalidate the observation."}, "falsifier": "A current supported Audio snapshot path already exists.", "confidence": {"level": "HIGH", "basis": "Direct runtime and source inspection."}},
+      {"id": "edge_shell", "relation": "FORWARD", "source_node_id": "state_shell_friction", "target_node_id": "mitigation_shell", "source_delta": "Navigation requires repeated pointer travel and recall of sidebar groups.", "mechanism_status": "HYPOTHESIZED", "mechanism": "A modal command query reduces task switching to one keystroke plus filtered selection.", "conditions": ["Focus is trapped only while open and restored on dismiss.", "All routes reuse ShowPanel."], "lag": "Immediate interaction.", "target_delta": "Every workspace is reachable without adding permanent visual density.", "affected_refs": ["stakeholder_owner"], "supporting_claim_ids": ["claim_gap"], "contradicting_claim_ids": [], "detection": {"signal": "Keyboard navigation and render-smoke state.", "latency": "Immediate.", "failure_to_detect": "Mouse-only capture would miss focus defects."}, "falsifier": "Any unreachable route or focus trap.", "confidence": {"level": "MEDIUM", "basis": "Observed gap with testable WPF mechanism."}},
+      {"id": "edge_audio", "relation": "FORWARD", "source_node_id": "state_audio_no_recall", "target_node_id": "mitigation_audio", "source_delta": "A user cannot return multiple app sessions to a known mix after experimentation.", "mechanism_status": "KNOWN", "mechanism": "Capture displayed session labels and values, re-observe exact matches, then reuse guarded Core Audio writes with read-back.", "conditions": ["Only controllable live sessions are captured.", "Raw endpoint and session identities are not persisted.", "Partial results remain explicit."], "lag": "Seconds during explicit apply.", "target_delta": "The user can restore a known mix or clear the local snapshot.", "affected_refs": ["stakeholder_owner", "dep_windows"], "supporting_claim_ids": ["claim_runtime", "claim_gap"], "contradicting_claim_ids": [], "detection": {"signal": "Store, match, orchestration, and native UI tests.", "latency": "Immediate after apply.", "failure_to_detect": "Happy-path UI alone could hide missing or mismatched sessions."}, "falsifier": "Ambiguous targeting, raw-ID persistence, or unreported failure.", "confidence": {"level": "HIGH", "basis": "Existing per-session controller already performs identity revalidation and read-back."}}
+    ],
+    "feedback_loops": [],
+    "thresholds": [
+      {"id": "threshold_snapshot", "variable": "Persisted Audio snapshot entries and bytes", "boundary": "At most 64 normalized entries and 64 KiB", "direction": "Reject or recover rather than load beyond the bound.", "evidence_or_test_ids": ["test_audio"]}
+    ]
+  },
+  "decision": {
+    "iteration_choice": "TEST",
+    "recommendation": "Retain the verified command surface, Security wrapping correction, and bounded Audio mix snapshot; bind final evidence to the commit and package before starting the next product module.",
+    "selected_action_ids": ["action_shell", "action_audio"],
+    "rejected_options": ["Do not skin Soltex to visually copy GG.", "Do not add fake EQ, routing, GPU, or update capabilities.", "Do not fill sparse states with decorative cards."],
+    "decision_claim_ids": ["claim_objective", "claim_gap", "claim_reference", "claim_boundary"],
+    "remaining_unknown_claim_ids": ["claim_unknown_release"],
+    "human_owner": "User",
+    "consecutive_stable_checks": 1,
+    "reopen_trigger": "Reopen if focused tests, native capture, installed recovery, or owner review exposes a higher-severity failure."
+  },
+  "actions": [
+    {"id": "action_shell", "description": "Implement the compact command surface, shortcuts, and Security activity wrapping correction.", "status": "VERIFIED", "authorization_status": "AUTHORIZED", "authority_basis": "Direct request to finish and rebuild the product UI.", "destructive": false, "production": false, "external_state_change": false, "irreversible": false, "monitoring": "Focused app tests and native keyboard/render-smoke capture.", "rollback": {"kind": "TRUE_ROLLBACK", "procedure": "Revert only this isolated feature diff before publication.", "preconditions": ["Do not touch the protected owner checkout."], "verification": "Canonical verification and native command/Security capture passed.", "evidence_ids": ["ev_canonical_verify", "ev_native_productization"], "irreversible_residue": "None."}, "recovery": {"procedure": "Fall back to the existing sidebar router if overlay verification fails.", "owner": "Soltex maintainer", "evidence_ids": ["ev_canonical_verify"]}, "mitigation_consequence_node_ids": ["mitigation_shell"]},
+    {"id": "action_audio", "description": "Implement one bounded, atomic, clearable Audio mix snapshot and exact-match apply workflow using existing read-back-backed writes.", "status": "VERIFIED", "authorization_status": "AUTHORIZED", "authority_basis": "Direct request for a deeper SteelSeries-class working tool while keeping claims honest.", "destructive": false, "production": false, "external_state_change": false, "irreversible": false, "monitoring": "Focused persistence and planner tests plus non-mutating native render-smoke; no live session apply during automation.", "rollback": {"kind": "TRUE_ROLLBACK", "procedure": "Remove the isolated source diff; users can explicitly clear the local snapshot file through the UI.", "preconditions": ["No raw Core Audio identifiers are persisted."], "verification": "Store-clear, malformed-state, matching, action-state, and full repository tests pass.", "evidence_ids": ["ev_canonical_verify", "ev_native_productization"], "irreversible_residue": "A local user-created snapshot may remain until cleared or the app data is removed."}, "recovery": {"procedure": "Recover to no-snapshot state on invalid, oversized, or unreadable data without enabling Apply.", "owner": "Soltex maintainer", "evidence_ids": ["ev_canonical_verify"]}, "mitigation_consequence_node_ids": ["mitigation_audio"]}
+  ],
+  "verification": {
+    "mechanism": {"status": "PASS", "signal": "All productization mechanisms pass the hardened canonical verifier.", "evidence_ids": ["ev_canonical_verify", "ev_source_productization"], "rationale": "171 named tests plus identity and design policy pass."},
+    "endpoint": {"status": "PASS", "signal": "Exact-source native command, Mixer, and Security states rendered and were directly inspected.", "evidence_ids": ["ev_native_productization"], "rationale": "Installed package upgrade remains a separate pending gate."},
+    "guardrails": {"status": "PASS", "signal": "Authority, protected checkout, security coexistence, and clean-room reference boundaries are explicit before editing.", "evidence_ids": ["ev_git_anchor", "ev_source_audit", "ev_gg_runtime"], "rationale": "Current inspection found no planned boundary crossing."},
+    "recovery": {"status": "PASS", "signal": "Malformed, oversized, duplicate, and clear paths fail closed or recover to no snapshot.", "evidence_ids": ["ev_canonical_verify"], "rationale": "Focused App/control recovery tests pass."}
+  },
+  "closure": {
+    "status": "BOUNDED",
+    "summary": "The highest-priority shell, Security layout, and Audio recovery slice is implemented and locally verified; package, hosted, and owner acceptance remain open.",
+    "residual_risks": ["Production signing and update release configuration remain owner-controlled.", "GG-level audio DSP or virtual routing is out of scope without a separately supported architecture.", "Human visual acceptance is not yet recorded."],
+    "human_acceptance_required": true,
+    "accepted_by": "",
+    "acceptance_evidence_ids": [],
+    "nonclaims": ["This ledger does not contain hidden chain-of-thought.", "This work does not copy SteelSeries GG.", "Soltex is not a replacement antivirus, virtual audio driver, or production-signed release.", "Automated tests do not grant human visual acceptance."]
+  }
+}

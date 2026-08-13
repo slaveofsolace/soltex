@@ -83,6 +83,7 @@
     <Color x:Key="AccentAreaColor">#2467B7FF</Color>
     <Color x:Key="SignalAreaColor">#1A5DD39E</Color>
     <Color x:Key="SelectionColor">#6067B7FF</Color>
+    <Color x:Key="ModalScrimColor">#B0000509</Color>
 
     <!-- ============================================================ -->
     <!-- 2. Semantic brushes                                           -->
@@ -145,6 +146,7 @@
     <SolidColorBrush x:Key="AccentAreaBrush" Color="{StaticResource AccentAreaColor}" />
     <SolidColorBrush x:Key="SignalAreaBrush" Color="{StaticResource SignalAreaColor}" />
     <SolidColorBrush x:Key="SelectionBrush" Color="{StaticResource SelectionColor}" />
+    <SolidColorBrush x:Key="ModalScrimBrush" Color="{StaticResource ModalScrimColor}" />
 
     <!-- ============================================================ -->
     <!-- 3. Corner-radius scale                                        -->

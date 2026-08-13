@@ -46,6 +46,7 @@ public partial class MainWindow : Window
     private bool _securityActivityVisible;
     private readonly PreferencesStore _preferencesStore;
     private readonly LocalActivityStore _activityStore;
+    private readonly AudioMixSnapshotStore _audioMixSnapshotStore;
     private readonly SemaphoreSlim _applicationRefreshGate = new(1, 1);
     private readonly TaskCompletionSource<bool> _startupCompleted = new(
         TaskCreationOptions.RunContinuationsAsynchronously);
@@ -106,6 +107,9 @@ public partial class MainWindow : Window
             _preferences.ActivityRetention,
             activityLoad.Detail,
             storageHealthy: !activityLoad.RecoveredFromInvalid);
+        _audioMixSnapshotStore = new AudioMixSnapshotStore(
+            Path.Combine(_runtime.DataRoot, "audio-mix.json"));
+        MixerPanel.UpdateMixSnapshot(_audioMixSnapshotStore.Load());
         MonitoringPanel.SetDetailsVisible(_preferences.OpenPerformanceDetails);
         _updateStagingRoot = Path.Combine(_runtime.DataRoot, "update", "staging");
         _updateJournal = new UpdatePlanningJournal(Path.Combine(_runtime.DataRoot, "update", "journal"));
@@ -113,6 +117,7 @@ public partial class MainWindow : Window
         DefenderEventGrid.ItemsSource = _defenderEventRows;
         UpdateJournalGrid.ItemsSource = _updateJournalRows;
         CurrentBuildText.Text = typeof(MainWindow).Assembly.GetName().Version?.ToString() ?? "development";
+        ShellBuildText.Text = typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "development";
         RemotePeerIdInput.TextChanged += RemotePeerId_TextChanged;
         SetRemoteAssistExecutable(RemoteAssistExecutableLocator.FindInstalled());
         DevicesPanel.UpdateObservation(_localDevice);
@@ -125,6 +130,9 @@ public partial class MainWindow : Window
         MixerPanel.EndpointPreferenceRequested += MixerPanel_EndpointPreferenceRequested;
         MixerPanel.ClearEndpointPreferencesRequested += MixerPanel_ClearEndpointPreferencesRequested;
         MixerPanel.OpenSoundSettingsRequested += MixerPanel_OpenSoundSettingsRequested;
+        MixerPanel.CaptureMixSnapshotRequested += MixerPanel_CaptureMixSnapshotRequested;
+        MixerPanel.ApplyMixSnapshotRequested += MixerPanel_ApplyMixSnapshotRequested;
+        MixerPanel.ClearMixSnapshotRequested += MixerPanel_ClearMixSnapshotRequested;
         SettingsPanel.PreferencesChanged += SettingsPanel_PreferencesChanged;
         ActivityPanel.ClearRequested += ActivityPanel_ClearRequested;
     }
@@ -217,10 +225,12 @@ public partial class MainWindow : Window
         }
 
         _operationCancellation?.Cancel();
+        _audioMixCancellation?.Cancel();
         await _telemetryLoop.StopAsync();
         bool ownedWorkDrained = await OwnedTaskDrain.WaitAsync(
             TimeSpan.FromSeconds(20),
             _activeOperationDrained,
+            _audioMixOperationDrained,
             _startupTask);
         if (!ownedWorkDrained)
         {
@@ -426,12 +436,14 @@ public partial class MainWindow : Window
             Task<AudioEndpointSnapshot> endpointCapture = AudioEndpointProvider.CaptureAsync();
             Task<AudioSessionSnapshot> sessionCapture = AudioSessionProvider.CaptureAsync();
             await Task.WhenAll(endpointCapture, sessionCapture);
+            _lastAudioSessionSnapshot = await sessionCapture;
             MixerPanel.UpdateSnapshot(
                 await endpointCapture,
-                await sessionCapture);
+                _lastAudioSessionSnapshot);
         }
         catch (Exception exception) when (exception is COMException or InvalidOperationException or ExternalException)
         {
+            _lastAudioSessionSnapshot = null;
             MixerPanel.ShowUnavailable();
         }
     }
@@ -1497,6 +1509,14 @@ public partial class MainWindow : Window
             ShowPanel(ApplicationsPanel, ApplicationsNavButton);
             ApplicationsPanel.ShowServicesForEvidence();
             _renderSmokeFocusTarget = ApplicationsPanel.ServicesGrid;
+            return true;
+        }
+
+        if (string.Equals(normalized, "command-palette", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(HomePanel, HomeNavButton);
+            OpenCommandPalette();
+            _renderSmokeFocusTarget = CommandSearchBox;
             return true;
         }
 

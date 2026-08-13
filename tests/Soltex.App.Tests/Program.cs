@@ -37,6 +37,7 @@ internal static class Program
         List<(string Name, Action Test)> tests =
         [
             ("Shared theme exposes required control resources", ThemeResourcesAreAvailable),
+            ("Workspace command catalog is bounded and searchable", WorkspaceCommandsAreBounded),
             ("Telemetry runs only in visible live workspaces", TelemetryRunsOnlyInLiveWorkspaces),
             ("Telemetry loop ownership serializes duplicate stop and queued restart", TelemetryLoopOwnershipIsSerialized),
             ("Background runtime remains explicit and fail-closed", BackgroundRuntimeIsExplicit),
@@ -63,6 +64,7 @@ internal static class Program
             ("Settings view renders working local preferences", SettingsViewRenders),
             ("Mixer prioritizes active endpoints and bounded app controls", () =>
                 MixerPrioritizesActiveEndpoints(audioSnapshot, audioSessionSnapshot)),
+            ("Audio mix snapshot is bounded, exact-match, and recoverable", AudioMixSnapshotIsBoundedAndRecoverable),
             ("Mixer keeps fallback reminders local and user mediated", MixerFallbackRemindersAreBounded),
             ("Windows Sound handoff uses one fixed supported URI", WindowsSoundHandoffIsFixed),
             ("Devices view renders an explicit unenrolled profile", () => DevicesViewRenders(device)),
@@ -154,6 +156,25 @@ internal static class Program
             homeVisible: true,
             monitoringVisible: false),
             "A hidden notification-area window must suspend performance telemetry.");
+    }
+
+    private static void WorkspaceCommandsAreBounded()
+    {
+        IReadOnlyList<WorkspaceCommand> all = WorkspaceCommandCatalog.Query(null);
+        True(all.Count == 9, "The command surface must expose the nine supported workspaces exactly once.");
+        True(all.Select(command => command.Workspace).Distinct(StringComparer.Ordinal).Count() == all.Count,
+            "Workspace commands contained duplicate routes.");
+        True(all.Select(command => command.Shortcut).Distinct(StringComparer.Ordinal).Count() == all.Count,
+            "Workspace commands contained duplicate shortcuts.");
+
+        IReadOnlyList<WorkspaceCommand> audio = WorkspaceCommandCatalog.Query("volume sessions");
+        True(audio.Count == 1 && audio[0].Workspace == "mixer",
+            "The command query did not route Audio synonyms to the mixer workspace.");
+        IReadOnlyList<WorkspaceCommand> remote = WorkspaceCommandCatalog.Query("screen peer");
+        True(remote.Count == 1 && remote[0].Workspace == "remote",
+            "The command query did not route Remote Assist synonyms.");
+        True(WorkspaceCommandCatalog.Query("not-a-soltex-tool").Count == 0,
+            "An unknown command query produced a fabricated result.");
     }
 
     private static void TelemetryLoopOwnershipIsSerialized()
@@ -934,6 +955,23 @@ internal static class Program
             "Mixer additional app sessions did not open from their disclosure control.");
         True(view.SessionSummaryText.Text.Contains("7 active", StringComparison.Ordinal),
             "Mixer omitted its bounded active-session summary.");
+        True(view.CaptureMixSnapshotButton.IsEnabled &&
+             !view.ApplyMixSnapshotButton.IsEnabled &&
+             !view.ClearMixSnapshotButton.IsEnabled,
+            "Mixer did not make capture the primary available action without a saved snapshot.");
+        AudioMixSnapshot savedMix = new(
+            DateTimeOffset.UtcNow,
+            [new AudioMixEntry("Audio app 1", "Speakers", 30, false)]);
+        view.UpdateMixSnapshot(new AudioMixLoadResult(
+            savedMix,
+            RecoveredFromInvalid: false,
+            AudioMixSnapshotStore.Describe(savedMix)));
+        True(view.ApplyMixSnapshotButton.IsEnabled && view.ClearMixSnapshotButton.IsEnabled,
+            "Mixer did not enable recall and clear after loading a valid snapshot.");
+        True(ReferenceEquals(
+                view.ApplyMixSnapshotButton.Style,
+                Application.Current.FindResource("ActionButton")),
+            "Mixer did not promote recall to the primary action after a snapshot was saved.");
 
         bool refreshRequested = false;
         view.RefreshRequested += (_, _) => refreshRequested = true;
@@ -1051,6 +1089,100 @@ internal static class Program
         True(result.Started, "The fixed Windows Sound handoff did not report launch dispatch.");
         True(backend.Plan == plan,
             "The Windows Sound launcher dispatched a plan other than the reviewed fixed plan.");
+    }
+
+    private static void AudioMixSnapshotIsBoundedAndRecoverable()
+    {
+        string root = Path.Combine(Path.GetTempPath(), "soltex-audio-mix-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            string path = Path.Combine(root, "audio-mix.json");
+            AudioMixSnapshotStore store = new(path);
+            AudioSession one = new(
+                "Game",
+                "Headset",
+                0.42,
+                isMuted: false,
+                canControl: true,
+                "Volume and mute available",
+                new AudioSessionIdentity("endpoint-one", "session-one", 101, 1001));
+            AudioSession duplicate = new(
+                "Game",
+                "Headset",
+                0.64,
+                isMuted: true,
+                canControl: true,
+                "Volume and mute available",
+                new AudioSessionIdentity("endpoint-two", "session-two", 102, 1002));
+            AudioSession chat = new(
+                "Chat",
+                "Headset",
+                0.75,
+                isMuted: true,
+                canControl: true,
+                "Volume and mute available",
+                new AudioSessionIdentity("endpoint-three", "session-three", 103, 1003));
+            AudioSession unavailable = new(
+                "System sounds",
+                "Headset",
+                0.90,
+                isMuted: false,
+                canControl: false,
+                "Control unavailable",
+                null);
+
+            AudioMixCaptureResult capture = AudioMixSnapshotPlanner.Capture(
+                [one, duplicate, chat, unavailable]);
+            True(capture.Snapshot is { Entries.Count: 1 },
+                "Capture did not omit duplicate or uncontrollable sessions.");
+            AudioMixSnapshot capturedSnapshot = capture.Snapshot!;
+            True(capture.SkippedAmbiguous == 2 && capture.SkippedUncontrollable == 1,
+                "Capture omission counts were not explicit.");
+            True(capturedSnapshot.Entries[0].ApplicationName == "Chat" &&
+                 capturedSnapshot.Entries[0].VolumePercent == 75 &&
+                 capturedSnapshot.Entries[0].IsMuted,
+                "Capture did not preserve the unique controllable session state.");
+
+            store.Save(capturedSnapshot);
+            string persisted = File.ReadAllText(path);
+            True(!persisted.Contains("endpoint-three", StringComparison.Ordinal) &&
+                 !persisted.Contains("session-three", StringComparison.Ordinal),
+                "The snapshot persisted a raw Core Audio identity.");
+            AudioMixLoadResult loaded = store.Load();
+            True(!loaded.RecoveredFromInvalid && loaded.Snapshot is { Entries.Count: 1 },
+                "The bounded mix snapshot did not round-trip.");
+
+            AudioMixApplyPlan exact = AudioMixSnapshotPlanner.Plan(
+                loaded.Snapshot!,
+                [chat]);
+            True(exact.Matches.Count == 1 && exact.MissingCount == 0 && exact.AmbiguousCount == 0,
+                "Exact live session matching did not produce one apply target.");
+            AudioMixApplyPlan changed = AudioMixSnapshotPlanner.Plan(
+                loaded.Snapshot!,
+                [one, duplicate]);
+            True(changed.Matches.Count == 0 && changed.MissingCount == 1,
+                "A changed app/endpoint pair was not reported missing.");
+
+            File.WriteAllText(path, "{invalid-json");
+            AudioMixLoadResult recovered = store.Load();
+            True(recovered.RecoveredFromInvalid && recovered.Snapshot is null,
+                "Malformed mix state did not fail closed.");
+
+            File.WriteAllText(path, new string('x', AudioMixSnapshotStore.MaximumDocumentBytes + 1));
+            AudioMixLoadResult oversized = store.Load();
+            True(oversized.RecoveredFromInvalid && oversized.Snapshot is null,
+                "Oversized mix state did not fail closed.");
+
+            store.Save(capturedSnapshot);
+            store.Clear();
+            True(!File.Exists(path) && store.Load().Snapshot is null,
+                "Clearing the mix snapshot left persisted state behind.");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
     }
 
     private static AudioSessionSnapshot CreateAudioSessionSnapshot()

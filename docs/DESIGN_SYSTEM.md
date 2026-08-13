@@ -188,6 +188,10 @@ default for navigation, tabs, headings, and buttons.
 
 - Global navigation remains shallow and grouped by user intent.
 - The selected item uses a signal rail plus quiet fill, never a purple pill.
+- `Ctrl+K` opens one transient workspace command surface; `Ctrl+1` through
+  `Ctrl+9` use the same route table, and Escape restores focus.
+- Command results remain bounded to the nine working workspaces and use the
+  shared theme for hover, selection, focus, and modal scrim treatment.
 - Primary commands remain visible and consistently aligned in the command header.
 - Secondary/rare commands move into overflow or a local detail surface.
 - Working and preview modules remain visibly distinct and are exposed through UI

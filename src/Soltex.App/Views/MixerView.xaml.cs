@@ -47,6 +47,9 @@ public partial class MixerView : UserControl
     private bool _deviceDetailsVisible;
     private bool _moreSessionsVisible;
     private bool _sessionControlsBusy;
+    private bool _mixSnapshotBusy;
+    private bool _hasControllableSessions;
+    private AudioMixSnapshot? _mixSnapshot;
     private AudioEndpointSnapshot? _lastEndpointSnapshot;
     private AudioObservationState? _lastSessionState;
     private string _preferredPlaybackEndpointKey = string.Empty;
@@ -66,6 +69,49 @@ public partial class MixerView : UserControl
     internal event EventHandler? ClearEndpointPreferencesRequested;
 
     internal event EventHandler? OpenSoundSettingsRequested;
+
+    internal event EventHandler? CaptureMixSnapshotRequested;
+
+    internal event EventHandler? ApplyMixSnapshotRequested;
+
+    internal event EventHandler? ClearMixSnapshotRequested;
+
+    internal AudioMixSnapshot? MixSnapshot => _mixSnapshot;
+
+    internal void UpdateMixSnapshot(AudioMixLoadResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        _mixSnapshotBusy = false;
+        _mixSnapshot = result.Snapshot;
+        MixSnapshotStateText.Text = result.RecoveredFromInvalid
+            ? "RECOVERED"
+            : result.Snapshot is null ? "NOT SAVED" : "SAVED";
+        MixSnapshotStateText.Foreground = (Brush)FindResource(
+            result.RecoveredFromInvalid
+                ? "WarningBrush"
+                : result.Snapshot is null ? "QuietTextBrush" : "SignalBrush");
+        MixSnapshotDetailText.Text = result.Detail;
+        UpdateMixSnapshotButtons();
+    }
+
+    internal void ShowMixSnapshotPending(string detail)
+    {
+        SetMixSnapshotBusy(true);
+        MixSnapshotStateText.Text = "CHECKING";
+        MixSnapshotStateText.Foreground = (Brush)FindResource("WarningBrush");
+        MixSnapshotDetailText.Text = detail;
+    }
+
+    internal void ShowMixSnapshotResult(
+        string state,
+        string brushKey,
+        string detail)
+    {
+        SetMixSnapshotBusy(false);
+        MixSnapshotStateText.Text = state;
+        MixSnapshotStateText.Foreground = (Brush)FindResource(brushKey);
+        MixSnapshotDetailText.Text = detail;
+    }
 
     internal void UpdateEndpointPreferences(string playbackKey, string recordingKey)
     {
@@ -247,6 +293,7 @@ public partial class MixerView : UserControl
         MoreSessionItems.ItemsSource = _moreSessions;
         NoSessionsText.Visibility = rows.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         SessionSummaryText.Text = DescribeSessions(snapshot);
+        _hasControllableSessions = rows.Any(row => row.CanControl);
         if (_moreSessions.Length == 0)
         {
             _moreSessionsVisible = false;
@@ -254,6 +301,7 @@ public partial class MixerView : UserControl
 
         UpdateMoreSessionsVisibility();
         SetSessionControlsBusy(false);
+        UpdateMixSnapshotButtons();
     }
 
     private void RefreshAudio_Click(object sender, RoutedEventArgs e)
@@ -304,6 +352,36 @@ public partial class MixerView : UserControl
         }
     }
 
+    private void CaptureMixSnapshot_Click(object sender, RoutedEventArgs e)
+    {
+        if (_mixSnapshotBusy || !_hasControllableSessions)
+        {
+            return;
+        }
+
+        CaptureMixSnapshotRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ApplyMixSnapshot_Click(object sender, RoutedEventArgs e)
+    {
+        if (_mixSnapshotBusy || _mixSnapshot is null)
+        {
+            return;
+        }
+
+        ApplyMixSnapshotRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void ClearMixSnapshot_Click(object sender, RoutedEventArgs e)
+    {
+        if (_mixSnapshotBusy || _mixSnapshot is null)
+        {
+            return;
+        }
+
+        ClearMixSnapshotRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     private void RequestSessionChange(
         SessionRow row,
         AudioSessionMutationKind kind,
@@ -345,6 +423,26 @@ public partial class MixerView : UserControl
         MoreSessionItems.IsEnabled = !busy;
         MoreSessionsButton.IsEnabled = !busy;
         RefreshAudioButton.IsEnabled = !busy;
+        UpdateMixSnapshotButtons();
+    }
+
+    private void SetMixSnapshotBusy(bool busy)
+    {
+        _mixSnapshotBusy = busy;
+        SetSessionControlsBusy(busy);
+        UpdateMixSnapshotButtons();
+    }
+
+    private void UpdateMixSnapshotButtons()
+    {
+        bool ready = !_mixSnapshotBusy && !_sessionControlsBusy;
+        CaptureMixSnapshotButton.IsEnabled = ready && _hasControllableSessions;
+        ApplyMixSnapshotButton.IsEnabled = ready && _mixSnapshot is not null;
+        ClearMixSnapshotButton.IsEnabled = ready && _mixSnapshot is not null;
+        CaptureMixSnapshotButton.Style = (Style)FindResource(
+            _mixSnapshot is null ? "ActionButton" : "SecondaryButton");
+        ApplyMixSnapshotButton.Style = (Style)FindResource(
+            _mixSnapshot is null ? "SecondaryButton" : "ActionButton");
     }
 
     private void SetSessionActionState(string state, string brushKey, string detail)

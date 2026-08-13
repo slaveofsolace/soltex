@@ -23,6 +23,8 @@ A passing test proves only its named boundary. A rendered image proves layout ex
 Implemented on the draft branch:
 
 - compact module-owned navigation: Overview, Performance, Applications, Audio, Security, Remote Assist, Activity, Updates, and a separate bottom-rail Settings entry;
+- a bounded `Ctrl+K` workspace switcher plus `Ctrl+1` through `Ctrl+9` direct
+  routes, with Escape dismissal and focus restoration;
 - Quiet Instrument Deck surfaces with graphite work areas, a glacier-blue
   interaction signal, Segoe UI Variable typography, small-radius hairline
   geometry, and a 2–3 px selected-workspace rail;
@@ -70,6 +72,14 @@ No executable paths, packet contents, destination history, elevation bypass, or 
 Owner-host exact-source verified on `3511ba92bde450ffac4e3fad145d9a13b8986e72` and hosted Windows/package accepted on PR head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183`: bounded Windows Core Audio endpoint enumeration plus active shared-mode render sessions. Soltex inspects at most 128 session slots, exposes at most 24 path-free session rows, and keeps system-sounds, multi-process/transferred, ended, or process-unverifiable sessions read-only. Eligible volume/mute requests revalidate endpoint/session identities plus process ID/start time immediately before the write and require immediate Windows read-back before success. The default UI keeps app controls primary and complete device inventory behind explicit disclosure.
 
 The accepted session-control gate passed Release/identity/design checks; standard Audio was 20/20, the opt-in task-owned silent-session live-write gate was 21/21, and hosted Windows/package artifacts re-hashed exactly. The current branch adds bounded direction-scoped endpoint fingerprints, preference schema 3 migration/recovery, explicit playback/recording fallback reminders, a fixed Windows Sound settings handoff, and a sixteenth native evidence state. Owner-host production source `1d15071a14472dce199796a57966bddbf7be2fc4` is accepted at Audio 21/21, App/control 29/29, 16/16 native states, exact runtime lifecycle, and self-contained package renders; the hosted gate for the new published head remains pending. Not implemented: direct Windows default assignment, automatic failover, app routing, virtual devices, EQ, DSP, noise suppression, microphone processing, profiles, or Sonar parity.
+
+The current productization working tree adds one bounded, atomic mix snapshot.
+Only sanitized application/endpoint labels plus volume and mute are retained;
+raw Core Audio identities and process metadata are not. Apply re-observes live
+sessions, admits exact unique matches only, reuses guarded read-back-backed
+writes, and reports missing, ambiguous, rejected, canceled, or failed entries.
+The strengthened canonical verifier passes App/control 31/31 and every repository
+suite locally; commit-bound package and hosted acceptance remain pending.
 
 ### Security companion
 

@@ -82,6 +82,7 @@ $projectPath = Join-Path $repoRoot 'src\Soltex.App\Soltex.App.csproj'
 
 $matrix = @(
     [ordered]@{ id = 'home-default'; panel = 'home'; state = 'default'; file = 'home-current-source.png' },
+    [ordered]@{ id = 'command-palette'; panel = 'command-palette'; state = 'expanded'; file = 'command-palette-current-source.png' },
     [ordered]@{ id = 'monitoring-default'; panel = 'monitoring'; state = 'default'; file = 'monitoring-current-source.png' },
     [ordered]@{ id = 'monitoring-details'; panel = 'monitoring-details'; state = 'expanded'; file = 'monitoring-details-current-source.png' },
     [ordered]@{ id = 'applications-default'; panel = 'applications'; state = 'default'; file = 'applications-current-source.png' },
