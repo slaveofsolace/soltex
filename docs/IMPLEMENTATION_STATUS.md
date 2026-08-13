@@ -146,6 +146,16 @@ gates passed. Optional hosted AMSI/EICAR remained 31/32 because the runner's
 installed provider returned native result `1`; this is provider-interoperability
 evidence, not an antivirus-efficacy verdict.
 
+The accessibility-contract source `06f6a3b7461e813119b3f581aed69a6d2c3cf97e`
+passed Windows run `31709142534` and package-smoke run `31709142535`. The new
+hosted accessibility check passed; all 18 native PNGs matched the manifest and
+the command palette, Activity, and packaged Home were directly inspected.
+Windows artifact `9184583480` has digest
+`sha256:0cc6b698675feaea1a4de688491fa663cc09571e9b60fe8b65f4f8df2172b47c`;
+package artifact `9184504652` has digest
+`sha256:fce90e052a7fbd7ec3f10f7699d409dc655f612df55e52fe0da124299055c54c`.
+Live assistive-technology and scaling acceptance remain open.
+
 ## Next stages
 
 The complete ordered implementation map, prerequisites, owner decisions,
