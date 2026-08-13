@@ -1,0 +1,258 @@
+Identity policy passed: scanned 220 tracked text files with 9 reasoned allowlist entries.
+Design-token policy passed: scanned 10 XAML file(s); colour lives only in src/Soltex.App/Themes/Tokens.xaml.
+Using dotnet: C:\Users\suhai\.codex\tools\dotnet-sdk-10\dotnet.exe
+10.0.302
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  Soltex.RemoteAssist -> C:\Users\suhai\Documents\soltex-product-rebuild\src\Soltex.RemoteAssist\bin\Release\net10.0-windows10.0.19041.0\Soltex.RemoteAssist.dll
+  Soltex.Benchmarks -> C:\Users\suhai\Documents\soltex-product-rebuild\src\Soltex.Benchmarks\bin\Release\net10.0-windows10.0.19041.0\Soltex.Benchmarks.dll
+  Soltex.Monitoring -> C:\Users\suhai\Documents\soltex-product-rebuild\src\Soltex.Monitoring\bin\Release\net10.0-windows10.0.19041.0\Soltex.Monitoring.dll
+  Soltex.Audio -> C:\Users\suhai\Documents\soltex-product-rebuild\src\Soltex.Audio\bin\Release\net10.0-windows10.0.19041.0\Soltex.Audio.dll
+  Soltex.DeviceFabric -> C:\Users\suhai\Documents\soltex-product-rebuild\src\Soltex.DeviceFabric\bin\Release\net10.0-windows10.0.19041.0\Soltex.DeviceFabric.dll
+  Soltex.Benchmarks.Tests -> C:\Users\suhai\Documents\soltex-product-rebuild\tests\Soltex.Benchmarks.Tests\bin\Release\net10.0-windows10.0.19041.0\Soltex.Benchmarks.Tests.dll
+  Soltex.Monitoring.Tests -> C:\Users\suhai\Documents\soltex-product-rebuild\tests\Soltex.Monitoring.Tests\bin\Release\net10.0-windows10.0.19041.0\Soltex.Monitoring.Tests.dll
+  Soltex.Audio.Tests -> C:\Users\suhai\Documents\soltex-product-rebuild\tests\Soltex.Audio.Tests\bin\Release\net10.0-windows10.0.19041.0\Soltex.Audio.Tests.dll
+  Soltex.DeviceFabric.Tests -> C:\Users\suhai\Documents\soltex-product-rebuild\tests\Soltex.DeviceFabric.Tests\bin\Release\net10.0-windows10.0.19041.0\Soltex.DeviceFabric.Tests.dll
+  Soltex.Security -> C:\Users\suhai\Documents\soltex-product-rebuild\src\Soltex.Security\bin\Release\net10.0-windows10.0.19041.0\Soltex.Security.dll
+  Soltex.Update -> C:\Users\suhai\Documents\soltex-product-rebuild\src\Soltex.Update\bin\Release\net10.0-windows10.0.19041.0\Soltex.Update.dll
+  Soltex.Security.SupplyChain.Tests -> C:\Users\suhai\Documents\soltex-product-rebuild\tests\Soltex.Security.SupplyChain.Tests\bin\Release\net10.0-windows10.0.19041.0\Soltex.Security.SupplyChain.Tests.dll
+  Soltex.Security.Tests -> C:\Users\suhai\Documents\soltex-product-rebuild\tests\Soltex.Security.Tests\bin\Release\net10.0-windows10.0.19041.0\Soltex.Security.Tests.dll
+  Soltex.Security.Hardening.Tests -> C:\Users\suhai\Documents\soltex-product-rebuild\tests\Soltex.Security.Hardening.Tests\bin\Release\net10.0-windows10.0.19041.0\Soltex.Security.Hardening.Tests.dll
+  Soltex.Update.Tests -> C:\Users\suhai\Documents\soltex-product-rebuild\tests\Soltex.Update.Tests\bin\Release\net10.0-windows10.0.19041.0\Soltex.Update.Tests.dll
+  Soltex.App -> C:\Users\suhai\Documents\soltex-product-rebuild\src\Soltex.App\bin\Release\net10.0-windows10.0.19041.0\Soltex.dll
+  Soltex.App.Tests -> C:\Users\suhai\Documents\soltex-product-rebuild\tests\Soltex.App.Tests\bin\Release\net10.0-windows10.0.19041.0\Soltex.App.Tests.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:03.79
+PASS  SHA-256 hashing is deterministic
+PASS  Manifest paths cannot escape their root
+PASS  Allow-list state detects tampering
+PASS  Quarantine round trip preserves bytes
+PASS  Signed integrity manifest detects content changes
+PASS  Integrity manifest identity compatibility is versioned
+PASS  Fresh profiles select the canonical Soltex data root
+PASS  Existing profiles select the sole legacy data root
+      reparse fixture unavailable: IOException
+PASS  Ambiguous or unsafe product data roots fail closed
+PASS  Audit log detects mutation
+PASS  Authenticode trusts the signed .NET host
+PASS  Authenticode rejects an unsigned Soltex assembly
+PASS  AMSI accepts a benign fixture
+PASS  Defender event parser redacts resource paths
+PASS  Protection monitor backs off and reports recovery
+PASS  Protection monitor isolates provider and subscriber faults
+PASS  Protection monitor shuts down during a pending wake
+PASS  Protection monitor does not abandon timed-out refresh waits
+PASS  Provider-neutral health preserves Windows Security Center precedence
+PASS  Native security imports resolve only from System32
+PASS  PowerShell security commands pin system module manifests
+      registered=True; duration=7.0 ms
+PASS  Windows Security change registration is bounded
+      WSC=Good; mode=Normal; duration=615.9 ms; Windows antivirus protection is active
+PASS  Windows protection health query is bounded
+      events=16; duration=254.3 ms
+PASS  Defender Operational event query is bounded
+PASS  Defender command output is byte-bounded
+PASS  PowerShell child boundary anchors its directory and redacts errors
+PASS  Defender event envelopes enforce the requested count
+      WSC mean=0.445 ms; AMSI 4 KiB mean=1.355 ms
+PASS  Security observation overhead is measured
+PASS  Remote Assist peer IDs reject argument injection
+PASS  Remote Assist launch plans are fixed and shell-free
+PASS  Remote Assist executable discovery is bounded
+PASS  AMSI detects the safe EICAR test marker
+
+32/32 tests passed.
+PASS  Publisher policy accepts an exact code-signing identity
+PASS  Publisher policy rejects the same subject with a different key
+PASS  Publisher policy requires the code-signing EKU
+PASS  Authenticode publisher verification pins one trusted .NET host signature
+PASS  Signed release state accepts a monotonic upgrade
+PASS  Signed release state rejects rollback
+PASS  Signed release state is idempotent for identical bytes
+PASS  Signed release state rejects sequence equivocation
+PASS  Signed release state detects local tampering
+PASS  Signed release state honors cross-process lock cancellation
+PASS  Signed release rejects noncanonical file paths
+PASS  Signed release requires an explicit UTC publication time
+PASS  Bounded ZIP staging preserves benign bytes
+PASS  Bounded ZIP staging rejects traversal and cleans up
+PASS  Bounded ZIP staging rejects case-colliding paths
+PASS  Bounded ZIP staging rejects symbolic-link entries
+PASS  Bounded ZIP staging enforces expanded-size limits
+PASS  Bounded ZIP staging enforces compression-ratio limits
+
+18/18 tests passed.
+PASS  Publisher verification binds trust and identity to one immutable snapshot
+PASS  Authenticated envelopes round trip with a last-known-good generation
+PASS  Legacy data and MAC migrate only after verification
+PASS  A torn current envelope recovers from last-known-good state
+PASS  Unverifiable current and backup envelopes fail closed
+PASS  Same-generation authenticated envelope equivocation fails closed
+PASS  Authenticated state rejects duplicate JSON properties
+PASS  ZIP preflight rejects excessive central-directory entry counts
+PASS  ZIP preflight rejects malformed central-directory records
+PASS  ZIP preflight rejects truncated archives
+PASS  ZIP preflight fails closed on ZIP64 metadata
+PASS  GitHub workflow dependencies remain immutable and least privilege
+
+12/12 tests passed.
+PASS  A valid signed acquisition descriptor verifies (136.3 ms)
+MEASURE update_test outcome=pass duration_ms=136.3 name=A valid signed acquisition descriptor verifies
+PASS  Duplicate descriptor properties fail before authorization (53.3 ms)
+MEASURE update_test outcome=pass duration_ms=53.3 name=Duplicate descriptor properties fail before authorization
+PASS  Expired descriptors retain an explicit classification (63.4 ms)
+MEASURE update_test outcome=pass duration_ms=63.4 name=Expired descriptors retain an explicit classification
+PASS  Descriptor signature quorum is enforced (109.0 ms)
+MEASURE update_test outcome=pass duration_ms=109.0 name=Descriptor signature quorum is enforced
+PASS  Unsigned redirect origins are rejected (79.5 ms)
+MEASURE update_test outcome=pass duration_ms=79.5 name=Unsigned redirect origins are rejected
+PASS  Exact trust-policy replay is idempotent (99.4 ms)
+MEASURE update_test outcome=pass duration_ms=99.4 name=Exact trust-policy replay is idempotent
+PASS  Trust-policy rollback is rejected (75.1 ms)
+MEASURE update_test outcome=pass duration_ms=75.1 name=Trust-policy rollback is rejected
+PASS  Trust-policy sequence equivocation is rejected (81.1 ms)
+MEASURE update_test outcome=pass duration_ms=81.1 name=Trust-policy sequence equivocation is rejected
+PASS  A signed overlap-preserving trust upgrade is accepted (72.4 ms)
+MEASURE update_test outcome=pass duration_ms=72.4 name=A signed overlap-preserving trust upgrade is accepted
+PASS  Trust key IDs cannot silently change key material (145.8 ms)
+MEASURE update_test outcome=pass duration_ms=145.8 name=Trust key IDs cannot silently change key material
+PASS  Bounded acquisition retains exact locked bytes and cleans up (100.4 ms)
+MEASURE update_test outcome=pass duration_ms=100.4 name=Bounded acquisition retains exact locked bytes and cleans up
+PASS  Acquisition rejects an unauthorized redirect and cleans up (77.1 ms)
+MEASURE update_test outcome=pass duration_ms=77.1 name=Acquisition rejects an unauthorized redirect and cleans up
+PASS  Acquisition rejects a truncated body and cleans up (79.1 ms)
+MEASURE update_test outcome=pass duration_ms=79.1 name=Acquisition rejects a truncated body and cleans up
+PASS  Acquisition cancellation cleans private staging (83.4 ms)
+MEASURE update_test outcome=pass duration_ms=83.4 name=Acquisition cancellation cleans private staging
+PASS  Planning journal sanitizes untrusted detail (41.2 ms)
+MEASURE update_test outcome=pass duration_ms=41.2 name=Planning journal sanitizes untrusted detail
+PASS  Planning recovery identifies and removes only private artifacts (34.2 ms)
+MEASURE update_test outcome=pass duration_ms=34.2 name=Planning recovery identifies and removes only private artifacts
+PASS  Update confirmation is exact and expires (0.3 ms)
+MEASURE update_test outcome=pass duration_ms=0.3 name=Update confirmation is exact and expires
+
+17/17 tests passed.
+MEASURE update_planner_suite tests=17 failed=0 total_ms=1338.6
+PASS  The capability catalog is exact and bounded (3.2 ms)
+PASS  Read-only observations require device-local policy (3.1 ms)
+PASS  State-changing requests require visible local consent (0.1 ms)
+PASS  Remote handoff requires a visible external client (0.0 ms)
+PASS  A target manifest is required (0.0 ms)
+PASS  Known but unadvertised capabilities are denied (0.0 ms)
+PASS  Generic shell capability is denied (0.0 ms)
+PASS  Arbitrary download-execute capability is denied (0.0 ms)
+PASS  Hidden remote-control capability is denied (0.0 ms)
+PASS  A valid Windows manifest is accepted (0.3 ms)
+PASS  Manifest capability input is copied (0.1 ms)
+PASS  Duplicate capabilities are rejected (0.1 ms)
+PASS  Unknown capabilities are rejected (0.0 ms)
+PASS  Defender requests are Windows-only (0.0 ms)
+PASS  Device ID injection is rejected (0.0 ms)
+PASS  Display-name injection is rejected (0.0 ms)
+PASS  Invalid agent versions are rejected (0.0 ms)
+PASS  Duplicate inventory device IDs are rejected (1.0 ms)
+PASS  Inventory input is copied and capture time normalized (0.6 ms)
+PASS  Oversized inventories fail closed (1.4 ms)
+PASS  Local observation is explicitly unenrolled (2.9 ms)
+PASS  Local observation fields are bounded (0.3 ms)
+PASS  Local observation provenance is explicit (0.1 ms)
+PASS  Local observation field sanitization removes controls (1.3 ms)
+
+24/24 tests passed.
+MEASURE device_fabric_suite tests=24 failed=0 total_ms=25.2
+PASS  System CPU math reports bounded busy time (1.1 ms)
+PASS  System CPU math rejects regressing counters (0.2 ms)
+PASS  Process CPU math respects machine capacity (0.6 ms)
+PASS  Unsupported optional signals do not downgrade supported telemetry (0.4 ms)
+PASS  Network rate math rejects regressions and reports bytes per second (0.7 ms)
+PASS  Process and network names remove control characters and enforce bounds (3.1 ms)
+PASS  Telemetry history validates capacity, range, and samples (1.0 ms)
+PASS  Telemetry history is bounded and snapshots are immutable (2.0 ms)
+PASS  Telemetry history respects configured ranges (0.1 ms)
+PASS  Sample windows reject unsafe bounds (1.6 ms)
+PASS  Cancellation stops a pending sample (3.4 ms)
+PASS  Live Windows capture is bounded and provenance-labeled (219.5 ms)
+PASS  Live process rows expose no paths (189.7 ms)
+PASS  Live memory and volume percentages are bounded (180.1 ms)
+PASS  Live network observations are bounded or explicitly unavailable (183.2 ms)
+      state=Current; processes=32; volumes=3; interfaces=1; network_bps=95483; inaccessible=250; provider_ms=181.2; wall_ms=181.5
+PASS  Monitoring capture overhead is measured (182.6 ms)
+
+16/16 tests passed.
+MEASURE monitoring_suite tests=16 failed=0 total_ms=980.0
+PASS  Endpoint names are sanitized and length-bounded (4.0 ms)
+PASS  Endpoint preference fingerprints are bounded and direction-scoped (7.6 ms)
+PASS  Volume scalar is clamped to a 0-100 percent range (0.8 ms)
+PASS  State classification reports unavailable when enumeration fails (0.4 ms)
+PASS  State classification reports current with no endpoints and no failures (0.0 ms)
+PASS  State classification reports partial when some endpoints are inaccessible (0.0 ms)
+PASS  State classification reports current when fully observed (0.0 ms)
+PASS  Cancellation stops a pending capture (4.7 ms)
+PASS  Live Core Audio capture is bounded and provenance-labeled (424.9 ms)
+PASS  Live endpoint names expose no control characters (407.5 ms)
+      state=Partial; render=32; capture=30; inaccessible=7; provider_ms=426.5; wall_ms=427.0
+PASS  Live endpoint capture overhead is measured (427.9 ms)
+PASS  Session names are sanitized and identity stays non-public (1.7 ms)
+PASS  Core Audio session COM layout matches the Windows SDK (3.2 ms)
+PASS  Session state classification preserves partial truth (0.1 ms)
+PASS  Session mutation rejects unsafe or invalid requests (2.3 ms)
+PASS  Session volume success requires matching read-back (1.9 ms)
+PASS  Session mute success requires matching read-back (1.5 ms)
+PASS  Session mutation exposes target drift without retrying (0.8 ms)
+PASS  Session mutation cancellation prevents backend dispatch (0.6 ms)
+PASS  Live Core Audio session capture is bounded and path-free (23.5 ms)
+      state=Current; exposed=2; observed=21; inaccessible=0; omitted=0; provider_ms=8.0; wall_ms=8.4
+PASS  Live session capture overhead is measured (8.8 ms)
+
+21/21 tests passed.
+MEASURE audio_suite tests=21 failed=0 total_ms=1332.7
+PASS  Quick profile is short and storage-bounded (2.3 ms)
+PASS  Production quick profile completes and cleans scratch (2751.5 ms)
+PASS  Live benchmark reports measured stages and cleans scratch (89.0 ms)
+PASS  Cancellation stops the benchmark and cleans scratch (40.6 ms)
+PASS  Unexpected scratch lengths fail closed (1.0 ms)
+PASS  Unsafe profiles and scratch roots fail closed (1.6 ms)
+6/6 tests passed.
+MEASURE benchmark_suite tests=6 failed=0 total_ms=2897.1
+PASS  Shared theme exposes required control resources (0.2 ms)
+PASS  Workspace command catalog is bounded and searchable (2.0 ms)
+PASS  Telemetry runs only in visible live workspaces (0.2 ms)
+PASS  Telemetry loop ownership serializes duplicate stop and queued restart (7.7 ms)
+PASS  Background runtime remains explicit and fail-closed (0.2 ms)
+PASS  Notification-area resource has a bounded show-hide-dispose lifecycle (153.2 ms)
+PASS  Owned startup work drains before resource disposal (32.7 ms)
+PASS  Shutdown evidence requires confirmed resource disposal (0.3 ms)
+PASS  Runtime CPU cost math is processor-normalized and bounded (1.9 ms)
+PASS  Runtime probe launch parsing is bounded and conflict-aware (0.7 ms)
+PASS  Process actions reject Windows and Soltex targets (0.4 ms)
+PASS  Process actions reject identity drift (0.2 ms)
+PASS  Process actions admit only the selected user-session process (0.0 ms)
+PASS  Sparkline renders bounded percentage values (19.9 ms)
+PASS  Sparkline auto-scales unbounded throughput values (1.5 ms)
+PASS  Home view renders a live snapshot (120.2 ms)
+PASS  Monitoring view renders provenance and bounded rows (52.0 ms)
+PASS  Monitoring details are disclosed only on request (5.9 ms)
+PASS  Benchmark lab is explicit, bounded, and progressively disclosed (81.1 ms)
+PASS  Benchmark execution is limited to the visible lab (0.1 ms)
+PASS  Benchmark result store is bounded, atomic, and recoverable (59.9 ms)
+PASS  Application inventory is bounded and path-free (0.6 ms)
+      state=Current; exposed=296; observed=296; inaccessible=0; omitted=0; capture_ms=52.9
+PASS  Windows service inventory is bounded and read-only (1.1 ms)
+PASS  Applications view progressively discloses startup and services (125.1 ms)
+PASS  Preference store recovers and round-trips bounded local state (11.1 ms)
+PASS  Activity store bounds, sanitizes, persists, and recovers (18.6 ms)
+PASS  Activity view renders and filters meaningful events (160.0 ms)
+PASS  Settings view renders working local preferences (12.8 ms)
+PASS  Mixer prioritizes active endpoints and bounded app controls (122.3 ms)
+PASS  Audio mix snapshot is bounded, exact-match, and recoverable (20.2 ms)
+PASS  Mixer keeps fallback reminders local and user mediated (5.1 ms)
+PASS  Windows Sound handoff uses one fixed supported URI (0.5 ms)
+PASS  Devices view renders an explicit unenrolled profile (21.1 ms)
+PASS  Render-smoke uses an unconstrained popup viewport (357.6 ms)
+
+34/34 tests passed.
+MEASURE app_control_suite tests=34 failed=0 total_ms=1398.4

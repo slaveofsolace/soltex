@@ -1,0 +1,109 @@
+﻿GATE design-tokens
+Design-token policy passed: scanned 10 XAML file(s); colour lives only in src/Soltex.App/Themes/Tokens.xaml.
+PASS design-tokens
+GATE security-supply-chain
+PASS  Publisher policy accepts an exact code-signing identity
+PASS  Publisher policy rejects the same subject with a different key
+PASS  Publisher policy requires the code-signing EKU
+PASS  Authenticode publisher verification pins one trusted .NET host signature
+PASS  Signed release state accepts a monotonic upgrade
+PASS  Signed release state rejects rollback
+PASS  Signed release state is idempotent for identical bytes
+PASS  Signed release state rejects sequence equivocation
+PASS  Signed release state detects local tampering
+PASS  Signed release state honors cross-process lock cancellation
+PASS  Signed release rejects noncanonical file paths
+PASS  Signed release requires an explicit UTC publication time
+PASS  Bounded ZIP staging preserves benign bytes
+PASS  Bounded ZIP staging rejects traversal and cleans up
+PASS  Bounded ZIP staging rejects case-colliding paths
+PASS  Bounded ZIP staging rejects symbolic-link entries
+PASS  Bounded ZIP staging enforces expanded-size limits
+PASS  Bounded ZIP staging enforces compression-ratio limits
+
+18/18 tests passed.
+PASS security-supply-chain
+GATE security-hardening
+PASS  Publisher verification binds trust and identity to one immutable snapshot
+PASS  Authenticated envelopes round trip with a last-known-good generation
+PASS  Legacy data and MAC migrate only after verification
+PASS  A torn current envelope recovers from last-known-good state
+PASS  Unverifiable current and backup envelopes fail closed
+PASS  Same-generation authenticated envelope equivocation fails closed
+PASS  Authenticated state rejects duplicate JSON properties
+PASS  ZIP preflight rejects excessive central-directory entry counts
+PASS  ZIP preflight rejects malformed central-directory records
+PASS  ZIP preflight rejects truncated archives
+PASS  ZIP preflight fails closed on ZIP64 metadata
+PASS  GitHub workflow dependencies remain immutable and least privilege
+
+12/12 tests passed.
+PASS security-hardening
+GATE update
+PASS  A valid signed acquisition descriptor verifies (366.3 ms)
+MEASURE update_test outcome=pass duration_ms=366.3 name=A valid signed acquisition descriptor verifies
+PASS  Duplicate descriptor properties fail before authorization (93.6 ms)
+MEASURE update_test outcome=pass duration_ms=93.6 name=Duplicate descriptor properties fail before authorization
+PASS  Expired descriptors retain an explicit classification (85.1 ms)
+MEASURE update_test outcome=pass duration_ms=85.1 name=Expired descriptors retain an explicit classification
+PASS  Descriptor signature quorum is enforced (103.4 ms)
+MEASURE update_test outcome=pass duration_ms=103.4 name=Descriptor signature quorum is enforced
+PASS  Unsigned redirect origins are rejected (91.9 ms)
+MEASURE update_test outcome=pass duration_ms=91.9 name=Unsigned redirect origins are rejected
+PASS  Exact trust-policy replay is idempotent (78.7 ms)
+MEASURE update_test outcome=pass duration_ms=78.7 name=Exact trust-policy replay is idempotent
+PASS  Trust-policy rollback is rejected (95.9 ms)
+MEASURE update_test outcome=pass duration_ms=95.9 name=Trust-policy rollback is rejected
+PASS  Trust-policy sequence equivocation is rejected (79.3 ms)
+MEASURE update_test outcome=pass duration_ms=79.3 name=Trust-policy sequence equivocation is rejected
+PASS  A signed overlap-preserving trust upgrade is accepted (86.2 ms)
+MEASURE update_test outcome=pass duration_ms=86.2 name=A signed overlap-preserving trust upgrade is accepted
+PASS  Trust key IDs cannot silently change key material (113.0 ms)
+MEASURE update_test outcome=pass duration_ms=113.0 name=Trust key IDs cannot silently change key material
+PASS  Bounded acquisition retains exact locked bytes and cleans up (123.7 ms)
+MEASURE update_test outcome=pass duration_ms=123.7 name=Bounded acquisition retains exact locked bytes and cleans up
+PASS  Acquisition rejects an unauthorized redirect and cleans up (64.7 ms)
+MEASURE update_test outcome=pass duration_ms=64.7 name=Acquisition rejects an unauthorized redirect and cleans up
+PASS  Acquisition rejects a truncated body and cleans up (73.1 ms)
+MEASURE update_test outcome=pass duration_ms=73.1 name=Acquisition rejects a truncated body and cleans up
+PASS  Acquisition cancellation cleans private staging (73.4 ms)
+MEASURE update_test outcome=pass duration_ms=73.4 name=Acquisition cancellation cleans private staging
+PASS  Planning journal sanitizes untrusted detail (42.0 ms)
+MEASURE update_test outcome=pass duration_ms=42.0 name=Planning journal sanitizes untrusted detail
+PASS  Planning recovery identifies and removes only private artifacts (40.4 ms)
+MEASURE update_test outcome=pass duration_ms=40.4 name=Planning recovery identifies and removes only private artifacts
+PASS  Update confirmation is exact and expires (0.2 ms)
+MEASURE update_test outcome=pass duration_ms=0.2 name=Update confirmation is exact and expires
+
+17/17 tests passed.
+MEASURE update_planner_suite tests=17 failed=0 total_ms=1618.4
+PASS update
+GATE device-fabric
+PASS  The capability catalog is exact and bounded (56.1 ms)
+PASS  Read-only observations require device-local policy (2.8 ms)
+PASS  State-changing requests require visible local consent (0.1 ms)
+PASS  Remote handoff requires a visible external client (0.0 ms)
+PASS  A target manifest is required (0.0 ms)
+PASS  Known but unadvertised capabilities are denied (0.0 ms)
+PASS  Generic shell capability is denied (0.0 ms)
+PASS  Arbitrary download-execute capability is denied (0.0 ms)
+PASS  Hidden remote-control capability is denied (0.0 ms)
+PASS  A valid Windows manifest is accepted (0.3 ms)
+PASS  Manifest capability input is copied (0.1 ms)
+PASS  Duplicate capabilities are rejected (0.1 ms)
+PASS  Unknown capabilities are rejected (0.0 ms)
+PASS  Defender requests are Windows-only (0.0 ms)
+PASS  Device ID injection is rejected (0.0 ms)
+PASS  Display-name injection is rejected (0.0 ms)
+PASS  Invalid agent versions are rejected (0.0 ms)
+PASS  Duplicate inventory device IDs are rejected (0.8 ms)
+PASS  Inventory input is copied and capture time normalized (0.6 ms)
+PASS  Oversized inventories fail closed (0.9 ms)
+PASS  Local observation is explicitly unenrolled (2.0 ms)
+PASS  Local observation fields are bounded (0.2 ms)
+PASS  Local observation provenance is explicit (0.1 ms)
+PASS  Local observation field sanitization removes controls (0.9 ms)
+
+24/24 tests passed.
+MEASURE device_fabric_suite tests=24 failed=0 total_ms=74.5
+PASS device-fabric

@@ -26,7 +26,7 @@ public partial class HomeView : UserControl
         CpuHeroValue.Text = TelemetryDisplay.Percent(snapshot.CpuPercent);
         CpuSparkline.Values ??= _cpuHistory.CreateSnapshot();
         HomeCapturedText.Text =
-            $"{snapshot.Provenance} · {snapshot.CaptureDuration.TotalMilliseconds:F0} ms · {snapshot.CapturedAtUtc.ToLocalTime():t}";
+            $"Updated {snapshot.CapturedAtUtc.ToLocalTime():t} · {snapshot.CaptureDuration.TotalMilliseconds:F0} ms sample";
 
         Brush stateBrush = (Brush)FindResource(snapshot.State == TelemetryObservationState.Current
             ? "SignalBrush"

@@ -2,22 +2,57 @@
 
 Soltex is a proprietary personal-computing workspace. **Soltex** is the canonical product, repository, solution, assembly, and namespace identity. A small, tested compatibility boundary preserves existing authenticated local state and historical evidence without presenting the retired working name as current product copy.
 
-The current desktop solution exposes eight related workspace areas:
+The current desktop solution exposes nine normal-navigation workspaces plus two
+explicit preview surfaces used by the native evidence matrix:
 
 - **Home** — a real local summary with explicit partial/unavailable signals.
-- **Monitoring** — bounded CPU, physical-memory, process, and fixed-volume observation from supported Windows interfaces.
-- **Devices** — a sanitized local profile and exact non-executing capability model, explicitly not enrolled.
-- **Audio** — future per-application routing, parametric EQ, microphone processing, and stream mixes.
-- **Clips** — future bounded rolling capture with a separate, non-injected overlay.
+- **Monitoring** — bounded CPU, physical-memory, process, and fixed-volume observation from supported Windows interfaces, plus one short local CPU/memory/storage benchmark with no synthetic score.
+- **Devices (preview)** — a sanitized local profile and exact non-executing capability model, explicitly not enrolled.
+- **Applications** — bounded, searchable, read-only installed-software, sign-in, and Win32 service inventories.
+- **Audio** — bounded Windows Core Audio endpoint and active app-session state, guarded per-session volume/mute with immediate read-back, one recoverable local mix snapshot, local fallback reminders, and a user-mediated Windows Sound handoff.
 - **Security** — the implemented focus: a lightweight companion that cooperates with the antivirus provider registered with Windows, plus bounded local supply-chain verification primitives.
 - **Remote Assist** — a consent-first launcher for a separately installed, Windows-trusted RustDesk client; Soltex does not own or embed the remote-session transport.
+- **Activity** — a bounded local timeline of meaningful Soltex actions and recovery transitions, session-only unless the user explicitly selects retention.
 - **Updates** — a non-installing signed planner that authenticates bounded release artifacts and stops at an exact human-readable preview.
+- **Settings** — working local preferences for telemetry cadence, workspace restoration, detail disclosure, Activity retention, and explicit close behavior.
+- **Capture (preview)** — a visible non-installed boundary for a future opt-in Windows Graphics Capture pipeline.
 
 This is a clean-room product. It is not affiliated with, endorsed by, or derived from SteelSeries, Malwarebytes, Zen Browser, AppControl, NZXT, or RustDesk. It contains no copied binaries, signatures, detection models, private protocols, branding, or UI assets from those products. RustDesk remains a separately licensed external program.
 
 ## What works now
 
-Home is the default WPF surface. Home, Monitoring, and Devices share one warm graphite/coral design system with bounded sparklines, progress, slider/focus, table, and scrollbar resources. One sequential sampler publishes immutable snapshots and copied 48/72-sample histories, surfaces provenance and unsupported signals, retains last confirmed values briefly as stale, and cancels on shutdown. GPU and network telemetry are not implemented and remain visibly unavailable.
+Home is the default WPF surface. The workspaces share the **Quiet Instrument
+Deck** design system: graphite work surfaces, a glacier-blue interaction signal,
+small-radius hairline geometry, compact command headers, local mode tabs, bounded
+work areas, and direct controls before commentary. Primary default pages do not
+own whole-page scroll viewers at the 1280×820 reference viewport; the Audio
+device-detail list scrolls inside its own work area. One sequential sampler
+publishes immutable snapshots and copied 48/72-sample histories, surfaces
+provenance and unsupported signals, retains last confirmed values briefly as
+stale, and cancels on shutdown. GPU telemetry is not implemented and remains
+visibly unavailable.
+
+Performance also owns one explicit Quick benchmark mode. It pauses Soltex's live
+sampler, measures named SHA-256, managed buffer-copy, and 32 MiB temporary-storage
+workloads, supports cancellation, removes its scratch file, and saves at most one
+bounded local result. It does not produce a synthetic PC score, rank other
+machines, stress the GPU, or infer stability. See
+[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
+
+`Ctrl+K` opens a bounded, searchable workspace switcher without adding another
+persistent navigation tier. `Ctrl+1` through `Ctrl+9` route to the same nine
+working workspaces, and Escape returns focus to the prior control.
+
+Activity records only bounded Soltex-owned events such as an explicit process action, scan request/result, quarantine change, Remote Assist launch result, or a telemetry failure/recovery transition. It does not record clicks, browsing, packet contents, command lines, or executable/file paths. The default is memory-only for the current session; 7-day and 30-day local retention require an explicit Settings choice, shortening retention requires confirmation, and Clear Activity requires confirmation before removing visible and saved history. See [`docs/ACTIVITY.md`](docs/ACTIVITY.md).
+
+Audio observes at most 128 active-render session slots and exposes at most 24 active shared-mode sessions. System-sounds, multi-process/transferred, and process-unverifiable sessions stay read-only. A volume or mute request revalidates the endpoint, session instance, process ID, and process start time, then reports success only after immediate Windows read-back. Raw endpoint/session identifiers, executable paths, command lines, and icon paths are never exposed or persisted. See [`docs/AUDIO.md`](docs/AUDIO.md).
+
+The optional Audio mix snapshot stores at most 64 normalized app/endpoint label
+pairs with volume and mute state in a 64 KiB atomic local document. Applying it
+re-observes live sessions, skips missing or ambiguous pairs, reuses the guarded
+Core Audio writes, and reports verified, partial, canceled, or failed outcomes.
+
+Applications can also observe bounded Win32 service state and start mode through query-only Service Control Manager access. Drivers and binary paths are excluded, and no service action is exposed. Closing Soltex exits by default; keeping the desktop process in the notification area is an explicit, reversible preference that suspends Performance sampling while hidden. Soltex installs no background service. See [`docs/RUNTIME_AND_SERVICES.md`](docs/RUNTIME_AND_SERVICES.md).
 
 The .NET 10 WPF solution builds and executes on Windows. The Security companion currently provides:
 
@@ -61,7 +96,7 @@ Requirements: Windows 10 version 2004 (build 19041) or newer, x64. The .NET runt
 
 The installer is **not code-signed**. No production Soltex code-signing identity has been selected, so Windows SmartScreen will warn on first run and the publisher will show as unknown. Verify the download against its published SHA-256 before running it. Code signing is tracked with the rest of the release program in [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
-Uninstalling removes the installed program files and shortcuts. Local Soltex state — quarantine, the HMAC-chained audit log, release-sequence state, and planning journals — lives under your user profile and is deliberately left in place so an accidental uninstall cannot destroy authenticated history. Remove it by hand if that is what you want.
+Uninstalling removes the installed program files and shortcuts. Local Soltex state — preferences, optional Activity history, quarantine, the HMAC-chained security audit log, release-sequence state, and planning journals — lives under your user profile and is deliberately left in place so an accidental uninstall cannot destroy authenticated security history. Activity can be cleared from its own confirmed control before uninstalling; the remaining security/update state requires a separate deliberate cleanup procedure.
 
 To build the installer from source, publish the app and compile the script with [Inno Setup](https://jrsoftware.org/isinfo.php) 6:
 
@@ -111,6 +146,16 @@ dotnet run `
   --no-build
 
 dotnet run `
+  --project .\tests\Soltex.Audio.Tests\Soltex.Audio.Tests.csproj `
+  --configuration Release `
+  --no-build
+
+dotnet run `
+  --project .\tests\Soltex.Benchmarks.Tests\Soltex.Benchmarks.Tests.csproj `
+  --configuration Release `
+  --no-build
+
+dotnet run `
   --project .\tests\Soltex.App.Tests\Soltex.App.Tests.csproj `
   --configuration Release `
   --no-build
@@ -152,6 +197,10 @@ Documentation:
 - Current continuation handoff: [`HANDOFF.md`](HANDOFF.md).
 - Documentation map: [`docs/INDEX.md`](docs/INDEX.md).
 - Current status and nonclaims: [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md).
+- Activity privacy, retention, recovery, and deletion contract: [`docs/ACTIVITY.md`](docs/ACTIVITY.md).
+- Core Audio session observation, write admission, read-back, and nonclaims: [`docs/AUDIO.md`](docs/AUDIO.md).
+- Local benchmark bounds, cleanup, persistence, evidence, and nonclaims: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
+- Runtime lifecycle, service-inventory bounds, and measured-cost contract: [`docs/RUNTIME_AND_SERVICES.md`](docs/RUNTIME_AND_SERVICES.md).
 - Immersive workspace behavior and visual/data boundaries: [`docs/IMMERSIVE_WORKSPACE.md`](docs/IMMERSIVE_WORKSPACE.md).
 - Exact commands and evidence ledger: [`docs/VALIDATION.md`](docs/VALIDATION.md).
 - Frozen Wave B evidence and decision ledger: [`docs/evidence/2026-08-04-immersive-workspace/`](docs/evidence/2026-08-04-immersive-workspace/).

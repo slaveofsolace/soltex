@@ -5,10 +5,12 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Threading;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Microsoft.Win32;
+using Soltex.App.Views;
 using Soltex.Audio;
 using Soltex.DeviceFabric;
 using Soltex.Monitoring;
@@ -33,39 +35,158 @@ public partial class MainWindow : Window
     private readonly string _updateStagingRoot;
     private readonly LocalDeviceObservation _localDevice = LocalDeviceObservationProvider.Capture();
     private CancellationTokenSource? _operationCancellation;
-    private CancellationTokenSource? _telemetryCancellation;
-    private Task? _telemetryLoopTask;
+    private Task _activeOperationDrained = Task.CompletedTask;
+    private readonly TelemetryLoopOwner _telemetryLoop = new();
+    private Task? _startupTask;
     private ImportFolderMonitor? _importMonitor;
     private ProtectionMonitor? _protectionMonitor;
     private ProtectionMonitorState? _lastMonitorState;
     private RemoteAssistExecutable? _remoteAssistExecutable;
     private AuthenticodeVerificationResult? _remoteAssistTrust;
     private bool _securityActivityVisible;
+    private readonly PreferencesStore _preferencesStore;
+    private readonly LocalActivityStore _activityStore;
+    private readonly AudioMixSnapshotStore _audioMixSnapshotStore;
+    private readonly BenchmarkResultStore _benchmarkResultStore;
+    private readonly SemaphoreSlim _applicationRefreshGate = new(1, 1);
+    private readonly TaskCompletionSource<bool> _startupCompleted = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
+    private SoltexPreferences _preferences = SoltexPreferences.Default;
+    private int _telemetryIntervalMilliseconds = SoltexPreferences.Default.TelemetryIntervalMilliseconds;
+    private string _activeWorkspace = "home";
+    private bool _shutdownStarted;
+    private readonly bool _renderSmokeMode = RuntimeLaunchPolicy.UsesControlledRuntime(
+        Environment.GetCommandLineArgs());
+
+    internal bool NotificationAreaAvailable { get; private set; }
+
+    internal bool KeepsRunningInNotificationArea =>
+        _preferences.CloseBehavior == CloseBehavior.NotificationArea;
+
+    internal event EventHandler? CloseBehaviorChanged;
+
+    internal event EventHandler<ShutdownCompletedEventArgs>? ShutdownCompleted;
+
+    internal Task StartupCompleted => _startupCompleted.Task;
 
     public MainWindow()
     {
         InitializeComponent();
+        _preferencesStore = new PreferencesStore(
+            Path.Combine(_runtime.DataRoot, "preferences.json"));
+        PreferencesLoadResult preferencesLoad = _preferencesStore.Load();
+        _preferences = preferencesLoad.Preferences;
+        if (_renderSmokeMode)
+        {
+            _preferences = _preferences with
+            {
+                RestoreLastWorkspace = false,
+                ActivityRetention = ActivityRetention.SessionOnly,
+                CloseBehavior = CloseBehavior.Exit,
+                PreferredPlaybackEndpointKey = string.Empty,
+                PreferredRecordingEndpointKey = string.Empty
+            };
+        }
+        Volatile.Write(
+            ref _telemetryIntervalMilliseconds,
+            _preferences.TelemetryIntervalMilliseconds);
+        SettingsPanel.UpdatePreferences(
+            _preferences,
+            preferencesLoad.RecoveredFromInvalid,
+            preferencesLoad.Detail);
+        MixerPanel.UpdateEndpointPreferences(
+            _preferences.PreferredPlaybackEndpointKey,
+            _preferences.PreferredRecordingEndpointKey);
+        NotificationAreaAvailable = OperatingSystem.IsWindows();
+        SettingsPanel.UpdateNotificationAreaAvailability(NotificationAreaAvailable);
+        _activityStore = new LocalActivityStore(
+            Path.Combine(_runtime.DataRoot, "activity.json"));
+        ActivityLoadResult activityLoad =
+            _activityStore.Load(_preferences.ActivityRetention);
+        ActivityPanel.UpdateEntries(
+            activityLoad.Entries,
+            _preferences.ActivityRetention,
+            activityLoad.Detail,
+            storageHealthy: !activityLoad.RecoveredFromInvalid);
+        _audioMixSnapshotStore = new AudioMixSnapshotStore(
+            Path.Combine(_runtime.DataRoot, "audio-mix.json"));
+        MixerPanel.UpdateMixSnapshot(_audioMixSnapshotStore.Load());
+        _benchmarkResultStore = new BenchmarkResultStore(
+            Path.Combine(_runtime.DataRoot, "benchmark-result.json"));
+        MonitoringPanel.UpdateBenchmarkLoad(_benchmarkResultStore.Load());
+        MonitoringPanel.SetDetailsVisible(_preferences.OpenPerformanceDetails);
         _updateStagingRoot = Path.Combine(_runtime.DataRoot, "update", "staging");
         _updateJournal = new UpdatePlanningJournal(Path.Combine(_runtime.DataRoot, "update", "journal"));
         QuarantineGrid.ItemsSource = _quarantineRows;
         DefenderEventGrid.ItemsSource = _defenderEventRows;
         UpdateJournalGrid.ItemsSource = _updateJournalRows;
         CurrentBuildText.Text = typeof(MainWindow).Assembly.GetName().Version?.ToString() ?? "development";
+        ShellBuildText.Text = typeof(MainWindow).Assembly.GetName().Version?.ToString(3) ?? "development";
         RemotePeerIdInput.TextChanged += RemotePeerId_TextChanged;
         SetRemoteAssistExecutable(RemoteAssistExecutableLocator.FindInstalled());
         DevicesPanel.UpdateObservation(_localDevice);
         DevicesPanel.RemoteAssistRequested += (_, _) => ShowPanel(RemotePanel, RemoteNavButton);
+        MonitoringPanel.ProcessActionCompleted += (_, args) =>
+            AddActivity(args.Result.Message, "Performance");
+        MonitoringPanel.BenchmarkRunRequested += MonitoringPanel_BenchmarkRunRequested;
+        MonitoringPanel.BenchmarkCancelRequested += MonitoringPanel_BenchmarkCancelRequested;
+        MonitoringPanel.BenchmarkClearRequested += MonitoringPanel_BenchmarkClearRequested;
+        MonitoringPanel.BenchmarkModeChanged += MonitoringPanel_BenchmarkModeChanged;
+        ApplicationsPanel.RefreshRequested += ApplicationsPanel_RefreshRequested;
+        MixerPanel.RefreshRequested += MixerPanel_RefreshRequested;
+        MixerPanel.SessionChangeRequested += MixerPanel_SessionChangeRequested;
+        MixerPanel.EndpointPreferenceRequested += MixerPanel_EndpointPreferenceRequested;
+        MixerPanel.ClearEndpointPreferencesRequested += MixerPanel_ClearEndpointPreferencesRequested;
+        MixerPanel.OpenSoundSettingsRequested += MixerPanel_OpenSoundSettingsRequested;
+        MixerPanel.CaptureMixSnapshotRequested += MixerPanel_CaptureMixSnapshotRequested;
+        MixerPanel.ApplyMixSnapshotRequested += MixerPanel_ApplyMixSnapshotRequested;
+        MixerPanel.ClearMixSnapshotRequested += MixerPanel_ClearMixSnapshotRequested;
+        SettingsPanel.PreferencesChanged += SettingsPanel_PreferencesChanged;
+        ActivityPanel.ClearRequested += ActivityPanel_ClearRequested;
+    }
+
+    internal void SetNotificationAreaAvailability(bool available)
+    {
+        NotificationAreaAvailable = available;
+        SettingsPanel.UpdateNotificationAreaAvailability(available);
     }
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        if (_telemetryCancellation is null)
+        _startupTask ??= InitializeWorkspaceAsync();
+        try
         {
-            _telemetryCancellation = new CancellationTokenSource();
-            _telemetryLoopTask = RunTelemetryLoopAsync(_telemetryCancellation.Token);
+            await _startupTask;
+        }
+        catch (OperationCanceledException) when (_shutdownStarted)
+        {
+            _startupCompleted.TrySetCanceled();
+        }
+        catch (Exception) when (_shutdownStarted)
+        {
+            _startupCompleted.TrySetCanceled();
+        }
+        catch (Exception exception)
+        {
+            _startupCompleted.TrySetException(exception);
+            if (!_renderSmokeMode)
+            {
+                throw;
+            }
+        }
+    }
+
+    private async Task InitializeWorkspaceAsync()
+    {
+        if (!_renderSmokeMode && _preferences.RestoreLastWorkspace)
+        {
+            RestoreWorkspace(_preferences.LastWorkspace);
         }
 
-        _ = RefreshAudioAsync();
+        await _telemetryLoop.StartAsync(RunTelemetryLoopAsync);
+
+        Task audioRefresh = RefreshAudioAsync();
+        Task applicationRefresh = RefreshApplicationsAsync();
 
         _importMonitor = new ImportFolderMonitor(
             _runtime.ImportsPath,
@@ -75,34 +196,61 @@ public partial class MainWindow : Window
             _runtime.Defender,
             new WindowsSecurityChangeMonitor());
         _protectionMonitor.Updated += OnProtectionMonitorUpdated;
-        await RefreshAllAsync();
-        await RefreshUpdateJournalAsync();
-        _protectionMonitor.Start();
-        AddActivity("Soltex import guard is active.");
-        if (_runtime.DataRootKind == ProductDataRootKind.LegacyCompatibility)
+        await Task.WhenAll(
+            RefreshAllAsync(),
+            RefreshUpdateJournalAsync(),
+            audioRefresh,
+            applicationRefresh);
+        if (_shutdownStarted)
         {
-            AddActivity("Soltex is using the existing compatible data location; no files were moved.");
+            _startupCompleted.TrySetCanceled();
+            return;
         }
 
-        AddActivity(_protectionMonitor.ChangeNotificationsAvailable
-            ? "Windows Security change notifications are active."
-            : "Windows Security notifications are unavailable; bounded polling remains active.");
+        _protectionMonitor.Start();
+        AddActivity("Soltex import guard is active.", "Security");
+        if (_runtime.DataRootKind == ProductDataRootKind.LegacyCompatibility)
+        {
+            AddActivity(
+                "Soltex is using the existing compatible data location; no files were moved.",
+                "Security");
+        }
+
+        AddActivity(
+            _protectionMonitor.ChangeNotificationsAvailable
+                ? "Windows Security change notifications are active."
+                : "Windows Security notifications are unavailable; bounded polling remains active.",
+            "Security");
+        _startupCompleted.TrySetResult(true);
     }
 
     private async void Window_Closed(object? sender, EventArgs e)
     {
-        _operationCancellation?.Cancel();
-        _telemetryCancellation?.Cancel();
-        if (_telemetryLoopTask is not null)
+        _shutdownStarted = true;
+        if (!_renderSmokeMode)
         {
-            try
-            {
-                await _telemetryLoopTask;
-            }
-            catch (OperationCanceledException)
-            {
-                // Normal bounded shutdown.
-            }
+            SavePreferencesForClose();
+        }
+
+        _operationCancellation?.Cancel();
+        _audioMixCancellation?.Cancel();
+        _benchmarkCancellation?.Cancel();
+        await _telemetryLoop.StopAsync();
+        bool ownedWorkDrained = await OwnedTaskDrain.WaitAsync(
+            TimeSpan.FromSeconds(20),
+            _activeOperationDrained,
+            _audioMixOperationDrained,
+            _benchmarkOperationDrained,
+            _startupTask);
+        if (!ownedWorkDrained)
+        {
+            // Do not dispose state that an in-flight task may still reference.
+            // The owning App will treat an evidence-mode cleanup timeout as a
+            // failed run; normal application shutdown is already in progress.
+            ShutdownCompleted?.Invoke(
+                this,
+                new ShutdownCompletedEventArgs(resourcesDisposed: false));
+            return;
         }
 
         if (_importMonitor is not null)
@@ -116,10 +264,11 @@ public partial class MainWindow : Window
             await _protectionMonitor.DisposeAsync();
         }
 
-        _operationCancellation?.Dispose();
-        _telemetryCancellation?.Dispose();
         _updateJournal.Dispose();
         _runtime.Dispose();
+        ShutdownCompleted?.Invoke(
+            this,
+            new ShutdownCompletedEventArgs(resourcesDisposed: true));
     }
 
     private async Task RunTelemetryLoopAsync(CancellationToken cancellationToken)
@@ -141,7 +290,9 @@ public partial class MainWindow : Window
                     DevicesPanel.UpdateObservation(_localDevice);
                     if (recoveryNoticeRequired)
                     {
-                        AddActivity("Windows telemetry recovered after a bounded retry.");
+                        AddActivity(
+                            "Windows telemetry recovered after a bounded retry.",
+                            "Performance");
                     }
                 });
                 consecutiveFailures = 0;
@@ -170,12 +321,17 @@ public partial class MainWindow : Window
                     }
                     if (consecutiveFailures == 1)
                     {
-                        AddActivity("Windows telemetry was unavailable; a bounded retry is scheduled.");
+                        AddActivity(
+                            "Windows telemetry was unavailable; a bounded retry is scheduled.",
+                            "Performance");
                     }
                 });
             }
 
-            TimeSpan retryDelay = TimeSpan.FromSeconds(Math.Min(10, 2 + consecutiveFailures * 2));
+            TimeSpan retryDelay = consecutiveFailures == 0
+                ? TimeSpan.FromMilliseconds(
+                    Volatile.Read(ref _telemetryIntervalMilliseconds))
+                : TimeSpan.FromSeconds(Math.Min(10, 2 + consecutiveFailures * 2));
             await Task.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
         }
     }
@@ -210,7 +366,7 @@ public partial class MainWindow : Window
                 health.Summary,
                 detail: health.Error,
                 cancellationToken: cancellationToken);
-            AddActivity(health.Summary + ".");
+            AddSecuritySessionActivity(health.Summary + ".");
         });
     }
 
@@ -223,8 +379,37 @@ public partial class MainWindow : Window
             ? good
             : health.WindowsSecurityCenterHealth == WindowsSecurityHealth.Poor ? danger : warning;
 
+        Brush stateSurface = (Brush)FindResource(health.IsProtected
+            ? "SignalSurfaceBrush"
+            : health.WindowsSecurityCenterHealth == WindowsSecurityHealth.Poor
+                ? "DangerSurfaceBrush"
+                : "WarningSurfaceBrush");
+        Brush stateBorder = (Brush)FindResource(health.IsProtected
+            ? "SignalBorderBrush"
+            : health.WindowsSecurityCenterHealth == WindowsSecurityHealth.Poor
+                ? "DangerBorderBrush"
+                : "WarningBorderBrush");
+
         HealthDot.Fill = stateBrush;
+        HealthHero.Background = stateSurface;
+        HealthHero.BorderBrush = stateBorder;
         HealthTitle.Text = health.Summary;
+
+        ProtectionSummaryDot.Fill = stateBrush;
+        ProtectionSummaryBorder.Background = stateSurface;
+        ProtectionSummaryBorder.BorderBrush = stateBorder;
+        ProtectionSummaryTitle.Text = health.IsProtected
+            ? "Protection"
+            : health.WindowsSecurityCenterHealth == WindowsSecurityHealth.Poor
+                ? "Protection needs attention"
+                : "Protection status";
+        ProtectionSummaryState.Text = health.IsProtected
+            ? "ACTIVE"
+            : health.WindowsSecurityCenterHealth == WindowsSecurityHealth.Poor ? "ATTENTION" : "CHECK";
+        ProtectionSummaryState.Foreground = stateBrush;
+        ProtectionSummaryDetail.Text = health.IsProtected
+            ? "Windows provider reports healthy"
+            : "Open Security for provider details";
         string wsc = health.WindowsSecurityCenterHealth.ToString();
         string mode = string.IsNullOrWhiteSpace(health.AMRunningMode)
             ? "mode unavailable"
@@ -233,7 +418,6 @@ public partial class MainWindow : Window
             ? $"WSC {wsc} · Defender {mode} · intelligence " +
               $"{health.AntivirusSignatureVersion ?? "version unavailable"} · checked {health.CheckedAtUtc.ToLocalTime():t}"
             : $"WSC {wsc} · {health.Error ?? "Defender details are managed by the registered provider."}";
-        HealthHero.BorderBrush = stateBrush;
 
         SetState(RealTimeStatus, health.RealTimeProtectionEnabled, health.StatusQuerySucceeded);
         SetState(BehaviorStatus, health.BehaviorMonitorEnabled, health.StatusQuerySucceeded);
@@ -259,12 +443,178 @@ public partial class MainWindow : Window
     {
         try
         {
-            AudioEndpointSnapshot snapshot = await AudioEndpointProvider.CaptureAsync();
-            MixerPanel.UpdateSnapshot(snapshot);
+            Task<AudioEndpointSnapshot> endpointCapture = AudioEndpointProvider.CaptureAsync();
+            Task<AudioSessionSnapshot> sessionCapture = AudioSessionProvider.CaptureAsync();
+            await Task.WhenAll(endpointCapture, sessionCapture);
+            _lastAudioSessionSnapshot = await sessionCapture;
+            MixerPanel.UpdateSnapshot(
+                await endpointCapture,
+                _lastAudioSessionSnapshot);
         }
         catch (Exception exception) when (exception is COMException or InvalidOperationException or ExternalException)
         {
+            _lastAudioSessionSnapshot = null;
             MixerPanel.ShowUnavailable();
+        }
+    }
+
+    private async void MixerPanel_RefreshRequested(object? sender, EventArgs e) =>
+        await RefreshAudioAsync();
+
+    private async void MixerPanel_SessionChangeRequested(
+        object? sender,
+        AudioSessionChangeRequestedEventArgs e)
+    {
+        AudioSessionMutationResult result;
+        try
+        {
+            result = e.Kind == AudioSessionMutationKind.Volume
+                ? await AudioSessionController.SetVolumeAsync(
+                    e.Session,
+                    e.RequestedVolumePercent ?? double.NaN)
+                : await AudioSessionController.SetMuteAsync(
+                    e.Session,
+                    e.RequestedMute ?? e.Session.IsMuted);
+        }
+        catch (Exception exception) when (
+            exception is COMException or InvalidOperationException or ExternalException)
+        {
+            result = new AudioSessionMutationResult(
+                e.Kind,
+                AudioSessionMutationStatus.Unavailable,
+                e.Session.Name,
+                e.RequestedVolumePercent,
+                e.RequestedMute,
+                null,
+                null,
+                $"Windows could not apply the requested audio change for {e.Session.Name}.");
+        }
+
+        await RefreshAudioAsync();
+        MixerPanel.ShowSessionMutationResult(result);
+        AddActivity(result.Message, "Audio");
+    }
+
+    private void MixerPanel_EndpointPreferenceRequested(
+        object? sender,
+        AudioEndpointPreferenceRequestedEventArgs e)
+    {
+        AudioEndpoint endpoint = e.Endpoint;
+        string preferenceKey =
+            SoltexPreferences.NormalizeEndpointPreferenceKey(endpoint.PreferenceKey);
+        if (endpoint.State != AudioEndpointState.Active ||
+            !Enum.IsDefined(endpoint.Direction) ||
+            preferenceKey.Length == 0 ||
+            !string.Equals(preferenceKey, endpoint.PreferenceKey, StringComparison.Ordinal))
+        {
+            MixerPanel.ShowEndpointPreferenceResult(
+                saved: false,
+                "Only a current, active audio endpoint can be remembered. No Windows audio setting was changed.");
+            return;
+        }
+
+        SoltexPreferences requested = endpoint.Direction == AudioEndpointDirection.Render
+            ? _preferences with
+            {
+                PreferredPlaybackEndpointKey = preferenceKey,
+                LastWorkspace = _activeWorkspace
+            }
+            : _preferences with
+            {
+                PreferredRecordingEndpointKey = preferenceKey,
+                LastWorkspace = _activeWorkspace
+            };
+        string direction = endpoint.Direction == AudioEndpointDirection.Render
+            ? "playback"
+            : "recording";
+        SaveAudioEndpointPreferences(
+            requested,
+            $"{endpoint.Name} is remembered as the {direction} fallback reminder.",
+            $"Remembered {endpoint.Name} as the {direction} fallback reminder.");
+    }
+
+    private void MixerPanel_ClearEndpointPreferencesRequested(object? sender, EventArgs e) =>
+        SaveAudioEndpointPreferences(
+            _preferences with
+            {
+                PreferredPlaybackEndpointKey = string.Empty,
+                PreferredRecordingEndpointKey = string.Empty,
+                LastWorkspace = _activeWorkspace
+            },
+            "Audio fallback reminders were cleared from this Windows account.",
+            "Cleared the saved audio fallback reminders.");
+
+    private void SaveAudioEndpointPreferences(
+        SoltexPreferences requested,
+        string successDetail,
+        string activityDetail)
+    {
+        SoltexPreferences normalized = requested.Normalize();
+        try
+        {
+            _preferencesStore.Save(normalized);
+            _preferences = normalized;
+            MixerPanel.UpdateEndpointPreferences(
+                _preferences.PreferredPlaybackEndpointKey,
+                _preferences.PreferredRecordingEndpointKey);
+            MixerPanel.ShowEndpointPreferenceResult(saved: true, detail: successDetail);
+            SettingsPanel.UpdatePreferences(
+                _preferences,
+                recoveredFromInvalid: false,
+                "Audio fallback preferences are saved on this Windows account.");
+            AddActivity(activityDetail, "Audio");
+        }
+        catch (Exception exception) when (IsExpectedPreferenceWriteFailure(exception))
+        {
+            MixerPanel.UpdateEndpointPreferences(
+                _preferences.PreferredPlaybackEndpointKey,
+                _preferences.PreferredRecordingEndpointKey);
+            MixerPanel.ShowEndpointPreferenceResult(
+                saved: false,
+                "The fallback reminder could not be saved. No Windows audio setting was changed.");
+        }
+    }
+
+    private void MixerPanel_OpenSoundSettingsRequested(object? sender, EventArgs e)
+    {
+        WindowsSoundSettingsLaunchResult result = WindowsSoundSettingsLauncher.Open();
+        MixerPanel.ShowSoundSettingsResult(result);
+        AddActivity(result.Message, "Audio");
+    }
+
+    private async void ApplicationsPanel_RefreshRequested(object? sender, EventArgs e) =>
+        await RefreshApplicationsAsync();
+
+    private async Task RefreshApplicationsAsync()
+    {
+        if (!await _applicationRefreshGate.WaitAsync(0))
+        {
+            return;
+        }
+
+        ApplicationsPanel.ShowLoading();
+        try
+        {
+            Task<ApplicationInventorySnapshot> applicationCapture =
+                ApplicationInventoryProvider.CaptureAsync();
+            Task<WindowsServiceInventorySnapshot> serviceCapture =
+                WindowsServiceInventoryProvider.CaptureAsync();
+            await Task.WhenAll(applicationCapture, serviceCapture);
+            ApplicationsPanel.UpdateSnapshot(
+                await applicationCapture,
+                await serviceCapture);
+        }
+        catch (Exception exception) when (exception is IOException or
+                                           UnauthorizedAccessException or
+                                           System.Security.SecurityException or
+                                           PlatformNotSupportedException or
+                                           InvalidOperationException)
+        {
+            ApplicationsPanel.ShowUnavailable();
+        }
+        finally
+        {
+            _applicationRefreshGate.Release();
         }
     }
 
@@ -292,7 +642,9 @@ public partial class MainWindow : Window
             EventQueryStatus.Foreground = (Brush)FindResource("WarningBrush");
             SecurityActivityButton.Content = "Activity unavailable";
             SecurityActivityButton.IsEnabled = false;
-            AddActivity("Defender activity unavailable: " + result.Error);
+            AddActivity(
+                "Defender activity unavailable: " + result.Error,
+                "Security");
             return;
         }
 
@@ -351,7 +703,7 @@ public partial class MainWindow : Window
             SecurityEventSeverity severity = update.State == ProtectionMonitorState.Degraded
                 ? SecurityEventSeverity.Warning
                 : SecurityEventSeverity.Information;
-            AddActivity(update.Detail);
+            AddActivity(update.Detail, "Security");
             await _runtime.AuditLog.AppendAsync(
                 update.State == ProtectionMonitorState.Degraded
                     ? "monitor.degraded"
@@ -384,31 +736,52 @@ public partial class MainWindow : Window
 
     private async Task RunBusyAsync(Func<CancellationToken, Task> action)
     {
-        if (_operationCancellation is not null)
+        if (_operationCancellation is not null || _shutdownStarted)
         {
             return;
         }
 
-        _operationCancellation = new CancellationTokenSource();
+        CancellationTokenSource cancellation = new();
+        TaskCompletionSource<bool> drained = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        _operationCancellation = cancellation;
+        _activeOperationDrained = drained.Task;
         SetBusy(true);
         try
         {
-            await action(_operationCancellation.Token);
+            await action(cancellation.Token);
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
-            AddActivity("Operation cancelled. A Defender scan already accepted by Windows may continue in the background.");
+            if (!_shutdownStarted)
+            {
+                AddActivity(
+                    "Operation cancelled. A Defender scan already accepted by Windows may continue in the background.",
+                    "Security");
+            }
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException or InvalidOperationException)
         {
-            AddActivity("Operation failed: " + exception.Message);
-            MessageBox.Show(this, exception.Message, "Soltex Security", MessageBoxButton.OK, MessageBoxImage.Warning);
+            if (!_shutdownStarted)
+            {
+                AddActivity("Operation failed: " + exception.Message, "Security");
+                MessageBox.Show(this, exception.Message, "Soltex Security", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
         finally
         {
-            _operationCancellation.Dispose();
-            _operationCancellation = null;
-            SetBusy(false);
+            if (ReferenceEquals(_operationCancellation, cancellation))
+            {
+                _operationCancellation = null;
+            }
+
+            cancellation.Dispose();
+            if (!_shutdownStarted)
+            {
+                SetBusy(false);
+            }
+
+            drained.TrySetResult(true);
         }
     }
 
@@ -437,7 +810,7 @@ public partial class MainWindow : Window
                 result.Operation,
                 detail: result.Message,
                 cancellationToken: cancellationToken);
-            AddActivity($"{result.Operation}: {result.Message}");
+            AddActivity($"{result.Operation}: {result.Message}", "Security");
             if (!result.Succeeded)
             {
                 MessageBox.Show(this, result.Message, result.Operation, MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -465,7 +838,9 @@ public partial class MainWindow : Window
                 assessment.Path,
                 assessment.Detail,
                 cancellationToken);
-            AddActivity($"{System.IO.Path.GetFileName(path)}: {assessment.Verdict}.");
+            AddActivity(
+                $"Selected file assessment: {assessment.Verdict}.",
+                "Security");
 
             if (assessment.ShouldBlock && File.Exists(path))
             {
@@ -488,7 +863,7 @@ public partial class MainWindow : Window
                         entry.OriginalPath,
                         entry.Detection,
                         cancellationToken);
-                    AddActivity($"{System.IO.Path.GetFileName(path)} moved to quarantine.");
+                    AddActivity("Selected file moved to quarantine.", "Security");
                     await RefreshQuarantineAsync(cancellationToken);
                     return;
                 }
@@ -497,7 +872,9 @@ public partial class MainWindow : Window
             if (File.Exists(path))
             {
                 DefenderCommandResult defenderResult = await _runtime.Defender.RunCustomScanAsync(path, cancellationToken);
-                AddActivity($"Defender custom scan: {defenderResult.Message}");
+                AddActivity(
+                    $"Defender custom scan: {defenderResult.Message}",
+                    "Security");
             }
         });
     }
@@ -517,13 +894,36 @@ public partial class MainWindow : Window
                 assessment.Verdict.ToString(),
                 assessment.Path,
                 assessment.Detail);
-            AddActivity($"Import guard: {System.IO.Path.GetFileName(assessment.Path)} · {assessment.Verdict}.");
+            AddActivity(
+                $"Import guard assessed a local item · {assessment.Verdict}.",
+                "Security");
         });
     }
 
-    private void AddActivity(string message)
+    private void AddActivity(string message, string area = "System")
     {
-        ActivityList.Items.Insert(0, $"{DateTimeOffset.Now:t}  {message}");
+        ActivityMutationResult result =
+            _activityStore.Add(area, message, _preferences.ActivityRetention);
+        ActivityPanel.UpdateEntries(
+            _activityStore.Snapshot(),
+            _preferences.ActivityRetention,
+            result.Detail,
+            result.StorageHealthy);
+
+        if (!string.Equals(area, "Security", StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        AddSecuritySessionActivity(
+            result.Entry?.Summary ?? "Security activity recorded.");
+    }
+
+    private void AddSecuritySessionActivity(string message)
+    {
+        ActivityEntry entry =
+            ActivityEntry.Create("Security", message, DateTimeOffset.UtcNow);
+        ActivityList.Items.Insert(0, $"{DateTimeOffset.Now:t}  {entry.Summary}");
         while (ActivityList.Items.Count > 40)
         {
             ActivityList.Items.RemoveAt(ActivityList.Items.Count - 1);
@@ -594,7 +994,7 @@ public partial class MainWindow : Window
                 "A quarantine item was restored by the user.",
                 restoredPath,
                 cancellationToken: cancellationToken);
-            AddActivity($"Restored {System.IO.Path.GetFileName(restoredPath)}.");
+            AddActivity("A quarantined item was restored.", "Security");
             await RefreshQuarantineAsync(cancellationToken);
         });
     }
@@ -626,7 +1026,9 @@ public partial class MainWindow : Window
                 SecurityEventSeverity.Warning,
                 "A quarantine item was permanently deleted by the user.",
                 cancellationToken: cancellationToken);
-            AddActivity($"Deleted {row.FileName} from quarantine.");
+            AddActivity(
+                "A quarantined item was permanently deleted.",
+                "Security");
             await RefreshQuarantineAsync(cancellationToken);
         });
     }
@@ -812,7 +1214,9 @@ public partial class MainWindow : Window
         RemoteSessionStatus.Text = result.Started ? "External client started" : "Launch failed";
         RemoteSessionDetail.Text = result.Message;
         RemoteSessionStatus.Foreground = (Brush)FindResource(result.Started ? "SignalBrush" : "DangerBrush");
-        AddActivity($"Remote Assist {operation}: {result.Message}");
+        AddActivity(
+            $"Remote Assist {operation}: {result.Message}",
+            "Remote Assist");
         try
         {
             await _runtime.AuditLog.AppendAsync(
@@ -823,7 +1227,9 @@ public partial class MainWindow : Window
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidDataException)
         {
-            AddActivity("Remote Assist audit write failed: " + exception.Message);
+            AddActivity(
+                "Remote Assist audit write failed: " + exception.Message,
+                "Remote Assist");
         }
     }
 
@@ -845,11 +1251,12 @@ public partial class MainWindow : Window
             UpdateJournalCount.Text = entryCount == 1 ? "1 entry" : $"{entryCount} entries";
             bool reviewRequired = report.HasIncompletePlanningAttempt ||
                                   report.ExistingPrivateStagingTokens.Count > 0;
-            Brush stateBrush = (Brush)FindResource(reviewRequired ? "WarningBrush" : "SignalBrush");
+            Brush stateBrush = (Brush)FindResource("WarningBrush");
             UpdateStateDot.Fill = stateBrush;
-            UpdateReadinessHero.BorderBrush = stateBrush;
-            UpdateStateTitle.Text = reviewRequired ? "Cleanup review required" : "Planner state is clean";
-            UpdateStatePill.Text = reviewRequired ? "REVIEW" : "IDLE";
+            UpdateReadinessHero.BorderBrush = (Brush)FindResource("WarningBorderBrush");
+            UpdateReadinessHero.Background = (Brush)FindResource("WarningSurfaceBrush");
+            UpdateStateTitle.Text = reviewRequired ? "Cleanup review required" : "Updates are not configured";
+            UpdateStatePill.Text = reviewRequired ? "REVIEW" : "OFF";
             UpdateStatePill.Foreground = stateBrush;
             UpdateStateDetail.Text = reviewRequired
                 ? report.Detail
@@ -904,6 +1311,12 @@ public partial class MainWindow : Window
 
     private void MonitoringNav_Click(object sender, RoutedEventArgs e) => ShowPanel(MonitoringPanel, MonitoringNavButton);
 
+    private async void ApplicationsNav_Click(object sender, RoutedEventArgs e)
+    {
+        ShowPanel(ApplicationsPanel, ApplicationsNavButton);
+        await RefreshApplicationsAsync();
+    }
+
     private void DevicesNav_Click(object sender, RoutedEventArgs e) => ShowPanel(DevicesPanel, DevicesNavButton);
 
     private async void MixerNav_Click(object sender, RoutedEventArgs e)
@@ -918,7 +1331,163 @@ public partial class MainWindow : Window
 
     private void RemoteNav_Click(object sender, RoutedEventArgs e) => ShowPanel(RemotePanel, RemoteNavButton);
 
+    private void ActivityNav_Click(object sender, RoutedEventArgs e) =>
+        ShowPanel(ActivityPanel, ActivityNavButton);
+
     private void UpdateNav_Click(object sender, RoutedEventArgs e) => ShowPanel(UpdatePanel, UpdateNavButton);
+
+    private void SettingsNav_Click(object sender, RoutedEventArgs e) => ShowPanel(SettingsPanel, SettingsNavButton);
+
+    private void SettingsPanel_PreferencesChanged(
+        object? sender,
+        PreferencesChangedEventArgs e)
+    {
+        SoltexPreferences requested = e.Preferences.Normalize() with
+        {
+            LastWorkspace = _activeWorkspace
+        };
+        bool shorteningActivityRetention =
+            ActivityRetentionRank(requested.ActivityRetention) <
+            ActivityRetentionRank(_preferences.ActivityRetention);
+        if (shorteningActivityRetention)
+        {
+            string retentionImpact =
+                requested.ActivityRetention == ActivityRetention.SessionOnly
+                    ? "Saved Activity history on this Windows account will be removed. Current-session entries remain visible."
+                    : "Saved Activity entries older than 7 days will be removed.";
+            MessageBoxResult choice = MessageBox.Show(
+                this,
+                "Shorten Activity retention?\n\n" + retentionImpact,
+                "Change Activity retention",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+            if (choice != MessageBoxResult.Yes)
+            {
+                SettingsPanel.UpdatePreferences(
+                    _preferences,
+                    recoveredFromInvalid: false,
+                    "Activity retention was not changed.");
+                return;
+            }
+        }
+
+        bool closeBehaviorChanged =
+            requested.CloseBehavior != _preferences.CloseBehavior;
+        _preferences = requested;
+        Volatile.Write(
+            ref _telemetryIntervalMilliseconds,
+            _preferences.TelemetryIntervalMilliseconds);
+        MonitoringPanel.SetDetailsVisible(_preferences.OpenPerformanceDetails);
+        ActivityMutationResult retentionResult = _activityStore.SetRetention(
+            _preferences.ActivityRetention,
+            removePersistedWhenSessionOnly:
+                shorteningActivityRetention &&
+                _preferences.ActivityRetention == ActivityRetention.SessionOnly);
+        ActivityPanel.UpdateEntries(
+            _activityStore.Snapshot(),
+            _preferences.ActivityRetention,
+            retentionResult.Detail,
+            retentionResult.StorageHealthy);
+        try
+        {
+            _preferencesStore.Save(_preferences);
+            SettingsPanel.ShowSaved();
+        }
+        catch (Exception exception) when (IsExpectedPreferenceWriteFailure(exception))
+        {
+            SettingsPanel.ShowSaveFailure();
+        }
+
+        if (closeBehaviorChanged)
+        {
+            CloseBehaviorChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private static int ActivityRetentionRank(ActivityRetention retention) =>
+        retention switch
+        {
+            ActivityRetention.ThirtyDays => 2,
+            ActivityRetention.SevenDays => 1,
+            _ => 0
+        };
+
+    private void ActivityPanel_ClearRequested(object? sender, EventArgs e)
+    {
+        MessageBoxResult choice = MessageBox.Show(
+            this,
+            "Clear all visible and saved Soltex Activity history?",
+            "Clear Activity",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+        if (choice != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        ActivityMutationResult result = _activityStore.Clear();
+        ActivityPanel.UpdateEntries(
+            _activityStore.Snapshot(),
+            _preferences.ActivityRetention,
+            result.Detail,
+            result.StorageHealthy);
+    }
+
+    private void SavePreferencesForClose()
+    {
+        _preferences = _preferences with
+        {
+            LastWorkspace = _activeWorkspace
+        };
+        try
+        {
+            _preferencesStore.Save(_preferences);
+        }
+        catch (Exception exception) when (IsExpectedPreferenceWriteFailure(exception))
+        {
+            // Closing must remain available when a local preference cannot be persisted.
+        }
+    }
+
+    private static bool IsExpectedPreferenceWriteFailure(Exception exception) =>
+        exception is IOException or UnauthorizedAccessException or
+            System.Security.SecurityException or InvalidOperationException;
+
+    private void RestoreWorkspace(string workspace)
+    {
+        switch (SoltexPreferences.NormalizeWorkspace(workspace))
+        {
+            case "monitoring":
+                ShowPanel(MonitoringPanel, MonitoringNavButton);
+                break;
+            case "applications":
+                ShowPanel(ApplicationsPanel, ApplicationsNavButton);
+                break;
+            case "mixer":
+                ShowPanel(MixerPanel, MixerNavButton);
+                break;
+            case "security":
+                ShowPanel(SecurityPanel, SecurityNavButton);
+                break;
+            case "remote":
+                ShowPanel(RemotePanel, RemoteNavButton);
+                break;
+            case "activity":
+                ShowPanel(ActivityPanel, ActivityNavButton);
+                break;
+            case "updates":
+                ShowPanel(UpdatePanel, UpdateNavButton);
+                break;
+            case "settings":
+                ShowPanel(SettingsPanel, SettingsNavButton);
+                break;
+            default:
+                ShowPanel(HomePanel, HomeNavButton);
+                break;
+        }
+    }
 
     internal bool TrySelectRenderSmokePanel(string panelName)
     {
@@ -942,6 +1511,38 @@ public partial class MainWindow : Window
             string.Equals(normalized, "monitor", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(MonitoringPanel, MonitoringNavButton);
+            return true;
+        }
+
+        if (string.Equals(normalized, "monitoring-benchmark", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(normalized, "benchmark", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(MonitoringPanel, MonitoringNavButton);
+            MonitoringPanel.PrepareBenchmarkRenderState();
+            _renderSmokeFocusTarget = MonitoringPanel.BenchmarkPanel;
+            return true;
+        }
+
+        if (string.Equals(normalized, "applications-services", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(ApplicationsPanel, ApplicationsNavButton);
+            ApplicationsPanel.ShowServicesForEvidence();
+            _renderSmokeFocusTarget = ApplicationsPanel.ServicesGrid;
+            return true;
+        }
+
+        if (string.Equals(normalized, "command-palette", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(HomePanel, HomeNavButton);
+            OpenCommandPalette();
+            _renderSmokeFocusTarget = CommandSearchBox;
+            return true;
+        }
+
+        if (string.Equals(normalized, "applications", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(normalized, "apps", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(ApplicationsPanel, ApplicationsNavButton);
             return true;
         }
 
@@ -979,9 +1580,20 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (string.Equals(normalized, "mixer-devices", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(MixerPanel, MixerNavButton);
+            MixerPanel.DeviceDetailsButton.RaiseEvent(
+                new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
+            _renderSmokeFocusTarget = MixerPanel.EndpointPreferenceDetailText;
+            return true;
+        }
+
         if (string.Equals(normalized, "mixer-more", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(MixerPanel, MixerNavButton);
+            MixerPanel.DeviceDetailsButton.RaiseEvent(
+                new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
             MixerPanel.MoreEndpointsButton.RaiseEvent(
                 new RoutedEventArgs(System.Windows.Controls.Button.ClickEvent));
             _renderSmokeFocusTarget = MixerPanel.MoreEndpointsPanel;
@@ -1000,6 +1612,18 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (string.Equals(normalized, "activity", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(ActivityPanel, ActivityNavButton);
+            return true;
+        }
+
+        if (string.Equals(normalized, "settings", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(SettingsPanel, SettingsNavButton);
+            return true;
+        }
+
         return false;
     }
 
@@ -1008,33 +1632,82 @@ public partial class MainWindow : Window
         _renderSmokeFocusTarget?.BringIntoView();
     }
 
+    private void UpdatePreviewTab_Click(object sender, RoutedEventArgs e) =>
+        ShowUpdatePanel(UpdatePreviewPanel, UpdatePreviewTab);
+
+    private void UpdateJournalTab_Click(object sender, RoutedEventArgs e) =>
+        ShowUpdatePanel(UpdateJournalPanel, UpdateJournalTab);
+
+    private void UpdateRecoveryTab_Click(object sender, RoutedEventArgs e) =>
+        ShowUpdatePanel(UpdateRecoveryPanel, UpdateRecoveryTab);
+
+    private void ShowUpdatePanel(UIElement panel, System.Windows.Controls.Button selectedTab)
+    {
+        UpdatePreviewPanel.Visibility = panel == UpdatePreviewPanel
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        UpdateJournalPanel.Visibility = panel == UpdateJournalPanel
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        UpdateRecoveryPanel.Visibility = panel == UpdateRecoveryPanel
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+        foreach (System.Windows.Controls.Button tab in new[]
+                 {
+                     UpdatePreviewTab,
+                     UpdateJournalTab,
+                     UpdateRecoveryTab
+                 })
+        {
+            tab.Tag = tab == selectedTab ? "Selected" : null;
+        }
+    }
+
     private void ShowPanel(UIElement panel, System.Windows.Controls.Button selectedButton)
     {
         HomePanel.Visibility = panel == HomePanel ? Visibility.Visible : Visibility.Collapsed;
         MonitoringPanel.Visibility = panel == MonitoringPanel ? Visibility.Visible : Visibility.Collapsed;
+        ApplicationsPanel.Visibility = panel == ApplicationsPanel ? Visibility.Visible : Visibility.Collapsed;
+        ActivityPanel.Visibility = panel == ActivityPanel ? Visibility.Visible : Visibility.Collapsed;
+        SettingsPanel.Visibility = panel == SettingsPanel ? Visibility.Visible : Visibility.Collapsed;
         DevicesPanel.Visibility = panel == DevicesPanel ? Visibility.Visible : Visibility.Collapsed;
         MixerPanel.Visibility = panel == MixerPanel ? Visibility.Visible : Visibility.Collapsed;
         ClipsPanel.Visibility = panel == ClipsPanel ? Visibility.Visible : Visibility.Collapsed;
         SecurityPanel.Visibility = panel == SecurityPanel ? Visibility.Visible : Visibility.Collapsed;
         RemotePanel.Visibility = panel == RemotePanel ? Visibility.Visible : Visibility.Collapsed;
         UpdatePanel.Visibility = panel == UpdatePanel ? Visibility.Visible : Visibility.Collapsed;
+        CancelBenchmarkIfInactive();
         foreach (System.Windows.Controls.Button button in new[]
                  {
                      HomeNavButton,
                      MonitoringNavButton,
+                     ApplicationsNavButton,
                      DevicesNavButton,
                      MixerNavButton,
                      ClipsNavButton,
                      SecurityNavButton,
                      RemoteNavButton,
-                     UpdateNavButton
+                     ActivityNavButton,
+                     UpdateNavButton,
+                     SettingsNavButton
                  })
         {
-            button.Background = (Brush)FindResource(button == selectedButton ? "SelectedNavBrush" : "NavRestBrush");
-            button.Foreground = button == selectedButton
-                ? (Brush)FindResource("AccentBrush")
-                : (Brush)FindResource("MutedBrush");
+            button.Tag = button == selectedButton ? "Selected" : null;
+            button.Background = (Brush)FindResource("NavRestBrush");
+            button.Foreground = (Brush)FindResource("MutedBrush");
         }
+
+        _activeWorkspace =
+            panel == MonitoringPanel ? "monitoring" :
+            panel == ApplicationsPanel ? "applications" :
+            panel == MixerPanel ? "mixer" :
+            panel == SecurityPanel ? "security" :
+            panel == RemotePanel ? "remote" :
+            panel == ActivityPanel ? "activity" :
+            panel == UpdatePanel ? "updates" :
+            panel == SettingsPanel ? "settings" :
+            "home";
 
         panel.BeginAnimation(OpacityProperty, null);
         panel.Opacity = 1;
@@ -1044,8 +1717,31 @@ public partial class MainWindow : Window
                 OpacityProperty,
                 new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(160))
                 {
-                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut }
+                    EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
+                    FillBehavior = FillBehavior.Stop
                 });
+        }
+    }
+
+    private void StopWorkspaceAnimations()
+    {
+        foreach (UIElement panel in new UIElement[]
+                 {
+                     HomePanel,
+                     MonitoringPanel,
+                     ApplicationsPanel,
+                     DevicesPanel,
+                     MixerPanel,
+                     ClipsPanel,
+                     SecurityPanel,
+                     RemotePanel,
+                     ActivityPanel,
+                     UpdatePanel,
+                     SettingsPanel
+                 })
+        {
+            panel.BeginAnimation(OpacityProperty, null);
+            panel.Opacity = 1;
         }
     }
 

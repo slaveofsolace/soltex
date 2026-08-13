@@ -45,6 +45,14 @@ jobs:
           .\eng\verify-design-tokens.ps1 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\design-tokens.log
 
+      - name: Verify keyboard and automation contracts
+        id: accessibility
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\eng\verify-accessibility-contracts.ps1 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\accessibility-contracts.log
+
       - name: Build Release
         id: build
         shell: pwsh
@@ -115,7 +123,16 @@ jobs:
           $ErrorActionPreference = 'Stop'
           dotnet run --project .\tests\Soltex.Audio.Tests\Soltex.Audio.Tests.csproj --configuration Release --no-build 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\tests-audio.log
-          if ($LASTEXITCODE -ne 0) { throw "Audio endpoint suite failed with exit code $LASTEXITCODE." }
+          if ($LASTEXITCODE -ne 0) { throw "Audio endpoint/session suite failed with exit code $LASTEXITCODE." }
+
+      - name: Run bounded benchmark suite
+        id: benchmark_tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\tests\Soltex.Benchmarks.Tests\Soltex.Benchmarks.Tests.csproj --configuration Release --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\tests-benchmarks.log
+          if ($LASTEXITCODE -ne 0) { throw "Benchmark suite failed with exit code $LASTEXITCODE." }
 
       - name: Run WPF control suite
         id: app_tests
@@ -125,6 +142,20 @@ jobs:
           dotnet run --project .\tests\Soltex.App.Tests\Soltex.App.Tests.csproj --configuration Release --no-build 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\tests-app-controls.log
           if ($LASTEXITCODE -ne 0) { throw "WPF control suite failed with exit code $LASTEXITCODE." }
+
+      - name: Measure native runtime lifecycle cost
+        id: runtime_cost
+        shell: pwsh
+        env:
+          SOLTEX_SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\eng\measure-runtime.ps1 `
+            -OutputDirectory .\artifacts\validation `
+            -Configuration Release `
+            -SourceHeadSha $env:SOLTEX_SOURCE_HEAD_SHA `
+            -TestedCommitSha $env:GITHUB_SHA `
+            -DotnetPath (Get-Command dotnet -ErrorAction Stop).Source
 
       - name: Run opt-in EICAR interoperability suite
         id: eicar
@@ -168,6 +199,7 @@ jobs:
             monitoring_tests = '${{ steps.monitoring_tests.outcome }}'
             audio_tests = '${{ steps.audio_tests.outcome }}'
             app_tests = '${{ steps.app_tests.outcome }}'
+            runtime_cost = '${{ steps.runtime_cost.outcome }}'
             render_matrix = '${{ steps.render_matrix.outcome }}'
             eicar = '${{ steps.eicar.outcome }}'
           }

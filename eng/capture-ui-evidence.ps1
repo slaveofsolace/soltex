@@ -82,10 +82,17 @@ $projectPath = Join-Path $repoRoot 'src\Soltex.App\Soltex.App.csproj'
 
 $matrix = @(
     [ordered]@{ id = 'home-default'; panel = 'home'; state = 'default'; file = 'home-current-source.png' },
+    [ordered]@{ id = 'command-palette'; panel = 'command-palette'; state = 'expanded'; file = 'command-palette-current-source.png' },
     [ordered]@{ id = 'monitoring-default'; panel = 'monitoring'; state = 'default'; file = 'monitoring-current-source.png' },
     [ordered]@{ id = 'monitoring-details'; panel = 'monitoring-details'; state = 'expanded'; file = 'monitoring-details-current-source.png' },
+    [ordered]@{ id = 'monitoring-benchmark'; panel = 'monitoring-benchmark'; state = 'idle'; file = 'monitoring-benchmark-current-source.png' },
+    [ordered]@{ id = 'applications-default'; panel = 'applications'; state = 'default'; file = 'applications-current-source.png' },
+    [ordered]@{ id = 'applications-services'; panel = 'applications-services'; state = 'expanded'; file = 'applications-services-current-source.png' },
+    [ordered]@{ id = 'activity-default'; panel = 'activity'; state = 'default'; file = 'activity-current-source.png' },
+    [ordered]@{ id = 'settings-default'; panel = 'settings'; state = 'default'; file = 'settings-current-source.png' },
     [ordered]@{ id = 'devices-default'; panel = 'devices'; state = 'default'; file = 'devices-current-source.png' },
     [ordered]@{ id = 'mixer-default'; panel = 'mixer'; state = 'default'; file = 'mixer-current-source.png' },
+    [ordered]@{ id = 'mixer-devices'; panel = 'mixer-devices'; state = 'expanded'; file = 'mixer-devices-current-source.png' },
     [ordered]@{ id = 'mixer-more'; panel = 'mixer-more'; state = 'expanded'; file = 'mixer-more-current-source.png' },
     [ordered]@{ id = 'clips-default'; panel = 'clips'; state = 'default'; file = 'clips-current-source.png' },
     [ordered]@{ id = 'security-default'; panel = 'security'; state = 'default'; file = 'security-current-source.png' },

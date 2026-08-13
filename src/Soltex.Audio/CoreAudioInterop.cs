@@ -23,6 +23,13 @@ internal enum DeviceRole
     Communications = 2
 }
 
+internal enum CoreAudioSessionState
+{
+    Inactive = 0,
+    Active = 1,
+    Expired = 2
+}
+
 internal static class DeviceStateMask
 {
     internal const uint Active = 0x1;
@@ -161,6 +168,81 @@ internal interface IAudioEndpointVolume
     int GetMute([MarshalAs(UnmanagedType.Bool)] out bool mute);
 }
 
+// The session interfaces below mirror the inherited vtable slots in the
+// Windows SDK's audiopolicy.h and Audioclient.h declarations. Soltex invokes
+// only the read methods plus ISimpleAudioVolume's volume/mute methods. The
+// unused slots remain declared so every invoked slot stays ABI-correct.
+[ComImport]
+[Guid("F4B1A599-7266-4319-A8CA-E70ACB11E8CD")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IAudioSessionControl
+{
+    [PreserveSig] int GetState(out CoreAudioSessionState state);
+    [PreserveSig] int GetDisplayName([MarshalAs(UnmanagedType.LPWStr)] out string displayName);
+    [PreserveSig] int SetDisplayName([MarshalAs(UnmanagedType.LPWStr)] string displayName, IntPtr eventContext);
+    [PreserveSig] int GetIconPath([MarshalAs(UnmanagedType.LPWStr)] out string iconPath);
+    [PreserveSig] int SetIconPath([MarshalAs(UnmanagedType.LPWStr)] string iconPath, IntPtr eventContext);
+    [PreserveSig] int GetGroupingParam(out Guid groupingId);
+    [PreserveSig] int SetGroupingParam(ref Guid groupingId, IntPtr eventContext);
+    [PreserveSig] int RegisterAudioSessionNotification(IntPtr notifications);
+    [PreserveSig] int UnregisterAudioSessionNotification(IntPtr notifications);
+}
+
+[ComImport]
+[Guid("BFB7FF88-7239-4FC9-8FA2-07C950BE9C6D")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IAudioSessionControl2
+{
+    [PreserveSig] int GetState(out CoreAudioSessionState state);
+    [PreserveSig] int GetDisplayName([MarshalAs(UnmanagedType.LPWStr)] out string displayName);
+    [PreserveSig] int SetDisplayName([MarshalAs(UnmanagedType.LPWStr)] string displayName, IntPtr eventContext);
+    [PreserveSig] int GetIconPath([MarshalAs(UnmanagedType.LPWStr)] out string iconPath);
+    [PreserveSig] int SetIconPath([MarshalAs(UnmanagedType.LPWStr)] string iconPath, IntPtr eventContext);
+    [PreserveSig] int GetGroupingParam(out Guid groupingId);
+    [PreserveSig] int SetGroupingParam(ref Guid groupingId, IntPtr eventContext);
+    [PreserveSig] int RegisterAudioSessionNotification(IntPtr notifications);
+    [PreserveSig] int UnregisterAudioSessionNotification(IntPtr notifications);
+    [PreserveSig] int GetSessionIdentifier([MarshalAs(UnmanagedType.LPWStr)] out string sessionIdentifier);
+    [PreserveSig] int GetSessionInstanceIdentifier([MarshalAs(UnmanagedType.LPWStr)] out string sessionInstanceIdentifier);
+    [PreserveSig] int GetProcessId(out uint processId);
+    [PreserveSig] int IsSystemSoundsSession();
+    [PreserveSig] int SetDuckingPreference([MarshalAs(UnmanagedType.Bool)] bool optOut);
+}
+
+[ComImport]
+[Guid("87CE5498-68D6-44E5-9215-6DA47EF883D8")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface ISimpleAudioVolume
+{
+    [PreserveSig] int SetMasterVolume(float level, ref Guid eventContext);
+    [PreserveSig] int GetMasterVolume(out float level);
+    [PreserveSig] int SetMute([MarshalAs(UnmanagedType.Bool)] bool mute, ref Guid eventContext);
+    [PreserveSig] int GetMute([MarshalAs(UnmanagedType.Bool)] out bool mute);
+}
+
+[ComImport]
+[Guid("E2F5BB11-0570-40CA-ACDD-3AA01277DEE8")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IAudioSessionEnumerator
+{
+    [PreserveSig] int GetCount(out int sessionCount);
+    [PreserveSig] int GetSession(int sessionIndex, out IAudioSessionControl session);
+}
+
+[ComImport]
+[Guid("77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IAudioSessionManager2
+{
+    [PreserveSig] int GetAudioSessionControl(IntPtr audioSessionGuid, uint streamFlags, out IAudioSessionControl sessionControl);
+    [PreserveSig] int GetSimpleAudioVolume(IntPtr audioSessionGuid, uint streamFlags, out ISimpleAudioVolume audioVolume);
+    [PreserveSig] int GetSessionEnumerator(out IAudioSessionEnumerator sessionEnumerator);
+    [PreserveSig] int RegisterSessionNotification(IntPtr sessionNotification);
+    [PreserveSig] int UnregisterSessionNotification(IntPtr sessionNotification);
+    [PreserveSig] int RegisterDuckNotification([MarshalAs(UnmanagedType.LPWStr)] string sessionId, IntPtr duckNotification);
+    [PreserveSig] int UnregisterDuckNotification(IntPtr duckNotification);
+}
+
 internal static class CoreAudio
 {
     internal const int Ok = 0;
@@ -175,6 +257,18 @@ internal static class CoreAudio
     };
 
     internal static Guid AudioEndpointVolumeId => new("5CDF2C82-841E-4546-9722-0CF74078229A");
+
+    internal static Guid AudioSessionManager2Id => new("77AA99A0-1BD6-484F-8BC7-2C654C9A9B6F");
+
+    internal static bool Succeeded(int hresult) => hresult >= 0;
+
+    internal static void ReleaseComObject(object? instance)
+    {
+        if (instance is not null && Marshal.IsComObject(instance))
+        {
+            _ = Marshal.ReleaseComObject(instance);
+        }
+    }
 
     [DllImport("ole32.dll")]
     internal static extern int PropVariantClear(ref PropVariant value);

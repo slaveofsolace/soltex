@@ -1,0 +1,175 @@
+<UserControl x:Class="Soltex.App.Views.ActivityView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="Transparent"
+             Foreground="{StaticResource TextBrush}"
+             FontFamily="{StaticResource UiFont}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="18" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Activity" />
+                <TextBlock Margin="0,3,0,0"
+                           Style="{StaticResource MutedTextStyle}"
+                           Text="Meaningful Soltex state changes and recovery events." />
+            </StackPanel>
+            <Border Grid.Column="1"
+                    Style="{StaticResource StatusPillStyle}"
+                    VerticalAlignment="Top">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse x:Name="ActivityStateDot"
+                             Width="7"
+                             Height="7"
+                             Fill="{StaticResource MutedBrush}"
+                             VerticalAlignment="Center" />
+                    <TextBlock x:Name="ActivityRetentionText"
+                               Margin="8,0,0,0"
+                               Text="SESSION"
+                               Foreground="{StaticResource MutedBrush}"
+                               FontFamily="{StaticResource MonoFont}"
+                               FontSize="{StaticResource FontMicro}"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="420" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid>
+                <TextBox x:Name="ActivitySearchBox"
+                         Style="{StaticResource FieldStyle}"
+                         AutomationProperties.Name="Search Soltex activity"
+                         TextChanged="ActivitySearchBox_TextChanged" />
+                <TextBlock x:Name="ActivitySearchHint"
+                           Margin="12,0,0,0"
+                           Text="Search area or summary"
+                           Foreground="{StaticResource QuietTextBrush}"
+                           VerticalAlignment="Center"
+                           IsHitTestVisible="False" />
+            </Grid>
+            <Button x:Name="ClearActivityButton"
+                    Grid.Column="2"
+                    Style="{StaticResource SecondaryButton}"
+                    Content="Clear activity"
+                    AutomationProperties.Name="Clear Soltex activity"
+                    Click="ClearActivity_Click" />
+        </Grid>
+
+        <Border Grid.Row="4"
+                Style="{StaticResource WorkbenchStyle}"
+                Padding="0"
+                ClipToBounds="True">
+            <Grid>
+                <ListBox x:Name="ActivityItems"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         HorizontalContentAlignment="Stretch"
+                         AutomationProperties.Name="Soltex activity timeline"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         VirtualizingPanel.IsVirtualizing="True">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="0" />
+                            <Setter Property="Focusable" Value="False" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <ContentPresenter />
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Padding="18,14"
+                                    BorderBrush="{StaticResource BorderBrush}"
+                                    BorderThickness="0,0,0,1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Ellipse Width="7"
+                                             Height="7"
+                                             Margin="0,6,12,0"
+                                             Fill="{StaticResource AccentBrush}"
+                                             VerticalAlignment="Top" />
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding Summary}"
+                                                   TextWrapping="Wrap"
+                                                   FontWeight="SemiBold" />
+                                        <TextBlock Margin="0,5,0,0"
+                                                   Text="{Binding Area}"
+                                                   Foreground="{StaticResource MutedBrush}"
+                                                   FontSize="{StaticResource FontCaption}" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="2"
+                                               Margin="22,1,0,0"
+                                               Text="{Binding When}"
+                                               Foreground="{StaticResource QuietTextBrush}"
+                                               FontFamily="{StaticResource MonoFont}"
+                                               FontSize="{StaticResource FontMicro}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <StackPanel x:Name="ActivityEmptyPanel"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock x:Name="ActivityEmptyTitle"
+                               Text="No activity yet"
+                               FontSize="{StaticResource FontSection}"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center" />
+                    <TextBlock x:Name="ActivityEmptyDetail"
+                               Margin="0,6,0,0"
+                               Text="Meaningful actions and recovery events will appear here."
+                               Foreground="{StaticResource MutedBrush}"
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="5" Margin="2,12,2,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="ActivityStorageDetail"
+                       Foreground="{StaticResource QuietTextBrush}"
+                       FontSize="{StaticResource FontCaption}"
+                       Text="Session only · nothing is kept after Soltex closes." />
+            <TextBlock x:Name="ActivityCountText"
+                       Grid.Column="1"
+                       Foreground="{StaticResource QuietTextBrush}"
+                       FontFamily="{StaticResource MonoFont}"
+                       FontSize="{StaticResource FontMicro}"
+                       Text="0 EVENTS" />
+        </Grid>
+    </Grid>
+</UserControl>

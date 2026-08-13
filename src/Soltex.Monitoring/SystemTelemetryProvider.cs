@@ -92,10 +92,17 @@ public static class SystemTelemetryProvider
             limitations.Add("One or more network interfaces could not be sampled.");
         }
 
-        TelemetryObservationState state =
-            cpuPercent is not null || memory is not null || network is not null || processes.Length > 0
-                ? limitations.Count == 0 ? TelemetryObservationState.Current : TelemetryObservationState.Partial
-                : TelemetryObservationState.Unavailable;
+        bool hasAnyData =
+            cpuPercent is not null || memory is not null || network is not null || processes.Length > 0;
+        bool hasSupportedProviderFailure =
+            cpuPercent is null ||
+            memory is null ||
+            volumeLimitation is not null ||
+            network is null ||
+            inaccessibleNetworks > 0;
+        TelemetryObservationState state = DetermineObservationState(
+            hasAnyData,
+            hasSupportedProviderFailure);
         capture.Stop();
         return new SystemTelemetrySnapshot(
             DateTimeOffset.UtcNow,
@@ -110,6 +117,15 @@ public static class SystemTelemetryProvider
             "GetSystemTimes · GlobalMemoryStatusEx · NetworkInterface statistics · System.Diagnostics.Process · DriveInfo",
             limitations);
     }
+
+    internal static TelemetryObservationState DetermineObservationState(
+        bool hasAnyData,
+        bool hasSupportedProviderFailure) =>
+        !hasAnyData
+            ? TelemetryObservationState.Unavailable
+            : hasSupportedProviderFailure
+                ? TelemetryObservationState.Partial
+                : TelemetryObservationState.Current;
 
     private static Dictionary<int, ProcessSeed> CaptureProcessSeeds(out int inaccessibleCount)
     {

@@ -16,6 +16,7 @@
     <ProjectReference Include="..\Soltex.Monitoring\Soltex.Monitoring.csproj" />
     <ProjectReference Include="..\Soltex.DeviceFabric\Soltex.DeviceFabric.csproj" />
     <ProjectReference Include="..\Soltex.Audio\Soltex.Audio.csproj" />
+    <ProjectReference Include="..\Soltex.Benchmarks\Soltex.Benchmarks.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Soltex.App.Tests" />

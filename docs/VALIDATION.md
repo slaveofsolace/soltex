@@ -1,8 +1,95 @@
 # Validation and evidence
 
-Snapshot: 2026-08-09
+Snapshot: 2026-08-12
 
 Repository: `slaveofsolace/soltex`
+
+Current draft: `sol/soltex-product-rebuild` / [PR #11](https://github.com/slaveofsolace/soltex/pull/11)
+
+## Audio fallback and lifecycle owner-host gate
+
+Production source `1d15071a14472dce199796a57966bddbf7be2fc4` and strengthened test head `41c8c37622ef666436024138e6d82f14e1e418da` passed the owner-controlled Windows gate. Release built with 0 warnings/errors; identity scanned 194 tracked text files with 9 reasoned allowlist entries; design-token policy passed 10 XAML files; Security/EICAR was 32/32, Monitoring 16/16, Audio 21/21, and App/control 29/29.
+
+The first exact native attempt at `975e48c` failed after its first frame with a disposed telemetry cancellation source. It was preserved as negative evidence and not accepted. Source `1d15071` consolidates cancellation/task start, stop, await, and disposal behind one serialized owner. Three repetition renders, the exact 16/16 native matrix, and the exact runtime probe then exited cleanly. Runtime observed 2,036.1 ms startup, 15.7 ms mean navigation, 0.576% visible-idle CPU, 0.022% minimized-steady CPU, and 0.000% hidden CPU; Performance sampling was suspended when minimized or hidden.
+
+The self-contained package is 71,589,791 bytes with SHA-256 `83a0a29347d8160dcd86f41ad828bd444eb3ec3dfb45b3317f8a3ddf092c9911`, remains `NotSigned`, and rendered packaged Home plus packaged Audio-device states with exit `0`. Default, device-management, full-inventory, and packaged-device pixels were directly inspected. Full evidence is recorded in [`evidence/2026-08-12-audio-fallback`](evidence/2026-08-12-audio-fallback/README.md). Hosted Windows/package acceptance of the new reconciliation head remains pending.
+
+## Audio candidate exact-source owner-host gate
+
+Audio source `3511ba92bde450ffac4e3fad145d9a13b8986e72` was exercised on the owner-controlled Windows host through the verified portable .NET SDK 10.0.302. No Windows security setting, endpoint assignment, third-party session, SteelSeries process, Voicemeeter process, or audible media was changed.
+
+| Command/gate | Result |
+|---|---:|
+| Release `Soltex.Audio` build | Passed, 0 warnings / 0 errors |
+| Release `Soltex.App` build | Passed, 0 warnings / 0 errors |
+| standard `Soltex.Audio.Tests` | 20/20 |
+| opt-in controlled live-write `Soltex.Audio.Tests` | 21/21 |
+| `Soltex.App.Tests` | 19/19 |
+| live session observation | 5 exposed / 28 observed / 0 inaccessible / 0 omitted; about 8 ms provider time |
+| targeted native Mixer captures | default and expanded device inventory passed at 1280x820 and were directly inspected |
+
+The complete exact-source gate also passed Security/EICAR 32/32, supply chain 18/18, hardening 12/12, Updates 17/17, Device Fabric 24/24, Monitoring 16/16, App/control 19/19, identity 181 files/9 allowlist entries, design-token policy across 10 XAML files, and a 14/14 native matrix with every retained image at 1280x820. The first tracked verification completed green but exposed a blank tracker exit-code property; after confirming no process remained, one handle-pinned retry recorded every exit as `0`.
+
+The opt-in write gate creates a one-second silent WinMM loop owned by the test process, locates only that process's session, writes its already-observed volume and mute values back unchanged, verifies both through immediate Core Audio read-back, stops the loop, and removes its temporary WAV. The standard suite does not perform any live write. COM GUID/vtable order, bounds, sanitization, identity privacy, rejection, target drift, cancellation, fake read-back match/mismatch, live observation, and measured overhead have focused tests.
+
+The exact self-contained `win-x64` owner-host package is 71,559,764 bytes with SHA-256 `31ef5e44b895738723b849705247fb2a4756a2a2092ec9aa514eea429aa64ebb`; its hidden Home render launch exited `0`, produced 1280x820 evidence, and the executable is truthfully `NotSigned`. Full evidence paths and image identities are recorded in [`evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md`](evidence/2026-08-11-product-rebuild/AUDIO_SESSION_GATE.md).
+
+Published PR head `abf1dc5e58ca7a23ef57a975c7fdeb041ea4d183` then passed Windows run `31562540695` and package-smoke run `31562540694`. Downloaded artifacts `9128308988` and `9128281441` independently matched GitHub digests `sha256:dd0c089596cbbdd09f79140bf9251770dcf18e482ec46bbef3ccd5aa6537e386` and `sha256:ff0df6759cd4b9ff1c8387d174c74d347f5774b1bb446f9e8e4a11c0d68f12c6`. The tested PR merge was exactly one commit ahead of the source with `abf1dc5` as merge base. All 14 retained 1280x820 PNGs matched their manifest identities; default/expanded Audio and packaged Home were directly inspected. The hosted package executable was 71,581,365 bytes, SHA-256 `898fd206951392c837c37dcd0b41178320ab1fd23cc7376819a3f4fb920132a3`, launched with exit code 0, and remained `NotSigned`. Optional hosted AMSI/EICAR remained 31/32 because the installed provider returned native result `1`; required gates passed and no detection-efficacy claim is made.
+
+## Services, runtime lifecycle, and notification-area exact gate
+
+Source and tested commit `4207ecb70ef30c09203cb4f0f2b3efedf1ef2bd6` passed the owner-controlled Windows gate:
+
+| Command/gate | Result |
+|---|---:|
+| Release solution build | Passed, 0 warnings / 0 errors |
+| identity policy | 192 tracked text files / 9 reasoned allowlist entries |
+| `Soltex.Security.Tests -RunEicar` | 32/32 |
+| `Soltex.Monitoring.Tests` | 16/16 |
+| `Soltex.Audio.Tests` | 20/20 |
+| `Soltex.App.Tests` | 26/26 |
+| live read-only SCM capture | 296 exposed / 296 observed / 0 inaccessible / 0 omitted; 92.8 ms |
+| runtime startup | 2,997.4 ms |
+| runtime navigation | 18 transitions; 39.1 ms mean / 379.2 ms maximum |
+| visible idle CPU | 0.643% normalized |
+| minimize transition CPU | 2.531% normalized; Performance sampler stopped |
+| minimized steady CPU | 0.000% normalized; Performance sampler stopped |
+| hidden notification-area CPU | 0.000% normalized; Performance sampler stopped |
+| native matrix | 15/15 at 1280x820; no error sidecars |
+| self-contained package | 71,583,560 bytes; Security render exit `0`; `NotSigned` |
+
+The owner report `Cannot access a disposed object. Object name: 'Soltex.Security.QuarantineStore'.` identified a real startup/close ownership race. The exact correction tracks startup and active-operation lifetime, cancels accepted shutdown work, drains owned tasks before disposing security resources, keeps close-to-notification-area outside shutdown, and makes controlled render/probe modes require confirmed disposal before a successful exit.
+
+A complete diff-focused security scan found and corrected one false-success evidence signal during review. The final scan has zero surviving findings; the resolved candidate remains audit-visible as `SOLTEX-SHUTDOWN-001`. Overview, Services, Security, Settings, and packaged Security owner-host pixels were directly inspected and contained initialized state with no exception dialog.
+
+Published source head `6e54fb509ba332191107aa64733db0880e3cac78` then passed Windows run `31568771869` and package-smoke run `31568771855`. Downloaded artifacts `9130547242` and `9130511337` independently matched GitHub digests `sha256:a9b58d12d30160028da00d97509cfcd9334b1ef1841aa3e90676dac7bb09c1a2` and `sha256:99f9c680cb37e97fece68250c6865b3799c986ac9aa5c7d85083c5d6e39b770c`. The tested PR merge `ebd163553b3229099c371cd79b8967ace2b1ab55` was exactly one commit ahead with `6e54fb5` as merge base.
+
+The hosted Release build had zero warnings/errors. Required suites passed: Security 31/31, supply chain 18/18, hardening 12/12, Updates 17/17, Device Fabric 24/24, Monitoring 16/16, Audio 20/20, and App/control 26/26. Optional EICAR/AMSI remained 31/32 because the installed runner provider returned native result `1`; this is an interoperability nonconfirmation, not efficacy evidence. All 15 retained 1280x820 PNGs matched their recorded lengths and hashes; Services, Security, Settings, and packaged Home were directly inspected without an exception dialog. The hosted package launched with exit `0`, was 71,605,238 bytes with SHA-256 `236959aae3abe37a35130b68515c1472730118a6e6c8f60c9315f1ca0107e8b9`, and remained `NotSigned`.
+
+Full evidence and nonclaims are recorded in [`evidence/2026-08-12-lifecycle-tray`](evidence/2026-08-12-lifecycle-tray/README.md). Owner visual acceptance remains open.
+
+## Activity candidate owner-host gate
+
+The Activity source candidate was exercised on the owner-controlled Windows host before publication. The gate used the repository-pinned .NET 10 contract through a verified portable .NET SDK 10.0.302 and did not disable, exclude, or reconfigure Windows security.
+
+| Command/gate | Result |
+|---|---:|
+| identity policy | Passed; 172 tracked text files, 9 reasoned allowlist entries |
+| Release solution build | Passed |
+| `Soltex.Security.Tests` | 31/31 |
+| `Soltex.Monitoring.Tests` | 16/16 |
+| `Soltex.App.Tests` | 19/19 |
+| Activity storage/privacy test | Passed inside the app suite |
+
+The Activity test covers the 120-entry bound, session-only no-file default, explicit retained persistence, drive/UNC-path sanitization, durable round trip, confirmed deletion boundary, invalid JSON recovery, and oversized-file fail-closed behavior. The view test covers retention state, filtering/no-match disclosure, deletion routing to the main-window confirmation owner, and native WPF rendering. A passing test does not establish human visual acceptance.
+
+### Exact-head hosted Activity gate
+
+PR head `4437db80b844dcfe33cd8265e41cb5fcf00bfd76` passed Windows run `31560242046` and package-smoke run `31560242019`. Windows artifact `9127496208` has digest `sha256:0046bc2b99c0e10accf58b3c030025c4802ceee782553a06f7c3881599e969c9`; package artifact `9127485263` has digest `sha256:dfd3b7aed215a2646bac1ad745e431511f5e4de4958b479b9a8d3865865ab30b`.
+
+The downloaded Windows ZIP independently matched its GitHub digest. Its render manifest binds source head `4437db8` to tested PR merge `4b3fff8`, records 14 native 1280×820 states, and all retained file lengths, SHA-256 values, and dimensions independently matched. Hosted Activity and Settings captures were directly inspected. Required suites passed: Security 31/31, supply chain 18/18, hardening 12/12, update 17/17, Device Fabric 24/24, monitoring 16/16, audio 10/10, and app/control 19/19. The optional hosted AMSI/EICAR run remained 31/32 because the runner's installed provider returned native result `1`; this is an interoperability nonconfirmation, not an efficacy test.
+
+The current render matrix contains 16 native states: eleven default workspaces and five progressive-disclosure states, including separate Audio device-management and full endpoint-inventory captures. Capture still fails closed on stale targets, source/tested-commit mismatch, missing output, error sidecars, empty images, and non-1280×820 output.
 
 Merged baseline: `main` at `61639bfe7ea3a7191fcb6c70ea1f2a699aa77248` (PR #9)
 

@@ -62,11 +62,23 @@ jobs:
             -FilePath $exe `
             -ArgumentList @('--render-smoke', $output, '--panel', 'home') `
             -WindowStyle Hidden `
-            -Wait `
             -PassThru
-          "exit_code=$($process.ExitCode)" | Set-Content -Encoding UTF8 .\artifacts\validation\package-launch.log
-          if ($process.ExitCode -ne 0) {
-            throw "Published package render failed with exit code $($process.ExitCode)."
+          try {
+            $processHandle = $process.Handle
+            if (-not $process.WaitForExit(80000)) {
+              Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+              'timeout=true' | Set-Content -Encoding UTF8 .\artifacts\validation\package-launch.log
+              throw 'Published package render exceeded its 80-second process bound.'
+            }
+            $process.Refresh()
+            $exitCode = $process.ExitCode
+          }
+          finally {
+            $process.Dispose()
+          }
+          "exit_code=$exitCode" | Set-Content -Encoding UTF8 .\artifacts\validation\package-launch.log
+          if ($exitCode -ne 0) {
+            throw "Published package render failed with exit code $exitCode."
           }
           if (-not (Test-Path -LiteralPath .\artifacts\validation\package-home.png -PathType Leaf)) {
             throw 'The published package did not create its Home render evidence.'

@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Soltex.Audio;
 
@@ -14,6 +16,7 @@ public static class AudioEndpointProvider
 {
     public const int MaximumEndpointCount = 32;
     public const int MaximumEndpointNameLength = 80;
+    internal const int MaximumEndpointIdentifierLength = 1_024;
     private const int MaximumObservedEndpointCount = 256;
     private const string Provenance =
         "IMMDeviceEnumerator · IMMDevice · IPropertyStore (PKEY_Device_FriendlyName) · IAudioEndpointVolume";
@@ -208,13 +211,24 @@ public static class AudioEndpointProvider
                 return false;
             }
 
+            bool hasId = TryGetEndpointId(device, out string? id);
             bool isDefault = defaultId is not null &&
-                TryGetEndpointId(device, out string? id) &&
+                hasId &&
                 string.Equals(id, defaultId, StringComparison.OrdinalIgnoreCase);
             string name = SanitizeName(ReadFriendlyName(device));
             (double? volumeScalar, bool? isMuted) = ReadVolume(device);
+            string preferenceKey = hasId && id!.Length <= MaximumEndpointIdentifierLength
+                ? CreatePreferenceKey(direction, id!)
+                : string.Empty;
 
-            endpoint = new AudioEndpoint(name, direction, MapState(stateValue), isDefault, volumeScalar, isMuted);
+            endpoint = new AudioEndpoint(
+                name,
+                direction,
+                MapState(stateValue),
+                isDefault,
+                volumeScalar,
+                isMuted,
+                preferenceKey);
             return true;
         }
         finally
@@ -301,6 +315,21 @@ public static class AudioEndpointProvider
             .Take(MaximumEndpointNameLength)
             .ToArray()).Trim();
         return safe.Length == 0 ? "Unavailable" : safe;
+    }
+
+    internal static string CreatePreferenceKey(AudioEndpointDirection direction, string endpointId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(endpointId);
+        if (endpointId.Length > MaximumEndpointIdentifierLength)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(endpointId),
+                "The endpoint identifier exceeded the bounded preference input length.");
+        }
+
+        string scoped = $"soltex-audio-endpoint-v1\0{direction}\0{endpointId}";
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(scoped)))
+            .ToLowerInvariant();
     }
 
     internal static AudioObservationState ClassifyState(

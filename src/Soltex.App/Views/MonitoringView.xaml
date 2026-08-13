@@ -5,26 +5,33 @@
              Background="Transparent"
              Foreground="{StaticResource TextBrush}"
              FontFamily="{StaticResource UiFont}">
-    <ScrollViewer VerticalScrollBarVisibility="Auto"
-                  HorizontalScrollBarVisibility="Disabled"
-                  HorizontalContentAlignment="Stretch">
-        <StackPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
             <!-- Page header -->
-            <Grid>
+            <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel>
-                    <TextBlock Style="{StaticResource PageEyebrowStyle}" Text="02 / SYSTEM PULSE" />
-                    <TextBlock Margin="0,5,0,0" Style="{StaticResource PageTitleStyle}" Text="Monitoring" />
-                    <TextBlock Margin="0,5,0,0"
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Style="{StaticResource PageTitleStyle}" Text="Performance" />
+                    <TextBlock x:Name="PerformanceSubtitleText"
+                               Margin="0,3,0,0"
                                Style="{StaticResource MutedTextStyle}"
-                               FontSize="{StaticResource FontBody}"
-                               Text="Bounded Windows readings with provenance, timing, and visible gaps." />
+                               Text="Live CPU, memory, network, storage, and process activity." />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                    <Button x:Name="BenchmarkModeButton"
+                            Margin="0,0,10,0"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Benchmark"
+                            AutomationProperties.Name="Open quick local benchmark"
+                            Click="BenchmarkMode_Click" />
                     <Button x:Name="MonitoringDetailsButton"
                             Margin="0,0,10,0"
                             Style="{StaticResource SecondaryButton}"
@@ -50,8 +57,15 @@
                 </StackPanel>
             </Grid>
 
+            <Grid x:Name="MonitoringOverviewPanel" Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="248" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
             <!-- Processor and physical memory -->
-            <Grid Margin="0,22,0,0">
+            <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="16" />
@@ -73,7 +87,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="PROCESSOR" Style="{StaticResource PageEyebrowStyle}" />
+                            <TextBlock Text="Processor" Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                             <TextBlock x:Name="CpuDetailText"
                                        Grid.Column="1"
                                        Text="GetSystemTimes"
@@ -144,9 +158,10 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="PHYSICAL MEMORY"
-                                       Style="{StaticResource PageEyebrowStyle}"
-                                       Foreground="{StaticResource SignalBrush}" />
+                            <TextBlock Text="Physical memory"
+                                       Foreground="{StaticResource SignalBrush}"
+                                       FontSize="{StaticResource FontCaption}"
+                                       FontWeight="SemiBold" />
                             <TextBlock x:Name="MemoryDetailText"
                                        Grid.Column="1"
                                        Text="GlobalMemoryStatusEx"
@@ -228,7 +243,7 @@
             </Grid>
 
             <!-- Network throughput -->
-            <Border Margin="0,16,0,0" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="2" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1.45*" />
@@ -273,7 +288,7 @@
                                 <TextBlock x:Name="NetworkTotalText"
                                            Text="—"
                                            Style="{StaticResource MetricValueStyle}"
-                                           FontSize="38" />
+                                           FontSize="{StaticResource FontMetric}" />
                                 <TextBlock x:Name="NetworkInterfaceCountText"
                                            Margin="12,0,0,6"
                                            Text="0 stable interfaces"
@@ -377,9 +392,16 @@
                 </Grid>
             </Border>
 
-            <StackPanel x:Name="MonitoringDetailsPanel" Visibility="Collapsed">
+            </Grid>
+
+            <Grid x:Name="MonitoringDetailsPanel" Grid.Row="2" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
             <!-- Volumes and provider coverage -->
-            <Grid Margin="0,16,0,0">
+            <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1.3*" />
                     <ColumnDefinition Width="16" />
@@ -502,12 +524,13 @@
             </Grid>
 
             <!-- Processes -->
-            <Border Margin="0,16,0,0" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="2" Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="12" />
-                        <RowDefinition Height="230" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
@@ -522,15 +545,27 @@
                                        Style="{StaticResource MutedTextStyle}"
                                        Text="Name and PID only; executable paths are intentionally omitted." />
                         </StackPanel>
-                        <TextBlock x:Name="ProcessCountText"
-                                   Grid.Column="1"
-                                   Foreground="{StaticResource MutedBrush}"
-                                   VerticalAlignment="Center"
-                                   Text="0 rows" />
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <TextBlock x:Name="ProcessCountText"
+                                       Margin="0,0,12,0"
+                                       Foreground="{StaticResource MutedBrush}"
+                                       VerticalAlignment="Center"
+                                       Text="0 rows" />
+                            <Button x:Name="EndTaskButton"
+                                    IsEnabled="False"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="End task"
+                                    AutomationProperties.Name="End selected task"
+                                    Click="EndTask_Click" />
+                        </StackPanel>
                     </Grid>
 
                     <DataGrid x:Name="ProcessGrid"
                               Grid.Row="2"
+                              SelectionMode="Single"
+                              SelectionChanged="ProcessGrid_SelectionChanged"
                               AlternationCount="2"
                               EnableRowVirtualization="True"
                               EnableColumnVirtualization="True"
@@ -546,8 +581,44 @@
                         </DataGrid.Columns>
                     </DataGrid>
 
+                    <Border x:Name="ProcessActionPanel"
+                            Grid.Row="3"
+                            Margin="0,12,0,0"
+                            Padding="12"
+                            Style="{StaticResource QuietCardStyle}"
+                            Visibility="Collapsed"
+                            AutomationProperties.LiveSetting="Polite">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="ProcessActionText"
+                                       Margin="0,0,14,0"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap" />
+                            <Button x:Name="ForceStopButton"
+                                    Grid.Column="1"
+                                    Margin="0,0,8,0"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Foreground="{StaticResource DangerBrush}"
+                                    BorderBrush="{StaticResource DangerBrush}"
+                                    Content="Force stop"
+                                    AutomationProperties.Name="Confirm force stop selected task"
+                                    Visibility="Collapsed"
+                                    Click="ForceStop_Click" />
+                            <Button x:Name="CancelEndTaskButton"
+                                    Grid.Column="2"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Dismiss"
+                                    AutomationProperties.Name="Dismiss process action"
+                                    Click="CancelEndTask_Click" />
+                        </Grid>
+                    </Border>
+
                     <TextBlock x:Name="MonitoringProvenanceText"
-                               Grid.Row="3"
+                               Grid.Row="4"
                                Margin="0,12,0,0"
                                Foreground="{StaticResource QuietTextBrush}"
                                FontFamily="{StaticResource MonoFont}"
@@ -556,7 +627,162 @@
                                Text="Waiting for provider provenance" />
                 </Grid>
             </Border>
-            </StackPanel>
-        </StackPanel>
-    </ScrollViewer>
+            </Grid>
+
+            <Grid x:Name="BenchmarkPanel"
+                  Grid.Row="2"
+                  Visibility="Collapsed"
+                  AutomationProperties.Name="Quick local benchmark">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="220" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Border Style="{StaticResource CardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Quick local benchmark" />
+                                <Border Margin="12,0,0,0" Style="{StaticResource StatusPillStyle}">
+                                    <TextBlock x:Name="BenchmarkStateText"
+                                               Text="READY"
+                                               Foreground="{StaticResource SignalBrush}"
+                                               FontFamily="{StaticResource MonoFont}"
+                                               FontSize="{StaticResource FontMicro}"
+                                               FontWeight="SemiBold" />
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Margin="0,6,0,0"
+                                       MaxWidth="670"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       TextWrapping="Wrap"
+                                       Text="Measures named local workloads without producing a synthetic PC score or cross-machine ranking." />
+                            <TextBlock Margin="0,12,0,0"
+                                       Foreground="{StaticResource QuietTextBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMicro}"
+                                       Text="about 4 seconds · 32 MiB scratch · cancelable · last result saved locally" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="CancelBenchmarkButton"
+                                    Margin="0,0,10,0"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Cancel"
+                                    IsEnabled="False"
+                                    AutomationProperties.Name="Cancel benchmark"
+                                    Click="CancelBenchmark_Click" />
+                            <Button x:Name="RunBenchmarkButton"
+                                    Style="{StaticResource ActionButton}"
+                                    Content="Run quick benchmark"
+                                    AutomationProperties.Name="Run bounded quick benchmark"
+                                    Click="RunBenchmark_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Style="{StaticResource HeroCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Processor" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
+                            <TextBlock x:Name="BenchmarkCpuValueText"
+                                       Margin="0,18,0,0"
+                                       Text="—"
+                                       Style="{StaticResource MetricValueStyle}"
+                                       FontSize="32" />
+                            <TextBlock Text="SHA-256 throughput" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock x:Name="BenchmarkCpuDetailText"
+                                       Margin="0,18,0,0"
+                                       Text="Not measured"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource QuietTextBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMicro}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Memory" Foreground="{StaticResource SignalBrush}" FontWeight="SemiBold" />
+                            <TextBlock x:Name="BenchmarkMemoryValueText"
+                                       Margin="0,18,0,0"
+                                       Text="—"
+                                       Style="{StaticResource MetricValueStyle}"
+                                       FontSize="32" />
+                            <TextBlock Text="Buffer copy throughput" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock x:Name="BenchmarkMemoryDetailText"
+                                       Margin="0,18,0,0"
+                                       Text="Not measured"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource QuietTextBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMicro}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="4" Style="{StaticResource CardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Temporary storage" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" />
+                            <TextBlock x:Name="BenchmarkStorageValueText"
+                                       Margin="0,18,0,0"
+                                       Text="—"
+                                       Style="{StaticResource MetricValueStyle}"
+                                       FontSize="32" />
+                            <TextBlock Text="Write / read throughput" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock x:Name="BenchmarkStorageDetailText"
+                                       Margin="0,18,0,0"
+                                       Text="No scratch file created"
+                                       TextWrapping="Wrap"
+                                       Foreground="{StaticResource QuietTextBrush}"
+                                       FontFamily="{StaticResource MonoFont}"
+                                       FontSize="{StaticResource FontMicro}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Grid.Row="4" Style="{StaticResource QuietCardStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Run context" />
+                            <Button x:Name="ClearBenchmarkResultButton"
+                                    Grid.Column="1"
+                                    IsEnabled="False"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Clear saved result"
+                                    AutomationProperties.Name="Clear saved benchmark result"
+                                    Click="ClearBenchmarkResult_Click" />
+                        </Grid>
+                        <TextBlock x:Name="BenchmarkSummaryText"
+                                   Grid.Row="1"
+                                   Margin="0,10,0,0"
+                                   Text="Ready. Performance sampling pauses while this lab is open so it does not compete with the measured workload."
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource MutedBrush}"
+                                   AutomationProperties.LiveSetting="Polite" />
+                    </Grid>
+                </Border>
+            </Grid>
+    </Grid>
 </UserControl>
