@@ -23,6 +23,7 @@ Design and architecture:
 - [Remote Assist](REMOTE_ASSIST.md)
 - [Activity privacy and retention](ACTIVITY.md)
 - [Audio session controls](AUDIO.md)
+- [Local benchmark lab](BENCHMARKS.md)
 - [Runtime lifecycle and Windows services](RUNTIME_AND_SERVICES.md)
 - [Naming and compatibility](NAMING_AND_COMPATIBILITY.md)
 - [Reference systems](REFERENCE_SYSTEMS.md) — clean-room product lessons and reuse boundaries.

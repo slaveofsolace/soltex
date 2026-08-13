@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Soltex.Benchmarks;
 using Soltex.Monitoring;
 
 namespace Soltex.App.Views;
@@ -26,6 +27,8 @@ public partial class MonitoringView : UserControl
     private readonly BoundedTelemetryHistory _networkReceiveHistory = new(HistoryCapacity, 0, double.MaxValue);
     private readonly BoundedTelemetryHistory _networkSendHistory = new(HistoryCapacity, 0, double.MaxValue);
     private bool _detailsVisible;
+    private bool _benchmarkVisible;
+    private bool _benchmarkRunning;
     private bool _isRefreshingProcesses;
     private bool _processActionBusy;
     private ProcessActionTicket? _pendingForceTicket;
@@ -43,21 +46,208 @@ public partial class MonitoringView : UserControl
 
     internal event EventHandler<ProcessActionCompletedEventArgs>? ProcessActionCompleted;
 
+    internal event EventHandler? BenchmarkRunRequested;
+
+    internal event EventHandler? BenchmarkCancelRequested;
+
+    internal event EventHandler? BenchmarkClearRequested;
+
+    internal event EventHandler? BenchmarkModeChanged;
+
+    internal bool IsBenchmarkVisible => _benchmarkVisible;
+
     private void MonitoringDetails_Click(object sender, RoutedEventArgs e) =>
         SetDetailsVisible(!_detailsVisible);
 
     internal void SetDetailsVisible(bool visible)
     {
         _detailsVisible = visible;
-        MonitoringOverviewPanel.Visibility = _detailsVisible ? Visibility.Collapsed : Visibility.Visible;
-        MonitoringDetailsPanel.Visibility = _detailsVisible ? Visibility.Visible : Visibility.Collapsed;
+        if (visible)
+        {
+            _benchmarkVisible = false;
+        }
+        ApplyPerformanceMode();
+    }
+
+    private void BenchmarkMode_Click(object sender, RoutedEventArgs e) =>
+        SetBenchmarkVisible(!_benchmarkVisible);
+
+    internal void SetBenchmarkVisible(bool visible)
+    {
+        bool changed = _benchmarkVisible != visible;
+        _benchmarkVisible = visible;
+        if (visible)
+        {
+            _detailsVisible = false;
+        }
+        ApplyPerformanceMode();
+        if (changed)
+        {
+            BenchmarkModeChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void ApplyPerformanceMode()
+    {
+        MonitoringOverviewPanel.Visibility = !_detailsVisible && !_benchmarkVisible
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        MonitoringDetailsPanel.Visibility = _detailsVisible
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        BenchmarkPanel.Visibility = _benchmarkVisible
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         MonitoringDetailsButton.Content = _detailsVisible ? "Live overview" : "System detail";
+        MonitoringDetailsButton.IsEnabled = !_benchmarkVisible;
         MonitoringDetailsButton.SetCurrentValue(
             System.Windows.Automation.AutomationProperties.NameProperty,
             _detailsVisible
                 ? "Show live performance overview"
                 : "Show storage, provider, and process details");
+        BenchmarkModeButton.Content = _benchmarkVisible ? "Live overview" : "Benchmark";
+        BenchmarkModeButton.SetCurrentValue(
+            System.Windows.Automation.AutomationProperties.NameProperty,
+            _benchmarkVisible
+                ? "Return to live performance overview"
+                : "Open quick local benchmark");
+        PerformanceSubtitleText.Text = _benchmarkVisible
+            ? "Short, cancelable local workloads with explicit limits."
+            : _detailsVisible
+                ? "Storage, provider coverage, and guarded process actions."
+                : "Live CPU, memory, network, storage, and process activity.";
+        if (_benchmarkVisible)
+        {
+            SetStatePill((Brush)FindResource("AccentBrush"), "LOCAL");
+        }
+        else if (MonitorStateText.Text == "LOCAL")
+        {
+            SetStatePill((Brush)FindResource("WarningBrush"), "WAITING");
+        }
     }
+
+    private void RunBenchmark_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_benchmarkRunning)
+        {
+            BenchmarkRunRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void CancelBenchmark_Click(object sender, RoutedEventArgs e)
+    {
+        if (_benchmarkRunning)
+        {
+            BenchmarkCancelRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    private void ClearBenchmarkResult_Click(object sender, RoutedEventArgs e)
+    {
+        if (!_benchmarkRunning && ClearBenchmarkResultButton.IsEnabled)
+        {
+            BenchmarkClearRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    internal void ShowBenchmarkRunning(string detail)
+    {
+        _benchmarkRunning = true;
+        BenchmarkStateText.Text = "RUNNING";
+        BenchmarkStateText.Foreground = (Brush)FindResource("AccentBrush");
+        RunBenchmarkButton.IsEnabled = false;
+        RunBenchmarkButton.Content = "Measuring…";
+        CancelBenchmarkButton.IsEnabled = true;
+        BenchmarkSummaryText.Text = detail;
+    }
+
+    internal void ShowBenchmarkCancelled()
+    {
+        SetBenchmarkIdle();
+        BenchmarkStateText.Text = "CANCELLED";
+        BenchmarkStateText.Foreground = (Brush)FindResource("WarningBrush");
+        BenchmarkSummaryText.Text =
+            "The benchmark was cancelled and its temporary scratch file was removed. No score was retained.";
+    }
+
+    internal void ShowBenchmarkFailed(string detail)
+    {
+        SetBenchmarkIdle();
+        BenchmarkStateText.Text = "CHECK";
+        BenchmarkStateText.Foreground = (Brush)FindResource("DangerBrush");
+        BenchmarkSummaryText.Text = detail;
+    }
+
+    internal void UpdateBenchmarkResult(BenchmarkResult result, string? persistenceDetail = null)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        SetBenchmarkIdle();
+        BenchmarkStateText.Text = "MEASURED";
+        BenchmarkStateText.Foreground = (Brush)FindResource("SignalBrush");
+        BenchmarkCpuValueText.Text = FormatMetric(result.Cpu);
+        BenchmarkCpuDetailText.Text = DescribeMetric(result.Cpu);
+        BenchmarkMemoryValueText.Text = FormatMetric(result.Memory);
+        BenchmarkMemoryDetailText.Text = DescribeMetric(result.Memory);
+        BenchmarkStorageValueText.Text =
+            $"{result.StorageWrite.Value:F0} / {result.StorageRead.Value:F0}";
+        BenchmarkStorageDetailText.Text =
+            $"MiB/s write / read · {result.StorageWrite.Detail} · {result.StorageRead.Detail}";
+        string baseline = result.BaselineCpuPercent is double cpu
+            ? $"baseline CPU {cpu:F0}%"
+            : "baseline CPU unavailable";
+        BenchmarkSummaryText.Text =
+            $"Completed {result.CompletedAtUtc.ToLocalTime():t} · {baseline} · " +
+            $"{result.ProfileId} v{result.ProfileVersion} · {result.ProcessorCount} logical processors. " +
+            string.Join(" ", result.Limitations) +
+            (string.IsNullOrWhiteSpace(persistenceDetail) ? string.Empty : " " + persistenceDetail);
+        ClearBenchmarkResultButton.IsEnabled = true;
+    }
+
+    internal void UpdateBenchmarkLoad(BenchmarkResultLoad load)
+    {
+        ArgumentNullException.ThrowIfNull(load);
+        if (load.Result is not null)
+        {
+            UpdateBenchmarkResult(load.Result, load.Detail);
+            return;
+        }
+
+        SetBenchmarkIdle();
+        ClearBenchmarkResultButton.IsEnabled = false;
+        BenchmarkCpuValueText.Text = "—";
+        BenchmarkCpuDetailText.Text = "Not measured";
+        BenchmarkMemoryValueText.Text = "—";
+        BenchmarkMemoryDetailText.Text = "Not measured";
+        BenchmarkStorageValueText.Text = "—";
+        BenchmarkStorageDetailText.Text = "No scratch file created";
+        BenchmarkStateText.Text = load.RecoveredFromInvalid ? "RECOVERED" : "READY";
+        BenchmarkStateText.Foreground = (Brush)FindResource(
+            load.RecoveredFromInvalid ? "WarningBrush" : "SignalBrush");
+        BenchmarkSummaryText.Text = load.RecoveredFromInvalid
+            ? load.Detail + " No benchmark ran during recovery."
+            : "Ready. Performance sampling pauses while this lab is open so it does not compete with the measured workload.";
+    }
+
+    internal void PrepareBenchmarkRenderState()
+    {
+        SetBenchmarkVisible(true);
+        BenchmarkStateText.Text = "READY";
+        BenchmarkStateText.Foreground = (Brush)FindResource("SignalBrush");
+    }
+
+    private void SetBenchmarkIdle()
+    {
+        _benchmarkRunning = false;
+        RunBenchmarkButton.IsEnabled = true;
+        RunBenchmarkButton.Content = "Run quick benchmark";
+        CancelBenchmarkButton.IsEnabled = false;
+    }
+
+    private static string FormatMetric(BenchmarkMetric metric) =>
+        $"{metric.Value:F0} {metric.Unit}";
+
+    private static string DescribeMetric(BenchmarkMetric metric) =>
+        $"{metric.Duration.TotalMilliseconds:F0} ms · {metric.Detail}";
 
     private void ProcessGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {

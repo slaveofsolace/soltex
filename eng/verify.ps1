@@ -47,6 +47,7 @@ try {
         'tests\Soltex.DeviceFabric.Tests\Soltex.DeviceFabric.Tests.csproj',
         'tests\Soltex.Monitoring.Tests\Soltex.Monitoring.Tests.csproj',
         'tests\Soltex.Audio.Tests\Soltex.Audio.Tests.csproj',
+        'tests\Soltex.Benchmarks.Tests\Soltex.Benchmarks.Tests.csproj',
         'tests\Soltex.App.Tests\Soltex.App.Tests.csproj'
     )
 

@@ -2,19 +2,19 @@ using System.Windows;
 
 namespace Soltex.App;
 
-public static class TelemetryActivityPolicy
+internal static class BenchmarkActivityPolicy
 {
-    public static bool ShouldRun(
+    internal static bool ShouldContinue(
         bool isLoaded,
         bool isVisible,
         bool isClosing,
         WindowState windowState,
-        bool homeVisible,
         bool monitoringVisible,
-        bool benchmarkVisible = false) =>
+        bool benchmarkVisible) =>
         isLoaded &&
         isVisible &&
         !isClosing &&
         windowState != WindowState.Minimized &&
-        (homeVisible || (monitoringVisible && !benchmarkVisible));
+        monitoringVisible &&
+        benchmarkVisible;
 }

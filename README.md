@@ -6,7 +6,7 @@ The current desktop solution exposes nine normal-navigation workspaces plus two
 explicit preview surfaces used by the native evidence matrix:
 
 - **Home** — a real local summary with explicit partial/unavailable signals.
-- **Monitoring** — bounded CPU, physical-memory, process, and fixed-volume observation from supported Windows interfaces.
+- **Monitoring** — bounded CPU, physical-memory, process, and fixed-volume observation from supported Windows interfaces, plus one short local CPU/memory/storage benchmark with no synthetic score.
 - **Devices (preview)** — a sanitized local profile and exact non-executing capability model, explicitly not enrolled.
 - **Applications** — bounded, searchable, read-only installed-software, sign-in, and Win32 service inventories.
 - **Audio** — bounded Windows Core Audio endpoint and active app-session state, guarded per-session volume/mute with immediate read-back, one recoverable local mix snapshot, local fallback reminders, and a user-mediated Windows Sound handoff.
@@ -31,6 +31,13 @@ publishes immutable snapshots and copied 48/72-sample histories, surfaces
 provenance and unsupported signals, retains last confirmed values briefly as
 stale, and cancels on shutdown. GPU telemetry is not implemented and remains
 visibly unavailable.
+
+Performance also owns one explicit Quick benchmark mode. It pauses Soltex's live
+sampler, measures named SHA-256, managed buffer-copy, and 32 MiB temporary-storage
+workloads, supports cancellation, removes its scratch file, and saves at most one
+bounded local result. It does not produce a synthetic PC score, rank other
+machines, stress the GPU, or infer stability. See
+[`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 
 `Ctrl+K` opens a bounded, searchable workspace switcher without adding another
 persistent navigation tier. `Ctrl+1` through `Ctrl+9` route to the same nine
@@ -144,6 +151,11 @@ dotnet run `
   --no-build
 
 dotnet run `
+  --project .\tests\Soltex.Benchmarks.Tests\Soltex.Benchmarks.Tests.csproj `
+  --configuration Release `
+  --no-build
+
+dotnet run `
   --project .\tests\Soltex.App.Tests\Soltex.App.Tests.csproj `
   --configuration Release `
   --no-build
@@ -187,6 +199,7 @@ Documentation:
 - Current status and nonclaims: [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md).
 - Activity privacy, retention, recovery, and deletion contract: [`docs/ACTIVITY.md`](docs/ACTIVITY.md).
 - Core Audio session observation, write admission, read-back, and nonclaims: [`docs/AUDIO.md`](docs/AUDIO.md).
+- Local benchmark bounds, cleanup, persistence, evidence, and nonclaims: [`docs/BENCHMARKS.md`](docs/BENCHMARKS.md).
 - Runtime lifecycle, service-inventory bounds, and measured-cost contract: [`docs/RUNTIME_AND_SERVICES.md`](docs/RUNTIME_AND_SERVICES.md).
 - Immersive workspace behavior and visual/data boundaries: [`docs/IMMERSIVE_WORKSPACE.md`](docs/IMMERSIVE_WORKSPACE.md).
 - Exact commands and evidence ledger: [`docs/VALIDATION.md`](docs/VALIDATION.md).

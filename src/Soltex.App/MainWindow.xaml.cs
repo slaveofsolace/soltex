@@ -47,6 +47,7 @@ public partial class MainWindow : Window
     private readonly PreferencesStore _preferencesStore;
     private readonly LocalActivityStore _activityStore;
     private readonly AudioMixSnapshotStore _audioMixSnapshotStore;
+    private readonly BenchmarkResultStore _benchmarkResultStore;
     private readonly SemaphoreSlim _applicationRefreshGate = new(1, 1);
     private readonly TaskCompletionSource<bool> _startupCompleted = new(
         TaskCreationOptions.RunContinuationsAsynchronously);
@@ -110,6 +111,9 @@ public partial class MainWindow : Window
         _audioMixSnapshotStore = new AudioMixSnapshotStore(
             Path.Combine(_runtime.DataRoot, "audio-mix.json"));
         MixerPanel.UpdateMixSnapshot(_audioMixSnapshotStore.Load());
+        _benchmarkResultStore = new BenchmarkResultStore(
+            Path.Combine(_runtime.DataRoot, "benchmark-result.json"));
+        MonitoringPanel.UpdateBenchmarkLoad(_benchmarkResultStore.Load());
         MonitoringPanel.SetDetailsVisible(_preferences.OpenPerformanceDetails);
         _updateStagingRoot = Path.Combine(_runtime.DataRoot, "update", "staging");
         _updateJournal = new UpdatePlanningJournal(Path.Combine(_runtime.DataRoot, "update", "journal"));
@@ -124,6 +128,10 @@ public partial class MainWindow : Window
         DevicesPanel.RemoteAssistRequested += (_, _) => ShowPanel(RemotePanel, RemoteNavButton);
         MonitoringPanel.ProcessActionCompleted += (_, args) =>
             AddActivity(args.Result.Message, "Performance");
+        MonitoringPanel.BenchmarkRunRequested += MonitoringPanel_BenchmarkRunRequested;
+        MonitoringPanel.BenchmarkCancelRequested += MonitoringPanel_BenchmarkCancelRequested;
+        MonitoringPanel.BenchmarkClearRequested += MonitoringPanel_BenchmarkClearRequested;
+        MonitoringPanel.BenchmarkModeChanged += MonitoringPanel_BenchmarkModeChanged;
         ApplicationsPanel.RefreshRequested += ApplicationsPanel_RefreshRequested;
         MixerPanel.RefreshRequested += MixerPanel_RefreshRequested;
         MixerPanel.SessionChangeRequested += MixerPanel_SessionChangeRequested;
@@ -226,11 +234,13 @@ public partial class MainWindow : Window
 
         _operationCancellation?.Cancel();
         _audioMixCancellation?.Cancel();
+        _benchmarkCancellation?.Cancel();
         await _telemetryLoop.StopAsync();
         bool ownedWorkDrained = await OwnedTaskDrain.WaitAsync(
             TimeSpan.FromSeconds(20),
             _activeOperationDrained,
             _audioMixOperationDrained,
+            _benchmarkOperationDrained,
             _startupTask);
         if (!ownedWorkDrained)
         {
@@ -1504,6 +1514,15 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (string.Equals(normalized, "monitoring-benchmark", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(normalized, "benchmark", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(MonitoringPanel, MonitoringNavButton);
+            MonitoringPanel.PrepareBenchmarkRenderState();
+            _renderSmokeFocusTarget = MonitoringPanel.BenchmarkPanel;
+            return true;
+        }
+
         if (string.Equals(normalized, "applications-services", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(ApplicationsPanel, ApplicationsNavButton);
@@ -1658,6 +1677,7 @@ public partial class MainWindow : Window
         SecurityPanel.Visibility = panel == SecurityPanel ? Visibility.Visible : Visibility.Collapsed;
         RemotePanel.Visibility = panel == RemotePanel ? Visibility.Visible : Visibility.Collapsed;
         UpdatePanel.Visibility = panel == UpdatePanel ? Visibility.Visible : Visibility.Collapsed;
+        CancelBenchmarkIfInactive();
         foreach (System.Windows.Controls.Button button in new[]
                  {
                      HomeNavButton,

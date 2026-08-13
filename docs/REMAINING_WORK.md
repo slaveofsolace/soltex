@@ -12,6 +12,8 @@ Built and working:
 
 - native WPF shell and shared design system;
 - live Home and bounded Performance telemetry;
+- a short, cancelable local CPU/memory/storage benchmark with named measurements,
+  strict scratch limits, one bounded saved result, and no synthetic score;
 - virtualized installed-app, startup, and read-only service inventory;
 - guarded process termination workflow;
 - Core Audio endpoint/session observation plus per-app volume and mute with
@@ -34,8 +36,8 @@ Explicit previews or absent systems:
 - Capture has no recorder or overlay;
 - Updates has no production release identity/source or activation path;
 - Soltex is a security companion, not an antivirus engine;
-- there is no benchmark runner, historical telemetry database, unified search,
-  NAS/Drive/Box connector, Privacy Center, DSP/audio routing engine, generic
+- there is no historical telemetry database, unified search, NAS/Drive/Box
+  connector, Privacy Center, DSP/audio routing engine, generic
   remote executor, or unattended correction engine.
 
 ## Stage 0 — owner UI and accessibility gate
@@ -103,16 +105,19 @@ and no “optimizer” action that weakens Windows security or services.
 
 ## Stage 3 — benchmark lab
 
-Dependency: reliable live telemetry and thermal/power signals where required.
+Built now: Quick local profile version 1 measures named CPU, memory, and 32 MiB
+temporary-storage workloads in about four seconds. It pauses live sampling,
+supports cancellation, removes scratch on cancel/failure/success, stores one
+bounded path-free result, and discloses profile/version and environmental limits.
 
-Build CPU, memory, storage, and optional GPU profiles with opt-in countdown,
-cancellation, cooldown, thermal/power guardrails, background-load disclosure,
-result provenance, and reproducible profile/version metadata. Start with short,
-non-destructive internal comparisons; do not publish cross-machine rankings until
-comparability is independently validated.
+Remaining expansion depends on reliable thermal/power signals: optional longer
+profiles, opt-in countdown and cooldown, thermal/power guardrails, GPU/render
+workloads, richer background-load disclosure, repeatability studies, and export.
+Do not publish a composite score or cross-machine ranking until comparability is
+independently validated.
 
-Owner decisions: allowed duration, temperature/power ceilings, and whether GPU or
-render workloads are permitted.
+Owner decisions for expansion: allowed duration, temperature/power ceilings, and
+whether GPU or render workloads are permitted.
 
 ## Stage 4 — Privacy Center
 
@@ -225,7 +230,7 @@ The implementation agent can take next:
 1. Stage 0 scaling/keyboard/accessibility evidence and corrections;
 2. Stage 2 process-detail provider contract and UI slice while signing choices
    are pending;
-3. Stage 3 benchmark architecture after the owner sets safety limits;
+3. Stage 3 benchmark expansion after the owner sets thermal and GPU safety limits;
 4. later stages only when their named prerequisites and authority exist.
 
 Every stage must retain an exact branch/commit, focused tests, failure/recovery

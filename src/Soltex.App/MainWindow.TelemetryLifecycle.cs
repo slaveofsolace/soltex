@@ -29,6 +29,7 @@ public partial class MainWindow
         {
             _shutdownStarted = true;
             _telemetryLifecycleClosing = true;
+            CancelBenchmarkIfInactive();
             QueueTelemetryReconcile();
         }
     }
@@ -43,18 +44,25 @@ public partial class MainWindow
             StopWorkspaceAnimations();
         }
 
+        CancelBenchmarkIfInactive();
         QueueTelemetryReconcile();
     }
 
     private void TelemetryLifecycle_IsVisibleChanged(
         object sender,
-        DependencyPropertyChangedEventArgs e) =>
+        DependencyPropertyChangedEventArgs e)
+    {
+        CancelBenchmarkIfInactive();
         QueueTelemetryReconcile();
+    }
 
     private void TelemetryPanel_IsVisibleChanged(
         object sender,
-        DependencyPropertyChangedEventArgs e) =>
+        DependencyPropertyChangedEventArgs e)
+    {
+        CancelBenchmarkIfInactive();
         QueueTelemetryReconcile();
+    }
 
     private void QueueTelemetryReconcile()
     {
@@ -90,7 +98,8 @@ public partial class MainWindow
             _telemetryLifecycleClosing,
             WindowState,
             HomePanel.IsVisible,
-            MonitoringPanel.IsVisible);
+            MonitoringPanel.IsVisible,
+            MonitoringPanel.IsBenchmarkVisible);
         if (shouldRun)
         {
             await _telemetryLoop.StartAsync(RunTelemetryLoopAsync);

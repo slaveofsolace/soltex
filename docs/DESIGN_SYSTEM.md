@@ -202,7 +202,7 @@ default for navigation, tabs, headings, and buttons.
 | Workspace | Default structure |
 |---|---|
 | Home | Brief system posture + three direct next actions + recent signal row |
-| Performance | Live telemetry grid; optional internal details pane |
+| Performance | Live telemetry grid with optional detail; local Benchmark mode owns one bounded run and result surface |
 | Applications | Dense process/app table + row detail/action pane |
 | Audio | Repeated channel lanes with volume sliders; Devices/More as local tabs |
 | Security | Posture/status band + scan command deck + Activity/Quarantine local tabs |

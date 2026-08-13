@@ -11,6 +11,7 @@ using Soltex.App;
 using Soltex.App.Controls;
 using Soltex.App.Views;
 using Soltex.Audio;
+using Soltex.Benchmarks;
 using Soltex.DeviceFabric;
 using Soltex.Monitoring;
 
@@ -54,6 +55,9 @@ internal static class Program
             ("Home view renders a live snapshot", () => HomeViewRenders(snapshot, device)),
             ("Monitoring view renders provenance and bounded rows", () => MonitoringViewRenders(snapshot)),
             ("Monitoring details are disclosed only on request", MonitoringDetailsAreProgressive),
+            ("Benchmark lab is explicit, bounded, and progressively disclosed", BenchmarkLabIsProgressive),
+            ("Benchmark execution is limited to the visible lab", BenchmarkExecutionRequiresVisibleLab),
+            ("Benchmark result store is bounded, atomic, and recoverable", BenchmarkResultStoreIsRecoverable),
             ("Application inventory is bounded and path-free", () => ApplicationInventoryIsBounded(applicationSnapshot)),
             ("Windows service inventory is bounded and read-only", () => ServiceInventoryIsBounded(serviceSnapshot)),
             ("Applications view progressively discloses startup and services", () =>
@@ -156,6 +160,15 @@ internal static class Program
             homeVisible: true,
             monitoringVisible: false),
             "A hidden notification-area window must suspend performance telemetry.");
+        True(!TelemetryActivityPolicy.ShouldRun(
+            isLoaded: true,
+            isVisible: true,
+            isClosing: false,
+            WindowState.Normal,
+            homeVisible: false,
+            monitoringVisible: true,
+            benchmarkVisible: true),
+            "The benchmark lab must suspend competing live telemetry sampling.");
     }
 
     private static void WorkspaceCommandsAreBounded()
@@ -599,6 +612,167 @@ internal static class Program
             "A manual stopped service was overstated as unhealthy.");
         True(WindowsServiceInventoryProvider.ClassifySignal(1, "Automatic", 1077, 0).Length == 0,
             "A service not started since boot was overstated as unhealthy.");
+    }
+
+    private static void BenchmarkLabIsProgressive()
+    {
+        MonitoringView view = new();
+        True(view.BenchmarkPanel.Visibility == Visibility.Collapsed &&
+             !view.IsBenchmarkVisible,
+            "Benchmark lab must be quiet on first view.");
+        int modeChanges = 0;
+        int runRequests = 0;
+        int cancelRequests = 0;
+        int clearRequests = 0;
+        view.BenchmarkModeChanged += (_, _) => modeChanges++;
+        view.BenchmarkRunRequested += (_, _) => runRequests++;
+        view.BenchmarkCancelRequested += (_, _) => cancelRequests++;
+        view.BenchmarkClearRequested += (_, _) => clearRequests++;
+        view.BenchmarkModeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.BenchmarkPanel.Visibility == Visibility.Visible &&
+             view.MonitoringOverviewPanel.Visibility == Visibility.Collapsed &&
+             view.IsBenchmarkVisible &&
+             modeChanges == 1,
+            "Benchmark lab did not open through its local mode control.");
+        view.RunBenchmarkButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(runRequests == 1, "Benchmark run did not require the explicit run control.");
+        view.ShowBenchmarkRunning("Measuring bounded workloads.");
+        True(!view.RunBenchmarkButton.IsEnabled && view.CancelBenchmarkButton.IsEnabled,
+            "Running benchmark did not expose a cancel-only action state.");
+        view.CancelBenchmarkButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(cancelRequests == 1, "Benchmark cancellation did not use its explicit control.");
+
+        view.UpdateBenchmarkResult(CreateBenchmarkResult(), "Saved local result.");
+        True(view.BenchmarkStateText.Text == "MEASURED" &&
+             view.BenchmarkCpuValueText.Text.Contains("1234", StringComparison.Ordinal) &&
+             view.BenchmarkStorageValueText.Text.Contains("400 / 900", StringComparison.Ordinal),
+            "Benchmark result did not render named measured values.");
+        view.ClearBenchmarkResultButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(clearRequests == 1, "Saved benchmark result did not require its explicit clear control.");
+        byte[] pixels = Render(view, 980, 720);
+        True(CountVisiblePixels(pixels) > 5_000,
+            "The Benchmark lab render was unexpectedly empty.");
+        view.BenchmarkModeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(view.MonitoringOverviewPanel.Visibility == Visibility.Visible &&
+             view.BenchmarkPanel.Visibility == Visibility.Collapsed &&
+             modeChanges == 2,
+            "Benchmark lab did not return to the live Performance view.");
+    }
+
+    private static void BenchmarkResultStoreIsRecoverable()
+    {
+        string root = Path.Combine(
+            Path.GetTempPath(),
+            "soltex-benchmark-result-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            string path = Path.Combine(root, "benchmark-result.json");
+            BenchmarkResultStore store = new(path);
+            BenchmarkResult expected = CreateBenchmarkResult();
+            store.Save(expected);
+            BenchmarkResultLoad loaded = store.Load();
+            True(!loaded.RecoveredFromInvalid && loaded.Result is not null,
+                "A valid benchmark result did not round-trip.");
+            True(loaded.Result!.Cpu.Value == expected.Cpu.Value &&
+                 loaded.Result.StorageRead.Value == expected.StorageRead.Value,
+                "Saved benchmark metrics changed during round-trip.");
+
+            File.WriteAllText(path, "{\"schemaVersion\":1");
+            BenchmarkResultLoad truncated = store.Load();
+            True(truncated.RecoveredFromInvalid && truncated.Result is null,
+                "Truncated benchmark state did not fail closed.");
+            store.Save(expected);
+            string changedJson = File.ReadAllText(path).Replace(
+                "\"profileVersion\": 1",
+                "\"profileVersion\": 99",
+                StringComparison.Ordinal);
+            File.WriteAllText(path, changedJson);
+            BenchmarkResultLoad changed = store.Load();
+            True(changed.RecoveredFromInvalid && changed.Result is null,
+                "Changed benchmark state did not fail closed.");
+            File.WriteAllText(path, new string('x', BenchmarkResultStore.MaximumDocumentBytes + 1));
+            BenchmarkResultLoad oversized = store.Load();
+            True(oversized.RecoveredFromInvalid && oversized.Result is null,
+                "Oversized benchmark state did not fail closed.");
+
+            store.Save(expected);
+            store.Clear();
+            True(!File.Exists(path) && store.Load().Result is null,
+                "Clearing the saved benchmark result left state behind.");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    private static void BenchmarkExecutionRequiresVisibleLab()
+    {
+        True(BenchmarkActivityPolicy.ShouldContinue(
+                isLoaded: true,
+                isVisible: true,
+                isClosing: false,
+                WindowState.Normal,
+                monitoringVisible: true,
+                benchmarkVisible: true),
+            "The visible benchmark lab should admit an explicit run.");
+        True(!BenchmarkActivityPolicy.ShouldContinue(
+                isLoaded: true,
+                isVisible: true,
+                isClosing: false,
+                WindowState.Normal,
+                monitoringVisible: false,
+                benchmarkVisible: true),
+            "Navigating away must cancel the benchmark.");
+        True(!BenchmarkActivityPolicy.ShouldContinue(
+                isLoaded: true,
+                isVisible: true,
+                isClosing: false,
+                WindowState.Minimized,
+                monitoringVisible: true,
+                benchmarkVisible: true),
+            "Minimizing must cancel the benchmark.");
+        True(!BenchmarkActivityPolicy.ShouldContinue(
+                isLoaded: true,
+                isVisible: false,
+                isClosing: false,
+                WindowState.Normal,
+                monitoringVisible: true,
+                benchmarkVisible: true),
+            "Hiding to the notification area must cancel the benchmark.");
+        True(!BenchmarkActivityPolicy.ShouldContinue(
+                isLoaded: true,
+                isVisible: true,
+                isClosing: true,
+                WindowState.Normal,
+                monitoringVisible: true,
+                benchmarkVisible: true),
+            "Closing must cancel the benchmark.");
+    }
+
+    private static BenchmarkResult CreateBenchmarkResult()
+    {
+        BenchmarkMetric cpu = new(
+            "cpu-sha256", "SHA-256 throughput", 1234, "MiB/s", TimeSpan.FromMilliseconds(1500), "1 MiB blocks");
+        BenchmarkMetric memory = new(
+            "memory-copy", "Buffer copy throughput", 5678, "MiB/s", TimeSpan.FromMilliseconds(1200), "8 MiB buffers");
+        BenchmarkMetric write = new(
+            "storage-write", "Temporary write", 400, "MiB/s", TimeSpan.FromMilliseconds(80), "32 MiB");
+        BenchmarkMetric read = new(
+            "storage-read", "Temporary read", 900, "MiB/s", TimeSpan.FromMilliseconds(36), "32 MiB");
+        return new BenchmarkResult(
+            BenchmarkProfile.Quick.Id,
+            BenchmarkProfile.Quick.Version,
+            DateTimeOffset.UtcNow.AddSeconds(-4),
+            DateTimeOffset.UtcNow,
+            16,
+            8,
+            cpu,
+            memory,
+            write,
+            read,
+            BenchmarkResultContract.Limitations);
     }
 
     private static void ApplicationsViewRenders(

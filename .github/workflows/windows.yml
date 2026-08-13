@@ -117,6 +117,15 @@ jobs:
             Tee-Object -FilePath .\artifacts\validation\tests-audio.log
           if ($LASTEXITCODE -ne 0) { throw "Audio endpoint/session suite failed with exit code $LASTEXITCODE." }
 
+      - name: Run bounded benchmark suite
+        id: benchmark_tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\tests\Soltex.Benchmarks.Tests\Soltex.Benchmarks.Tests.csproj --configuration Release --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\tests-benchmarks.log
+          if ($LASTEXITCODE -ne 0) { throw "Benchmark suite failed with exit code $LASTEXITCODE." }
+
       - name: Run WPF control suite
         id: app_tests
         shell: pwsh

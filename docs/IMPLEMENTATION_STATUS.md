@@ -65,6 +65,14 @@ Implemented on the draft branch:
 - hard rejection of Soltex, PID 0–4, Session 0, cross-session targets, and named critical Windows/security processes;
 - force stop targets only the chosen process, never its descendants.
 
+The current branch also adds a local Benchmark mode inside Performance. Its
+Quick profile measures named SHA-256, managed buffer-copy, and 32 MiB temporary
+storage workloads sequentially; it is cancelable, cleans scratch on every exit,
+suspends live telemetry while visible, and saves at most one bounded path-free
+result. It deliberately has no synthetic score, cross-machine rank, GPU load, or
+stability verdict. The production profile and UI/storage recovery paths pass
+focused owner-host tests; commit-bound complete acceptance is pending.
+
 No executable paths, packet contents, destination history, elevation bypass, or generic process-tree termination are introduced.
 
 ### Audio mixer

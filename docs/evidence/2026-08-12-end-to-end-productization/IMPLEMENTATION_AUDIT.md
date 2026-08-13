@@ -21,6 +21,9 @@ acceptance still pending.
   explicit .NET host override.
 - Moved command and Audio orchestration into focused `MainWindow` partial files
   rather than extending the already-large core window source.
+- Added a bounded Performance-owned benchmark lab with named processor, memory,
+  and temporary-storage measurements, explicit cancellation, scratch cleanup,
+  one recoverable local result, and no composite score or cross-machine rank.
 
 ## Evidence
 
@@ -36,7 +39,8 @@ The hardened canonical verifier used .NET SDK 10.0.302 and passed:
 | Device Fabric | 24/24 |
 | Monitoring | 16/16 |
 | Audio | 21/21 |
-| App/control | 31/31 |
+| Benchmarks | 6/6 |
+| App/control | 34/34 |
 
 The EICAR gate used the harmless in-memory marker through AMSI and did not change
 Defender configuration. Native 1280x820 command-palette, Mixer, and Security
@@ -55,10 +59,27 @@ gate then passed. Logs in this directory retain both the failure and recovery.
   visible no-snapshot recovery state.
 - No antivirus exclusions, provider changes, services, drivers, public
   listeners, unattended remote access, or hidden automation were added.
+- The production Quick profile is capped at 1.5 seconds of SHA-256 work, 1.2
+  seconds of buffer-copy work, and one 32 MiB scratch file. Saved results exclude
+  hostnames, paths, device identifiers, process lists, and raw telemetry history.
+- Benchmark result loading now opens once, reads at most 32 KiB plus one overflow
+  byte, and rejects overflow before decoding or deserialization.
+- Each benchmark run uses one private child directory, an open owner marker, and
+  one exclusive `DeleteOnClose` payload handle. Write/read identity and exact
+  length are checked, while cleanup deletes only the exact owned artifacts and
+  fails closed if the directory changes.
+- Active work is cancelled when the benchmark lab is no longer visible, including
+  navigation away, minimize, notification-area hide, and application close.
+
+Defensive hardening was applied for two unproven filesystem race hypotheses.
+Real-world exploitability was not dynamically established because policy-safe
+validation was intentionally not attempted. Evidence is limited to source review,
+ordinary builds, benign regression tests, and native product rendering; no
+reparse-point, cross-user, or sensitive-target demonstration was constructed.
 
 ## Nonclaims and remaining gates
 
 This is not Sonar DSP/routing parity, a virtual audio driver, a replacement
-antivirus, a signed production release, or owner visual acceptance. A benchmark
-runner, capture pipeline, enrolled device mesh, production updater/activator,
+antivirus, a signed production release, or owner visual acceptance. A GPU or
+thermal benchmark, capture pipeline, enrolled device mesh, production updater/activator,
 Privacy Center, and cloud/NAS connectors remain separate implementation programs.
