@@ -3,8 +3,9 @@
 Date: 2026-08-12
 
 Branch: `sol/soltex-product-rebuild`
-Status: local working-tree verification passed; commit-bound package and hosted
-acceptance still pending.
+Status: exact source commit, native matrix, runtime lifecycle, and self-contained
+package passed locally; installer execution, hosted acceptance, and owner visual
+acceptance remain pending.
 
 ## Implemented in this slice
 
@@ -17,7 +18,7 @@ acceptance still pending.
   apply, cancellation, explicit partial results, confirmed clear, and shutdown
   task ownership.
 - Strengthened `eng/verify.ps1` so the canonical gate includes identity,
-  design-token policy, all eight test executables, optional EICAR, and an
+  design-token policy, all nine test executables, optional EICAR, and an
   explicit .NET host override.
 - Moved command and Audio orchestration into focused `MainWindow` partial files
   rather than extending the already-large core window source.
@@ -47,6 +48,15 @@ Defender configuration. Native 1280x820 command-palette, Mixer, and Security
 captures were directly inspected. The first extended gate found one raw modal
 scrim color; it was moved into the shared token dictionary and the design-token
 gate then passed. Logs in this directory retain both the failure and recovery.
+
+Commit `48e806092cb160e9edaef09e06552dfdbfea0530` then passed an
+18-state exact-commit native matrix, the bounded runtime lifecycle probe, and a
+self-contained packaged Home render. Startup was 804.8471 ms; visible idle CPU
+was 0.6211% normalized and minimized-steady/hidden samples were 0%. The package
+is 71,621,929 bytes with SHA-256 `88278BDC266630D1AC0FE4D4C93FD9CDD3B380B12FAC94DB4E010E177E15F42F`
+and remains `NotSigned`. The 1.0.2 installer compiled, but its launch was denied
+before execution; upgrade/state-preservation are not claimed. Exact paths,
+hashes, and nonclaims are in `EXACT_COMMIT_RELEASE.md`.
 
 ## Security and privacy review
 

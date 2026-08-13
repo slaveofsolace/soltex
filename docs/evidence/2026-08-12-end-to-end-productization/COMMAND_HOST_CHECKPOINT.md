@@ -127,3 +127,18 @@ unresponsive immediately before it was written.
 - Exact resume step: run the ordinary canonical verifier, reconcile the reasoning
   ledger and staged diff, then commit and bind package/runtime evidence to the
   resulting exact commit. Do not touch the protected owner checkout.
+
+## Exact-commit release continuation
+
+- Benchmark and defensive hardening committed as
+  `48e806092cb160e9edaef09e06552dfdbfea0530` with a clean worktree.
+- Exact-commit native matrix passed 18/18; runtime lifecycle passed; the
+  self-contained executable rendered and its schema-2 package identity passed.
+- Unsigned `Soltex.exe` and the unsigned 1.0.2 per-user installer compiled with
+  exact hashes recorded in `EXACT_COMMIT_RELEASE.md`.
+- Installer execution was denied before launch. Reconciliation proved the
+  existing installation remained version 1.0.0 at its prior hash with no related
+  process. Upgrade/state preservation are not claimed.
+- Exact resume step: commit this evidence-only reconciliation, push the branch,
+  inspect required hosted Windows/package workflows, and retain any provider-
+  specific optional failure without converting it into an efficacy claim.
