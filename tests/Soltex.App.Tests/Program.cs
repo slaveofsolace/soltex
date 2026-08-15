@@ -41,6 +41,7 @@ internal static class Program
         [
             ("Shared theme exposes required control resources", ThemeResourcesAreAvailable),
             ("Workspace command catalog is bounded and searchable", WorkspaceCommandsAreBounded),
+            ("Every command palette workspace resolves to its intended target", WorkspaceCommandRoutesResolve),
             ("Telemetry runs only in visible live workspaces", TelemetryRunsOnlyInLiveWorkspaces),
             ("Telemetry loop ownership serializes duplicate stop and queued restart", TelemetryLoopOwnershipIsSerialized),
             ("Background runtime remains explicit and fail-closed", BackgroundRuntimeIsExplicit),
@@ -906,6 +907,28 @@ internal static class Program
                 Directory.Delete(directory);
             }
         }
+    }
+
+    private static void WorkspaceCommandRoutesResolve()
+    {
+        foreach (WorkspaceCommand command in WorkspaceCommandCatalog.Query(null))
+        {
+            True(
+                WorkspaceNavigationPolicy.TryResolve(command.Workspace, out WorkspaceNavigationTarget target),
+                $"The command palette route '{command.Workspace}' is listed but cannot be opened.");
+            True(
+                string.Equals(command.Workspace, target.ToString(), StringComparison.OrdinalIgnoreCase),
+                $"The command palette route '{command.Workspace}' resolved to '{target}'.");
+        }
+
+        True(
+            WorkspaceNavigationPolicy.TryResolve("whisper", out WorkspaceNavigationTarget whisper) &&
+            whisper == WorkspaceNavigationTarget.Whisper,
+            "The Whisper command did not resolve to the Whisper workspace.");
+        True(
+            !WorkspaceNavigationPolicy.TryResolve("not-a-soltex-workspace", out WorkspaceNavigationTarget unknown) &&
+            unknown == WorkspaceNavigationTarget.Home,
+            "An unknown command route did not fail closed to Overview.");
     }
 
     private static void RuntimeNavigationContractIsCurrent()

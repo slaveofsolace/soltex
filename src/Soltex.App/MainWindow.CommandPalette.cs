@@ -164,16 +164,18 @@ public partial class MainWindow
 
     private void NavigateToWorkspace(string workspace)
     {
-        Button button = workspace switch
+        _ = WorkspaceNavigationPolicy.TryResolve(workspace, out WorkspaceNavigationTarget target);
+        Button button = target switch
         {
-            "monitoring" => MonitoringNavButton,
-            "applications" => ApplicationsNavButton,
-            "mixer" => MixerNavButton,
-            "security" => SecurityNavButton,
-            "remote" => RemoteNavButton,
-            "activity" => ActivityNavButton,
-            "updates" => UpdateNavButton,
-            "settings" => SettingsNavButton,
+            WorkspaceNavigationTarget.Monitoring => MonitoringNavButton,
+            WorkspaceNavigationTarget.Applications => ApplicationsNavButton,
+            WorkspaceNavigationTarget.Mixer => MixerNavButton,
+            WorkspaceNavigationTarget.Security => SecurityNavButton,
+            WorkspaceNavigationTarget.Remote => RemoteNavButton,
+            WorkspaceNavigationTarget.Whisper => WhisperNavButton,
+            WorkspaceNavigationTarget.Activity => ActivityNavButton,
+            WorkspaceNavigationTarget.Updates => UpdateNavButton,
+            WorkspaceNavigationTarget.Settings => SettingsNavButton,
             _ => HomeNavButton
         };
         button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
