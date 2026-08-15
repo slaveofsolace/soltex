@@ -167,11 +167,35 @@ The paste path emits only Ctrl-down, V-down, V-up, Ctrl-up after confirming no C
 Shift, Alt, or Windows modifier is already down. It never emits transcript characters.
 Injected shortcut events remain rejected by the shortcut adapter. `SendInput` is
 subject to UIPI and may report only dispatch, not target receipt; therefore the
-delivery result records `MutationDispatched` and Slice 6 must independently read back
-the target before any submission authorization. Same-user clipboard readers,
+delivery result records `MutationDispatched`. The verified-submit adapter then
+performs a bounded target-owned read-back and one final identity comparison before
+asking the core gate for authorization. Same-user clipboard readers,
 clipboard managers, malicious accessibility providers, and races inside Windows
 between the final ownership check and OLE restoration remain outside complete
 prevention and are addressed by fail-closed outcomes and later verification.
+
+### Whisper verified-submission boundary
+
+Enter is irreversible and can send a message, choose an application action, or
+execute a terminal command. Submission therefore requires the original delivery
+policy origin, recorded first-use consent, no cancellation, a matching final target,
+and verified insertion. `WhisperSubmitGate` is the only component that grants the
+authorization, and its permit can be consumed once. The Windows adapter emits only
+Enter-down and Enter-up after consuming that permit. Modifier state, unavailable or
+oversized read-back, read mismatch, inaccessible automation, provider timeout,
+focus/category/editability/protection/integrity drift, and cancellation all produce
+no Enter.
+
+Read-back is sensitive even though it is not retained. It is deadline-bounded,
+single-flight, limited to the focused control and 400,000 characters, rejected for
+password targets, and passed directly to the verifier without diagnostics,
+serialization, Activity, or evidence output. UI Automation may still allocate a
+provider-returned Value string before Soltex can enforce its post-return length
+limit; TextPattern reads use an explicit maximum. A same-user injector, malicious
+provider, or focus change in the final gap between the last UIA comparison and
+`SendInput` remains outside complete prevention. Soltex reduces that window, never
+selects a recipient/channel/address/terminal, and keeps auto-send unavailable in the
+shipped UI until the application matrix and coordinator lifecycle are proven.
 
 ### External Remote Assist boundary
 

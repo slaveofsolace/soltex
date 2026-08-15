@@ -75,7 +75,10 @@ internal sealed class WindowsWhisperInsertionPlatform : IWindowsWhisperInsertion
     private static bool TryInsertDirect(WhisperTargetSnapshot capturedTarget, string text)
     {
         AutomationElement? element = AutomationElement.FocusedElement;
-        if (element is null || !Matches(element, capturedTarget.Identity))
+        if (element is null ||
+            !WindowsWhisperAutomationIdentity.Matches(
+                element,
+                capturedTarget.Identity))
         {
             return false;
         }
@@ -111,27 +114,21 @@ internal sealed class WindowsWhisperInsertionPlatform : IWindowsWhisperInsertion
                 TextPatternRangeEndpoint.End,
                 document,
                 TextPatternRangeEndpoint.End) == 0;
-        if (!wholeValueSelected || !Matches(element, capturedTarget.Identity))
+        if (!wholeValueSelected ||
+            !WindowsWhisperAutomationIdentity.Matches(
+                element,
+                capturedTarget.Identity))
         {
             return false;
         }
 
         valuePattern.SetValue(text);
         AutomationElement? confirmation = AutomationElement.FocusedElement;
-        return confirmation is not null && Matches(confirmation, capturedTarget.Identity);
+        return confirmation is not null &&
+            WindowsWhisperAutomationIdentity.Matches(
+                confirmation,
+                capturedTarget.Identity);
     }
-
-    private static bool Matches(
-        AutomationElement element,
-        WhisperTargetIdentity identity) =>
-        element.Current.ProcessId == identity.ProcessId &&
-        string.Equals(
-            string.Join(
-                '.',
-                element.GetRuntimeId().Select(value => value.ToString(
-                    System.Globalization.CultureInfo.InvariantCulture))),
-            identity.ElementRuntimeId,
-            StringComparison.Ordinal);
 }
 
 internal sealed class WindowsWhisperClipboardLease : IWindowsWhisperClipboardLease

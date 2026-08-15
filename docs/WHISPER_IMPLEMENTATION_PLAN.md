@@ -19,7 +19,7 @@ is reproduced, and no affiliation is implied.
 ## Implemented and verified
 
 The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
-96-test suite in `tests/Soltex.Whisper.Tests`.
+97-test suite in `tests/Soltex.Whisper.Tests`.
 
 | Area | State |
 |---|---|
@@ -47,14 +47,15 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Windows shortcut adapter | Dedicated low-level keyboard/mouse hook thread, configured-key-only matching, auto-repeat suppression, Mouse 4/5 support, bounded transition queue, atomic replacement rollback, injected-input rejection, clean async disposal, and content-free callback percentiles |
 | Windows target inspection | Metadata-only UI Automation adapter returns one atomic identity-and-capability snapshot; process integrity, runtime identity, editable/protected/read-only state, Value/Text/Text2 pattern availability, selection/caret support, and category are bounded behind a 750 ms single-flight timeout |
 | Windows insertion adapter | Core reauthorization before mutation and again before paste; whole-value-only UIA direct set; otherwise one clipboard paste chord with a unique token, sequence ownership, bounded restore, focus-drift copy fallback, and cancellation cleanup |
+| Windows verified submission | Bounded target-owned read-back, a final target reinspection, `WhisperSubmitGate` authorization, a one-use permit, and one two-event Enter dispatch; unavailable/mismatched reads, cancellation, drift, and modifier state fail closed |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, and Privacy tabs, and the floating listening surface — render this core.
 They are honest about capability: the navigation entry remains marked `SCAFFOLD`
-while providers, shipped shortcut dispatch, target/insertion session wiring, and
-verified submission are unavailable. The target and insertion adapters exist but are
-not yet connected to a shipped session, so the page does not claim it is ready. The
-capture controls are enabled only when a selected device exists.
+while providers and shipped shortcut/target/insertion/submission session wiring are
+unavailable. The Windows adapters exist but are not yet connected to a shipped
+session, so the page does not claim it is ready. The capture controls are enabled
+only when a selected device exists.
 
 ## Not implemented
 
@@ -68,7 +69,8 @@ from an owner-controlled Windows host says otherwise.
    exist).
 4. Shipped session wiring and the complete application matrix for the insertion
    adapter (one controlled WinForms target has live direct and clipboard proof).
-5. Emission of Enter.
+5. Shipped verified-submission wiring and the complete application/denial matrix
+   (the adapter and one controlled target proof exist).
 6. Scratchpad UI, snippet/vocabulary/style editors, and history UI.
 7. Encrypted transcript retention.
 8. Full accessibility, scale, theme, performance, install, update, and uninstall
@@ -209,7 +211,7 @@ after staging or paste input is rejected, the transcript remains copied and the
 result names the fallback. Clipboard acquisition and restoration use bounded retries
 on one background STA thread.
 
-The core suite has 96 cases and the Windows suite has 28 deterministic cases. The
+The core suite has 97 cases and the Windows suite has 39 deterministic cases. The
 Windows cases cover direct-before-clipboard ordering, ownership restoration and loss,
 focus drift after staging, unknown targets, rejected paste, and cancellation cleanup.
 An opt-in owner-host test uses a controlled WinForms text target to prove clipboard
@@ -218,18 +220,32 @@ replacement. Exact current timings are retained in the commit-matched live evide
 The harness reads the controlled target to prove the mutations; the adapter result
 itself is intentionally named
 `MutationDispatched`, not `Inserted`, because `SendInput` success is not insertion
-proof. Full verification and submission remain Slice 6.
+proof.
 
 ### 6. Verified submission
 
-Route every submission through `WhisperSubmitGate`. Re-inspect the target
-immediately before insertion and again before submission, compare against the
-captured snapshot, verify insertion by reading the target's own state, then emit
-Enter exactly once after a short bounded settle window. Record content-free evidence:
-target category, requested origin, policy decision, verification method, outcome.
+Implemented in the provider-neutral core and `src/Soltex.Whisper.Windows`, but not
+yet wired into the shipped session. After a dispatched insertion,
+`WindowsWhisperVerifiedSubmitter` waits one bounded 75 ms verification window,
+re-inspects the target, and asks `WindowsWhisperTargetTextReader` for at most
+400,000 characters of the focused control's own Value or TextPattern state. The
+ephemeral read-back is never logged or persisted and is passed directly through
+`WhisperInsertionVerifier`.
 
-A successful synthetic-input call is not proof that insertion occurred. If
-verification is unavailable, insert or copy, but do not submit.
+The target is inspected once more immediately before submission. Every decision then
+passes through `WhisperSubmitGate`: requested origin, accepted first-use warning,
+cancellation, target drift, and verified insertion must all remain valid. An allowed
+authorization carries a one-use permit. The Windows adapter consumes it immediately
+before one Enter-down/Enter-up `SendInput` call; a denied or already-consumed
+authorization cannot emit input. Active Ctrl, Shift, Alt, or Windows modifiers reject
+the dispatch after consuming the permit, so no retry can accidentally submit later.
+
+The Windows suite exercises every gate branch end-to-end, altered and unavailable
+read-back, focus change between verification and Enter, pre-irreversible
+cancellation, submit-only behavior, rejected dispatch, provider timeout/failure,
+bounded reads, and one-use authorization. A successful synthetic-input call remains
+dispatch evidence only. The controlled live harness must separately observe exactly
+one Enter on the same verified control before this slice is claimed at a commit.
 
 Whisper never selects a recipient, channel, conversation, address, or terminal. A
 named destination shortcut may focus an owner-configured application, but still

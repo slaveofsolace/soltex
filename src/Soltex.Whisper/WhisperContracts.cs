@@ -159,6 +159,24 @@ public interface IWhisperTextDelivery
         CancellationToken cancellationToken);
 }
 
+public interface IWhisperTargetTextReader
+{
+    /// <summary>
+    /// Reads only the focused target's own bounded text for immediate insertion
+    /// verification. Implementations must never persist or log the returned text.
+    /// </summary>
+    ValueTask<WhisperTargetReadback?> ReadAsync(
+        WhisperTargetSnapshot expectedTarget,
+        CancellationToken cancellationToken);
+}
+
+public interface IWhisperVerifiedSubmitter
+{
+    ValueTask<WhisperVerifiedSubmitResult> SubmitAsync(
+        WhisperVerifiedSubmitRequest request,
+        CancellationToken cancellationToken);
+}
+
 public interface IWhisperShortcutHost : IAsyncDisposable
 {
     ValueTask RegisterAsync(

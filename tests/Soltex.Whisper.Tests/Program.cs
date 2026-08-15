@@ -418,6 +418,8 @@ var tests = new (string Name, Action Run)[]
             Snap("chat", "el-1"), Verified());
         True(authorization.Allowed);
         Equal(WhisperTargetDrift.None, authorization.Drift);
+        True(authorization.TryConsume());
+        False(authorization.TryConsume());
     }),
     ("the submit gate denies unverified insertion", () =>
         False(Gate(Snap("chat", "el-1"), WhisperInsertionVerification.Unavailable).Allowed)),
@@ -430,7 +432,18 @@ var tests = new (string Name, Action Run)[]
     ("the submit gate denies until the first-use warning is accepted", () =>
         False(Gate(Snap("chat", "el-1"), Verified(), warningAccepted: false).Allowed)),
     ("the submit gate denies after cancellation", () =>
-        False(Gate(Snap("chat", "el-1"), Verified(), cancelled: true).Allowed)),
+    {
+        WhisperSubmitAuthorization authorization =
+            Gate(Snap("chat", "el-1"), Verified(), cancelled: true);
+        False(authorization.Allowed);
+        False(authorization.TryConsume());
+    }),
+    ("the submit gate denies an unavailable current target", () =>
+    {
+        WhisperSubmitAuthorization authorization = Gate(null, Verified());
+        False(authorization.Allowed);
+        Equal(WhisperTargetDrift.TargetUnknown, authorization.Drift);
+    }),
     ("the submit gate ignores decisions that never requested submission", () =>
     {
         WhisperDeliveryDecision insertOnly = new(
@@ -877,7 +890,7 @@ static WhisperTextDeliveryRequest InsertRequest(WhisperTargetSnapshot capturedTa
     capturedTarget);
 
 static WhisperSubmitAuthorization Gate(
-    WhisperTargetSnapshot current,
+    WhisperTargetSnapshot? current,
     WhisperInsertionVerification verification,
     bool warningAccepted = true,
     bool cancelled = false)

@@ -36,7 +36,18 @@ List<(string Name, Func<Task> Run)> tests =
     ("focus drift after clipboard staging falls back to copy", DeliveryFocusDrift),
     ("an unknown target copies without emitting paste input", DeliveryUnknownTarget),
     ("a rejected paste leaves the transcript copied", DeliveryPasteRejected),
-    ("cancellation before paste restores an owned clipboard", DeliveryCancellationRestores)
+    ("cancellation before paste restores an owned clipboard", DeliveryCancellationRestores),
+    ("verified submission consumes one authorization and emits Enter once", VerifiedSubmitOnce),
+    ("submission denies an unverified insertion", VerifiedSubmitRequiresReadback),
+    ("submission denies altered target text", VerifiedSubmitRejectsAlteredText),
+    ("submission denies focus drift between verification and Enter", VerifiedSubmitFocusDrift),
+    ("submission denies an unavailable final target", VerifiedSubmitUnknownTarget),
+    ("submission prerequisites avoid target text reads", VerifiedSubmitPrerequisites),
+    ("submission cancellation remains reversible before Enter", VerifiedSubmitCancellation),
+    ("submit-only authorization emits Enter without a text read", VerifiedSubmitOnly),
+    ("a rejected Enter dispatch cannot reuse its authorization", VerifiedSubmitDispatchRejected),
+    ("target read-back is bounded and provider failures fail closed", TargetReadbackFailures),
+    ("target read-back cancellation is honored", TargetReadbackCancellation)
 ];
 
 if (string.Equals(
@@ -506,6 +517,274 @@ static async Task DeliveryCancellationRestores()
     Equal(1, platform.LastLease?.RestoreCount);
 }
 
+static async Task VerifiedSubmitOnce()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(captured, captured);
+    FakeTargetTextReader reader = new("hello from Soltex");
+    FakeSubmitPlatform platform = new(dispatchResult: true);
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector, reader, platform);
+
+    WhisperVerifiedSubmitResult result = await submitter.SubmitAsync(
+        VerifiedSubmitRequest(captured),
+        CancellationToken.None);
+    True(result.EnterDispatched);
+    Equal(WhisperSubmitDispatchOutcome.Dispatched, result.Outcome);
+    True(result.Verification.Verified);
+    Equal(1, reader.ReadCount);
+    Equal(1, platform.DispatchCount);
+    True(platform.FirstConsume);
+    False(platform.SecondConsume);
+}
+
+static async Task VerifiedSubmitRequiresReadback()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(captured);
+    FakeTargetTextReader reader = new("hello from Soltex");
+    FakeSubmitPlatform platform = new(dispatchResult: true);
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector, reader, platform);
+    WhisperVerifiedSubmitRequest request = VerifiedSubmitRequest(
+        captured,
+        delivery: NoMutationDelivery());
+
+    WhisperVerifiedSubmitResult result = await submitter.SubmitAsync(
+        request,
+        CancellationToken.None);
+    False(result.EnterDispatched);
+    False(result.Authorization.Allowed);
+    Equal(WhisperSubmitDispatchOutcome.Denied, result.Outcome);
+    Equal(0, reader.ReadCount);
+    Equal(0, platform.DispatchCount);
+}
+
+static async Task VerifiedSubmitRejectsAlteredText()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(captured, captured);
+    FakeTargetTextReader reader = new("hello from Soltex altered");
+    FakeSubmitPlatform platform = new(dispatchResult: true);
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector, reader, platform);
+
+    WhisperVerifiedSubmitResult result = await submitter.SubmitAsync(
+        VerifiedSubmitRequest(captured),
+        CancellationToken.None);
+    False(result.EnterDispatched);
+    False(result.Verification.Verified);
+    Equal(0, platform.DispatchCount);
+}
+
+static async Task VerifiedSubmitFocusDrift()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperTargetSnapshot changed = DeliveryTarget("mail", "el-2", processId: 42);
+    WhisperScriptedTargetInspector inspector = new(captured, changed);
+    FakeTargetTextReader reader = new("hello from Soltex");
+    FakeSubmitPlatform platform = new(dispatchResult: true);
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector, reader, platform);
+
+    WhisperVerifiedSubmitResult result = await submitter.SubmitAsync(
+        VerifiedSubmitRequest(captured),
+        CancellationToken.None);
+    False(result.EnterDispatched);
+    Equal(WhisperTargetDrift.ProcessChanged, result.Authorization.Drift);
+    Equal(0, platform.DispatchCount);
+}
+
+static async Task VerifiedSubmitUnknownTarget()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(
+        captured,
+        (WhisperTargetSnapshot?)null);
+    FakeTargetTextReader reader = new("hello from Soltex");
+    FakeSubmitPlatform platform = new(dispatchResult: true);
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector, reader, platform);
+
+    WhisperVerifiedSubmitResult result = await submitter.SubmitAsync(
+        VerifiedSubmitRequest(captured),
+        CancellationToken.None);
+    False(result.EnterDispatched);
+    Equal(WhisperTargetDrift.TargetUnknown, result.Authorization.Drift);
+    Equal(0, platform.DispatchCount);
+}
+
+static async Task VerifiedSubmitPrerequisites()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(captured);
+    FakeTargetTextReader reader = new("hello from Soltex");
+    FakeSubmitPlatform platform = new(dispatchResult: true);
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector, reader, platform);
+
+    WhisperVerifiedSubmitRequest warningNotAccepted = VerifiedSubmitRequest(
+        captured,
+        firstUseWarningAccepted: false);
+    WhisperVerifiedSubmitResult warningResult = await submitter.SubmitAsync(
+        warningNotAccepted,
+        CancellationToken.None);
+    False(warningResult.Authorization.Allowed);
+    Equal(0, reader.ReadCount);
+    Equal(0, platform.DispatchCount);
+
+    WhisperDeliveryDecision missingOrigin = new(
+        WhisperDeliveryKind.InsertAndSubmit,
+        "hello from Soltex",
+        WhisperSubmitOrigin.None,
+        RestoreClipboard: false,
+        "invalid origin fixture");
+    WhisperVerifiedSubmitResult originResult = await submitter.SubmitAsync(
+        VerifiedSubmitRequest(captured, decision: missingOrigin),
+        CancellationToken.None);
+    False(originResult.Authorization.Allowed);
+    Equal(0, reader.ReadCount);
+    Equal(0, platform.DispatchCount);
+
+    WhisperDeliveryDecision insertOnly = new(
+        WhisperDeliveryKind.InsertText,
+        "hello from Soltex",
+        WhisperSubmitOrigin.None,
+        RestoreClipboard: false,
+        "insert only");
+    WhisperVerifiedSubmitResult insertResult = await submitter.SubmitAsync(
+        VerifiedSubmitRequest(captured, decision: insertOnly),
+        CancellationToken.None);
+    Equal(WhisperSubmitDispatchOutcome.NotRequested, insertResult.Outcome);
+    Equal(0, reader.ReadCount);
+    Equal(0, platform.DispatchCount);
+}
+
+static async Task VerifiedSubmitCancellation()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(captured);
+    FakeTargetTextReader reader = new("hello from Soltex");
+    FakeSubmitPlatform platform = new(dispatchResult: true);
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector, reader, platform);
+    using CancellationTokenSource cancellation = new();
+    cancellation.Cancel();
+
+    WhisperVerifiedSubmitResult result = await submitter.SubmitAsync(
+        VerifiedSubmitRequest(captured),
+        cancellation.Token);
+    False(result.Authorization.Allowed);
+    False(result.EnterDispatched);
+    Equal(0, reader.ReadCount);
+    Equal(0, platform.DispatchCount);
+}
+
+static async Task VerifiedSubmitOnly()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(captured);
+    FakeTargetTextReader reader = new("ignored");
+    FakeSubmitPlatform platform = new(dispatchResult: true);
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector, reader, platform);
+    WhisperDeliveryDecision decision = new(
+        WhisperDeliveryKind.SubmitOnly,
+        string.Empty,
+        WhisperSubmitOrigin.DedicatedShortcut,
+        RestoreClipboard: false,
+        "submit the focused target");
+
+    WhisperVerifiedSubmitResult result = await submitter.SubmitAsync(
+        VerifiedSubmitRequest(
+            captured,
+            decision: decision,
+            delivery: NoMutationDelivery()),
+        CancellationToken.None);
+    True(result.EnterDispatched);
+    Equal(WhisperVerificationMethod.None, result.Verification.Method);
+    Equal(0, reader.ReadCount);
+    Equal(1, platform.DispatchCount);
+}
+
+static async Task VerifiedSubmitDispatchRejected()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(captured, captured);
+    FakeTargetTextReader reader = new("hello from Soltex");
+    FakeSubmitPlatform platform = new(dispatchResult: false);
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector, reader, platform);
+
+    WhisperVerifiedSubmitResult result = await submitter.SubmitAsync(
+        VerifiedSubmitRequest(captured),
+        CancellationToken.None);
+    False(result.EnterDispatched);
+    Equal(WhisperSubmitDispatchOutcome.DispatchRejected, result.Outcome);
+    True(platform.FirstConsume);
+    False(platform.SecondConsume);
+}
+
+static async Task TargetReadbackFailures()
+{
+    WhisperTargetSnapshot target = DeliveryTarget("chat", "el-1");
+    WindowsWhisperTargetTextReader success = new(
+        new ScriptedTargetTextBackend(() => new WindowsWhisperTargetReadObservation(
+            "hello from Soltex",
+            WhisperVerificationMethod.AutomationTextRead)),
+        TimeSpan.FromMilliseconds(100));
+    WhisperTargetReadback? readback = await success.ReadAsync(
+        target,
+        CancellationToken.None);
+    Equal("hello from Soltex", readback?.Text);
+
+    WindowsWhisperTargetTextReader oversized = new(
+        new ScriptedTargetTextBackend(() => new WindowsWhisperTargetReadObservation(
+            new string('x', WhisperLimits.MaximumReadbackCharacters + 1),
+            WhisperVerificationMethod.AutomationTextRead)),
+        TimeSpan.FromMilliseconds(100));
+    Equal<WhisperTargetReadback?>(
+        null,
+        await oversized.ReadAsync(target, CancellationToken.None));
+
+    WindowsWhisperTargetTextReader throwing = new(
+        new ScriptedTargetTextBackend(() =>
+            throw new InvalidOperationException("provider fixture")),
+        TimeSpan.FromMilliseconds(100));
+    Equal<WhisperTargetReadback?>(
+        null,
+        await throwing.ReadAsync(target, CancellationToken.None));
+
+    WindowsWhisperTargetTextReader slow = new(
+        new ScriptedTargetTextBackend(() =>
+        {
+            Thread.Sleep(100);
+            return new WindowsWhisperTargetReadObservation(
+                "late",
+                WhisperVerificationMethod.AutomationTextRead);
+        }),
+        TimeSpan.FromMilliseconds(20));
+    Stopwatch timer = Stopwatch.StartNew();
+    Equal<WhisperTargetReadback?>(
+        null,
+        await slow.ReadAsync(target, CancellationToken.None));
+    True(timer.Elapsed < TimeSpan.FromMilliseconds(90));
+}
+
+static async Task TargetReadbackCancellation()
+{
+    WhisperTargetSnapshot target = DeliveryTarget("chat", "el-1");
+    using ManualResetEventSlim started = new();
+    WindowsWhisperTargetTextReader reader = new(
+        new ScriptedTargetTextBackend(() =>
+        {
+            started.Set();
+            Thread.Sleep(100);
+            return new WindowsWhisperTargetReadObservation(
+                "late",
+                WhisperVerificationMethod.AutomationTextRead);
+        }),
+        TimeSpan.FromMilliseconds(200));
+    using CancellationTokenSource cancellation = new();
+    Task<WhisperTargetReadback?> read = reader
+        .ReadAsync(target, cancellation.Token)
+        .AsTask();
+    True(started.Wait(TimeSpan.FromSeconds(1)));
+    cancellation.Cancel();
+    await ThrowsAsync<OperationCanceledException>(async () => await read);
+}
+
 static WhisperTargetSnapshot DeliveryTarget(
     string processName,
     string runtimeId,
@@ -534,6 +813,33 @@ static WhisperTextDeliveryRequest DeliveryRequest(WhisperTargetSnapshot captured
         RestoreClipboard: true,
         "insert"),
     captured);
+
+static WhisperVerifiedSubmitRequest VerifiedSubmitRequest(
+    WhisperTargetSnapshot captured,
+    WhisperDeliveryDecision? decision = null,
+    WhisperTextDeliveryResult? delivery = null,
+    bool firstUseWarningAccepted = true) => new(
+        decision ?? new WhisperDeliveryDecision(
+            WhisperDeliveryKind.InsertAndSubmit,
+            "hello from Soltex",
+            WhisperSubmitOrigin.TerminalPhrase,
+            RestoreClipboard: false,
+            "authorized fixture"),
+        captured,
+        delivery ?? new WhisperTextDeliveryResult(
+            WhisperInsertionMethod.ClipboardPaste,
+            WhisperInsertionFallbackReason.DirectInsertionUnavailable,
+            WhisperClipboardRestoreOutcome.NotRequested,
+            MutationDispatched: true,
+            Copied: false),
+        firstUseWarningAccepted);
+
+static WhisperTextDeliveryResult NoMutationDelivery() => new(
+    WhisperInsertionMethod.None,
+    WhisperInsertionFallbackReason.PasteRejected,
+    WhisperClipboardRestoreOutcome.NotRequested,
+    MutationDispatched: false,
+    Copied: false);
 
 static async Task LiveShortcutHooks()
 {
@@ -632,11 +938,34 @@ static async Task LiveTextInsertion()
     directTimer.Stop();
     Equal("hello from Soltex", await target.GetTextAsync());
     Equal(WhisperInsertionMethod.AutomationValue, directResult.Method);
+
+    WhisperDeliveryDecision submitDecision = new(
+        WhisperDeliveryKind.InsertAndSubmit,
+        "hello from Soltex",
+        WhisperSubmitOrigin.TerminalPhrase,
+        RestoreClipboard: false,
+        "owner-controlled verified-submit proof");
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector);
+    Stopwatch submitTimer = Stopwatch.StartNew();
+    WhisperVerifiedSubmitResult submitResult = await submitter.SubmitAsync(
+        new WhisperVerifiedSubmitRequest(
+            submitDecision,
+            replacementTarget,
+            directResult,
+            FirstUseWarningAccepted: true),
+        CancellationToken.None);
+    await target.WaitForEnterAsync(expectedCount: 1);
+    submitTimer.Stop();
+    True(submitResult.Authorization.Allowed);
+    True(submitResult.Verification.Verified);
+    True(submitResult.EnterDispatched);
+    Equal(1, target.EnterCount);
     Console.WriteLine(
         $"MEASURE whisper_insertion method={result.Method} " +
         $"restore={result.ClipboardRestore} duration_ms={timer.Elapsed.TotalMilliseconds:F2} " +
         $"direct_method={directResult.Method} direct_ms={directTimer.Elapsed.TotalMilliseconds:F2} " +
-        "input_events=4 content_logged=0");
+        $"verified_submit_ms={submitTimer.Elapsed.TotalMilliseconds:F2} " +
+        "input_events=6 enter_events=1 content_logged=0");
 }
 
 static void SendInjectedShortcut()
@@ -1181,6 +1510,18 @@ internal sealed class ScriptedTargetInspectionBackend(
     public WindowsWhisperTargetObservation InspectFocused() => inspect();
 }
 
+internal sealed class ScriptedTargetTextBackend(
+    Func<WindowsWhisperTargetReadObservation?> read) :
+    IWindowsWhisperTargetTextBackend
+{
+    public WindowsWhisperTargetReadObservation? ReadFocused(
+        WhisperTargetSnapshot expectedTarget)
+    {
+        ArgumentNullException.ThrowIfNull(expectedTarget);
+        return read();
+    }
+}
+
 internal sealed class CancelingTargetInspector(
     WhisperTargetSnapshot first,
     CancellationTokenSource cancellation) : IWhisperTargetInspector
@@ -1198,6 +1539,48 @@ internal sealed class CancelingTargetInspector(
         cancellation.Cancel();
         cancellationToken.ThrowIfCancellationRequested();
         throw new UnreachableException();
+    }
+}
+
+internal sealed class FakeTargetTextReader(string? text) : IWhisperTargetTextReader
+{
+    internal int ReadCount { get; private set; }
+
+    public ValueTask<WhisperTargetReadback?> ReadAsync(
+        WhisperTargetSnapshot expectedTarget,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(expectedTarget);
+        cancellationToken.ThrowIfCancellationRequested();
+        ReadCount++;
+        return ValueTask.FromResult(
+            text is null
+                ? null
+                : new WhisperTargetReadback(
+                    text,
+                    WhisperVerificationMethod.AutomationTextRead));
+    }
+}
+
+internal sealed class FakeSubmitPlatform(bool dispatchResult) :
+    IWindowsWhisperSubmitPlatform
+{
+    internal int DispatchCount { get; private set; }
+
+    internal bool FirstConsume { get; private set; }
+
+    internal bool SecondConsume { get; private set; }
+
+    public ValueTask<bool> TryEmitEnterAsync(
+        WhisperSubmitAuthorization authorization,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(authorization);
+        cancellationToken.ThrowIfCancellationRequested();
+        DispatchCount++;
+        FirstConsume = authorization.TryConsume();
+        SecondConsume = authorization.TryConsume();
+        return ValueTask.FromResult(dispatchResult && FirstConsume);
     }
 }
 
@@ -1285,6 +1668,7 @@ internal sealed class LiveTextTarget : IAsyncDisposable
     private readonly Thread _thread;
     private System.Windows.Forms.Form? _form;
     private System.Windows.Forms.TextBox? _textBox;
+    private int _enterCount;
 
     private LiveTextTarget(string initialText)
     {
@@ -1373,6 +1757,25 @@ internal sealed class LiveTextTarget : IAsyncDisposable
         throw new InvalidOperationException("The controlled text target did not receive the insertion.");
     }
 
+    internal int EnterCount => Volatile.Read(ref _enterCount);
+
+    internal async ValueTask WaitForEnterAsync(int expectedCount)
+    {
+        Stopwatch deadline = Stopwatch.StartNew();
+        while (deadline.Elapsed < TimeSpan.FromSeconds(2))
+        {
+            if (EnterCount == expectedCount)
+            {
+                return;
+            }
+
+            await Task.Delay(20);
+        }
+
+        throw new InvalidOperationException(
+            "The controlled text target did not receive exactly one Enter event.");
+    }
+
     public async ValueTask DisposeAsync()
     {
         System.Windows.Forms.Form? form = _form;
@@ -1414,6 +1817,13 @@ internal sealed class LiveTextTarget : IAsyncDisposable
             Text = _initialText,
             Location = new System.Drawing.Point(12, 18),
             Width = 390
+        };
+        textBox.KeyDown += (_, eventArgs) =>
+        {
+            if (eventArgs.KeyCode == System.Windows.Forms.Keys.Enter)
+            {
+                _ = Interlocked.Increment(ref _enterCount);
+            }
         };
         form.Controls.Add(textBox);
         _form = form;

@@ -140,11 +140,38 @@ public static class WhisperInsertionVerifier
     }
 }
 
-public sealed record WhisperSubmitAuthorization(
-    bool Allowed,
-    string Reason,
-    WhisperVerificationMethod Verification,
-    WhisperTargetDrift Drift);
+public sealed class WhisperSubmitAuthorization
+{
+    private int _consumed;
+
+    internal WhisperSubmitAuthorization(
+        bool allowed,
+        string reason,
+        WhisperVerificationMethod verification,
+        WhisperTargetDrift drift)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        Allowed = allowed;
+        Reason = reason;
+        Verification = verification;
+        Drift = drift;
+    }
+
+    public bool Allowed { get; }
+
+    public string Reason { get; }
+
+    public WhisperVerificationMethod Verification { get; }
+
+    public WhisperTargetDrift Drift { get; }
+
+    /// <summary>
+    /// Converts an allowed policy result into a one-use submit permit. Windows
+    /// adapters must consume this immediately before the irreversible input call.
+    /// </summary>
+    public bool TryConsume() =>
+        Allowed && Interlocked.CompareExchange(ref _consumed, 1, 0) == 0;
+}
 
 /// <summary>
 /// The last gate before Enter is emitted. <see cref="WhisperDeliveryPolicy"/> decides
@@ -157,14 +184,13 @@ public static class WhisperSubmitGate
     public static WhisperSubmitAuthorization Evaluate(
         WhisperDeliveryDecision decision,
         WhisperTargetSnapshot capturedTarget,
-        WhisperTargetSnapshot currentTarget,
+        WhisperTargetSnapshot? currentTarget,
         WhisperInsertionVerification verification,
         bool firstUseWarningAccepted,
         bool cancellationRequested)
     {
         ArgumentNullException.ThrowIfNull(decision);
         ArgumentNullException.ThrowIfNull(capturedTarget);
-        ArgumentNullException.ThrowIfNull(currentTarget);
         ArgumentNullException.ThrowIfNull(verification);
 
         if (decision.Kind is not (WhisperDeliveryKind.InsertAndSubmit or WhisperDeliveryKind.SubmitOnly))
@@ -195,6 +221,13 @@ public static class WhisperSubmitGate
                 WhisperTargetDrift.None);
         }
 
+        if (currentTarget is null)
+        {
+            return Deny(
+                "The focused target could not be established before submission.",
+                WhisperTargetDrift.TargetUnknown);
+        }
+
         WhisperTargetDrift drift = capturedTarget.CompareWith(currentTarget);
         if (drift != WhisperTargetDrift.None)
         {
@@ -216,13 +249,16 @@ public static class WhisperSubmitGate
             ? WhisperVerificationMethod.None
             : verification.Method;
 
+        string allowedReason = decision.Kind == WhisperDeliveryKind.SubmitOnly
+            ? "The target still matches the captured target."
+            : "Insertion is verified and the target still matches the captured target.";
         return new WhisperSubmitAuthorization(
-            Allowed: true,
-            "Insertion is verified and the target still matches the captured target.",
+            allowed: true,
+            allowedReason,
             method,
             WhisperTargetDrift.None);
     }
 
     private static WhisperSubmitAuthorization Deny(string reason, WhisperTargetDrift drift) =>
-        new(Allowed: false, reason, WhisperVerificationMethod.None, drift);
+        new(allowed: false, reason, WhisperVerificationMethod.None, drift);
 }

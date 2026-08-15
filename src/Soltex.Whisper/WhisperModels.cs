@@ -5,6 +5,7 @@ namespace Soltex.Whisper;
 public static class WhisperLimits
 {
     public const int MaximumTranscriptCharacters = 200_000;
+    public const int MaximumReadbackCharacters = MaximumTranscriptCharacters * 2;
     public const int MaximumSnippetCount = 256;
     public const int MaximumSnippetCueCharacters = 80;
     public const int MaximumSnippetContentCharacters = 64_000;
