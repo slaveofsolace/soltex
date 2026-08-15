@@ -1,0 +1,97 @@
+name: whisper-core
+
+on:
+  push:
+    paths:
+      - 'src/Soltex.Whisper/**'
+      - 'tests/Soltex.Whisper.Tests/**'
+      - 'docs/WHISPER_TOOL_SPEC.md'
+      - 'docs/CODEX_WHISPER_IMPLEMENTATION_PROMPT.md'
+      - '.github/workflows/whisper.yml'
+  pull_request:
+    paths:
+      - 'src/Soltex.Whisper/**'
+      - 'tests/Soltex.Whisper.Tests/**'
+      - 'docs/WHISPER_TOOL_SPEC.md'
+      - 'docs/CODEX_WHISPER_IMPLEMENTATION_PROMPT.md'
+      - '.github/workflows/whisper.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  DOTNET_NOLOGO: true
+
+jobs:
+  whisper-core:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Prepare Whisper evidence directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force .\artifacts\whisper | Out-Null
+
+      - name: Build Whisper core
+        id: build
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet build .\tests\Soltex.Whisper.Tests\Soltex.Whisper.Tests.csproj `
+            --configuration Release `
+            --nologo 2>&1 |
+            Tee-Object -FilePath .\artifacts\whisper\build-release.log
+          if ($LASTEXITCODE -ne 0) {
+            throw "Whisper Release build failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Run Whisper core suite
+        id: tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run `
+            --project .\tests\Soltex.Whisper.Tests\Soltex.Whisper.Tests.csproj `
+            --configuration Release `
+            --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\whisper\tests-core.log
+          if ($LASTEXITCODE -ne 0) {
+            throw "Whisper core suite failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Record Whisper gate classification
+        if: always()
+        shell: pwsh
+        run: |
+          $classification = if ('${{ steps.build.outcome }}' -eq 'success' -and
+                                '${{ steps.tests.outcome }}' -eq 'success') {
+            'The provider-neutral Whisper core built and all named policy tests passed. Live capture, transcription, focused-control delivery, global shortcuts, WPF integration, accessibility proof, and owner-host submission proof remain outside this scaffold gate.'
+          } else {
+            "The Whisper core gate is incomplete: build=${{ steps.build.outcome }}; tests=${{ steps.tests.outcome }}."
+          }
+          @(
+            "build=${{ steps.build.outcome }}"
+            "tests=${{ steps.tests.outcome }}"
+            $classification
+          ) | Set-Content -Encoding UTF8 .\artifacts\whisper\gate-classification.log
+          Add-Content -Encoding UTF8 -Path $env:GITHUB_STEP_SUMMARY -Value '## Soltex Whisper core gate'
+          Add-Content -Encoding UTF8 -Path $env:GITHUB_STEP_SUMMARY -Value ''
+          Add-Content -Encoding UTF8 -Path $env:GITHUB_STEP_SUMMARY -Value $classification
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        name: Upload Whisper evidence
+        if: always()
+        with:
+          name: soltex-whisper-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/whisper/**
+          if-no-files-found: warn
+          retention-days: 14
