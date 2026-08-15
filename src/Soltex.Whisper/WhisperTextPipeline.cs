@@ -35,6 +35,13 @@ public static class WhisperTerminalSubmitCommand
 
 public sealed class WhisperTextPipeline
 {
+    private readonly WhisperTextOptions _defaultOptions;
+
+    public WhisperTextPipeline(WhisperTextOptions? defaultOptions = null)
+    {
+        _defaultOptions = defaultOptions ?? WhisperTextOptions.Default;
+    }
+
     public WhisperPipelineResult Process(
         string rawTranscript,
         IEnumerable<WhisperSnippet>? snippets = null,
@@ -49,7 +56,7 @@ public sealed class WhisperTextPipeline
                 $"Raw transcripts cannot exceed {WhisperLimits.MaximumTranscriptCharacters} characters.");
         }
 
-        WhisperTextOptions effectiveOptions = options ?? WhisperTextOptions.Default;
+        WhisperTextOptions effectiveOptions = options ?? _defaultOptions;
         List<string> appliedOperations = [];
         string working = rawTranscript.Trim();
         bool submitRequested = false;
@@ -113,7 +120,7 @@ public sealed class WhisperTextPipeline
             appliedOperations);
     }
 
-    private static void ValidateSnippets(IReadOnlyCollection<WhisperSnippet> snippets)
+    private static void ValidateSnippets(WhisperSnippet[] snippets)
     {
         if (snippets.Count > WhisperLimits.MaximumSnippetCount)
         {
@@ -198,7 +205,7 @@ internal static class WhisperSmartFormatter
             return new WhisperTransformResult(text.Trim(), Changed: false);
         }
 
-        IReadOnlyList<string> tokens = Tokenize(text);
+        List<string> tokens = Tokenize(text);
         StringBuilder builder = new(text.Length);
         bool changed = false;
 
@@ -289,7 +296,7 @@ internal static class WhisperSmartFormatter
         return new WhisperTransformResult(builder.ToString().Trim(), changed);
     }
 
-    private static IReadOnlyList<string> Tokenize(string text)
+    private static List<string> Tokenize(string text)
     {
         List<string> tokens = [];
         StringBuilder token = new();

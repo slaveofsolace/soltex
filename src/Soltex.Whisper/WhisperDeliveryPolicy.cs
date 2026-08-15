@@ -2,6 +2,13 @@ namespace Soltex.Whisper;
 
 public sealed class WhisperDeliveryPolicy
 {
+    private readonly bool _allowAutomaticSubmission;
+
+    public WhisperDeliveryPolicy(bool allowAutomaticSubmission = true)
+    {
+        _allowAutomaticSubmission = allowAutomaticSubmission;
+    }
+
     public WhisperDeliveryDecision Evaluate(
         WhisperPipelineResult pipeline,
         WhisperTargetContext target,
@@ -83,6 +90,16 @@ public sealed class WhisperDeliveryPolicy
                 WhisperSubmitOrigin.None,
                 restoreClipboard,
                 "Insert the finalized transcript without submitting it.");
+        }
+
+        if (!_allowAutomaticSubmission)
+        {
+            return new WhisperDeliveryDecision(
+                WhisperDeliveryKind.InsertText,
+                pipeline.Text,
+                WhisperSubmitOrigin.None,
+                restoreClipboard,
+                "Automatic submission is disabled by this policy instance.");
         }
 
         if (!autoSendEnabled)
