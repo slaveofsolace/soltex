@@ -100,8 +100,8 @@ The packaged Mixer-device pixels were directly inspected and match the intended 
 ## Evidence roots
 
 ```text
-accepted: C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\audio-fallback-exact-1d15071-20260812-0200
-negative: C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\audio-fallback-exact-975e48c-20260812-0145
+accepted: <local-evidence-root>\2026\08\12\soltex-product-rebuild\audio-fallback-exact-1d15071-20260812-0200
+negative: <local-evidence-root>\2026\08\12\soltex-product-rebuild\audio-fallback-exact-975e48c-20260812-0145
 ```
 
 ## Remaining gate
@@ -117,6 +117,6 @@ Publish the corrected reconciliation head, require exact hosted Windows and pack
 Failed hosted package evidence was retained at:
 
 ```text
-C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\hosted-failed-package-ef5f966
-C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\cold-package-recovery-exact-0359522-20260812-0225
+<local-evidence-root>\2026\08\12\soltex-product-rebuild\hosted-failed-package-ef5f966
+<local-evidence-root>\2026\08\12\soltex-product-rebuild\cold-package-recovery-exact-0359522-20260812-0225
 ```

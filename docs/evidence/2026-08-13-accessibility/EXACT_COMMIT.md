@@ -42,8 +42,8 @@
 
 Local render evidence is retained outside the repository at:
 
-- `C:\Users\suhai\.codex\visualizations\2026\08\13\soltex-product-rebuild\06f6a3b-native`
-- `C:\Users\suhai\.codex\visualizations\2026\08\13\soltex-product-rebuild\06f6a3b-native-validation`
+- `<local-evidence-root>\2026\08\13\soltex-product-rebuild\06f6a3b-native`
+- `<local-evidence-root>\2026\08\13\soltex-product-rebuild\06f6a3b-native-validation`
 
 ## Hosted verification
 

@@ -17,7 +17,7 @@ Key conclusions:
 - RustDesk separates screen capture, input, clipboard, client, server, and rendezvous responsibilities, but its AGPL-3.0 license is incompatible with silently copying that implementation into a closed Soltex executable. Soltex therefore uses a clean external-process boundary.
 - Zen Browser's compact mode, split-view emphasis, transient Glance layer, warm dark palette, and editorial hierarchy are product-design references only. Soltex uses independently authored WPF layout and no Zen assets, branding, or source.
 
-The external ChatGPT handoff requested by the owner was sent to conversation `6a6f4dbd-e6ec-83ea-b36e-cdb4207a247c` and completed. Its recommendation matched the companion-versus-provider split implemented here. Its sandbox files were not imported; this repository contains an independently written, source-matched handoff.
+The external review handoff requested by the owner was sent to conversation `6a6f4dbd-e6ec-83ea-b36e-cdb4207a247c` and completed. Its recommendation matched the companion-versus-provider split implemented here. Its sandbox files were not imported; this repository contains an independently written, source-matched handoff.
 
 ## Defender and Malwarebytes interoperability
 

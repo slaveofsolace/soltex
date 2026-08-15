@@ -4,7 +4,7 @@ Date: 2026-08-09
 
 Evidence class: owner-host candidate verification
 
-Branch: `codex/soltex-ui-focus-v1`
+Branch: `soltex-ui-focus-v1`
 
 Base: `a0daa2163529d8f813e79ea7e342ddfbd5c61f50`
 

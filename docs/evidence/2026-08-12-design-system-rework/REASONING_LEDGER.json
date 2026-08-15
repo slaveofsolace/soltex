@@ -64,7 +64,7 @@
         "unknown_disposition": ""
       },
       "people_incentives": {
-        "summary": "The user owns subjective visual acceptance and wants a calm, capable app rather than an AI-generated dashboard aesthetic.",
+        "summary": "The user owns subjective visual acceptance and wants a calm, capable app rather than an generic dashboard aesthetic.",
         "knowledge": "KNOWN",
         "load_bearing": true,
         "claim_ids": ["claim_ui_rework_needed"],
@@ -302,7 +302,7 @@
       "id": "ev_baseline_capture",
       "kind": "ARTIFACT",
       "access": "INSPECTED_CURRENT",
-      "locator": "C:/Users/suhai/.codex/visualizations/2026/08/12/soltex-product-rebuild/hosted-1facf37/windows/visual",
+      "locator": "<local-evidence-root>/2026/08/12/soltex-product-rebuild/hosted-1facf37/windows/visual",
       "captured_at": "2026-08-12T17:13:14Z",
       "integrity": "Current-source native capture set at branch head 1facf373; primary/default and disclosure states inspected before source-led interpretation.",
       "supports_claim_ids": ["claim_ui_rework_needed"],
@@ -362,7 +362,7 @@
       "id": "ev_candidate_matrix",
       "kind": "ARTIFACT",
       "access": "INSPECTED_CURRENT",
-      "locator": "C:/Users/suhai/.codex/visualizations/2026/08/12/soltex-product-rebuild/quiet-instrument-deck-exact-d342977-20260812-031629",
+      "locator": "<local-evidence-root>/2026/08/12/soltex-product-rebuild/quiet-instrument-deck-exact-d342977-20260812-031629",
       "captured_at": "2026-08-12T08:17:48Z",
       "integrity": "Sixteen 1280 by 820 native states are bound to source and tested commit d3429777c7baff67f08f1e78cc5540d71f58da03; zero error sidecars; manifest SHA-256 13BFBB211675118DDB558FE906F12D63BCAC8A436B1E638BE2D70F46EB682EDE.",
       "supports_claim_ids": ["claim_design_direction"],

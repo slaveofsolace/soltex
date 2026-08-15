@@ -53,7 +53,7 @@ Latest measured owner-host observation in the exact gate: 5 active sessions expo
 Evidence root:
 
 ```text
-C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\audio-exact-3511ba9-20260811-230454
+<local-evidence-root>\2026\08\11\soltex-product-rebuild\audio-exact-3511ba9-20260811-230454
 ```
 
 ## Exact native matrix
@@ -61,7 +61,7 @@ C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\audio-exa
 The complete native matrix passed 14/14 with source and tested commit both equal to `3511ba92bde450ffac4e3fad145d9a13b8986e72`. Every PNG is 1280x820. The default and explicitly expanded-device Audio states were directly inspected.
 
 ```text
-packet: C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\audio-native-3511ba9-20260811-230647
+packet: <local-evidence-root>\2026\08\11\soltex-product-rebuild\audio-native-3511ba9-20260811-230647
 default Audio: 166353 bytes / sha256:60bf70248d13511f01274c116da5ba02f1d7bb22199a59ad8a71bb3a20fd0828
 expanded Audio: 197133 bytes / sha256:054b813954a695e36aace808fb785bec5d0a4d7e18ae8cbfd6575eea1353fe4e
 ```
@@ -71,7 +71,7 @@ Default Audio shows five active sessions, three controllable, one compact endpoi
 ## Exact package gate
 
 ```text
-packet: C:\Users\suhai\.codex\visualizations\2026\08\11\soltex-product-rebuild\audio-package-3511ba9-20260811-230909
+packet: <local-evidence-root>\2026\08\11\soltex-product-rebuild\audio-package-3511ba9-20260811-230909
 file: Soltex.exe
 length: 71559764
 sha256: 31ef5e44b895738723b849705247fb2a4756a2a2092ec9aa514eea429aa64ebb

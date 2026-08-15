@@ -19,7 +19,7 @@ Implementation commit: `2a0699b2ca77b30fa636279b1d5ecab603a8bde9`
 - ZIP bytes: 626,093
 - GitHub-recorded SHA-256: `71905016B3A67F8CE340D90C2E404DEBFB185C3DAE8A973F21B80F1B8A94515`
 - Independently downloaded-byte SHA-256: `71905016B3A67F8CE340D90C2E404DEBFB185C3DAE8A973F21B80F1B8A94515`
-- Local inspected extraction: `C:\Users\suhai\.codex\visualizations\2026\08\02\019fc3bd-0b97-7560-925e-28f62969e8d3\soltex-wave-b-run-30925606488\extracted`
+- Local inspected extraction: `<local-evidence-root>\2026\08\02\019fc3bd-0b97-7560-925e-28f62969e8d3\soltex-wave-b-run-30925606488\extracted`
 
 The matching independent digest binds this review to the downloaded artifact bytes. It does not authenticate GitHub itself beyond the repository connection and the recorded workflow metadata.
 

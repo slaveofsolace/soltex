@@ -72,7 +72,7 @@ unresponsive immediately before it was written.
   `cmd /d /c echo SOLTEX_CANARY` exceeded five seconds again.
 - This is the third consecutive goal turn with the identical command-host
   startup failure. No additional command or process action followed. The active
-  goal now meets the formal blocked threshold and requires a Codex command-host
+  goal now meets the formal blocked threshold and requires a command-host
   or Windows restart before the exact resume step can run.
 
 ## Fresh resumed-goal audit

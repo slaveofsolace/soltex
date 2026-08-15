@@ -70,7 +70,7 @@ This is not owner acceptance or an accessibility conformance result.
 External evidence root:
 
 ```text
-C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\quiet-instrument-deck-exact-d342977-20260812-031629
+<local-evidence-root>\2026\08\12\soltex-product-rebuild\quiet-instrument-deck-exact-d342977-20260812-031629
 ```
 
 ## Verification completed on the frozen source

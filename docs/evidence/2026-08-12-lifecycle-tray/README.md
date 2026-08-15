@@ -41,7 +41,7 @@ Accepted close now cancels the active operation and telemetry loop, waits up to 
 
 The first security review pass found that this abandoned-cleanup path still raised a success-shaped completion event. The final source carries `ResourcesDisposed=false` for that path and `true` only after disposal. Normal shutdown maps false to exit code `1`; controlled render/runtime modes additionally require an observed, completed, true result and write an error sidecar otherwise. Focused tests independently reject false, missing, and pending cleanup signals.
 
-A canonical Codex Security working-tree scan validated with complete coverage and zero surviving findings. The rejected candidate remains in its audit ledger as `SOLTEX-SHUTDOWN-001`. The scan bundle remains in its task-owned scan directory; it was not silently copied into repository retention.
+A canonical security working-tree scan validated with complete coverage and zero surviving findings. The rejected candidate remains in its audit ledger as `SOLTEX-SHUTDOWN-001`. The scan bundle remains in its task-owned scan directory; it was not silently copied into repository retention.
 
 ## Exact runtime evidence
 
@@ -117,8 +117,8 @@ launch exit: 0
 ## External evidence root
 
 ```text
-C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\lifecycle-tray-exact-4207ecb-20260812-0055
-C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\hosted-6e54fb5
+<local-evidence-root>\2026\08\12\soltex-product-rebuild\lifecycle-tray-exact-4207ecb-20260812-0055
+<local-evidence-root>\2026\08\12\soltex-product-rebuild\hosted-6e54fb5
 ```
 
 ## Remaining gate

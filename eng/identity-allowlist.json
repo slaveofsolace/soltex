@@ -41,11 +41,6 @@
       "reason": "Append-only historical evidence preserves the product and source identifiers that were true when captured."
     },
     {
-      "pathPrefix": "docs/archive/prompts/",
-      "allowAll": true,
-      "reason": "Superseded prompt artifacts are retained only as historical context and are not current instructions."
-    },
-    {
       "path": "docs/RESEARCH_AUDIT.md",
       "lineContains": [
         "C:\\Users\\suhai\\Documents\\WaveSlate References\\RustDesk\\1.4.7"

@@ -4,7 +4,7 @@ Date: 2026-08-09
 
 Repository: `slaveofsolace/soltex`
 
-Candidate branch: `codex/soltex-ui-focus-v1`
+Candidate branch: `soltex-ui-focus-v1`
 
 Stack base: `feat/soltex-monitoring-and-audio` at `a0daa2163529d8f813e79ea7e342ddfbd5c61f50`
 

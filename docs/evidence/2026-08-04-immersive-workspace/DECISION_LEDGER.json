@@ -541,7 +541,7 @@
       "id": "ev_goal",
       "kind": "SOURCE",
       "access": "INSPECTED_CURRENT",
-      "locator": "User continuation goal and attached Soltex product/identity steers in the current Codex task.",
+      "locator": "User continuation goal and attached Soltex product/identity steers in the current implementation task.",
       "captured_at": "2026-08-04T15:58:43.009Z",
       "integrity": "Conversation-scoped source; not a repository artifact.",
       "supports_claim_ids": [
