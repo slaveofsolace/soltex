@@ -5,6 +5,8 @@
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <RootNamespace>Soltex.Whisper.Tests</RootNamespace>
     <AssemblyName>Soltex.Whisper.Tests</AssemblyName>
+    <!-- Exception-path tests intentionally invoke constructors solely to verify their throw contracts. -->
+    <NoWarn>$(NoWarn);CA1806</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Soltex.Whisper\Soltex.Whisper.csproj" />

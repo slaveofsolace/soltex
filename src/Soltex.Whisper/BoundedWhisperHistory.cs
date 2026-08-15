@@ -21,7 +21,7 @@ public sealed class BoundedWhisperHistory
 
     public int Capacity { get; }
 
-    public ReadOnlyCollection<WhisperHistoryEntry> Add(
+    public IReadOnlyList<WhisperHistoryEntry> Add(
         WhisperHistoryEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
