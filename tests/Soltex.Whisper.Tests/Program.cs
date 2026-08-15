@@ -195,6 +195,436 @@ var tests = new (string Name, Action Run)[]
             new byte[] { 0, 0 }, 4_000, 1, TimeSpan.FromSeconds(1)));
         Throws<ArgumentOutOfRangeException>(() => new WhisperAudioClip(
             new byte[] { 0, 0 }, 16_000, 1, TimeSpan.FromMinutes(21)));
+    }),
+
+    // ---------- Target identity and submit gate ----------
+
+    ("an unchanged target reports no drift", () =>
+        Equal(WhisperTargetDrift.None, Snap("chat", "el-1").CompareWith(Snap("chat", "el-1")))),
+    ("a different focused element is drift", () =>
+        Equal(WhisperTargetDrift.ElementChanged, Snap("chat", "el-1").CompareWith(Snap("chat", "el-2")))),
+    ("a different process is drift", () =>
+        Equal(WhisperTargetDrift.ProcessChanged, Snap("chat", "el-1").CompareWith(Snap("mail", "el-1", processId: 42)))),
+    ("an unknown current target is drift, never a match", () =>
+    {
+        WhisperTargetSnapshot unknown = new(
+            new WhisperTargetIdentity(7, "chat", "el-1"),
+            new WhisperTargetContext("chat", WhisperTargetKind.PlainText, false, false, false, false, false));
+        Equal(WhisperTargetDrift.TargetUnknown, Snap("chat", "el-1").CompareWith(unknown));
+    }),
+    ("a field that became a password is drift", () =>
+    {
+        WhisperTargetSnapshot password = new(
+            new WhisperTargetIdentity(7, "chat", "el-1"),
+            new WhisperTargetContext("chat", WhisperTargetKind.PlainText, true, true, true, false, false));
+        Equal(WhisperTargetDrift.ProtectedFieldAppeared, Snap("chat", "el-1").CompareWith(password));
+    }),
+    ("identity requires the process to agree with the context", () =>
+        Throws<ArgumentException>(() => new WhisperTargetSnapshot(
+            new WhisperTargetIdentity(7, "chat", "el-1"),
+            Edit("mail")))),
+
+    ("insertion verification accepts an exact match", () =>
+        True(WhisperInsertionVerifier.Verify(
+            "hello there", "hello there",
+            WhisperVerificationMethod.AutomationValueRead,
+            WhisperTargetKind.PlainText).Verified)),
+    ("insertion verification accepts a field ending with the transcript", () =>
+        True(WhisperInsertionVerifier.Verify(
+            "world", "hello world",
+            WhisperVerificationMethod.AutomationValueRead,
+            WhisperTargetKind.PlainText).Verified)),
+    ("insertion verification tolerates documented rich-text normalization", () =>
+        True(WhisperInsertionVerifier.Verify(
+            "hello world", "hello\u00A0world\u200B\r\n",
+            WhisperVerificationMethod.AutomationTextRead,
+            WhisperTargetKind.RichText).Verified)),
+    ("insertion verification rejects altered text", () =>
+        False(WhisperInsertionVerifier.Verify(
+            "transfer 100", "transfer 1000",
+            WhisperVerificationMethod.AutomationValueRead,
+            WhisperTargetKind.PlainText).Verified)),
+    ("insertion verification fails closed when no read is possible", () =>
+    {
+        WhisperInsertionVerification verification = WhisperInsertionVerifier.Verify(
+            "hello", "hello", WhisperVerificationMethod.None, WhisperTargetKind.PlainText);
+        False(verification.Verified);
+        Equal(WhisperVerificationMethod.None, verification.Method);
+    }),
+
+    ("the submit gate allows a verified, unchanged target", () =>
+    {
+        WhisperSubmitAuthorization authorization = Gate(
+            Snap("chat", "el-1"), Verified());
+        True(authorization.Allowed);
+        Equal(WhisperTargetDrift.None, authorization.Drift);
+    }),
+    ("the submit gate denies unverified insertion", () =>
+        False(Gate(Snap("chat", "el-1"), WhisperInsertionVerification.Unavailable).Allowed)),
+    ("the submit gate denies a target that changed after insertion", () =>
+    {
+        WhisperSubmitAuthorization authorization = Gate(Snap("chat", "el-2"), Verified());
+        False(authorization.Allowed);
+        Equal(WhisperTargetDrift.ElementChanged, authorization.Drift);
+    }),
+    ("the submit gate denies until the first-use warning is accepted", () =>
+        False(Gate(Snap("chat", "el-1"), Verified(), warningAccepted: false).Allowed)),
+    ("the submit gate denies after cancellation", () =>
+        False(Gate(Snap("chat", "el-1"), Verified(), cancelled: true).Allowed)),
+    ("the submit gate ignores decisions that never requested submission", () =>
+    {
+        WhisperDeliveryDecision insertOnly = new(
+            WhisperDeliveryKind.InsertText, "hello", WhisperSubmitOrigin.None, false, "insert");
+        False(WhisperSubmitGate.Evaluate(
+            insertOnly, Snap("chat", "el-1"), Snap("chat", "el-1"), Verified(), true, false).Allowed);
+    }),
+
+    // ---------- Vocabulary, styles, languages ----------
+
+    ("dictionary terms are normalized and deduplicated", () =>
+    {
+        WhisperVocabulary dictionary = new(["  Soltex ", "soltex", "Whisper\tflow"]);
+        Equal(2, dictionary.Terms.Count);
+        Equal("Soltex", dictionary.Terms[0]);
+        Equal("Whisper flow", dictionary.Terms[1]);
+        True(dictionary.Contains("SOLTEX"));
+    }),
+    ("oversized dictionary terms are rejected", () =>
+        Throws<ArgumentOutOfRangeException>(() => new WhisperVocabulary(
+            [new string('a', WhisperVocabulary.MaximumTermCharacters + 1)]))),
+    ("a terminal target always resolves to the terminal style", () =>
+    {
+        WhisperStyleProfile style = WhisperStyleProfile.Resolve(
+            Edit("pwsh", WhisperTargetKind.Terminal),
+            new WhisperAppProfile("pwsh", false, styleName: "Email"));
+        Equal(WhisperStyleKind.Terminal, style.Kind);
+        False(style.ProseCleanup);
+    }),
+    ("an application profile selects its named style", () =>
+        Equal(WhisperStyleKind.Email, WhisperStyleProfile.Resolve(
+            Edit("outlook"), new WhisperAppProfile("outlook", false, styleName: "Email")).Kind)),
+    ("the terminal style keeps the submit phrase but drops prose cleanup", () =>
+    {
+        WhisperTextOptions options = WhisperStyleProfile.Terminal.ToTextOptions();
+        True(options.DetectTerminalSubmit);
+        False(options.SmartFormatting);
+        False(options.Backtrack);
+    }),
+    ("explicit languages must be real culture names", () =>
+    {
+        Equal("fr", WhisperLanguageSelection.Explicit("fr").LanguageTag);
+        True(WhisperLanguageSelection.AutoDetect.IsAutoDetect);
+        Throws<ArgumentException>(() => WhisperLanguageSelection.Explicit("not-a-language"));
+    }),
+
+    // ---------- Command Mode ----------
+
+    ("command mode maps known phrases", () =>
+    {
+        Equal(WhisperCommandKind.Shorten, WhisperCommandParser.Parse("make it shorter", true).Kind);
+        Equal(WhisperCommandKind.FixGrammar, WhisperCommandParser.Parse("Fix grammar.", true).Kind);
+        Equal(WhisperCommandKind.ConvertToBullets, WhisperCommandParser.Parse("convert to bullets", true).Kind);
+    }),
+    ("command mode refuses instructions it does not know", () =>
+    {
+        WhisperCommandRequest request = WhisperCommandParser.Parse("delete the production database", true);
+        False(request.IsSupported);
+        Equal(WhisperCommandKind.Unsupported, request.Kind);
+    }),
+    ("command mode translates only into offered languages", () =>
+    {
+        Equal("ja", WhisperCommandParser.Parse("translate to Japanese", true).TargetLanguageTag);
+        False(WhisperCommandParser.Parse("translate to Klingon", true).IsSupported);
+    }),
+    ("meaning-changing transforms preview before replacing a selection", () =>
+    {
+        True(WhisperCommandParser.Parse("summarize", true).RequiresPreview);
+        False(WhisperCommandParser.Parse("summarize", false).RequiresPreview);
+        False(WhisperCommandParser.Parse("fix grammar", true).RequiresPreview);
+    }),
+    ("command mode uses the caret when nothing is selected", () =>
+        Equal(WhisperCommandScope.Caret, WhisperCommandParser.Parse("rewrite", false).Scope)),
+
+    // ---------- Settings validation and migration ----------
+
+    ("default settings keep every outward capability off", () =>
+    {
+        WhisperSettings defaults = WhisperSettings.CreateDefault();
+        False(defaults.AutoSendEnabled);
+        False(defaults.ContextReadsAllowed);
+        False(defaults.ShowTranscriptPreview);
+        Equal(WhisperHistoryMode.SessionMemory, defaults.HistoryMode);
+    }),
+    ("a missing settings document falls back to defaults", () =>
+    {
+        WhisperSettingsLoadResult result = WhisperSettingsMigrator.Load(null);
+        False(result.Settings.AutoSendEnabled);
+        Equal(1, result.Corrections.Count);
+    }),
+    ("auto-send without a recorded warning is disabled on load", () =>
+    {
+        WhisperSettingsLoadResult result = WhisperSettingsMigrator.Load(new WhisperSettingsDocument
+        {
+            Version = WhisperSettings.CurrentVersion,
+            AutoSendEnabled = true,
+            AutoSendWarningAccepted = false
+        });
+        False(result.Settings.AutoSendEnabled);
+        True(result.Corrections.Count > 0);
+    }),
+    ("migrating from an older version resets auto-send consent", () =>
+    {
+        WhisperSettingsLoadResult result = WhisperSettingsMigrator.Load(new WhisperSettingsDocument
+        {
+            Version = 1,
+            AutoSendEnabled = true,
+            AutoSendWarningAccepted = true
+        });
+        True(result.Migrated);
+        False(result.Settings.AutoSendEnabled);
+        False(result.Settings.AutoSendWarningAccepted);
+    }),
+    ("an unsupported future version falls back to defaults", () =>
+    {
+        WhisperSettingsLoadResult result = WhisperSettingsMigrator.Load(new WhisperSettingsDocument
+        {
+            Version = WhisperSettings.CurrentVersion + 1,
+            AutoSendEnabled = true
+        });
+        False(result.Settings.AutoSendEnabled);
+        False(result.Migrated);
+    }),
+    ("invalid fields are repaired to the safer default and reported", () =>
+    {
+        WhisperSettingsLoadResult result = WhisperSettingsMigrator.Load(new WhisperSettingsDocument
+        {
+            Version = WhisperSettings.CurrentVersion,
+            PreferredLanguageTag = "zzz-not-real",
+            HistoryMode = "EverythingForever",
+            HistoryRetentionDays = 5_000,
+            ClipboardBehavior = "KeepForever",
+            VocabularyTerms = ["ok", "  ", "also fine"]
+        });
+        True(result.Settings.Language.IsAutoDetect);
+        Equal(WhisperHistoryMode.SessionMemory, result.Settings.HistoryMode);
+        Equal(7, result.Settings.HistoryRetentionDays);
+        Equal(WhisperClipboardBehavior.RestorePrevious, result.Settings.ClipboardBehavior);
+        Equal(2, result.Settings.Vocabulary.Terms.Count);
+        Equal(5, result.Corrections.Count);
+    }),
+    ("a clean current document round-trips without corrections", () =>
+    {
+        WhisperSettings source = WhisperSettings.CreateDefault();
+        WhisperSettingsLoadResult result = WhisperSettingsMigrator.Load(source.ToDocument());
+        True(result.IsClean);
+        Equal(WhisperSettings.CurrentVersion, result.LoadedVersion);
+    }),
+
+    // ---------- Readiness ----------
+
+    ("a fully configured Whisper reports ready", () =>
+    {
+        WhisperReadinessReport report = WhisperReadinessEvaluator.Evaluate(ReadyInputs());
+        True(report.CanDictate);
+        True(report.PrimaryBlocker is null);
+    }),
+    ("a missing microphone permission blocks dictation with one action", () =>
+    {
+        WhisperReadinessReport report = WhisperReadinessEvaluator.Evaluate(
+            ReadyInputs() with { MicrophonePermissionGranted = false });
+        False(report.CanDictate);
+        Equal("microphone", report.PrimaryBlocker!.Id);
+        Equal(WhisperReadinessState.Blocked, report.PrimaryBlocker.State);
+        True(report.PrimaryBlocker.NextAction is { Length: > 0 });
+    }),
+    ("auto-send with no approved application is surfaced as setup", () =>
+    {
+        WhisperReadinessReport report = WhisperReadinessEvaluator.Evaluate(
+            ReadyInputs() with { AutoSendEnabled = true, EnabledAutoSendProfileCount = 0 });
+        True(report.CanDictate);
+        Equal("auto-send", report.PrimaryBlocker!.Id);
+    }),
+    ("target inspection is not required to dictate", () =>
+        True(WhisperReadinessEvaluator.Evaluate(
+            ReadyInputs() with { TargetInspectionAvailable = false }).CanDictate)),
+
+    // ---------- Overlay presentation ----------
+
+    ("an idle session hides the overlay", () =>
+        False(WhisperOverlayPresenter.Project(Overlay(WhisperSessionState.Idle)).IsVisible)),
+    ("listening shows the meter, the target, and one cancel action", () =>
+    {
+        WhisperOverlayView view = WhisperOverlayPresenter.Project(Overlay(WhisperSessionState.Listening));
+        Equal(WhisperOverlayState.Listening, view.State);
+        Equal(WhisperOverlayTone.Accent, view.Tone);
+        True(view.ShowLevelMeter);
+        True(view.CancelAvailable);
+        Equal("chat", view.TargetLabel);
+    }),
+    ("the hands-free warning changes tone before the limit", () =>
+    {
+        WhisperOverlayView warning = WhisperOverlayPresenter.Project(Overlay(
+            WhisperSessionState.Listening,
+            mode: WhisperCaptureMode.HandsFree,
+            duration: WhisperDurationState.Warning));
+        Equal(WhisperOverlayTone.Warning, warning.Tone);
+        True(warning.ShowElapsed);
+
+        WhisperOverlayView expired = WhisperOverlayPresenter.Project(Overlay(
+            WhisperSessionState.Listening,
+            mode: WhisperCaptureMode.HandsFree,
+            duration: WhisperDurationState.Expired));
+        Equal(WhisperOverlayTone.Danger, expired.Tone);
+    }),
+    ("cancel is withdrawn once insertion begins", () =>
+        False(WhisperOverlayPresenter.Project(Overlay(WhisperSessionState.Delivering)).CancelAvailable)),
+    ("a copy fallback is shown as attention with a recovery action", () =>
+    {
+        WhisperOverlayView view = WhisperOverlayPresenter.Project(Overlay(
+            WhisperSessionState.Completed, delivery: WhisperDeliveryKind.CopyText));
+        Equal(WhisperOverlayState.CopiedFallback, view.State);
+        Equal(WhisperOverlayTone.Warning, view.Tone);
+        Equal("Paste", view.ActionLabel);
+    }),
+    ("a submitted session reads as confirmed", () =>
+    {
+        WhisperOverlayView view = WhisperOverlayPresenter.Project(Overlay(
+            WhisperSessionState.Completed, delivery: WhisperDeliveryKind.InsertAndSubmit));
+        Equal(WhisperOverlayState.Submitted, view.State);
+        Equal(WhisperOverlayTone.Signal, view.Tone);
+    }),
+    ("an unknown target is labelled rather than blank", () =>
+    {
+        WhisperOverlayView view = WhisperOverlayPresenter.Project(
+            Overlay(WhisperSessionState.Listening) with { TargetIsKnown = false });
+        Equal("Unknown target", view.TargetLabel);
+    }),
+    ("elapsed time is formatted for speech-length sessions", () =>
+    {
+        Equal("0:07", WhisperOverlayPresenter.FormatElapsed(TimeSpan.FromSeconds(7)));
+        Equal("19:00", WhisperOverlayPresenter.FormatElapsed(TimeSpan.FromMinutes(19)));
+        Equal("1:00:01", WhisperOverlayPresenter.FormatElapsed(TimeSpan.FromSeconds(3601)));
+    }),
+
+    // ---------- Diagnostics ----------
+
+    ("diagnostics redact paths, URLs, and quoted payloads", () =>
+    {
+        string sanitized = WhisperRedaction.Sanitize(
+            "provider https://api.example.com rejected \"my private sentence\" at C:\\Users\\me\\a.log",
+            200);
+        False(sanitized.Contains("api.example.com", StringComparison.Ordinal));
+        False(sanitized.Contains("private", StringComparison.Ordinal));
+        False(sanitized.Contains("Users", StringComparison.Ordinal));
+        True(sanitized.Contains("[redacted]", StringComparison.Ordinal));
+    }),
+    ("diagnostic detail is bounded", () =>
+        True(WhisperRedaction.Sanitize(new string('a', 500), 64).Length <= 64)),
+    ("durations are reported as buckets, not exact values", () =>
+    {
+        Equal(WhisperDurationBucket.UnderFiveSeconds, WhisperRedaction.ToBucket(TimeSpan.FromSeconds(2)));
+        Equal(WhisperDurationBucket.UnderTwoMinutes, WhisperRedaction.ToBucket(TimeSpan.FromSeconds(90)));
+        Equal(WhisperDurationBucket.Extended, WhisperRedaction.ToBucket(TimeSpan.FromMinutes(15)));
+    }),
+    ("the diagnostic log is bounded and content-free", () =>
+    {
+        WhisperDiagnosticLog log = new(2);
+        for (int index = 0; index < 5; index++)
+        {
+            log.Record(new WhisperDiagnosticEvent(
+                DateTimeOffset.UnixEpoch,
+                WhisperDiagnosticEventKind.SessionStarted,
+                WhisperCaptureMode.PushToTalk,
+                WhisperTargetKind.PlainText,
+                "started"));
+        }
+
+        Equal(2, log.CreateSnapshot().Count);
+        True(log.CreateSnapshot()[0].ToEvidenceLine().Contains("kind=SessionStarted", StringComparison.Ordinal));
+    }),
+
+    // ---------- Scratchpad ----------
+
+    ("scratchpad append and undo are reversible", () =>
+    {
+        WhisperScratchpadTab tab = new("Note");
+        tab.Append("first");
+        tab.Append("second");
+        Equal("first second", tab.Content);
+        True(tab.Undo());
+        Equal("first", tab.Content);
+        True(tab.Redo());
+        Equal("first second", tab.Content);
+    }),
+    ("scratchpad undo depth is bounded", () =>
+    {
+        WhisperScratchpadTab tab = new("Note");
+        for (int index = 0; index < WhisperScratchpadTab.MaximumUndoDepth + 20; index++)
+        {
+            tab.Append("x");
+        }
+
+        int undone = 0;
+        while (tab.Undo())
+        {
+            undone++;
+        }
+
+        Equal(WhisperScratchpadTab.MaximumUndoDepth, undone);
+    }),
+    ("the scratchpad holds at most five tabs and always keeps one", () =>
+    {
+        WhisperScratchpad scratchpad = new();
+        while (scratchpad.CanAddTab)
+        {
+            scratchpad.AddTab();
+        }
+
+        Equal(WhisperScratchpad.MaximumTabs, scratchpad.Tabs.Count);
+        Throws<InvalidOperationException>(() => scratchpad.AddTab());
+
+        for (int index = WhisperScratchpad.MaximumTabs - 1; index >= 0; index--)
+        {
+            scratchpad.CloseTab(index);
+        }
+
+        Equal(1, scratchpad.Tabs.Count);
+    }),
+
+    // ---------- Deterministic providers ----------
+
+    ("the deterministic transcriber replays scripted transcripts and records context", () =>
+    {
+        WhisperDeterministicCaptureSource capture = new(TimeSpan.FromSeconds(2));
+        WhisperDeterministicTranscriber transcriber = new("first", "second");
+        WhisperAudioClip clip = Wait(capture.CaptureAsync(
+            WhisperCaptureMode.PushToTalk, CancellationToken.None));
+        WhisperTranscriptionContext context = new(
+            WhisperCaptureMode.PushToTalk, "en", "chat", "Message", ["Soltex"]);
+
+        Equal("first", Wait(transcriber.TranscribeAsync(clip, context, CancellationToken.None)));
+        Equal("second", Wait(transcriber.TranscribeAsync(clip, context, CancellationToken.None)));
+        Equal("second", Wait(transcriber.TranscribeAsync(clip, context, CancellationToken.None)));
+        Equal(3, transcriber.ObservedContexts.Count);
+        Equal("Soltex", transcriber.ObservedContexts[0].DictionaryTerms.First());
+        Equal(1, capture.CaptureCount);
+    }),
+    ("a failing transcriber surfaces as a fault rather than an empty transcript", () =>
+    {
+        WhisperDeterministicTranscriber transcriber =
+            WhisperDeterministicTranscriber.CreateFailing("provider unavailable");
+        WhisperAudioClip clip = Wait(new WhisperDeterministicCaptureSource().CaptureAsync(
+            WhisperCaptureMode.PushToTalk, CancellationToken.None));
+        WhisperTranscriptionContext context = new(
+            WhisperCaptureMode.PushToTalk, null, "chat", "Message", []);
+        Throws<InvalidOperationException>(() => Wait(
+            transcriber.TranscribeAsync(clip, context, CancellationToken.None)));
+    }),
+    ("the scripted inspector can change focus mid-session", () =>
+    {
+        WhisperScriptedTargetInspector inspector = new(Edit("chat"), Edit("mail"));
+        Equal("chat", Wait(inspector.InspectAsync(CancellationToken.None)).ProcessName);
+        Equal("mail", Wait(inspector.InspectAsync(CancellationToken.None)).ProcessName);
     })
 };
 
@@ -249,6 +679,72 @@ static WhisperHistoryEntry Entry(string processName, string text) => new(
     processName,
     WhisperDeliveryKind.InsertText,
     text);
+
+// The deterministic providers all complete synchronously, so unwrapping the
+// ValueTask here cannot deadlock and keeps the suite a plain list of Actions.
+static T Wait<T>(ValueTask<T> pending) => pending.GetAwaiter().GetResult();
+
+static WhisperTargetSnapshot Snap(
+    string processName,
+    string elementRuntimeId,
+    int processId = 7,
+    WhisperTargetKind kind = WhisperTargetKind.PlainText) => new(
+        new WhisperTargetIdentity(processId, processName, elementRuntimeId),
+        Edit(processName, kind));
+
+static WhisperInsertionVerification Verified() => new(
+    Verified: true,
+    WhisperVerificationMethod.AutomationValueRead,
+    "read back");
+
+static WhisperSubmitAuthorization Gate(
+    WhisperTargetSnapshot current,
+    WhisperInsertionVerification verification,
+    bool warningAccepted = true,
+    bool cancelled = false)
+{
+    WhisperDeliveryDecision decision = new(
+        WhisperDeliveryKind.InsertAndSubmit,
+        "hello",
+        WhisperSubmitOrigin.TerminalPhrase,
+        RestoreClipboard: false,
+        "authorized");
+    return WhisperSubmitGate.Evaluate(
+        decision,
+        Snap("chat", "el-1"),
+        current,
+        verification,
+        warningAccepted,
+        cancelled);
+}
+
+static WhisperReadinessInputs ReadyInputs() => new(
+    FeatureEnabled: true,
+    MicrophoneSelected: true,
+    MicrophonePermissionGranted: true,
+    ShortcutsRegistered: true,
+    ShortcutRegistrationError: null,
+    TranscriberConfigured: true,
+    TranscriberCredentialAvailable: true,
+    TargetInspectionAvailable: true,
+    AutoSendEnabled: false,
+    AutoSendWarningAccepted: false,
+    EnabledAutoSendProfileCount: 0);
+
+static WhisperOverlayInputs Overlay(
+    WhisperSessionState state,
+    WhisperCaptureMode mode = WhisperCaptureMode.PushToTalk,
+    WhisperDurationState duration = WhisperDurationState.Current,
+    WhisperDeliveryKind delivery = WhisperDeliveryKind.InsertText) => new(
+        new WhisperSessionSnapshot(state, mode, DateTimeOffset.UnixEpoch, null),
+        mode,
+        "chat",
+        TargetIsKnown: true,
+        HandsFreeLocked: false,
+        TimeSpan.FromSeconds(12),
+        duration,
+        delivery,
+        ErrorDetail: null);
 
 static void Equal<T>(T expected, T actual)
 {

@@ -459,4 +459,110 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Padding" Value="8,6" />
     </Style>
+
+    <!-- ===================== Whisper dictation ===================== -->
+    <!--
+        The listening overlay is the only Soltex surface drawn over other applications.
+        It follows the same rules as the rest of the system - hairline edges, small
+        corners, no glass - but uses the denser overlay ground so it stays readable
+        against an unknown background.
+    -->
+
+    <Style x:Key="WhisperOverlayShellStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource OverlayBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource OverlayBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusPill}" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <!--
+        The signal rail from the navigation rail, reused as the overlay's state
+        indicator. Its brush is set from the presenter's tone, so state is carried by
+        one consistent element instead of recolouring the whole surface.
+    -->
+    <Style x:Key="WhisperStateRailStyle" TargetType="Border">
+        <Setter Property="Width" Value="3" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusXs}" />
+        <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Margin" Value="0,2,10,2" />
+    </Style>
+
+    <Style x:Key="WhisperStateChipStyle" TargetType="Border" BasedOn="{StaticResource StatusPillStyle}">
+        <Setter Property="Background" Value="{StaticResource InsetBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Padding" Value="7,3" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!--
+        Audio level meter. Read-only telemetry, so it is a meter and never a slider,
+        per the control-selection table in docs/DESIGN_SYSTEM.md.
+    -->
+    <Style x:Key="WhisperLevelMeterStyle" TargetType="ProgressBar">
+        <Setter Property="Height" Value="4" />
+        <Setter Property="Minimum" Value="0" />
+        <Setter Property="Maximum" Value="1" />
+        <Setter Property="Background" Value="{StaticResource MeterTrackBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource MeterFillBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="IsIndeterminate" Value="False" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ProgressBar">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="{StaticResource RadiusXs}"
+                            ClipToBounds="True">
+                        <Grid>
+                            <Rectangle x:Name="PART_Track" />
+                            <Rectangle x:Name="PART_Indicator"
+                                       HorizontalAlignment="Left"
+                                       Fill="{TemplateBinding Foreground}" />
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!--
+        Keycaps render a shortcut chord as the keys the user actually presses. Showing
+        "Ctrl Win" as two caps rather than the string "Ctrl+Win" removes the step where
+        someone has to decode the notation before trying it.
+    -->
+    <Style x:Key="WhisperKeycapStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource KeycapBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource KeycapBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusSm}" />
+        <Setter Property="Padding" Value="7,2" />
+        <Setter Property="Margin" Value="0,0,4,0" />
+        <Setter Property="MinWidth" Value="24" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="WhisperKeycapTextStyle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
+        <Setter Property="FontSize" Value="{StaticResource FontMono}" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="TextAlignment" Value="Center" />
+    </Style>
+
+    <!--
+        One readiness row: state dot, what it is, one sentence, and the single next
+        action. Empty and blocked states use this same row so a half-configured
+        Whisper reads as a checklist rather than a wall of disabled controls.
+    -->
+    <Style x:Key="WhisperChecklistRowStyle" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource QuietBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource RadiusSm}" />
+        <Setter Property="Padding" Value="{StaticResource PadCompact}" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
 </ResourceDictionary>

@@ -79,6 +79,23 @@
     <!-- Navigation selection tint. -->
     <Color x:Key="NavSelectedColor">#10263A</Color>
 
+    <!--
+        Whisper listening overlay. This is the only Soltex surface that floats above
+        other applications, so it needs a slightly denser ground and a stronger edge
+        than in-window surfaces: it has to stay legible over an arbitrary background
+        without borrowing shadow or glass.
+    -->
+    <Color x:Key="OverlayColor">#151C24</Color>
+    <Color x:Key="OverlayBorderColor">#3A4A58</Color>
+
+    <!-- Audio level meter: a recessed track with discrete segments. -->
+    <Color x:Key="MeterTrackColor">#1A222B</Color>
+    <Color x:Key="MeterQuietColor">#2A3742</Color>
+
+    <!-- Keycap faces for rendering shortcut chords. -->
+    <Color x:Key="KeycapColor">#212B36</Color>
+    <Color x:Key="KeycapBorderColor">#43535F</Color>
+
     <!-- Translucent fills for chart areas and text selection (#AARRGGBB). -->
     <Color x:Key="AccentAreaColor">#2467B7FF</Color>
     <Color x:Key="SignalAreaColor">#1A5DD39E</Color>
@@ -142,6 +159,18 @@
     <SolidColorBrush x:Key="SelectedNavBrush" Color="{StaticResource NavSelectedColor}" />
     <SolidColorBrush x:Key="NavRestBrush" Color="Transparent" />
 
+    <!-- Whisper overlay, level meter, and keycaps. -->
+    <SolidColorBrush x:Key="OverlayBrush" Color="{StaticResource OverlayColor}" />
+    <SolidColorBrush x:Key="OverlayBorderBrush" Color="{StaticResource OverlayBorderColor}" />
+    <SolidColorBrush x:Key="MeterTrackBrush" Color="{StaticResource MeterTrackColor}" />
+    <SolidColorBrush x:Key="MeterQuietBrush" Color="{StaticResource MeterQuietColor}" />
+    <!-- The meter and peak roles alias the accent and warning signals rather than
+         introducing new hues: a loud input is attention, not a separate colour. -->
+    <SolidColorBrush x:Key="MeterFillBrush" Color="{StaticResource AccentColor}" />
+    <SolidColorBrush x:Key="MeterPeakBrush" Color="{StaticResource WarningColor}" />
+    <SolidColorBrush x:Key="KeycapBrush" Color="{StaticResource KeycapColor}" />
+    <SolidColorBrush x:Key="KeycapBorderBrush" Color="{StaticResource KeycapBorderColor}" />
+
     <!-- Chart area fills and text selection. -->
     <SolidColorBrush x:Key="AccentAreaBrush" Color="{StaticResource AccentAreaColor}" />
     <SolidColorBrush x:Key="SignalAreaBrush" Color="{StaticResource SignalAreaColor}" />
@@ -158,6 +187,8 @@
     <CornerRadius x:Key="RadiusCard">6</CornerRadius>
     <CornerRadius x:Key="RadiusHero">8</CornerRadius>
     <CornerRadius x:Key="RadiusHeroXl">10</CornerRadius>
+    <!-- Fully rounded ends, used only by the listening overlay shell and keycaps. -->
+    <CornerRadius x:Key="RadiusPill">14</CornerRadius>
 
     <!-- ============================================================ -->
     <!-- 4. Spacing scale and common paddings                          -->

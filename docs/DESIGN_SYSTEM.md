@@ -207,9 +207,86 @@ default for navigation, tabs, headings, and buttons.
 | Audio | Repeated channel lanes with volume sliders; Devices/More as local tabs |
 | Security | Posture/status band + scan command deck + Activity/Quarantine local tabs |
 | Remote Assist | Device/session master-detail deck + compact permission disclosure |
+| Whisper | Readiness checklist + dictation controls; Shortcuts/Snippets/History as local tabs |
 | Activity | Filter command band + bounded event table |
 | Updates | Prepared update detail + History/Recovery local tabs |
 | Settings | Category rail/tabs + one bounded settings panel at a time |
+
+## Dictation surfaces (Whisper)
+
+Whisper is the first Soltex tool that draws outside the application window and acts
+inside someone else's. Both facts change what the visual language has to do.
+
+### The listening overlay
+
+The overlay is a compact horizontal shell, not a panel. It answers four questions and
+stops: what state am I in, which application will receive this, how long have I been
+talking, and how do I stop.
+
+| Region | Content |
+|---|---|
+| State rail | 3 px leading rail, tinted by tone. The only element that changes colour. |
+| Headline | One or two words: Listening, Transcribing, Sent, Copied instead. |
+| Target | The focused application's name, or `Unknown target`. Never a window title. |
+| Elapsed | Hands-free only. `m:ss`, switching to `h:mm:ss` past an hour. |
+| Level meter | 4 px meter driven by live input level. Present only while listening. |
+| Action | Exactly one: Cancel while running, or a recovery action after a fallback. |
+
+Rules:
+
+- The overlay never shows transcript text unless the user turns preview on. A floating
+  window that echoes speech is a shoulder-surfing surface by default.
+- The level meter is a meter, never a slider, and it is fed by a throttled level value.
+  No audio is retained to draw it.
+- The state rail carries tone; the surface behind it does not change colour. A red
+  overlay for a failed insert is louder than the failure warrants.
+- Reduced motion removes the meter's smoothing, not the meter.
+
+### State and tone mapping
+
+`WhisperOverlayPresenter` emits a tone; the overlay resolves it to a token. Views do
+not choose colours for states.
+
+| State | Tone | Brush |
+|---|---|---|
+| Listening, locked hands-free, transcribing, cleaning, inserting | Accent | `AccentBrush` |
+| Inserted, sent | Signal | `SignalBrush` |
+| 19-minute warning, copied fallback | Warning | `WarningBrush` |
+| Hands-free expired, error | Danger | `DangerBrush` |
+| Idle, cancelled, nothing to insert | Neutral | `MutedBrush` |
+
+Because the presenter is a pure function in `Soltex.Whisper`, every one of these
+states is reachable in a test rather than only by dictating into a live application.
+
+### Readiness before controls
+
+The Whisper page leads with a readiness checklist, not a settings wall. Each row is a
+state dot, a name, one sentence, and one action. A user whose shortcut did nothing
+should be able to open Whisper and read the single reason why.
+
+Blocked capability is shown as a row with an action, never as a control that looks
+operable and silently does nothing.
+
+### Keycaps
+
+Shortcut chords render as keycaps — `Ctrl` `Win` — rather than the string `Ctrl+Win`.
+The notation is an extra decoding step in the one place where the user is being asked
+to press physical keys.
+
+### Whisper tokens
+
+| Token | Value | Role |
+|---|---|---|
+| `OverlayColor` | `#151C24` | Floating overlay ground, denser than in-window surfaces |
+| `OverlayBorderColor` | `#3A4A58` | Overlay edge, strong enough to read over any background |
+| `MeterTrackColor` | `#1A222B` | Level meter track |
+| `MeterQuietColor` | `#2A3742` | Inactive meter segments |
+| `KeycapColor` | `#212B36` | Keycap face |
+| `KeycapBorderColor` | `#43535F` | Keycap edge |
+| `RadiusPill` | 14 | Overlay shell only |
+
+`MeterFillBrush` and `MeterPeakBrush` alias the accent and warning colours rather than
+introducing new hues: a loud input is attention, not a new semantic category.
 
 ## Motion
 
