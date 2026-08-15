@@ -8,6 +8,7 @@
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Soltex.Audio\Soltex.Audio.csproj" />
     <ProjectReference Include="..\Soltex.Whisper\Soltex.Whisper.csproj" />
   </ItemGroup>
   <ItemGroup>

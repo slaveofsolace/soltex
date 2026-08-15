@@ -42,6 +42,7 @@ internal static class Program
             ("Shared theme exposes required control resources", ThemeResourcesAreAvailable),
             ("Workspace command catalog is bounded and searchable", WorkspaceCommandsAreBounded),
             ("Every command palette workspace resolves to its intended target", WorkspaceCommandRoutesResolve),
+            ("Whisper Core Audio startup waits for the shared audio refresh", WhisperAudioStartupIsSerialized),
             ("Telemetry runs only in visible live workspaces", TelemetryRunsOnlyInLiveWorkspaces),
             ("Telemetry loop ownership serializes duplicate stop and queued restart", TelemetryLoopOwnershipIsSerialized),
             ("Background runtime remains explicit and fail-closed", BackgroundRuntimeIsExplicit),
@@ -929,6 +930,27 @@ internal static class Program
             !WorkspaceNavigationPolicy.TryResolve("not-a-soltex-workspace", out WorkspaceNavigationTarget unknown) &&
             unknown == WorkspaceNavigationTarget.Home,
             "An unknown command route did not fail closed to Overview.");
+    }
+
+    private static void WhisperAudioStartupIsSerialized()
+    {
+        TaskCompletionSource<bool> audioCompleted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        bool whisperStarted = false;
+        Task coordinated = CoreAudioStartupCoordinator.RunWhisperAfterAudioAsync(
+            audioCompleted.Task,
+            () =>
+            {
+                whisperStarted = true;
+                return Task.CompletedTask;
+            });
+
+        True(!whisperStarted && !coordinated.IsCompleted,
+            "Whisper microphone discovery overlapped the initial Core Audio refresh.");
+        audioCompleted.TrySetResult(true);
+        coordinated.GetAwaiter().GetResult();
+        True(whisperStarted,
+            "Whisper microphone discovery did not begin after Core Audio completed.");
     }
 
     private static void RuntimeNavigationContractIsCurrent()

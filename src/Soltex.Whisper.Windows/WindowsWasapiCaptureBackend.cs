@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using Soltex.Audio;
 using Soltex.Whisper;
 
 namespace Soltex.Whisper.Windows;
@@ -23,14 +24,14 @@ internal sealed class WindowsWasapiCaptureBackendFactory : IWhisperCaptureBacken
     private static WhisperCaptureDeviceSnapshot Enumerate(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        IWasapiDeviceEnumerator enumerator = CreateEnumerator();
+        IMMDeviceEnumerator enumerator = CreateEnumerator();
         try
         {
             string? defaultId = TryGetDefaultId(enumerator);
             int result = enumerator.EnumAudioEndpoints(
-                WasapiDataFlow.Capture,
-                WasapiDeviceState.Active,
-                out IWasapiDeviceCollection collection);
+                DataFlow.Capture,
+                DeviceStateMask.Active,
+                out IMMDeviceCollection collection);
             ThrowForFailure(result, "Windows could not enumerate microphone devices.");
 
             try
@@ -42,7 +43,7 @@ internal sealed class WindowsWasapiCaptureBackendFactory : IWhisperCaptureBacken
                 for (uint index = 0; index < count; index++)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    if (collection.Item(index, out IWasapiDevice device) != WasapiNative.Ok)
+                    if (collection.Item(index, out IMMDevice device) != WasapiNative.Ok)
                     {
                         continue;
                     }
@@ -83,8 +84,8 @@ internal sealed class WindowsWasapiCaptureBackendFactory : IWhisperCaptureBacken
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        IWasapiDeviceEnumerator enumerator = CreateEnumerator();
-        IWasapiDevice? device = null;
+        IMMDeviceEnumerator enumerator = CreateEnumerator();
+        IMMDevice? device = null;
         try
         {
             bool usedFallback = false;
@@ -93,7 +94,7 @@ internal sealed class WindowsWasapiCaptureBackendFactory : IWhisperCaptureBacken
                 int selectedResult = enumerator.GetDevice(requestedDeviceId, out device);
                 if (selectedResult != WasapiNative.Ok ||
                     device.GetState(out uint state) != WasapiNative.Ok ||
-                    state != WasapiDeviceState.Active)
+                    state != DeviceStateMask.Active)
                 {
                     WasapiNative.Release(device);
                     device = null;
@@ -104,8 +105,8 @@ internal sealed class WindowsWasapiCaptureBackendFactory : IWhisperCaptureBacken
             if (device is null)
             {
                 int defaultResult = enumerator.GetDefaultAudioEndpoint(
-                    WasapiDataFlow.Capture,
-                    WasapiDeviceRole.Multimedia,
+                    DataFlow.Capture,
+                    DeviceRole.Multimedia,
                     out device);
                 if (defaultResult != WasapiNative.Ok)
                 {
@@ -156,11 +157,11 @@ internal sealed class WindowsWasapiCaptureBackendFactory : IWhisperCaptureBacken
         }
     }
 
-    private static IWasapiDeviceEnumerator CreateEnumerator()
+    private static IMMDeviceEnumerator CreateEnumerator()
     {
         try
         {
-            return (IWasapiDeviceEnumerator)(object)new WasapiDeviceEnumeratorObject();
+            return (IMMDeviceEnumerator)(object)new MMDeviceEnumeratorObject();
         }
         catch (COMException exception)
         {
@@ -178,12 +179,12 @@ internal sealed class WindowsWasapiCaptureBackendFactory : IWhisperCaptureBacken
         }
     }
 
-    private static string? TryGetDefaultId(IWasapiDeviceEnumerator enumerator)
+    private static string? TryGetDefaultId(IMMDeviceEnumerator enumerator)
     {
         int result = enumerator.GetDefaultAudioEndpoint(
-            WasapiDataFlow.Capture,
-            WasapiDeviceRole.Multimedia,
-            out IWasapiDevice device);
+            DataFlow.Capture,
+            DeviceRole.Multimedia,
+            out IMMDevice device);
         if (result != WasapiNative.Ok)
         {
             return null;
@@ -199,7 +200,7 @@ internal sealed class WindowsWasapiCaptureBackendFactory : IWhisperCaptureBacken
         }
     }
 
-    private static bool TryReadId(IWasapiDevice device, out string? id)
+    private static bool TryReadId(IMMDevice device, out string? id)
     {
         int result = device.GetId(out string value);
         bool accepted = result == WasapiNative.Ok &&
@@ -210,9 +211,9 @@ internal sealed class WindowsWasapiCaptureBackendFactory : IWhisperCaptureBacken
         return accepted;
     }
 
-    private static string ReadFriendlyName(IWasapiDevice device)
+    private static string ReadFriendlyName(IMMDevice device)
     {
-        if (device.OpenPropertyStore(WasapiNative.StorageRead, out IWasapiPropertyStore store) !=
+        if (device.OpenPropertyStore(WasapiNative.StorageRead, out IPropertyStore store) !=
             WasapiNative.Ok)
         {
             return "Windows microphone";
@@ -220,8 +221,8 @@ internal sealed class WindowsWasapiCaptureBackendFactory : IWhisperCaptureBacken
 
         try
         {
-            WasapiPropertyKey key = WasapiNative.FriendlyNameKey;
-            if (store.GetValue(ref key, out WasapiPropVariant value) != WasapiNative.Ok)
+            PropertyKey key = CoreAudio.FriendlyNameKey;
+            if (store.GetValue(ref key, out PropVariant value) != WasapiNative.Ok)
             {
                 return "Windows microphone";
             }
@@ -244,7 +245,7 @@ internal sealed class WindowsWasapiCaptureBackendFactory : IWhisperCaptureBacken
             }
             finally
             {
-                _ = WasapiNative.PropVariantClear(ref value);
+                _ = CoreAudio.PropVariantClear(ref value);
             }
         }
         finally

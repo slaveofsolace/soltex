@@ -88,11 +88,17 @@ pooled accumulation chunks, and final clips are explicitly cleared on every disp
 path. WASAPI's engine-owned buffer is released through `IAudioCaptureClient` and is
 never retained or modified.
 
+Whisper reuses the existing `Soltex.Audio` MMDevice declarations instead of loading a
+second managed identity for the same Windows COM interfaces. The shell also completes
+its initial audio inventory before starting Whisper device discovery. This prevents a
+cold-start RCW identity collision while preserving later user-requested refreshes.
+
 Deterministic tests cover selected-device fallback, disconnect recovery, cancellation
 during enumeration/open/read, the byte bound, float-stereo normalization, readiness
-mapping, metering, and buffer clearing. An owner-host run observed 6 active capture
-devices and captured 31,360 PCM bytes over 980 ms from the selected default device
-without fallback; the clip was then disposed. That proves one normal live path only.
+mapping, metering, and buffer clearing. An owner-host run observed 5 active capture
+devices and captured 31,040 PCM bytes over 970 ms from the selected default device
+without fallback; the clip was then disposed. A separate cold-start app run exposed
+all 5 devices without a manual retry. That proves one normal live path only.
 It does not prove every microphone driver, a physical unplug/reconnect, or Windows
 privacy-denial recovery.
 

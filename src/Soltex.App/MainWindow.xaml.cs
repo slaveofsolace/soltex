@@ -191,7 +191,9 @@ public partial class MainWindow : Window
 
         Task audioRefresh = RefreshAudioAsync();
         Task applicationRefresh = RefreshApplicationsAsync();
-        Task whisperCaptureRefresh = RefreshWhisperCaptureDevicesAsync();
+        Task whisperCaptureRefresh = CoreAudioStartupCoordinator.RunWhisperAfterAudioAsync(
+            audioRefresh,
+            RefreshWhisperCaptureDevicesAsync);
 
         _importMonitor = new ImportFolderMonitor(
             _runtime.ImportsPath,
