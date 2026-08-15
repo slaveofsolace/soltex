@@ -49,6 +49,7 @@ internal static class Program
             ("Shutdown evidence requires confirmed resource disposal", ShutdownEvidenceRequiresDisposal),
             ("Runtime CPU cost math is processor-normalized and bounded", RuntimeCostMathIsBounded),
             ("Runtime probe launch parsing is bounded and conflict-aware", RuntimeLaunchParsingIsBounded),
+            ("Runtime navigation contract includes every shipped workspace", RuntimeNavigationContractIsCurrent),
             ("Process actions reject Windows and Soltex targets", ProcessActionsRejectProtectedTargets),
             ("Process actions reject identity drift", ProcessActionsRejectIdentityDrift),
             ("Process actions admit only the selected user-session process", ProcessActionsAdmitBoundedTarget),
@@ -905,6 +906,17 @@ internal static class Program
                 Directory.Delete(directory);
             }
         }
+    }
+
+    private static void RuntimeNavigationContractIsCurrent()
+    {
+        IReadOnlyList<string> routes = RuntimeCostProbe.NavigationRoutesForTest;
+        True(routes.Count == routes.Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+            "Runtime navigation contains duplicate workspace routes.");
+        True(routes.Contains("whisper", StringComparer.OrdinalIgnoreCase),
+            "Runtime navigation omitted the shipped Whisper workspace.");
+        True(RuntimeCostProbe.ExpectedNavigationTransitionCount == routes.Count * 2,
+            "Runtime navigation evidence no longer derives its expected count from the exercised route set.");
     }
 
     private static void WhisperSettingsRoundTripAndRecovery()

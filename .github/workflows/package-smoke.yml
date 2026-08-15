@@ -56,17 +56,14 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          foreach ($requiredAssembly in @('Soltex.Whisper.dll', 'Soltex.Whisper.Windows.dll')) {
-            $assemblyPath = Join-Path .\artifacts\publish\win-x64 $requiredAssembly
-            if (-not (Test-Path -LiteralPath $assemblyPath -PathType Leaf)) {
-              throw "The published package is missing $requiredAssembly."
-            }
-          }
           $exe = Resolve-Path .\artifacts\publish\win-x64\Soltex.exe
-          $output = [System.IO.Path]::GetFullPath('.\artifacts\validation\package-home.png')
+          # The release is intentionally a single-file bundle, so managed assemblies
+          # are not expected as loose DLLs. Rendering Whisper initializes both the
+          # provider-neutral core and Windows adapter from the published executable.
+          $output = [System.IO.Path]::GetFullPath('.\artifacts\validation\package-whisper.png')
           $process = Start-Process `
             -FilePath $exe `
-            -ArgumentList @('--render-smoke', $output, '--panel', 'home') `
+            -ArgumentList @('--render-smoke', $output, '--panel', 'whisper') `
             -WindowStyle Hidden `
             -PassThru
           try {
@@ -86,11 +83,11 @@ jobs:
           if ($exitCode -ne 0) {
             throw "Published package render failed with exit code $exitCode."
           }
-          if (-not (Test-Path -LiteralPath .\artifacts\validation\package-home.png -PathType Leaf)) {
-            throw 'The published package did not create its Home render evidence.'
+          if (-not (Test-Path -LiteralPath .\artifacts\validation\package-whisper.png -PathType Leaf)) {
+            throw 'The published package did not create its Whisper render evidence.'
           }
-          if (Test-Path -LiteralPath .\artifacts\validation\package-home.png.error.txt -PathType Leaf) {
-            Get-Content -LiteralPath .\artifacts\validation\package-home.png.error.txt
+          if (Test-Path -LiteralPath .\artifacts\validation\package-whisper.png.error.txt -PathType Leaf) {
+            Get-Content -LiteralPath .\artifacts\validation\package-whisper.png.error.txt
             throw 'The published package produced a render-smoke error file.'
           }
 
@@ -102,7 +99,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           .\eng\record-package-identity.ps1 `
             -ExecutablePath .\artifacts\publish\win-x64\Soltex.exe `
-            -RenderPath .\artifacts\validation\package-home.png `
+            -RenderPath .\artifacts\validation\package-whisper.png `
             -OutputPath .\artifacts\validation\package-smoke.json `
             -Runtime win-x64 `
             -SourceHeadSha $env:SOLTEX_SOURCE_HEAD_SHA `
@@ -119,8 +116,8 @@ jobs:
             artifacts/publish/win-x64/Soltex.exe
             artifacts/validation/package-publish.log
             artifacts/validation/package-launch.log
-            artifacts/validation/package-home.png
-            artifacts/validation/package-home.png.error.txt
+            artifacts/validation/package-whisper.png
+            artifacts/validation/package-whisper.png.error.txt
             artifacts/validation/package-smoke.json
           if-no-files-found: warn
           retention-days: 30

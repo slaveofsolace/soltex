@@ -26,6 +26,7 @@ internal sealed record RuntimeCostSample(
 
 internal sealed record RuntimeNavigationCost(
     int TransitionCount,
+    int ExpectedTransitionCount,
     double TotalMilliseconds,
     double MeanMilliseconds,
     double MaximumMilliseconds);
@@ -103,6 +104,24 @@ internal static class RuntimeCostProbe
     internal const int PostNavigationSettleMilliseconds = 750;
     internal const int MinimizedSteadyDelayMilliseconds = 2_000;
     private const int TransitionSetCount = 2;
+    private static readonly string[] NavigationRoutes =
+    [
+        "home",
+        "monitoring",
+        "applications",
+        "mixer",
+        "security",
+        "remote",
+        "whisper",
+        "activity",
+        "update",
+        "settings"
+    ];
+
+    internal static int ExpectedNavigationTransitionCount =>
+        NavigationRoutes.Length * TransitionSetCount;
+
+    internal static IReadOnlyList<string> NavigationRoutesForTest => NavigationRoutes;
 
     internal static async Task<RuntimeCostReport> CaptureAsync(
         MainWindow window,
@@ -145,23 +164,10 @@ internal static class RuntimeCostProbe
         ];
         progress?.Invoke("visible-idle-complete");
 
-        string[] routes =
-        [
-            "home",
-            "monitoring",
-            "applications",
-            "mixer",
-            "security",
-            "remote",
-            "whisper",
-            "activity",
-            "update",
-            "settings"
-        ];
-        List<double> transitionMilliseconds = new(routes.Length * TransitionSetCount);
+        List<double> transitionMilliseconds = new(ExpectedNavigationTransitionCount);
         for (int pass = 0; pass < TransitionSetCount; pass++)
         {
-            foreach (string route in routes)
+            foreach (string route in NavigationRoutes)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 Stopwatch transition = Stopwatch.StartNew();
@@ -180,6 +186,7 @@ internal static class RuntimeCostProbe
 
         RuntimeNavigationCost navigation = new(
             transitionMilliseconds.Count,
+            ExpectedNavigationTransitionCount,
             transitionMilliseconds.Sum(),
             transitionMilliseconds.Average(),
             transitionMilliseconds.Max());
