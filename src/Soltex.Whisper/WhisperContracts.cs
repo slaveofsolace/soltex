@@ -159,6 +159,6 @@ public interface IWhisperShortcutHost : IAsyncDisposable
 {
     ValueTask RegisterAsync(
         WhisperShortcutSet shortcutSet,
-        Func<WhisperShortcutAction, CancellationToken, ValueTask> handler,
+        Func<WhisperShortcutSignal, CancellationToken, ValueTask> handler,
         CancellationToken cancellationToken);
 }

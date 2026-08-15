@@ -5,6 +5,8 @@ using System.Security.Cryptography;
 using Soltex.Whisper;
 using Soltex.Whisper.Windows;
 
+[assembly: DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+
 List<(string Name, Func<Task> Run)> tests =
 [
     ("selected device is passed to the backend and fallback is reported", DeviceSelectionAndFallback),
@@ -17,7 +19,11 @@ List<(string Name, Func<Task> Run)> tests =
     ("stereo float WASAPI packets normalize to bounded 16 kHz mono", NativeFormatNormalization),
     ("metering is content-free and throttled", MeteringIsThrottled),
     ("capture failures map to distinct readiness states", ReadinessMapping),
-    ("native HRESULTs map to stable capture categories", HResultMapping)
+    ("native HRESULTs map to stable capture categories", HResultMapping),
+    ("shortcut chord matching is order independent and suppresses repeat", ShortcutChordMatching),
+    ("shortcut mouse buttons preserve press and release", ShortcutMouseButtons),
+    ("shortcut registration rejects unsupported Windows keys", UnsupportedShortcutKey),
+    ("shortcut registration rolls back atomically after a replacement failure", AtomicShortcutRollback)
 ];
 
 if (string.Equals(
@@ -26,6 +32,14 @@ if (string.Equals(
     StringComparison.Ordinal))
 {
     tests.Add(("owner-host WASAPI capture returns disposable bounded audio", LiveCapture));
+}
+
+if (string.Equals(
+    Environment.GetEnvironmentVariable("SOLTEX_RUN_WHISPER_LIVE_SHORTCUT"),
+    "1",
+    StringComparison.Ordinal))
+{
+    tests.Add(("owner-host hooks register, ignore injected input, measure, and unregister", LiveShortcutHooks));
 }
 
 int failures = 0;
@@ -43,8 +57,186 @@ foreach ((string name, Func<Task> run) in tests)
     }
 }
 
-Console.WriteLine($"{tests.Count - failures}/{tests.Count} Whisper Windows capture tests passed.");
+Console.WriteLine($"{tests.Count - failures}/{tests.Count} Whisper Windows adapter tests passed.");
 return failures == 0 ? 0 : 1;
+
+static Task ShortcutChordMatching()
+{
+    WhisperShortcutSet set = new(
+    [
+        WhisperShortcutBinding.Create(
+            WhisperShortcutAction.PushToTalk,
+            "Ctrl",
+            "Alt",
+            "Space")
+    ]);
+    WhisperShortcutMatcher matcher = new(set);
+
+    False(matcher.IsRelevant("Q"));
+    Equal(0, matcher.Observe(0x51, "Q", true, TimeSpan.Zero).Count);
+    Equal(0, matcher.Observe(0x20, "Space", true, TimeSpan.FromMilliseconds(1)).Count);
+    Equal(0, matcher.Observe(0xA4, "Alt", true, TimeSpan.FromMilliseconds(2)).Count);
+    IReadOnlyList<WhisperShortcutSignal> pressed = matcher.Observe(
+        0xA2,
+        "Ctrl",
+        true,
+        TimeSpan.FromMilliseconds(3));
+    Equal(1, pressed.Count);
+    Equal(WhisperShortcutTransition.Pressed, pressed[0].Transition);
+    Equal(WhisperShortcutAction.PushToTalk, pressed[0].Action);
+
+    Equal(0, matcher.Observe(
+        0xA2,
+        "Ctrl",
+        true,
+        TimeSpan.FromMilliseconds(4)).Count);
+
+    IReadOnlyList<WhisperShortcutSignal> released = matcher.Observe(
+        0x20,
+        "Space",
+        false,
+        TimeSpan.FromMilliseconds(5));
+    Equal(1, released.Count);
+    Equal(WhisperShortcutTransition.Released, released[0].Transition);
+    return Task.CompletedTask;
+}
+
+static Task ShortcutMouseButtons()
+{
+    WhisperShortcutSet set = new(
+    [
+        WhisperShortcutBinding.Create(
+            WhisperShortcutAction.PushToTalk,
+            "Mouse 4")
+    ]);
+    True(WhisperShortcutRegistrationPolicy.Validate(set).IsValid);
+    WhisperShortcutMatcher matcher = new(set);
+
+    IReadOnlyList<WhisperShortcutSignal> pressed = matcher.Observe(
+        WindowsShortcutKeyMap.Mouse4InputId,
+        "Mouse 4",
+        true,
+        TimeSpan.FromMilliseconds(1));
+    Equal(WhisperShortcutTransition.Pressed, pressed.Single().Transition);
+    Equal(0, matcher.Observe(
+        WindowsShortcutKeyMap.Mouse4InputId,
+        "Mouse 4",
+        true,
+        TimeSpan.FromMilliseconds(2)).Count);
+    IReadOnlyList<WhisperShortcutSignal> released = matcher.Observe(
+        WindowsShortcutKeyMap.Mouse4InputId,
+        "Mouse 4",
+        false,
+        TimeSpan.FromMilliseconds(3));
+    Equal(WhisperShortcutTransition.Released, released.Single().Transition);
+    return Task.CompletedTask;
+}
+
+static Task UnsupportedShortcutKey()
+{
+    WhisperShortcutSet set = new(
+    [
+        WhisperShortcutBinding.Create(
+            WhisperShortcutAction.PushToTalk,
+            "Ctrl",
+            "Volume Up")
+    ]);
+    Throws<WhisperShortcutRegistrationException>(() => WindowsShortcutKeyMap.Compile(set));
+    return Task.CompletedTask;
+}
+
+static async Task AtomicShortcutRollback()
+{
+    FakeShortcutRegistrationFactory factory = new();
+    await using WindowsWhisperShortcutHost host = new(factory);
+    List<WhisperShortcutSignal> observed = [];
+    WhisperShortcutSet initial = WhisperShortcutSet.CreateDefault();
+    await host.RegisterAsync(
+        initial,
+        (signal, _) =>
+        {
+            observed.Add(signal);
+            return ValueTask.CompletedTask;
+        },
+        CancellationToken.None);
+    FakeShortcutRegistration first = factory.Created.Single();
+    True(first.Active);
+
+    factory.FailNext = true;
+    await ThrowsAsync<WhisperShortcutRegistrationException>(async () =>
+        await host.RegisterAsync(
+            new WhisperShortcutSet(
+            [
+                WhisperShortcutBinding.Create(
+                    WhisperShortcutAction.Cancel,
+                    "Esc")
+            ]),
+            (_, _) => ValueTask.CompletedTask,
+            CancellationToken.None));
+
+    True(host.IsRegistered);
+    True(first.Active);
+    await first.EmitAsync(new WhisperShortcutSignal(
+        WhisperShortcutAction.Cancel,
+        WhisperShortcutTransition.Pressed,
+        TimeSpan.FromSeconds(1)));
+    Equal(1, observed.Count);
+}
+
+static async Task LiveShortcutHooks()
+{
+    await using WindowsWhisperShortcutHost host = new();
+    int observedSignals = 0;
+    WhisperShortcutSet set = new(
+    [
+        WhisperShortcutBinding.Create(
+            WhisperShortcutAction.PushToTalk,
+            "Ctrl",
+            "Shift",
+            "F24")
+    ]);
+    await host.RegisterAsync(
+        set,
+        (_, _) =>
+        {
+            Interlocked.Increment(ref observedSignals);
+            return ValueTask.CompletedTask;
+        },
+        CancellationToken.None);
+    True(host.IsRegistered);
+
+    SendInjectedShortcut();
+    await Task.Delay(150);
+    WhisperShortcutPerformanceSnapshot performance = host.Performance;
+    True(performance.SampleCount >= 6);
+    Equal(0, Volatile.Read(ref observedSignals));
+    Console.WriteLine(
+        $"MEASURE whisper_hook callbacks={performance.SampleCount} " +
+        $"local_p50_us={performance.P50Microseconds:F2} " +
+        $"local_p95_us={performance.P95Microseconds:F2} " +
+        $"local_p99_us={performance.P99Microseconds:F2} injected_signals=0");
+}
+
+static void SendInjectedShortcut()
+{
+    NativeInput[] inputs =
+    [
+        NativeInput.Keyboard(0x11, keyUp: false),
+        NativeInput.Keyboard(0x10, keyUp: false),
+        NativeInput.Keyboard(0x87, keyUp: false),
+        NativeInput.Keyboard(0x87, keyUp: true),
+        NativeInput.Keyboard(0x10, keyUp: true),
+        NativeInput.Keyboard(0x11, keyUp: true)
+    ];
+    uint sent = TestNativeMethods.SendInput(
+        checked((uint)inputs.Length),
+        inputs,
+        Marshal.SizeOf<NativeInput>());
+    if (sent != inputs.Length)
+    {
+        throw new InvalidOperationException("Windows did not accept the bounded shortcut input sequence.");
+    }
+}
 
 static async Task DeviceSelectionAndFallback()
 {
@@ -498,4 +690,111 @@ internal sealed class FakeBackend : IWhisperCaptureBackend
 
         return packet;
     }
+}
+
+internal sealed class FakeShortcutRegistrationFactory :
+    IWhisperShortcutRegistrationFactory
+{
+    internal List<FakeShortcutRegistration> Created { get; } = [];
+
+    internal bool FailNext { get; set; }
+
+    public ValueTask<IWhisperShortcutRegistration> CreateAsync(
+        WhisperShortcutSet shortcutSet,
+        Func<WhisperShortcutSignal, CancellationToken, ValueTask> handler,
+        Action<string> faultHandler,
+        CancellationToken cancellationToken)
+    {
+        _ = shortcutSet;
+        _ = faultHandler;
+        cancellationToken.ThrowIfCancellationRequested();
+        if (FailNext)
+        {
+            FailNext = false;
+            throw new WhisperShortcutRegistrationException(
+                "Scripted replacement registration failure.");
+        }
+
+        FakeShortcutRegistration registration = new(handler);
+        Created.Add(registration);
+        return ValueTask.FromResult<IWhisperShortcutRegistration>(registration);
+    }
+}
+
+internal sealed class FakeShortcutRegistration(
+    Func<WhisperShortcutSignal, CancellationToken, ValueTask> handler) :
+    IWhisperShortcutRegistration
+{
+    internal bool Active { get; private set; }
+
+    public bool IsActive => Active;
+
+    public WhisperShortcutPerformanceSnapshot Performance { get; } =
+        new(0, 0, 0, 0);
+
+    public void Activate() => Active = true;
+
+    public void Deactivate() => Active = false;
+
+    internal ValueTask EmitAsync(WhisperShortcutSignal signal)
+    {
+        if (!Active)
+        {
+            throw new InvalidOperationException("The fake registration is not active.");
+        }
+
+        return handler(signal, CancellationToken.None);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        Active = false;
+        return ValueTask.CompletedTask;
+    }
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativeInput
+{
+    internal uint Type;
+    internal NativeInputUnion Data;
+
+    internal static NativeInput Keyboard(ushort virtualKey, bool keyUp) => new()
+    {
+        Type = 1,
+        Data = new NativeInputUnion
+        {
+            Keyboard = new NativeKeyboardInput
+            {
+                VirtualKey = virtualKey,
+                Flags = keyUp ? 0x0002u : 0u
+            }
+        }
+    };
+}
+
+[StructLayout(LayoutKind.Explicit, Size = 32)]
+internal struct NativeInputUnion
+{
+    [FieldOffset(0)]
+    internal NativeKeyboardInput Keyboard;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativeKeyboardInput
+{
+    internal ushort VirtualKey;
+    internal ushort ScanCode;
+    internal uint Flags;
+    internal uint Time;
+    internal nuint ExtraInfo;
+}
+
+internal static class TestNativeMethods
+{
+    [DllImport("user32.dll", SetLastError = true)]
+    internal static extern uint SendInput(
+        uint inputCount,
+        [In] NativeInput[] inputs,
+        int inputSize);
 }

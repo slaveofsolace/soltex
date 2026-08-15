@@ -43,12 +43,15 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Windows capture | Shared-mode WASAPI capture endpoints only; selected-device persistence, one default-device recovery attempt, PCM/float normalization to 16 kHz mono PCM16, a 20-minute byte bound, explicit stop versus cancellation, and throttled content-free metering |
 | Capture privacy | Soltex-owned packet, conversion, accumulation, and final clip buffers are cleared on disposal; the Windows-owned WASAPI packet is released without being retained |
 | Capture UI | Working device refresh, persisted selection, explicit five-second microphone test, recovery/error status, and live overlay level meter |
+| Shortcut policy | Unsafe Windows-key and reserved chords are rejected with a reason; prefix-overlapping chords are rejected before registration; push-to-talk and Command Mode retain press/release semantics; hands-free double-tap becomes one lock intent rather than a second session |
+| Windows shortcut adapter | Dedicated low-level keyboard/mouse hook thread, configured-key-only matching, auto-repeat suppression, Mouse 4/5 support, bounded transition queue, atomic replacement rollback, injected-input rejection, clean async disposal, and content-free callback percentiles |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, and Privacy tabs, and the floating listening surface — render this core.
 They are honest about capability: the navigation entry remains marked `SCAFFOLD`
-while providers, shortcuts, target inspection, delivery, and verified submission are
-unavailable. The capture controls are enabled only when a selected device exists.
+while providers, shipped shortcut dispatch, target inspection, delivery, and verified
+submission are unavailable. The capture controls are enabled only when a selected
+device exists.
 
 ## Not implemented
 
@@ -56,7 +59,7 @@ Nothing below exists yet. Any claim that it works is false until runtime evidenc
 from an owner-controlled Windows host says otherwise.
 
 1. A real transcription provider adapter and its credential storage.
-2. Global Windows keyboard and mouse hook registration.
+2. Shipped shortcut registration and dispatch into the real session coordinator.
 3. UI Automation inspection of real focused controls.
 4. Insertion into another application, and the clipboard paste fallback.
 5. Emission of Enter.
@@ -116,12 +119,31 @@ policy remains the sole actuator.
 
 ### 3. Global shortcuts
 
-Register the configured set through low-level Windows hooks. Push-to-talk starts on
-a confirmed chord-down transition and stops on release, without restarting under key
-auto-repeat. Hands-free toggles and supports double-tap locking without creating a
-second session. Registration is atomic: if one binding fails, the previous valid set
-survives and the failure is surfaced through readiness. The hook callback stays
-minimal, queues work to managed code, and never captures unrelated keystroke content.
+The provider-neutral policy and Windows adapter are implemented. The low-level hook
+runs on a dedicated message thread, retains only state for keys present in the
+validated shortcut set, ignores injected input, queues content-free action
+transitions to one managed reader, and never suppresses system input. Chords match in
+any key order, key auto-repeat cannot start a second action, and left/right modifier
+state is reference-counted. Mouse 4 and Mouse 5 use the same transition model.
+
+Registration builds a disabled candidate first. Only a successfully installed
+keyboard/mouse pair replaces the active registration; a partial or failed replacement
+leaves the previous valid set running. Disposal disables callbacks before posting the
+hook thread's quit message and awaiting the dispatch worker. Platform-neutral gesture
+policy maps push-to-talk and Command Mode to press/release intents and maps a hands-free
+double-tap to one lock intent rather than a second session.
+
+The owner-host native lifecycle proof installed and removed the production hooks and
+fed one six-event injected sequence. Production correctly dispatched zero actions
+from that sequence while still recording content-free Soltex callback work before
+control passes to the next hook. That proves
+installation, callback entry, injected-input rejection, measurement, and teardown; it
+does not prove a physical keyboard/mouse matrix or shipped session dispatch.
+
+Still required: register only after the validated runtime settings and real provider
+are available, route intents into the session coordinator, surface registration
+failures in readiness, prove physical push-to-talk release and mouse buttons, and
+record shortcut-to-listening latency in the packaged app.
 
 ### 4. Target inspection
 

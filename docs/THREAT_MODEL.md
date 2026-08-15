@@ -6,7 +6,7 @@ Soltex is a proprietary Windows desktop application intended to combine audio co
 
 The Security companion runs unelevated. It reads antivirus health, invokes supported Microsoft Defender operations, assesses Soltex-bound content, and manages a per-user quarantine. It does not provide system-wide enforcement and must coexist with the antivirus product registered with Windows.
 
-Security-sensitive assets are user files, quarantined payloads, original restore paths, exact-hash allow decisions, metadata/release signing keys, TLS and publisher policy, signed acquisition descriptors and manifests, update monotonicity/planning state, private staged artifacts, local audit integrity, the truthfulness of displayed Windows protection health, the approved external-client fingerprint, peer IDs, and remote-session authorization intent.
+Security-sensitive assets are user files, quarantined payloads, original restore paths, exact-hash allow decisions, metadata/release signing keys, TLS and publisher policy, signed acquisition descriptors and manifests, update monotonicity/planning state, private staged artifacts, local audit integrity, the truthfulness of displayed Windows protection health, the approved external-client fingerprint, peer IDs, remote-session authorization intent, microphone audio, provider credentials, transcript text, focused-control identity, shortcut intent, and submission consent.
 
 ## Threat Model, Trust Boundaries, and Assumptions
 
@@ -29,6 +29,7 @@ Security-sensitive assets are user files, quarantined payloads, original restore
 8. **Soltex to external remote client.** `RemoteAssistExecutable`, `RemotePeerId`, and `RustDeskExternalClient` mediate a one-way launch request. RustDesk and its infrastructure remain a separately licensed, separately updated, network-facing trust domain.
 9. **Preview to future installer.** No implementation crosses this boundary. A future privileged component must accept only the exact confirmed plan and immutable verified handles, never a URL, archive path, or generic command.
 10. **Future personal device fabric.** Device agents, Tailscale reachability, NAS storage, Google Drive, Box, and AI intent translation are designed but not implemented. Before code enters this boundary, jobs must be typed, target-bound, short-lived, replay-resistant, locally authorized, and free of generic shell semantics. The NAS must have no authorization role, and personal/work cloud identities must remain isolated by default.
+11. **Whisper to global input.** The shortcut adapter observes system-wide key and mouse transitions because Windows low-level hooks are global. Registration policy, configured-key filtering, transition-only dispatch, injected-input rejection, and clean unregistration constrain that boundary. The adapter never records text, key sequences, active-window content, or unrelated key identities and never suppresses input from reaching Windows.
 
 ### Invariants
 
@@ -46,6 +47,8 @@ Security-sensitive assets are user files, quarantined payloads, original restore
 - Never treat downloaded/staged bytes as executable authority, cross an installer boundary from an unconfirmed plan, or expose arbitrary download-and-execute behavior.
 - Never treat private-network membership, NAS possession, AI output, or a cloud login as authority to execute a device capability.
 - Never expose a generic remote shell or silently move work Box data into personal Drive, the NAS, an AI prompt, or another trust domain.
+- Never turn the Whisper shortcut hook into a keylogger: only configured-key state and content-free action transitions may leave the callback.
+- Never accept an injected shortcut as dictation authority or retain raw keyboard/mouse events in logs, Activity, crash text, or evidence.
 
 ## Attack Surface, Mitigations, and Attacker Stories
 
@@ -86,6 +89,29 @@ An attacker may flood the import folder. The channel holds at most 128 paths, dr
 ### WPF and user actions
 
 Restore and permanent delete are user-driven high-impact actions with confirmation UI. The WPF process is unelevated and does not automate Windows Security settings. UI health labels must preserve unknown/provider-managed states and never turn missing telemetry into a green claim.
+
+### Whisper global shortcut boundary
+
+A malicious or buggy configuration could choose an operating-system chord, a broad
+modifier-only binding, or one chord that is a prefix of another and thereby trigger
+the wrong action while the user is still pressing keys. The core rejects Windows-key,
+reserved, modifier-only, unsupported, duplicate, conflicting, and prefix-overlapping
+bindings before any native registration begins. Default chords avoid those classes.
+
+The native callback maps only supported virtual keys and Mouse 4/5, then immediately
+forwards all input to the next hook. It retains physical-down and reference-counted
+logical state only for keys used by the active set. Auto-repeat is ignored. Action
+transitions enter a bounded channel; overflow disables the registration and surfaces
+a content-free fault instead of leaving capture active. Candidate keyboard and mouse
+hooks remain disabled until both install, so a partial replacement cannot destroy the
+previous valid set. Injected events are measured but never dispatched as actions.
+
+Low-level hooks remain an attractive same-user abuse surface. Same-user malware can
+install its own hook, inject into this process, or manipulate the application, and an
+administrator can bypass these controls. Future shipped integration must register
+only after validated settings, cancel active work on hook faults, unregister during
+the owned shutdown drain, and prove physical-key behavior without collecting user
+content. Hook timing evidence contains only sample counts and percentile durations.
 
 ### External Remote Assist boundary
 

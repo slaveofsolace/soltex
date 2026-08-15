@@ -80,6 +80,36 @@ public enum WhisperShortcutAction
     SubmitLastTranscript
 }
 
+public enum WhisperShortcutTransition
+{
+    Pressed,
+    Released
+}
+
+/// <summary>
+/// A content-free transition from a configured shortcut. The timestamp is monotonic
+/// elapsed time supplied by the platform adapter; it is not a wall-clock observation.
+/// </summary>
+public sealed record WhisperShortcutSignal(
+    WhisperShortcutAction Action,
+    WhisperShortcutTransition Transition,
+    TimeSpan MonotonicTime);
+
+public enum WhisperShortcutIntent
+{
+    BeginPushToTalk,
+    EndPushToTalk,
+    ToggleHandsFree,
+    LockHandsFree,
+    BeginCommandMode,
+    EndCommandMode,
+    PasteLastTranscript,
+    CopyLastTranscript,
+    Cancel,
+    OpenScratchpad,
+    SubmitLastTranscript
+}
+
 public sealed record WhisperTextOptions(
     bool SmartFormatting,
     bool Backtrack,

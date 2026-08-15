@@ -15,6 +15,7 @@ on:
       - 'tests/Soltex.Whisper.Windows.Tests/**'
       - 'docs/WHISPER_TOOL_SPEC.md'
       - 'docs/WHISPER_IMPLEMENTATION_PLAN.md'
+      - 'docs/THREAT_MODEL.md'
       - '.github/workflows/whisper.yml'
   pull_request:
     paths:
@@ -30,6 +31,7 @@ on:
       - 'tests/Soltex.Whisper.Windows.Tests/**'
       - 'docs/WHISPER_TOOL_SPEC.md'
       - 'docs/WHISPER_IMPLEMENTATION_PLAN.md'
+      - 'docs/THREAT_MODEL.md'
       - '.github/workflows/whisper.yml'
   workflow_dispatch:
 
@@ -91,7 +93,7 @@ jobs:
             throw "Whisper core suite failed with exit code $LASTEXITCODE."
           }
 
-      - name: Run Whisper Windows capture suite
+      - name: Run Whisper Windows adapter suite
         id: windows_tests
         shell: pwsh
         run: |
@@ -100,9 +102,9 @@ jobs:
             --project .\tests\Soltex.Whisper.Windows.Tests\Soltex.Whisper.Windows.Tests.csproj `
             --configuration Release `
             --no-build 2>&1 |
-            Tee-Object -FilePath .\artifacts\whisper\tests-windows-capture.log
+            Tee-Object -FilePath .\artifacts\whisper\tests-windows-adapters.log
           if ($LASTEXITCODE -ne 0) {
-            throw "Whisper Windows capture suite failed with exit code $LASTEXITCODE."
+            throw "Whisper Windows adapter suite failed with exit code $LASTEXITCODE."
           }
 
       - name: Record Whisper gate classification
@@ -112,7 +114,7 @@ jobs:
           $classification = if ('${{ steps.build.outcome }}' -eq 'success' -and
                                 '${{ steps.core_tests.outcome }}' -eq 'success' -and
                                 '${{ steps.windows_tests.outcome }}' -eq 'success') {
-            'The Whisper policy core and Windows capture adapter built and passed deterministic tests. Hosted CI does not prove microphone permission, live device capture, transcription, focused-control delivery, global shortcuts, accessibility, or submission.'
+            'The Whisper policy core plus Windows capture and shortcut adapters built and passed deterministic tests. Hosted CI does not prove microphone permission, live device capture, physical global shortcuts, transcription, focused-control delivery, accessibility, or submission.'
           } else {
             "The Whisper gate is incomplete: build=${{ steps.build.outcome }}; core_tests=${{ steps.core_tests.outcome }}; windows_tests=${{ steps.windows_tests.outcome }}."
           }

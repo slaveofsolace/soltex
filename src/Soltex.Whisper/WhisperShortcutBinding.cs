@@ -196,13 +196,13 @@ public sealed class WhisperShortcutSet
     {
         return new WhisperShortcutSet(
         [
-            WhisperShortcutBinding.Create(WhisperShortcutAction.PushToTalk, "Ctrl", "Win"),
-            WhisperShortcutBinding.Create(WhisperShortcutAction.HandsFree, "Ctrl", "Win", "Space"),
-            WhisperShortcutBinding.Create(WhisperShortcutAction.CommandMode, "Ctrl", "Win", "Alt"),
+            WhisperShortcutBinding.Create(WhisperShortcutAction.PushToTalk, "Ctrl", "Alt", "Space"),
+            WhisperShortcutBinding.Create(WhisperShortcutAction.HandsFree, "Ctrl", "Alt", "H"),
+            WhisperShortcutBinding.Create(WhisperShortcutAction.CommandMode, "Ctrl", "Alt", "C"),
             WhisperShortcutBinding.Create(WhisperShortcutAction.PasteLastTranscript, "Shift", "Alt", "Z"),
             WhisperShortcutBinding.Create(WhisperShortcutAction.CopyLastTranscript, "Shift", "Alt", "X"),
             WhisperShortcutBinding.Create(WhisperShortcutAction.Cancel, "Esc"),
-            WhisperShortcutBinding.Create(WhisperShortcutAction.OpenScratchpad, "Win", "Alt", "S")
+            WhisperShortcutBinding.Create(WhisperShortcutAction.OpenScratchpad, "Ctrl", "Alt", "S")
         ]);
     }
 }

@@ -90,9 +90,84 @@ var tests = new (string Name, Action Run)[]
     {
         WhisperShortcutSet set = WhisperShortcutSet.CreateDefault();
         Equal(7, set.Bindings.Count);
-        Equal("Ctrl+Win", set.ForAction(WhisperShortcutAction.PushToTalk)[0].DisplayText);
-        Equal("Ctrl+Win+Space", set.ForAction(WhisperShortcutAction.HandsFree)[0].DisplayText);
-        Equal("Ctrl+Win+Alt", set.ForAction(WhisperShortcutAction.CommandMode)[0].DisplayText);
+        Equal("Ctrl+Alt+Space", set.ForAction(WhisperShortcutAction.PushToTalk)[0].DisplayText);
+        Equal("Ctrl+Alt+H", set.ForAction(WhisperShortcutAction.HandsFree)[0].DisplayText);
+        Equal("Ctrl+Alt+C", set.ForAction(WhisperShortcutAction.CommandMode)[0].DisplayText);
+        True(WhisperShortcutRegistrationPolicy.Validate(set).IsValid);
+    }),
+    ("shortcut registration rejects operating-system and broad chords with reasons", () =>
+    {
+        WhisperShortcutValidationResult windowsKey = WhisperShortcutRegistrationPolicy.Validate(
+            new WhisperShortcutSet(
+            [
+                WhisperShortcutBinding.Create(
+                    WhisperShortcutAction.OpenScratchpad,
+                    "Win",
+                    "S")
+            ]));
+        False(windowsKey.IsValid);
+        True(windowsKey.Error?.Contains("reserved", StringComparison.OrdinalIgnoreCase) == true);
+
+        WhisperShortcutValidationResult broad = WhisperShortcutRegistrationPolicy.Validate(
+            new WhisperShortcutSet(
+            [
+                WhisperShortcutBinding.Create(
+                    WhisperShortcutAction.PushToTalk,
+                    "Ctrl",
+                    "Alt")
+            ]));
+        False(broad.IsValid);
+        True(broad.Error?.Contains("too broad", StringComparison.OrdinalIgnoreCase) == true);
+    }),
+    ("shortcut registration rejects ambiguous prefix combinations", () =>
+    {
+        WhisperShortcutValidationResult result = WhisperShortcutRegistrationPolicy.Validate(
+            new WhisperShortcutSet(
+            [
+                WhisperShortcutBinding.Create(
+                    WhisperShortcutAction.PushToTalk,
+                    "Ctrl",
+                    "Space"),
+                WhisperShortcutBinding.Create(
+                    WhisperShortcutAction.HandsFree,
+                    "Ctrl",
+                    "Alt",
+                    "Space")
+            ]));
+        False(result.IsValid);
+        True(result.Error?.Contains("overlap", StringComparison.OrdinalIgnoreCase) == true);
+    }),
+    ("shortcut gestures preserve hold release and double-tap locking", () =>
+    {
+        WhisperShortcutGestureInterpreter gestures = new();
+        Equal<WhisperShortcutIntent?>(
+            WhisperShortcutIntent.BeginPushToTalk,
+            gestures.Observe(new WhisperShortcutSignal(
+                WhisperShortcutAction.PushToTalk,
+                WhisperShortcutTransition.Pressed,
+                TimeSpan.FromSeconds(1))));
+        Equal<WhisperShortcutIntent?>(
+            WhisperShortcutIntent.EndPushToTalk,
+            gestures.Observe(new WhisperShortcutSignal(
+                WhisperShortcutAction.PushToTalk,
+                WhisperShortcutTransition.Released,
+                TimeSpan.FromSeconds(2))));
+        Equal<WhisperShortcutIntent?>(
+            WhisperShortcutIntent.ToggleHandsFree,
+            gestures.Observe(new WhisperShortcutSignal(
+                WhisperShortcutAction.HandsFree,
+                WhisperShortcutTransition.Pressed,
+                TimeSpan.FromSeconds(3))));
+        Equal<WhisperShortcutIntent?>(null, gestures.Observe(new WhisperShortcutSignal(
+            WhisperShortcutAction.HandsFree,
+            WhisperShortcutTransition.Released,
+            TimeSpan.FromSeconds(3.1))));
+        Equal<WhisperShortcutIntent?>(
+            WhisperShortcutIntent.LockHandsFree,
+            gestures.Observe(new WhisperShortcutSignal(
+                WhisperShortcutAction.HandsFree,
+                WhisperShortcutTransition.Pressed,
+                TimeSpan.FromSeconds(3.3))));
     }),
     ("auto-send remains disabled globally by default", () =>
     {

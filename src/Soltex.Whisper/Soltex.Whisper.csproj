@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Soltex.Whisper.Tests" />
+    <InternalsVisibleTo Include="Soltex.Whisper.Windows" />
   </ItemGroup>
 </Project>
