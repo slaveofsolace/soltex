@@ -6,6 +6,7 @@
     <AssemblyName>Soltex.Whisper.Windows</AssemblyName>
     <Description>Bounded Windows capture, shortcut, and target-inspection adapters for the provider-neutral Soltex Whisper core.</Description>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Soltex.Audio\Soltex.Audio.csproj" />

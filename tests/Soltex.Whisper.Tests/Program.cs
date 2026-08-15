@@ -284,6 +284,79 @@ var tests = new (string Name, Action Run)[]
         Throws<ObjectDisposedException>(() => _ = clip.Pcm16);
     }),
 
+    // ---------- Insertion authorization ----------
+
+    ("insertion authorization accepts the unchanged captured target", () =>
+    {
+        WhisperInsertionAuthorization authorization = WhisperInsertionPolicy.Evaluate(
+            InsertRequest(Snap("chat", "el-1")),
+            Snap("chat", "el-1"));
+        Equal(WhisperInsertionAction.Insert, authorization.Action);
+        Equal(WhisperInsertionFallbackReason.None, authorization.FallbackReason);
+    }),
+    ("insertion authorization copies when the target is unknown", () =>
+    {
+        WhisperInsertionAuthorization authorization = WhisperInsertionPolicy.Evaluate(
+            InsertRequest(Snap("chat", "el-1")),
+            currentTarget: null);
+        Equal(WhisperInsertionAction.Copy, authorization.Action);
+        Equal(WhisperInsertionFallbackReason.TargetUnknown, authorization.FallbackReason);
+    }),
+    ("insertion authorization copies when focus changes", () =>
+    {
+        WhisperInsertionAuthorization authorization = WhisperInsertionPolicy.Evaluate(
+            InsertRequest(Snap("chat", "el-1")),
+            Snap("mail", "el-2", processId: 42));
+        Equal(WhisperInsertionAction.Copy, authorization.Action);
+        Equal(WhisperInsertionFallbackReason.TargetChanged, authorization.FallbackReason);
+    }),
+    ("insertion authorization copies when a protected field appears", () =>
+    {
+        WhisperTargetSnapshot protectedTarget = new(
+            new WhisperTargetIdentity(7, "chat", "el-1"),
+            new WhisperTargetContext(
+                "chat",
+                WhisperTargetKind.PlainText,
+                isKnown: true,
+                isEditable: false,
+                isPassword: true,
+                isReadOnly: true,
+                isElevated: false));
+        WhisperInsertionAuthorization authorization = WhisperInsertionPolicy.Evaluate(
+            InsertRequest(Snap("chat", "el-1")),
+            protectedTarget);
+        Equal(WhisperInsertionAction.Copy, authorization.Action);
+        Equal(WhisperInsertionFallbackReason.ProtectedField, authorization.FallbackReason);
+    }),
+    ("a policy copy decision cannot be upgraded to insertion", () =>
+    {
+        WhisperDeliveryDecision copy = new(
+            WhisperDeliveryKind.CopyText,
+            "hello",
+            WhisperSubmitOrigin.None,
+            RestoreClipboard: false,
+            "safe fallback");
+        WhisperInsertionAuthorization authorization = WhisperInsertionPolicy.Evaluate(
+            new WhisperTextDeliveryRequest(copy, CapturedTarget: null),
+            Snap("chat", "el-1"));
+        Equal(WhisperInsertionAction.Copy, authorization.Action);
+        Equal(WhisperInsertionFallbackReason.PolicyRequiredCopy, authorization.FallbackReason);
+    }),
+    ("submit-only decisions do not create an insertion action", () =>
+    {
+        WhisperDeliveryDecision submitOnly = new(
+            WhisperDeliveryKind.SubmitOnly,
+            string.Empty,
+            WhisperSubmitOrigin.DedicatedShortcut,
+            RestoreClipboard: false,
+            "authorized");
+        Equal(
+            WhisperInsertionAction.None,
+            WhisperInsertionPolicy.Evaluate(
+                new WhisperTextDeliveryRequest(submitOnly, Snap("chat", "el-1")),
+                Snap("chat", "el-1")).Action);
+    }),
+
     // ---------- Target identity and submit gate ----------
 
     ("an unchanged target reports no drift", () =>
@@ -793,6 +866,15 @@ static WhisperInsertionVerification Verified() => new(
     Verified: true,
     WhisperVerificationMethod.AutomationValueRead,
     "read back");
+
+static WhisperTextDeliveryRequest InsertRequest(WhisperTargetSnapshot capturedTarget) => new(
+    new WhisperDeliveryDecision(
+        WhisperDeliveryKind.InsertText,
+        "hello",
+        WhisperSubmitOrigin.None,
+        RestoreClipboard: true,
+        "insert"),
+    capturedTarget);
 
 static WhisperSubmitAuthorization Gate(
     WhisperTargetSnapshot current,

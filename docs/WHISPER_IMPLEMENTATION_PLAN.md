@@ -19,7 +19,7 @@ is reproduced, and no affiliation is implied.
 ## Implemented and verified
 
 The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
-90-test suite in `tests/Soltex.Whisper.Tests`.
+96-test suite in `tests/Soltex.Whisper.Tests`.
 
 | Area | State |
 |---|---|
@@ -46,14 +46,15 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Shortcut policy | Unsafe Windows-key and reserved chords are rejected with a reason; prefix-overlapping chords are rejected before registration; push-to-talk and Command Mode retain press/release semantics; hands-free double-tap becomes one lock intent rather than a second session |
 | Windows shortcut adapter | Dedicated low-level keyboard/mouse hook thread, configured-key-only matching, auto-repeat suppression, Mouse 4/5 support, bounded transition queue, atomic replacement rollback, injected-input rejection, clean async disposal, and content-free callback percentiles |
 | Windows target inspection | Metadata-only UI Automation adapter returns one atomic identity-and-capability snapshot; process integrity, runtime identity, editable/protected/read-only state, Value/Text/Text2 pattern availability, selection/caret support, and category are bounded behind a 750 ms single-flight timeout |
+| Windows insertion adapter | Core reauthorization before mutation and again before paste; whole-value-only UIA direct set; otherwise one clipboard paste chord with a unique token, sequence ownership, bounded restore, focus-drift copy fallback, and cancellation cleanup |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, and Privacy tabs, and the floating listening surface — render this core.
 They are honest about capability: the navigation entry remains marked `SCAFFOLD`
-while providers, shipped shortcut dispatch, target-inspection session wiring,
-delivery, and verified submission are unavailable. The target-inspection adapter
-exists but is not yet connected to a shipped session, so the page does not claim it
-is ready. The capture controls are enabled only when a selected device exists.
+while providers, shipped shortcut dispatch, target/insertion session wiring, and
+verified submission are unavailable. The target and insertion adapters exist but are
+not yet connected to a shipped session, so the page does not claim it is ready. The
+capture controls are enabled only when a selected device exists.
 
 ## Not implemented
 
@@ -65,7 +66,8 @@ from an owner-controlled Windows host says otherwise.
 3. Shipped session wiring for the UI Automation inspector, plus the complete
    owner-controlled target matrix (the adapter and one live focused-control proof
    exist).
-4. Insertion into another application, and the clipboard paste fallback.
+4. Shipped session wiring and the complete application matrix for the insertion
+   adapter (one controlled WinForms target has live direct and clipboard proof).
 5. Emission of Enter.
 6. Scratchpad UI, snippet/vocabulary/style editors, and history UI.
 7. Encrypted transcript retention.
@@ -170,23 +172,53 @@ terminal, plain-text, and rich-text categories remain content-free. Soltex stays
 `asInvoker` with `uiAccess=false`; high/system/protected targets are identified and
 the existing delivery policy falls back to copy.
 
-The Windows adapter suite currently has 21 deterministic cases. It covers all five
-target categories, pattern capability mapping, protected/read-only/unknown controls,
-provider timeout, provider failure, and cancellation. An opt-in owner-host run also
-inspected a real focused rich-text control in 112.52 ms and reported zero content
-reads. This is adapter proof, not the full Win32/WPF/WinUI/Chromium/Electron/Terminal/
-elevated matrix and not shipped session wiring. Context reads remain off; a future
-visible per-application permission must precede any bounded contextual read.
+Target-specific coverage is included in the current 28-case Windows adapter suite.
+It covers all five target categories, pattern capability mapping,
+protected/read-only/unknown controls, provider timeout, provider failure, and
+cancellation. An opt-in owner-host run at commit `d11edec` also inspected a real
+focused rich-text control in 72.04 ms and reported zero content reads. This is
+adapter proof, not the full Win32/WPF/WinUI/Chromium/Electron/Terminal/elevated
+matrix and not shipped session wiring. Context reads remain off; a future visible
+per-application permission must precede any bounded contextual read.
 
 ### 5. Insertion
 
-In order: a direct supported automation value or text operation when it preserves
-editing semantics; otherwise a clipboard paste fallback with a unique operation
-token and clipboard-sequence tracking; restore the prior clipboard only while
-Whisper still owns the sequence and the user enabled restoration; if the target is
-unknown, read-only, protected, stale, inaccessible across an integrity boundary, or
-changed mid-operation, copy and explain the fallback. Never type character by
-character through broad synthetic input.
+Implemented in the provider-neutral core and `src/Soltex.Whisper.Windows`, but not
+yet wired into the shipped session. `WhisperInsertionPolicy` reauthorizes the core's
+delivery decision against the captured and current target before Windows code may
+act. Unknown, read-only, protected, stale, focus-changing, and cross-integrity targets
+reduce to a clipboard copy with a fixed content-free reason; a prior copy decision
+can never be upgraded to insertion.
+
+`WindowsWhisperTextDelivery` inspects again before mutation and once more after
+staging the clipboard. A direct `ValuePattern.SetValue` is attempted only when the
+same focused control exposes both Value and Text patterns, is enabled, focusable,
+non-password, writable, and its one selection covers the entire document. That
+preserves whole-value replacement semantics without reading the value or text. Every
+other editable case uses a single four-event `Ctrl+V` sequence; it never types the
+transcript character by character. Existing modifier state causes paste to fail
+closed, and Windows UIPI remains authoritative.
+
+Clipboard text is bounded to the transcript limit and tagged with a unique
+operation token. The Windows clipboard sequence number is captured only after both
+the text and token are rendered. Optional restore retains the previous OLE data
+object without inspecting its formats, then restores it only if both the sequence
+and token still match. If another owner changes the clipboard, restore is skipped.
+Cancellation before paste restores an owned clipboard when requested. If focus drifts
+after staging or paste input is rejected, the transcript remains copied and the
+result names the fallback. Clipboard acquisition and restoration use bounded retries
+on one background STA thread.
+
+The core suite has 96 cases and the Windows suite has 28 deterministic cases. The
+Windows cases cover direct-before-clipboard ordering, ownership restoration and loss,
+focus drift after staging, unknown targets, rejected paste, and cancellation cleanup.
+An opt-in owner-host test uses a controlled WinForms text target to prove clipboard
+paste, ownership-checked prior-content restoration, and whole-value UI Automation
+replacement. Exact current timings are retained in the commit-matched live evidence.
+The harness reads the controlled target to prove the mutations; the adapter result
+itself is intentionally named
+`MutationDispatched`, not `Inserted`, because `SendInput` success is not insertion
+proof. Full verification and submission remain Slice 6.
 
 ### 6. Verified submission
 

@@ -154,8 +154,8 @@ public interface IWhisperTargetInspector
 
 public interface IWhisperTextDelivery
 {
-    ValueTask DeliverAsync(
-        WhisperDeliveryDecision decision,
+    ValueTask<WhisperTextDeliveryResult> DeliverAsync(
+        WhisperTextDeliveryRequest request,
         CancellationToken cancellationToken);
 }
 

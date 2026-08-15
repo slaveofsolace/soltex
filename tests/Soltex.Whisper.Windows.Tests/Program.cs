@@ -29,7 +29,14 @@ List<(string Name, Func<Task> Run)> tests =
     ("target inspection fails closed for protected read-only and unknown controls", TargetSafetyStates),
     ("a slow target provider times out without blocking the caller", TargetTimeout),
     ("a throwing target provider resolves to unavailable", TargetProviderFailure),
-    ("target inspection cancellation is honored", TargetCancellation)
+    ("target inspection cancellation is honored", TargetCancellation),
+    ("direct target insertion precedes clipboard fallback", DirectInsertionPrecedesClipboard),
+    ("clipboard paste restores only while ownership remains", ClipboardOwnershipRestore),
+    ("clipboard restoration is skipped after another owner takes it", ClipboardOwnershipLost),
+    ("focus drift after clipboard staging falls back to copy", DeliveryFocusDrift),
+    ("an unknown target copies without emitting paste input", DeliveryUnknownTarget),
+    ("a rejected paste leaves the transcript copied", DeliveryPasteRejected),
+    ("cancellation before paste restores an owned clipboard", DeliveryCancellationRestores)
 ];
 
 if (string.Equals(
@@ -54,6 +61,14 @@ if (string.Equals(
     StringComparison.Ordinal))
 {
     tests.Add(("owner-host focused control produces a bounded metadata-only snapshot", LiveTargetInspection));
+}
+
+if (string.Equals(
+    Environment.GetEnvironmentVariable("SOLTEX_RUN_WHISPER_LIVE_INSERTION"),
+    "1",
+    StringComparison.Ordinal))
+{
+    tests.Add(("owner-host text control receives one clipboard-owned insertion", LiveTextInsertion));
 }
 
 int failures = 0;
@@ -363,6 +378,163 @@ static WindowsWhisperTargetObservation TargetObservation(
         TextIsReadOnly: false,
         selection);
 
+static async Task DirectInsertionPrecedesClipboard()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(captured);
+    FakeInsertionPlatform platform = new() { DirectResult = true };
+    WindowsWhisperTextDelivery delivery = new(inspector, platform);
+
+    WhisperTextDeliveryResult result = await delivery.DeliverAsync(
+        DeliveryRequest(captured),
+        CancellationToken.None);
+    Equal(WhisperInsertionMethod.AutomationValue, result.Method);
+    True(result.MutationDispatched);
+    Equal(1, platform.DirectCount);
+    Equal(0, platform.StageCount);
+    Equal(0, platform.PasteCount);
+}
+
+static async Task ClipboardOwnershipRestore()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(captured, captured);
+    FakeInsertionPlatform platform = new()
+    {
+        DirectResult = false,
+        RestoreOutcome = WhisperClipboardRestoreOutcome.Restored
+    };
+    WindowsWhisperTextDelivery delivery = new(inspector, platform);
+
+    WhisperTextDeliveryResult result = await delivery.DeliverAsync(
+        DeliveryRequest(captured),
+        CancellationToken.None);
+    Equal(WhisperInsertionMethod.ClipboardPaste, result.Method);
+    True(result.MutationDispatched);
+    Equal(WhisperClipboardRestoreOutcome.Restored, result.ClipboardRestore);
+    Equal(1, platform.StageCount);
+    Equal(1, platform.PasteCount);
+    Equal(1, platform.LastLease?.RestoreCount);
+    True(WindowsWhisperTextDelivery.ClipboardSettleDelay >= TimeSpan.FromMilliseconds(200));
+    True(WindowsWhisperTextDelivery.ClipboardSettleDelay <= TimeSpan.FromMilliseconds(500));
+}
+
+static async Task ClipboardOwnershipLost()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(captured, captured);
+    FakeInsertionPlatform platform = new()
+    {
+        RestoreOutcome = WhisperClipboardRestoreOutcome.SkippedOwnershipChanged
+    };
+    WindowsWhisperTextDelivery delivery = new(inspector, platform);
+
+    WhisperTextDeliveryResult result = await delivery.DeliverAsync(
+        DeliveryRequest(captured),
+        CancellationToken.None);
+    True(result.MutationDispatched);
+    Equal(
+        WhisperClipboardRestoreOutcome.SkippedOwnershipChanged,
+        result.ClipboardRestore);
+}
+
+static async Task DeliveryFocusDrift()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperTargetSnapshot changed = DeliveryTarget("mail", "el-2", processId: 42);
+    WhisperScriptedTargetInspector inspector = new(captured, changed);
+    FakeInsertionPlatform platform = new();
+    WindowsWhisperTextDelivery delivery = new(inspector, platform);
+
+    WhisperTextDeliveryResult result = await delivery.DeliverAsync(
+        DeliveryRequest(captured),
+        CancellationToken.None);
+    Equal(WhisperInsertionMethod.ClipboardCopy, result.Method);
+    Equal(WhisperInsertionFallbackReason.TargetChanged, result.FallbackReason);
+    False(result.MutationDispatched);
+    True(result.Copied);
+    Equal(0, platform.PasteCount);
+    Equal(0, platform.LastLease?.RestoreCount);
+}
+
+static async Task DeliveryUnknownTarget()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new((WhisperTargetSnapshot?)null);
+    FakeInsertionPlatform platform = new();
+    WindowsWhisperTextDelivery delivery = new(inspector, platform);
+
+    WhisperTextDeliveryResult result = await delivery.DeliverAsync(
+        DeliveryRequest(captured),
+        CancellationToken.None);
+    Equal(WhisperInsertionMethod.ClipboardCopy, result.Method);
+    Equal(WhisperInsertionFallbackReason.TargetUnknown, result.FallbackReason);
+    Equal(1, platform.CopyCount);
+    Equal(0, platform.PasteCount);
+}
+
+static async Task DeliveryPasteRejected()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(captured, captured);
+    FakeInsertionPlatform platform = new() { PasteResult = false };
+    WindowsWhisperTextDelivery delivery = new(inspector, platform);
+
+    WhisperTextDeliveryResult result = await delivery.DeliverAsync(
+        DeliveryRequest(captured),
+        CancellationToken.None);
+    Equal(WhisperInsertionMethod.ClipboardCopy, result.Method);
+    Equal(WhisperInsertionFallbackReason.PasteRejected, result.FallbackReason);
+    False(result.MutationDispatched);
+    True(result.Copied);
+}
+
+static async Task DeliveryCancellationRestores()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    using CancellationTokenSource cancellation = new();
+    CancelingTargetInspector inspector = new(captured, cancellation);
+    FakeInsertionPlatform platform = new()
+    {
+        RestoreOutcome = WhisperClipboardRestoreOutcome.Restored
+    };
+    WindowsWhisperTextDelivery delivery = new(inspector, platform);
+
+    await ThrowsAsync<OperationCanceledException>(async () =>
+        await delivery.DeliverAsync(DeliveryRequest(captured), cancellation.Token));
+    Equal(0, platform.PasteCount);
+    Equal(1, platform.LastLease?.RestoreCount);
+}
+
+static WhisperTargetSnapshot DeliveryTarget(
+    string processName,
+    string runtimeId,
+    int processId = 7) => new(
+        new WhisperTargetIdentity(processId, processName, runtimeId),
+        new WhisperTargetContext(
+            processName,
+            WhisperTargetKind.PlainText,
+            isKnown: true,
+            isEditable: true,
+            isPassword: false,
+            isReadOnly: false,
+            isElevated: false,
+            new WhisperTargetCapabilities(
+                SupportsValuePattern: true,
+                SupportsTextPattern: true,
+                SupportsTextPattern2: false,
+                SupportsSelection: true,
+                SupportsCaret: true)));
+
+static WhisperTextDeliveryRequest DeliveryRequest(WhisperTargetSnapshot captured) => new(
+    new WhisperDeliveryDecision(
+        WhisperDeliveryKind.InsertText,
+        "hello from Soltex",
+        WhisperSubmitOrigin.None,
+        RestoreClipboard: true,
+        "insert"),
+    captured);
+
 static async Task LiveShortcutHooks()
 {
     await using WindowsWhisperShortcutHost host = new();
@@ -416,6 +588,55 @@ static async Task LiveTargetInspection()
         $"text_pattern={snapshot.Context.Capabilities.SupportsTextPattern} " +
         $"text_pattern2={snapshot.Context.Capabilities.SupportsTextPattern2} " +
         $"duration_ms={timer.Elapsed.TotalMilliseconds:F2} content_read=0");
+}
+
+static async Task LiveTextInsertion()
+{
+    const string prefix = "existing ";
+    const string inserted = "soltex insertion probe";
+    await using LiveTextTarget target = await LiveTextTarget.CreateAsync(prefix);
+    await target.FocusAsync();
+
+    WindowsWhisperTargetInspector inspector = new();
+    WhisperTargetSnapshot captured = await inspector.InspectAsync(CancellationToken.None)
+        ?? throw new InvalidOperationException(
+            $"Controlled target inspection was unavailable ({inspector.LastFailure}).");
+    WindowsWhisperTextDelivery delivery = new(inspector);
+    WhisperDeliveryDecision decision = new(
+        WhisperDeliveryKind.InsertText,
+        inserted,
+        WhisperSubmitOrigin.None,
+        RestoreClipboard: true,
+        "owner-controlled insertion proof");
+
+    Stopwatch timer = Stopwatch.StartNew();
+    WhisperTextDeliveryResult result = await delivery.DeliverAsync(
+        new WhisperTextDeliveryRequest(decision, captured),
+        CancellationToken.None);
+    await target.WaitForTextAsync(prefix.Length + inserted.Length);
+    timer.Stop();
+
+    Equal(prefix + inserted, await target.GetTextAsync());
+    Equal(WhisperInsertionMethod.ClipboardPaste, result.Method);
+    True(result.MutationDispatched);
+    Equal(WhisperClipboardRestoreOutcome.Restored, result.ClipboardRestore);
+
+    await target.SelectAllAsync();
+    WhisperTargetSnapshot replacementTarget = await inspector.InspectAsync(CancellationToken.None)
+        ?? throw new InvalidOperationException("The controlled replacement target was unavailable.");
+    Stopwatch directTimer = Stopwatch.StartNew();
+    WhisperTextDeliveryResult directResult = await delivery.DeliverAsync(
+        DeliveryRequest(replacementTarget),
+        CancellationToken.None);
+    await target.WaitForTextAsync("hello from Soltex".Length);
+    directTimer.Stop();
+    Equal("hello from Soltex", await target.GetTextAsync());
+    Equal(WhisperInsertionMethod.AutomationValue, directResult.Method);
+    Console.WriteLine(
+        $"MEASURE whisper_insertion method={result.Method} " +
+        $"restore={result.ClipboardRestore} duration_ms={timer.Elapsed.TotalMilliseconds:F2} " +
+        $"direct_method={directResult.Method} direct_ms={directTimer.Elapsed.TotalMilliseconds:F2} " +
+        "input_events=4 content_logged=0");
 }
 
 static void SendInjectedShortcut()
@@ -960,6 +1181,253 @@ internal sealed class ScriptedTargetInspectionBackend(
     public WindowsWhisperTargetObservation InspectFocused() => inspect();
 }
 
+internal sealed class CancelingTargetInspector(
+    WhisperTargetSnapshot first,
+    CancellationTokenSource cancellation) : IWhisperTargetInspector
+{
+    private int _calls;
+
+    public ValueTask<WhisperTargetSnapshot?> InspectAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (Interlocked.Increment(ref _calls) == 1)
+        {
+            return ValueTask.FromResult<WhisperTargetSnapshot?>(first);
+        }
+
+        cancellation.Cancel();
+        cancellationToken.ThrowIfCancellationRequested();
+        throw new UnreachableException();
+    }
+}
+
+internal sealed class FakeInsertionPlatform : IWindowsWhisperInsertionPlatform
+{
+    internal bool DirectResult { get; init; }
+
+    internal bool PasteResult { get; init; } = true;
+
+    internal WhisperClipboardRestoreOutcome RestoreOutcome { get; init; } =
+        WhisperClipboardRestoreOutcome.Restored;
+
+    internal int DirectCount { get; private set; }
+
+    internal int StageCount { get; private set; }
+
+    internal int CopyCount { get; private set; }
+
+    internal int PasteCount { get; private set; }
+
+    internal FakeClipboardLease? LastLease { get; private set; }
+
+    public ValueTask<bool> TryInsertDirectAsync(
+        WhisperTargetSnapshot capturedTarget,
+        string text,
+        CancellationToken cancellationToken)
+    {
+        _ = capturedTarget;
+        _ = text;
+        cancellationToken.ThrowIfCancellationRequested();
+        DirectCount++;
+        return ValueTask.FromResult(DirectResult);
+    }
+
+    public ValueTask<IWindowsWhisperClipboardLease> StageClipboardAsync(
+        string text,
+        bool capturePrevious,
+        CancellationToken cancellationToken)
+    {
+        _ = text;
+        _ = capturePrevious;
+        cancellationToken.ThrowIfCancellationRequested();
+        StageCount++;
+        LastLease = new FakeClipboardLease(RestoreOutcome);
+        return ValueTask.FromResult<IWindowsWhisperClipboardLease>(LastLease);
+    }
+
+    public ValueTask CopyAsync(string text, CancellationToken cancellationToken)
+    {
+        _ = text;
+        cancellationToken.ThrowIfCancellationRequested();
+        CopyCount++;
+        return ValueTask.CompletedTask;
+    }
+
+    public ValueTask<bool> PasteAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        PasteCount++;
+        return ValueTask.FromResult(PasteResult);
+    }
+}
+
+internal sealed class FakeClipboardLease(WhisperClipboardRestoreOutcome restoreOutcome) :
+    IWindowsWhisperClipboardLease
+{
+    internal int RestoreCount { get; private set; }
+
+    public ValueTask<WhisperClipboardRestoreOutcome> TryRestoreAsync(
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        RestoreCount++;
+        return ValueTask.FromResult(restoreOutcome);
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}
+
+internal sealed class LiveTextTarget : IAsyncDisposable
+{
+    private readonly string _initialText;
+    private readonly TaskCompletionSource _ready = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly Thread _thread;
+    private System.Windows.Forms.Form? _form;
+    private System.Windows.Forms.TextBox? _textBox;
+
+    private LiveTextTarget(string initialText)
+    {
+        _initialText = initialText;
+        _thread = new Thread(ThreadMain)
+        {
+            IsBackground = true,
+            Name = "Soltex Whisper controlled target"
+        };
+        _thread.SetApartmentState(ApartmentState.STA);
+    }
+
+    internal static async ValueTask<LiveTextTarget> CreateAsync(string initialText)
+    {
+        LiveTextTarget target = new(initialText);
+        target._thread.Start();
+        await target._ready.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        return target;
+    }
+
+    internal async ValueTask FocusAsync()
+    {
+        System.Windows.Forms.Form form = _form ??
+            throw new InvalidOperationException("The controlled target is not ready.");
+        System.Windows.Forms.TextBox textBox = _textBox ??
+            throw new InvalidOperationException("The controlled target is not ready.");
+        TaskCompletionSource focused = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        _ = form.BeginInvoke(() =>
+        {
+            form.Show();
+            form.WindowState = System.Windows.Forms.FormWindowState.Normal;
+            form.BringToFront();
+            form.Activate();
+            textBox.Focus();
+            textBox.SelectionStart = textBox.TextLength;
+            textBox.SelectionLength = 0;
+            _ = TestNativeMethods.SetForegroundWindow(form.Handle);
+            focused.TrySetResult();
+        });
+        await focused.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await Task.Delay(100);
+    }
+
+    internal async ValueTask<string> GetTextAsync()
+    {
+        System.Windows.Forms.TextBox textBox = _textBox ??
+            throw new InvalidOperationException("The controlled target is not ready.");
+        TaskCompletionSource<string> value = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        _ = textBox.BeginInvoke(() => value.TrySetResult(textBox.Text));
+        return await value.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    }
+
+    internal async ValueTask SelectAllAsync()
+    {
+        System.Windows.Forms.Form form = _form ??
+            throw new InvalidOperationException("The controlled target is not ready.");
+        System.Windows.Forms.TextBox textBox = _textBox ??
+            throw new InvalidOperationException("The controlled target is not ready.");
+        TaskCompletionSource selected = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        _ = textBox.BeginInvoke(() =>
+        {
+            form.BringToFront();
+            form.Activate();
+            textBox.Focus();
+            textBox.SelectAll();
+            _ = TestNativeMethods.SetForegroundWindow(form.Handle);
+            selected.TrySetResult();
+        });
+        await selected.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await Task.Delay(100);
+    }
+
+    internal async ValueTask WaitForTextAsync(int expectedLength)
+    {
+        Stopwatch deadline = Stopwatch.StartNew();
+        while (deadline.Elapsed < TimeSpan.FromSeconds(2))
+        {
+            if ((await GetTextAsync()).Length == expectedLength)
+            {
+                return;
+            }
+
+            await Task.Delay(20);
+        }
+
+        throw new InvalidOperationException("The controlled text target did not receive the insertion.");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        System.Windows.Forms.Form? form = _form;
+        if (form is not null && !form.IsDisposed)
+        {
+            TaskCompletionSource closed = new(TaskCreationOptions.RunContinuationsAsynchronously);
+            try
+            {
+                _ = form.BeginInvoke(() =>
+                {
+                    form.FormClosed += (_, _) => closed.TrySetResult();
+                    form.Close();
+                });
+                await closed.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            }
+            catch (InvalidOperationException)
+            {
+                // The controlled window already exited.
+            }
+        }
+
+        _ = _thread.Join(millisecondsTimeout: 500);
+    }
+
+    private void ThreadMain()
+    {
+        using System.Windows.Forms.Form form = new()
+        {
+            Text = "Soltex insertion target",
+            ShowInTaskbar = false,
+            TopMost = true,
+            StartPosition = System.Windows.Forms.FormStartPosition.Manual,
+            Location = new System.Drawing.Point(24, 24),
+            ClientSize = new System.Drawing.Size(420, 72),
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow
+        };
+        using System.Windows.Forms.TextBox textBox = new()
+        {
+            Text = _initialText,
+            Location = new System.Drawing.Point(12, 18),
+            Width = 390
+        };
+        form.Controls.Add(textBox);
+        _form = form;
+        _textBox = textBox;
+        form.Shown += (_, _) =>
+        {
+            textBox.Focus();
+            textBox.SelectionStart = textBox.TextLength;
+            _ready.TrySetResult();
+        };
+        System.Windows.Forms.Application.Run(form);
+    }
+}
+
 [StructLayout(LayoutKind.Sequential)]
 internal struct NativeInput
 {
@@ -999,6 +1467,10 @@ internal struct NativeKeyboardInput
 
 internal static class TestNativeMethods
 {
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool SetForegroundWindow(IntPtr windowHandle);
+
     [DllImport("user32.dll", SetLastError = true)]
     internal static extern uint SendInput(
         uint inputCount,

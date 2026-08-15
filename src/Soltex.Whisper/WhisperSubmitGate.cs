@@ -11,7 +11,8 @@ public enum WhisperInsertionMethod
     None,
     AutomationValue,
     AutomationTextRange,
-    ClipboardPaste
+    ClipboardPaste,
+    ClipboardCopy
 }
 
 /// <summary>

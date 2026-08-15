@@ -31,6 +31,7 @@ Security-sensitive assets are user files, quarantined payloads, original restore
 10. **Future personal device fabric.** Device agents, Tailscale reachability, NAS storage, Google Drive, Box, and AI intent translation are designed but not implemented. Before code enters this boundary, jobs must be typed, target-bound, short-lived, replay-resistant, locally authorized, and free of generic shell semantics. The NAS must have no authorization role, and personal/work cloud identities must remain isolated by default.
 11. **Whisper to global input.** The shortcut adapter observes system-wide key and mouse transitions because Windows low-level hooks are global. Registration policy, configured-key filtering, transition-only dispatch, injected-input rejection, and clean unregistration constrain that boundary. The adapter never records text, key sequences, active-window content, or unrelated key identities and never suppresses input from reaching Windows.
 12. **Whisper to focused application metadata.** UI Automation crosses into an untrusted provider process. Inspection is metadata-only, single-flight, deadline-bounded, and produces one identity-and-capability snapshot or unknown. Soltex does not request UIAccess, cross an integrity boundary, or read field, selection, caption, password, or surrounding text at this boundary.
+13. **Whisper to target and clipboard mutation.** The core reauthorizes the captured target before Windows code acts and again after clipboard staging. Direct UIA replacement is whole-value-only; other insertion uses one paste chord. Clipboard restore requires a matching sequence number and unique operation token and never inspects prior formats.
 
 ### Invariants
 
@@ -52,6 +53,7 @@ Security-sensitive assets are user files, quarantined payloads, original restore
 - Never accept an injected shortcut as dictation authority or retain raw keyboard/mouse events in logs, Activity, crash text, or evidence.
 - Never read a password value, field value, selected text, caption, or surrounding text while inspecting a Whisper target.
 - Never treat a timed-out, inaccessible, focus-changing, identity-less, or cross-integrity UI Automation provider as an editable target.
+- Never upgrade a core copy decision to insertion, restore a clipboard after ownership changes, or treat an accepted `SendInput` sequence as proof that text arrived.
 
 ## Attack Surface, Mitigations, and Attacker Stories
 
@@ -141,6 +143,35 @@ Windows UI Automation subsystem. Identity checks and later insertion verificatio
 must therefore be repeated immediately before insertion and submission. Current live
 evidence covers one owner-host rich-text target only; the full application and
 elevation matrix remains required before a shipped-support claim.
+
+### Whisper insertion and clipboard boundary
+
+Focus can move between target inspection, clipboard staging, paste dispatch, and
+later submission. `WhisperInsertionPolicy` compares the captured and current atomic
+snapshots before any action, and the Windows adapter repeats that comparison after
+staging. A mismatch leaves the transcript copied and emits no paste input. Direct UI
+Automation replacement is limited to an enabled, focusable, non-password, writable
+ValuePattern control whose one TextPattern selection spans the whole document; no
+target value or text is read to make that decision.
+
+Clipboard contents are attacker-controlled and can change concurrently. Soltex
+retains the prior OLE data object without enumerating or deserializing its formats,
+sets only bounded Unicode text plus a random operation token, and records the
+sequence number after rendering. Restore is optional and proceeds only when both the
+sequence and token still match. A different sequence or token is ownership loss and
+restore is skipped. Clipboard-open failures use bounded retries; cancellation before
+paste attempts owned restoration, while a failed paste deliberately leaves the
+transcript copied for recovery.
+
+The paste path emits only Ctrl-down, V-down, V-up, Ctrl-up after confirming no Ctrl,
+Shift, Alt, or Windows modifier is already down. It never emits transcript characters.
+Injected shortcut events remain rejected by the shortcut adapter. `SendInput` is
+subject to UIPI and may report only dispatch, not target receipt; therefore the
+delivery result records `MutationDispatched` and Slice 6 must independently read back
+the target before any submission authorization. Same-user clipboard readers,
+clipboard managers, malicious accessibility providers, and races inside Windows
+between the final ownership check and OLE restoration remain outside complete
+prevention and are addressed by fail-closed outcomes and later verification.
 
 ### External Remote Assist boundary
 

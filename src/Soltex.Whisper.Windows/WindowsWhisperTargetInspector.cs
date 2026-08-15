@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Threading.Channels;
 using Soltex.Whisper;
 
 namespace Soltex.Whisper.Windows;
@@ -23,8 +21,7 @@ public sealed class WindowsWhisperTargetInspector : IWhisperTargetInspector
     public static TimeSpan DefaultInspectionTimeout { get; } = TimeSpan.FromMilliseconds(750);
 
     private readonly IWhisperTargetInspectionBackend _backend;
-    private readonly TimeSpan _timeout;
-    private readonly Channel<bool> _inspectionPermit = CreateInspectionPermit();
+    private readonly WindowsBoundedMtaOperationHost _operations;
     private int _lastFailure;
 
     public WindowsWhisperTargetInspector()
@@ -37,15 +34,8 @@ public sealed class WindowsWhisperTargetInspector : IWhisperTargetInspector
         TimeSpan timeout)
     {
         ArgumentNullException.ThrowIfNull(backend);
-        if (timeout < TimeSpan.FromMilliseconds(10) || timeout > TimeSpan.FromSeconds(5))
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(timeout),
-                "Target inspection timeouts must be between 10 milliseconds and 5 seconds.");
-        }
-
         _backend = backend;
-        _timeout = timeout;
+        _operations = new WindowsBoundedMtaOperationHost(timeout);
     }
 
     public WhisperTargetInspectionFailureKind LastFailure =>
@@ -54,152 +44,28 @@ public sealed class WindowsWhisperTargetInspector : IWhisperTargetInspector
     public async ValueTask<WhisperTargetSnapshot?> InspectAsync(
         CancellationToken cancellationToken)
     {
-        Stopwatch deadline = Stopwatch.StartNew();
-        using CancellationTokenSource permitDeadline =
-            CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        permitDeadline.CancelAfter(_timeout);
-        try
+        WindowsBoundedOperationResult<WindowsWhisperTargetObservation> operation =
+            await _operations.RunAsync(
+                _backend.InspectFocused,
+                cancellationToken).ConfigureAwait(false);
+        if (!operation.Succeeded || operation.Value is null)
         {
-            _ = await _inspectionPermit.Reader
-                .ReadAsync(permitDeadline.Token)
-                .ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            SetFailure(WhisperTargetInspectionFailureKind.TimedOut);
+            SetFailure(operation.Failure == WindowsBoundedOperationFailure.TimedOut
+                ? WhisperTargetInspectionFailureKind.TimedOut
+                : WhisperTargetInspectionFailureKind.ProviderUnavailable);
             return null;
         }
 
-        Task<WindowsWhisperTargetObservation>? inspection = null;
-        bool releaseDeferred = false;
-        try
-        {
-            TimeSpan remaining = _timeout - deadline.Elapsed;
-            if (remaining <= TimeSpan.Zero)
-            {
-                SetFailure(WhisperTargetInspectionFailureKind.TimedOut);
-                return null;
-            }
-
-            inspection = StartInspection();
-            WindowsWhisperTargetObservation observation = await inspection
-                .WaitAsync(remaining, cancellationToken)
-                .ConfigureAwait(false);
-            WhisperTargetSnapshot? snapshot = WindowsWhisperTargetMapper.Map(observation);
-            SetFailure(snapshot is null
-                ? WhisperTargetInspectionFailureKind.UnknownTarget
-                : WhisperTargetInspectionFailureKind.None);
-            return snapshot;
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            if (inspection is not null && !inspection.IsCompleted)
-            {
-                releaseDeferred = true;
-                _ = ReleaseWhenCompleteAsync(inspection);
-            }
-
-            throw;
-        }
-        catch (TimeoutException)
-        {
-            SetFailure(WhisperTargetInspectionFailureKind.TimedOut);
-            if (inspection is not null && !inspection.IsCompleted)
-            {
-                releaseDeferred = true;
-                _ = ReleaseWhenCompleteAsync(inspection);
-            }
-
-            return null;
-        }
-        catch (Exception exception) when (IsRecoverableProviderFailure(exception))
-        {
-            SetFailure(WhisperTargetInspectionFailureKind.ProviderUnavailable);
-            return null;
-        }
-        finally
-        {
-            if (!releaseDeferred)
-            {
-                ReleaseInspectionPermit();
-            }
-        }
-    }
-
-    private Task<WindowsWhisperTargetObservation> StartInspection()
-    {
-        TaskCompletionSource<WindowsWhisperTargetObservation> completion = new(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        Thread worker = new(() =>
-        {
-            try
-            {
-                completion.TrySetResult(_backend.InspectFocused());
-            }
-            catch (Exception exception)
-            {
-                completion.TrySetException(exception);
-            }
-        })
-        {
-            IsBackground = true,
-            Name = "Soltex Whisper target inspection"
-        };
-        worker.SetApartmentState(ApartmentState.MTA);
-        worker.Start();
-        return completion.Task;
-    }
-
-    private async Task ReleaseWhenCompleteAsync(Task inspection)
-    {
-        try
-        {
-            await inspection.ConfigureAwait(false);
-        }
-        catch (Exception)
-        {
-            // Observe any provider failure. Caller-visible state was already reduced
-            // to a content-free timeout or cancellation outcome before this cleanup
-            // continuation was scheduled.
-        }
-        finally
-        {
-            ReleaseInspectionPermit();
-        }
-    }
-
-    private void ReleaseInspectionPermit()
-    {
-        if (!_inspectionPermit.Writer.TryWrite(true))
-        {
-            throw new InvalidOperationException("The target inspection permit was released twice.");
-        }
-    }
-
-    private static Channel<bool> CreateInspectionPermit()
-    {
-        Channel<bool> permit = Channel.CreateBounded<bool>(new BoundedChannelOptions(1)
-        {
-            FullMode = BoundedChannelFullMode.Wait,
-            SingleReader = false,
-            SingleWriter = false,
-            AllowSynchronousContinuations = false
-        });
-        if (!permit.Writer.TryWrite(true))
-        {
-            throw new InvalidOperationException("The target inspection permit could not be initialized.");
-        }
-
-        return permit;
+        WhisperTargetSnapshot? snapshot = WindowsWhisperTargetMapper.Map(operation.Value);
+        SetFailure(snapshot is null
+            ? WhisperTargetInspectionFailureKind.UnknownTarget
+            : WhisperTargetInspectionFailureKind.None);
+        return snapshot;
     }
 
     private void SetFailure(WhisperTargetInspectionFailureKind failure) =>
         Volatile.Write(ref _lastFailure, (int)failure);
 
-    private static bool IsRecoverableProviderFailure(Exception exception) =>
-        exception is not OutOfMemoryException and
-        not StackOverflowException and
-        not AccessViolationException;
 }
 
 internal interface IWhisperTargetInspectionBackend

@@ -150,19 +150,31 @@ public sealed class WhisperScriptedTargetInspector : IWhisperTargetInspector
 /// </summary>
 public sealed class WhisperRecordingTextDelivery : IWhisperTextDelivery
 {
-    private readonly List<WhisperDeliveryDecision> _decisions = [];
+    private readonly List<WhisperTextDeliveryRequest> _requests = [];
 
-    public ReadOnlyCollection<WhisperDeliveryDecision> Decisions =>
-        Array.AsReadOnly(_decisions.ToArray());
+    public ReadOnlyCollection<WhisperTextDeliveryRequest> Requests =>
+        Array.AsReadOnly(_requests.ToArray());
 
-    public ValueTask DeliverAsync(
-        WhisperDeliveryDecision decision,
+    public ValueTask<WhisperTextDeliveryResult> DeliverAsync(
+        WhisperTextDeliveryRequest request,
         CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(decision);
+        ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
 
-        _decisions.Add(decision);
-        return ValueTask.CompletedTask;
+        _requests.Add(request);
+        WhisperInsertionMethod method = request.Decision.Kind == WhisperDeliveryKind.CopyText
+            ? WhisperInsertionMethod.ClipboardCopy
+            : request.Decision.Text.Length > 0
+                ? WhisperInsertionMethod.ClipboardPaste
+                : WhisperInsertionMethod.None;
+        return ValueTask.FromResult(new WhisperTextDeliveryResult(
+            method,
+            method == WhisperInsertionMethod.ClipboardCopy
+                ? WhisperInsertionFallbackReason.PolicyRequiredCopy
+                : WhisperInsertionFallbackReason.None,
+            WhisperClipboardRestoreOutcome.NotRequested,
+            MutationDispatched: method == WhisperInsertionMethod.ClipboardPaste,
+            Copied: method == WhisperInsertionMethod.ClipboardCopy));
     }
 }
