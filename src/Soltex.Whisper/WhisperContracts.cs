@@ -144,7 +144,11 @@ public interface IWhisperTranscriber
 
 public interface IWhisperTargetInspector
 {
-    ValueTask<WhisperTargetContext> InspectAsync(
+    /// <summary>
+    /// Returns one atomic identity-and-capability snapshot of the focused control.
+    /// A null result means the target could not be established safely.
+    /// </summary>
+    ValueTask<WhisperTargetSnapshot?> InspectAsync(
         CancellationToken cancellationToken);
 }
 

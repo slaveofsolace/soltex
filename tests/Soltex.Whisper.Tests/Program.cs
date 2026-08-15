@@ -717,9 +717,11 @@ var tests = new (string Name, Action Run)[]
     }),
     ("the scripted inspector can change focus mid-session", () =>
     {
-        WhisperScriptedTargetInspector inspector = new(Edit("chat"), Edit("mail"));
-        Equal("chat", Wait(inspector.InspectAsync(CancellationToken.None)).ProcessName);
-        Equal("mail", Wait(inspector.InspectAsync(CancellationToken.None)).ProcessName);
+        WhisperScriptedTargetInspector inspector = new(
+            Snap("chat", "el-1"),
+            Snap("mail", "el-2", processId: 42));
+        Equal("chat", Wait(inspector.InspectAsync(CancellationToken.None))?.Context.ProcessName);
+        Equal("mail", Wait(inspector.InspectAsync(CancellationToken.None))?.Context.ProcessName);
     })
 };
 

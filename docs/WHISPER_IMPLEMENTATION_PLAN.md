@@ -19,7 +19,7 @@ is reproduced, and no affiliation is implied.
 ## Implemented and verified
 
 The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
-87-test suite in `tests/Soltex.Whisper.Tests`.
+90-test suite in `tests/Soltex.Whisper.Tests`.
 
 | Area | State |
 |---|---|
@@ -45,13 +45,15 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Capture UI | Working device refresh, persisted selection, explicit five-second microphone test, recovery/error status, and live overlay level meter |
 | Shortcut policy | Unsafe Windows-key and reserved chords are rejected with a reason; prefix-overlapping chords are rejected before registration; push-to-talk and Command Mode retain press/release semantics; hands-free double-tap becomes one lock intent rather than a second session |
 | Windows shortcut adapter | Dedicated low-level keyboard/mouse hook thread, configured-key-only matching, auto-repeat suppression, Mouse 4/5 support, bounded transition queue, atomic replacement rollback, injected-input rejection, clean async disposal, and content-free callback percentiles |
+| Windows target inspection | Metadata-only UI Automation adapter returns one atomic identity-and-capability snapshot; process integrity, runtime identity, editable/protected/read-only state, Value/Text/Text2 pattern availability, selection/caret support, and category are bounded behind a 750 ms single-flight timeout |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, and Privacy tabs, and the floating listening surface — render this core.
 They are honest about capability: the navigation entry remains marked `SCAFFOLD`
-while providers, shipped shortcut dispatch, target inspection, delivery, and verified
-submission are unavailable. The capture controls are enabled only when a selected
-device exists.
+while providers, shipped shortcut dispatch, target-inspection session wiring,
+delivery, and verified submission are unavailable. The target-inspection adapter
+exists but is not yet connected to a shipped session, so the page does not claim it
+is ready. The capture controls are enabled only when a selected device exists.
 
 ## Not implemented
 
@@ -60,7 +62,9 @@ from an owner-controlled Windows host says otherwise.
 
 1. A real transcription provider adapter and its credential storage.
 2. Shipped shortcut registration and dispatch into the real session coordinator.
-3. UI Automation inspection of real focused controls.
+3. Shipped session wiring for the UI Automation inspector, plus the complete
+   owner-controlled target matrix (the adapter and one live focused-control proof
+   exist).
 4. Insertion into another application, and the clipboard paste fallback.
 5. Emission of Enter.
 6. Scratchpad UI, snippet/vocabulary/style editors, and history UI.
@@ -147,12 +151,32 @@ record shortcut-to-listening latency in the packaged app.
 
 ### 4. Target inspection
 
-Implement `IWhisperTargetInspector` with UI Automation, producing the
-`WhisperTargetSnapshot` the core already consumes. Inspect only process identity and
-integrity level, focused element runtime identity, editable and read-only state,
-password state, supported patterns, and target category. Never read password values.
-Never log surrounding text. Context reads stay off by default behind a visible
-per-application permission.
+Implemented in `src/Soltex.Whisper.Windows`. `IWhisperTargetInspector` now returns a
+nullable `WhisperTargetSnapshot` so identity and capabilities come from one atomic
+inspection rather than from independently timed reads. `WindowsWhisperTargetInspector`
+runs UI Automation provider work on one background MTA thread and applies one total
+750 ms deadline. If a provider is slow, throws, changes focus during inspection, or
+cannot expose a stable identity and integrity level, the result is unknown. Only one
+native inspection can remain in flight, which prevents a non-responsive provider
+from creating an unbounded thread or queue.
+
+The native adapter reads process ID/name, token integrity level, opaque runtime ID,
+enabled/focusable/password state, control type, and advertised Value, Text, and
+TextPattern2 support. It queries Value/Text read-only and selection metadata only for
+non-password controls. It never requests UIA Name, a Value value, text-range text,
+selected text, captions, or surrounding text. Password providers are not opened.
+`WhisperTargetCapabilities` carries only boolean pattern metadata; browser, editor,
+terminal, plain-text, and rich-text categories remain content-free. Soltex stays
+`asInvoker` with `uiAccess=false`; high/system/protected targets are identified and
+the existing delivery policy falls back to copy.
+
+The Windows adapter suite currently has 21 deterministic cases. It covers all five
+target categories, pattern capability mapping, protected/read-only/unknown controls,
+provider timeout, provider failure, and cancellation. An opt-in owner-host run also
+inspected a real focused rich-text control in 112.52 ms and reported zero content
+reads. This is adapter proof, not the full Win32/WPF/WinUI/Chromium/Electron/Terminal/
+elevated matrix and not shipped session wiring. Context reads remain off; a future
+visible per-application permission must precede any bounded contextual read.
 
 ### 5. Insertion
 

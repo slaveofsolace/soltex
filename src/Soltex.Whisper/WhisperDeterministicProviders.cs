@@ -118,10 +118,10 @@ public sealed class WhisperDeterministicTranscriber : IWhisperTranscriber
 /// </summary>
 public sealed class WhisperScriptedTargetInspector : IWhisperTargetInspector
 {
-    private readonly ReadOnlyCollection<WhisperTargetContext> _targets;
+    private readonly ReadOnlyCollection<WhisperTargetSnapshot?> _targets;
     private int _index;
 
-    public WhisperScriptedTargetInspector(params WhisperTargetContext[] targets)
+    public WhisperScriptedTargetInspector(params WhisperTargetSnapshot?[] targets)
     {
         ArgumentNullException.ThrowIfNull(targets);
 
@@ -132,14 +132,14 @@ public sealed class WhisperScriptedTargetInspector : IWhisperTargetInspector
                 nameof(targets));
         }
 
-        _targets = Array.AsReadOnly((WhisperTargetContext[])targets.Clone());
+        _targets = Array.AsReadOnly((WhisperTargetSnapshot?[])targets.Clone());
     }
 
-    public ValueTask<WhisperTargetContext> InspectAsync(CancellationToken cancellationToken)
+    public ValueTask<WhisperTargetSnapshot?> InspectAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        WhisperTargetContext target = _targets[Math.Min(_index, _targets.Count - 1)];
+        WhisperTargetSnapshot? target = _targets[Math.Min(_index, _targets.Count - 1)];
         _index++;
         return ValueTask.FromResult(target);
     }

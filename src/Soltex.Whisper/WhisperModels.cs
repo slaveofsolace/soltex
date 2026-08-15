@@ -49,7 +49,40 @@ public enum WhisperTargetKind
     Unknown,
     PlainText,
     RichText,
-    Terminal
+    Terminal,
+    Browser,
+    Editor
+}
+
+public enum WhisperTargetIntegrityLevel
+{
+    Unknown,
+    Untrusted,
+    Low,
+    Medium,
+    High,
+    System,
+    Protected
+}
+
+/// <summary>
+/// Content-free editing capabilities reported by a target adapter. These flags
+/// describe pattern support only; they never contain a field value, selection,
+/// caption, or surrounding text.
+/// </summary>
+public sealed record WhisperTargetCapabilities(
+    bool SupportsValuePattern,
+    bool SupportsTextPattern,
+    bool SupportsTextPattern2,
+    bool SupportsSelection,
+    bool SupportsCaret)
+{
+    public static WhisperTargetCapabilities None { get; } = new(
+        SupportsValuePattern: false,
+        SupportsTextPattern: false,
+        SupportsTextPattern2: false,
+        SupportsSelection: false,
+        SupportsCaret: false);
 }
 
 public enum WhisperDeliveryKind
@@ -251,7 +284,9 @@ public sealed class WhisperTargetContext
         bool isEditable,
         bool isPassword,
         bool isReadOnly,
-        bool isElevated)
+        bool isElevated,
+        WhisperTargetCapabilities? capabilities = null,
+        WhisperTargetIntegrityLevel? integrityLevel = null)
     {
         ProcessName = string.IsNullOrWhiteSpace(processName)
             ? "unknown"
@@ -261,7 +296,14 @@ public sealed class WhisperTargetContext
         IsEditable = isEditable;
         IsPassword = isPassword;
         IsReadOnly = isReadOnly;
-        IsElevated = isElevated;
+        IntegrityLevel = integrityLevel ?? (isElevated
+            ? WhisperTargetIntegrityLevel.High
+            : WhisperTargetIntegrityLevel.Medium);
+        IsElevated = isElevated || IntegrityLevel is
+            WhisperTargetIntegrityLevel.High or
+            WhisperTargetIntegrityLevel.System or
+            WhisperTargetIntegrityLevel.Protected;
+        Capabilities = capabilities ?? WhisperTargetCapabilities.None;
     }
 
     public string ProcessName { get; }
@@ -278,6 +320,10 @@ public sealed class WhisperTargetContext
 
     public bool IsElevated { get; }
 
+    public WhisperTargetIntegrityLevel IntegrityLevel { get; }
+
+    public WhisperTargetCapabilities Capabilities { get; }
+
     public static WhisperTargetContext Unknown { get; } = new(
         "unknown",
         WhisperTargetKind.Unknown,
@@ -285,7 +331,9 @@ public sealed class WhisperTargetContext
         isEditable: false,
         isPassword: false,
         isReadOnly: false,
-        isElevated: false);
+        isElevated: false,
+        capabilities: WhisperTargetCapabilities.None,
+        integrityLevel: WhisperTargetIntegrityLevel.Unknown);
 }
 
 public sealed class WhisperPipelineResult

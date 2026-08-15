@@ -23,7 +23,13 @@ List<(string Name, Func<Task> Run)> tests =
     ("shortcut chord matching is order independent and suppresses repeat", ShortcutChordMatching),
     ("shortcut mouse buttons preserve press and release", ShortcutMouseButtons),
     ("shortcut registration rejects unsupported Windows keys", UnsupportedShortcutKey),
-    ("shortcut registration rolls back atomically after a replacement failure", AtomicShortcutRollback)
+    ("shortcut registration rolls back atomically after a replacement failure", AtomicShortcutRollback),
+    ("target inspection classifies supported control categories", TargetCategories),
+    ("target inspection exposes content-free pattern capabilities", TargetCapabilities),
+    ("target inspection fails closed for protected read-only and unknown controls", TargetSafetyStates),
+    ("a slow target provider times out without blocking the caller", TargetTimeout),
+    ("a throwing target provider resolves to unavailable", TargetProviderFailure),
+    ("target inspection cancellation is honored", TargetCancellation)
 ];
 
 if (string.Equals(
@@ -40,6 +46,14 @@ if (string.Equals(
     StringComparison.Ordinal))
 {
     tests.Add(("owner-host hooks register, ignore injected input, measure, and unregister", LiveShortcutHooks));
+}
+
+if (string.Equals(
+    Environment.GetEnvironmentVariable("SOLTEX_RUN_WHISPER_LIVE_TARGET"),
+    "1",
+    StringComparison.Ordinal))
+{
+    tests.Add(("owner-host focused control produces a bounded metadata-only snapshot", LiveTargetInspection));
 }
 
 int failures = 0;
@@ -183,6 +197,172 @@ static async Task AtomicShortcutRollback()
     Equal(1, observed.Count);
 }
 
+static async Task TargetCategories()
+{
+    (WindowsWhisperTargetObservation Observation, WhisperTargetKind Expected)[] cases =
+    [
+        (TargetObservation("notepad", WindowsWhisperControlKind.Edit, valuePattern: true),
+            WhisperTargetKind.PlainText),
+        (TargetObservation("wordpad", WindowsWhisperControlKind.Document, textPattern: true),
+            WhisperTargetKind.RichText),
+        (TargetObservation("pwsh", WindowsWhisperControlKind.Edit, valuePattern: true),
+            WhisperTargetKind.Terminal),
+        (TargetObservation("chrome", WindowsWhisperControlKind.Document, textPattern: true),
+            WhisperTargetKind.Browser),
+        (TargetObservation("code", WindowsWhisperControlKind.Document, textPattern: true),
+            WhisperTargetKind.Editor)
+    ];
+
+    foreach ((WindowsWhisperTargetObservation observation, WhisperTargetKind expected) in cases)
+    {
+        WindowsWhisperTargetInspector inspector = new(
+            new ScriptedTargetInspectionBackend(() => observation),
+            TimeSpan.FromMilliseconds(250));
+        WhisperTargetSnapshot? snapshot = await inspector.InspectAsync(CancellationToken.None);
+        True(snapshot is not null);
+        Equal(expected, snapshot!.Context.Kind);
+        Equal(observation.ProcessId, snapshot.Identity.ProcessId);
+        Equal(WhisperTargetInspectionFailureKind.None, inspector.LastFailure);
+    }
+}
+
+static async Task TargetCapabilities()
+{
+    WindowsWhisperTargetObservation observation = TargetObservation(
+        "writer",
+        WindowsWhisperControlKind.Document,
+        textPattern: true,
+        textPattern2: true,
+        selection: true);
+    WindowsWhisperTargetInspector inspector = new(
+        new ScriptedTargetInspectionBackend(() => observation),
+        TimeSpan.FromMilliseconds(250));
+
+    WhisperTargetSnapshot snapshot = await inspector.InspectAsync(CancellationToken.None)
+        ?? throw new InvalidOperationException("Expected a known rich-text target.");
+    True(snapshot.Context.IsEditable);
+    False(snapshot.Context.IsReadOnly);
+    True(snapshot.Context.Capabilities.SupportsTextPattern);
+    True(snapshot.Context.Capabilities.SupportsTextPattern2);
+    True(snapshot.Context.Capabilities.SupportsSelection);
+    True(snapshot.Context.Capabilities.SupportsCaret);
+    Equal(WhisperTargetIntegrityLevel.Medium, snapshot.Context.IntegrityLevel);
+}
+
+static async Task TargetSafetyStates()
+{
+    WindowsWhisperTargetInspector passwordInspector = new(
+        new ScriptedTargetInspectionBackend(() => TargetObservation(
+            "browser",
+            WindowsWhisperControlKind.Edit,
+            valuePattern: true,
+            password: true)),
+        TimeSpan.FromMilliseconds(250));
+    WhisperTargetSnapshot password = await passwordInspector.InspectAsync(CancellationToken.None)
+        ?? throw new InvalidOperationException("Expected a protected target snapshot.");
+    True(password.Context.IsPassword);
+    False(password.Context.IsEditable);
+
+    WindowsWhisperTargetInspector readOnlyInspector = new(
+        new ScriptedTargetInspectionBackend(() => TargetObservation(
+            "reader",
+            WindowsWhisperControlKind.Edit,
+            valuePattern: true,
+            valueReadOnly: true)),
+        TimeSpan.FromMilliseconds(250));
+    WhisperTargetSnapshot readOnly = await readOnlyInspector.InspectAsync(CancellationToken.None)
+        ?? throw new InvalidOperationException("Expected a read-only target snapshot.");
+    True(readOnly.Context.IsReadOnly);
+    False(readOnly.Context.IsEditable);
+
+    WindowsWhisperTargetInspector unknownInspector = new(
+        new ScriptedTargetInspectionBackend(() => TargetObservation(
+            "surface",
+            WindowsWhisperControlKind.Unknown)),
+        TimeSpan.FromMilliseconds(250));
+    Equal<WhisperTargetSnapshot?>(
+        null,
+        await unknownInspector.InspectAsync(CancellationToken.None));
+    Equal(WhisperTargetInspectionFailureKind.UnknownTarget, unknownInspector.LastFailure);
+}
+
+static async Task TargetTimeout()
+{
+    WindowsWhisperTargetInspector inspector = new(
+        new ScriptedTargetInspectionBackend(() =>
+        {
+            Thread.Sleep(80);
+            return TargetObservation(
+                "notepad",
+                WindowsWhisperControlKind.Edit,
+                valuePattern: true);
+        }),
+        TimeSpan.FromMilliseconds(10));
+    Stopwatch timer = Stopwatch.StartNew();
+    WhisperTargetSnapshot? snapshot = await inspector.InspectAsync(CancellationToken.None);
+    timer.Stop();
+
+    Equal<WhisperTargetSnapshot?>(null, snapshot);
+    Equal(WhisperTargetInspectionFailureKind.TimedOut, inspector.LastFailure);
+    True(timer.Elapsed < TimeSpan.FromMilliseconds(250));
+    await Task.Delay(100);
+}
+
+static async Task TargetProviderFailure()
+{
+    WindowsWhisperTargetInspector inspector = new(
+        new ScriptedTargetInspectionBackend(() =>
+            throw new InvalidOperationException("Scripted inaccessible provider.")),
+        TimeSpan.FromMilliseconds(250));
+    Equal<WhisperTargetSnapshot?>(
+        null,
+        await inspector.InspectAsync(CancellationToken.None));
+    Equal(WhisperTargetInspectionFailureKind.ProviderUnavailable, inspector.LastFailure);
+}
+
+static async Task TargetCancellation()
+{
+    WindowsWhisperTargetInspector inspector = new(
+        new ScriptedTargetInspectionBackend(() =>
+        {
+            Thread.Sleep(80);
+            return TargetObservation(
+                "notepad",
+                WindowsWhisperControlKind.Edit,
+                valuePattern: true);
+        }),
+        TimeSpan.FromMilliseconds(250));
+    using CancellationTokenSource cancellation = new(TimeSpan.FromMilliseconds(10));
+    await ThrowsAsync<OperationCanceledException>(async () =>
+        await inspector.InspectAsync(cancellation.Token));
+    await Task.Delay(100);
+}
+
+static WindowsWhisperTargetObservation TargetObservation(
+    string processName,
+    WindowsWhisperControlKind controlKind,
+    bool valuePattern = false,
+    bool valueReadOnly = false,
+    bool textPattern = false,
+    bool textPattern2 = false,
+    bool selection = false,
+    bool password = false) => new(
+        ProcessId: 2048,
+        processName,
+        RuntimeId: [42, 7, 11],
+        WhisperTargetIntegrityLevel.Medium,
+        controlKind,
+        IsEnabled: true,
+        IsKeyboardFocusable: true,
+        password,
+        valuePattern,
+        valueReadOnly,
+        textPattern,
+        textPattern2,
+        TextReadOnlyKnown: textPattern,
+        TextIsReadOnly: false,
+        selection);
+
 static async Task LiveShortcutHooks()
 {
     await using WindowsWhisperShortcutHost host = new();
@@ -215,6 +395,27 @@ static async Task LiveShortcutHooks()
         $"local_p50_us={performance.P50Microseconds:F2} " +
         $"local_p95_us={performance.P95Microseconds:F2} " +
         $"local_p99_us={performance.P99Microseconds:F2} injected_signals=0");
+}
+
+static async Task LiveTargetInspection()
+{
+    WindowsWhisperTargetInspector inspector = new();
+    Stopwatch timer = Stopwatch.StartNew();
+    WhisperTargetSnapshot snapshot = await inspector.InspectAsync(CancellationToken.None)
+        ?? throw new InvalidOperationException(
+            $"Focused-control inspection was unavailable ({inspector.LastFailure}).");
+    timer.Stop();
+
+    True(snapshot.Identity.ElementRuntimeId.Length <=
+         WhisperTargetIdentity.MaximumRuntimeIdCharacters);
+    True(snapshot.Context.IsKnown);
+    Console.WriteLine(
+        $"MEASURE whisper_target category={snapshot.Context.Kind} " +
+        $"integrity={snapshot.Context.IntegrityLevel} " +
+        $"value_pattern={snapshot.Context.Capabilities.SupportsValuePattern} " +
+        $"text_pattern={snapshot.Context.Capabilities.SupportsTextPattern} " +
+        $"text_pattern2={snapshot.Context.Capabilities.SupportsTextPattern2} " +
+        $"duration_ms={timer.Elapsed.TotalMilliseconds:F2} content_read=0");
 }
 
 static void SendInjectedShortcut()
@@ -751,6 +952,12 @@ internal sealed class FakeShortcutRegistration(
         Active = false;
         return ValueTask.CompletedTask;
     }
+}
+
+internal sealed class ScriptedTargetInspectionBackend(
+    Func<WindowsWhisperTargetObservation> inspect) : IWhisperTargetInspectionBackend
+{
+    public WindowsWhisperTargetObservation InspectFocused() => inspect();
 }
 
 [StructLayout(LayoutKind.Sequential)]

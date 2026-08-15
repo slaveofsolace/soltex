@@ -30,6 +30,7 @@ Security-sensitive assets are user files, quarantined payloads, original restore
 9. **Preview to future installer.** No implementation crosses this boundary. A future privileged component must accept only the exact confirmed plan and immutable verified handles, never a URL, archive path, or generic command.
 10. **Future personal device fabric.** Device agents, Tailscale reachability, NAS storage, Google Drive, Box, and AI intent translation are designed but not implemented. Before code enters this boundary, jobs must be typed, target-bound, short-lived, replay-resistant, locally authorized, and free of generic shell semantics. The NAS must have no authorization role, and personal/work cloud identities must remain isolated by default.
 11. **Whisper to global input.** The shortcut adapter observes system-wide key and mouse transitions because Windows low-level hooks are global. Registration policy, configured-key filtering, transition-only dispatch, injected-input rejection, and clean unregistration constrain that boundary. The adapter never records text, key sequences, active-window content, or unrelated key identities and never suppresses input from reaching Windows.
+12. **Whisper to focused application metadata.** UI Automation crosses into an untrusted provider process. Inspection is metadata-only, single-flight, deadline-bounded, and produces one identity-and-capability snapshot or unknown. Soltex does not request UIAccess, cross an integrity boundary, or read field, selection, caption, password, or surrounding text at this boundary.
 
 ### Invariants
 
@@ -49,6 +50,8 @@ Security-sensitive assets are user files, quarantined payloads, original restore
 - Never expose a generic remote shell or silently move work Box data into personal Drive, the NAS, an AI prompt, or another trust domain.
 - Never turn the Whisper shortcut hook into a keylogger: only configured-key state and content-free action transitions may leave the callback.
 - Never accept an injected shortcut as dictation authority or retain raw keyboard/mouse events in logs, Activity, crash text, or evidence.
+- Never read a password value, field value, selected text, caption, or surrounding text while inspecting a Whisper target.
+- Never treat a timed-out, inaccessible, focus-changing, identity-less, or cross-integrity UI Automation provider as an editable target.
 
 ## Attack Surface, Mitigations, and Attacker Stories
 
@@ -112,6 +115,32 @@ administrator can bypass these controls. Future shipped integration must registe
 only after validated settings, cancel active work on hook faults, unregister during
 the owned shutdown drain, and prove physical-key behavior without collecting user
 content. Hook timing evidence contains only sample counts and percentile durations.
+
+### Whisper focused-target boundary
+
+A hostile, inaccessible, or hung UI Automation provider could block its caller,
+change the focused element between reads, expose misleading editability metadata, or
+attempt to make Soltex ingest private target content. The Windows adapter runs
+provider calls off the UI thread under one total deadline and permits at most one
+native inspection at a time. A timed-out worker is allowed to finish in the
+background, but no second worker starts until it does; callers receive unknown rather
+than hanging or accumulating threads. Focused process ID and opaque runtime ID are
+re-read before acceptance, and a change invalidates the observation.
+
+Inspection requests only content-free properties and pattern availability. Password
+providers are not opened, and no code in this path asks UI Automation for Name,
+Value, text, a selection, or surrounding context. Value/Text read-only and selection
+support are queried only on non-password controls. Contextual formatting reads remain
+disabled and require a future visible, per-application permission. The executable
+remains `asInvoker` with `uiAccess=false`; elevated or protected UI is not automated,
+and high/system/protected integrity resolves to the existing copy-only policy.
+
+This boundary cannot defend against a malicious same-user process that lies through
+its own accessibility provider, process injection, an administrator, or a compromised
+Windows UI Automation subsystem. Identity checks and later insertion verification
+must therefore be repeated immediately before insertion and submission. Current live
+evidence covers one owner-host rich-text target only; the full application and
+elevation matrix remains required before a shipped-support claim.
 
 ### External Remote Assist boundary
 

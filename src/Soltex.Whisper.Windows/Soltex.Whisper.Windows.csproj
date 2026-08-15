@@ -4,12 +4,15 @@
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <RootNamespace>Soltex.Whisper.Windows</RootNamespace>
     <AssemblyName>Soltex.Whisper.Windows</AssemblyName>
-    <Description>Bounded Windows WASAPI capture adapter for the provider-neutral Soltex Whisper core.</Description>
+    <Description>Bounded Windows capture, shortcut, and target-inspection adapters for the provider-neutral Soltex Whisper core.</Description>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Soltex.Audio\Soltex.Audio.csproj" />
     <ProjectReference Include="..\Soltex.Whisper\Soltex.Whisper.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Soltex.Whisper.Windows.Tests" />
