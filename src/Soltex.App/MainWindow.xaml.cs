@@ -17,6 +17,7 @@ using Soltex.Monitoring;
 using Soltex.RemoteAssist;
 using Soltex.Security;
 using Soltex.Update;
+using Soltex.Whisper;
 
 namespace Soltex.App;
 
@@ -41,6 +42,7 @@ public partial class MainWindow : Window
     private ImportFolderMonitor? _importMonitor;
     private ProtectionMonitor? _protectionMonitor;
     private ProtectionMonitorState? _lastMonitorState;
+    private WhisperOverlayWindow? _whisperOverlay;
     private RemoteAssistExecutable? _remoteAssistExecutable;
     private AuthenticodeVerificationResult? _remoteAssistTrust;
     private bool _securityActivityVisible;
@@ -126,6 +128,7 @@ public partial class MainWindow : Window
         SetRemoteAssistExecutable(RemoteAssistExecutableLocator.FindInstalled());
         DevicesPanel.UpdateObservation(_localDevice);
         DevicesPanel.RemoteAssistRequested += (_, _) => ShowPanel(RemotePanel, RemoteNavButton);
+        WhisperPanel.PreviewOverlayRequested += (_, _) => ShowWhisperOverlayPreview();
         MonitoringPanel.ProcessActionCompleted += (_, args) =>
             AddActivity(args.Result.Message, "Performance");
         MonitoringPanel.BenchmarkRunRequested += MonitoringPanel_BenchmarkRunRequested;
@@ -231,6 +234,11 @@ public partial class MainWindow : Window
         {
             SavePreferencesForClose();
         }
+
+        // The overlay is a separate top-level window, so it has to be closed
+        // explicitly or it keeps the process alive after the shell is gone.
+        _whisperOverlay?.Close();
+        _whisperOverlay = null;
 
         _operationCancellation?.Cancel();
         _audioMixCancellation?.Cancel();
@@ -1331,6 +1339,42 @@ public partial class MainWindow : Window
 
     private void RemoteNav_Click(object sender, RoutedEventArgs e) => ShowPanel(RemotePanel, RemoteNavButton);
 
+    private void WhisperNav_Click(object sender, RoutedEventArgs e) => ShowPanel(WhisperPanel, WhisperNavButton);
+
+    /// <summary>
+    /// Shows the listening surface in its idle-listening state so the user can see and
+    /// place it before any capture exists. It renders a presenter frame like the real
+    /// session would; it does not open a microphone.
+    /// </summary>
+    private void ShowWhisperOverlayPreview()
+    {
+        if (_whisperOverlay is null)
+        {
+            _whisperOverlay = new WhisperOverlayWindow { Owner = this };
+            _whisperOverlay.ActionRequested += (_, _) => _whisperOverlay?.Hide();
+            _whisperOverlay.Closed += (_, _) => _whisperOverlay = null;
+        }
+
+        WhisperOverlayView frame = WhisperOverlayPresenter.Project(new WhisperOverlayInputs(
+            new WhisperSessionSnapshot(
+                WhisperSessionState.Listening,
+                WhisperCaptureMode.PushToTalk,
+                DateTimeOffset.UtcNow,
+                null),
+            WhisperCaptureMode.PushToTalk,
+            TargetProcessName: null,
+            TargetIsKnown: false,
+            HandsFreeLocked: false,
+            TimeSpan.Zero,
+            WhisperDurationState.Current,
+            WhisperDeliveryKind.None,
+            ErrorDetail: null));
+
+        _whisperOverlay.Render(frame);
+        _whisperOverlay.Left = Left + ((Width - _whisperOverlay.Width) / 2);
+        _whisperOverlay.Top = Top + Height - 140;
+    }
+
     private void ActivityNav_Click(object sender, RoutedEventArgs e) =>
         ShowPanel(ActivityPanel, ActivityNavButton);
 
@@ -1473,6 +1517,9 @@ public partial class MainWindow : Window
                 break;
             case "remote":
                 ShowPanel(RemotePanel, RemoteNavButton);
+                break;
+            case "whisper":
+                ShowPanel(WhisperPanel, WhisperNavButton);
                 break;
             case "activity":
                 ShowPanel(ActivityPanel, ActivityNavButton);

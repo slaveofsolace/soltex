@@ -84,6 +84,14 @@
                             <TextBlock Grid.Column="1" Text="Security" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
+                    <Button x:Name="WhisperNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Whisper dictation" Click="WhisperNav_Click">
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="&#xE720;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Text="Whisper" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="2" Text="SCAFFOLD" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                        </Grid>
+                    </Button>
                     <Button x:Name="RemoteNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Remote Assist" Click="RemoteNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -184,6 +192,7 @@
             <views:ActivityView x:Name="ActivityPanel" Visibility="Collapsed" />
             <views:SettingsView x:Name="SettingsPanel" Visibility="Collapsed" />
             <views:DevicesView x:Name="DevicesPanel" Visibility="Collapsed" />
+            <views:WhisperView x:Name="WhisperPanel" Visibility="Collapsed" />
 
             <Grid x:Name="SecurityPanel" Visibility="Collapsed">
                 <Grid.RowDefinitions>

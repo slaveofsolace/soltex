@@ -174,7 +174,7 @@ internal static class Program
     private static void WorkspaceCommandsAreBounded()
     {
         IReadOnlyList<WorkspaceCommand> all = WorkspaceCommandCatalog.Query(null);
-        True(all.Count == 9, "The command surface must expose the nine supported workspaces exactly once.");
+        True(all.Count == 10, "The command surface must expose the ten supported workspaces exactly once.");
         True(all.Select(command => command.Workspace).Distinct(StringComparer.Ordinal).Count() == all.Count,
             "Workspace commands contained duplicate routes.");
         True(all.Select(command => command.Shortcut).Distinct(StringComparer.Ordinal).Count() == all.Count,
@@ -186,6 +186,9 @@ internal static class Program
         IReadOnlyList<WorkspaceCommand> remote = WorkspaceCommandCatalog.Query("screen peer");
         True(remote.Count == 1 && remote[0].Workspace == "remote",
             "The command query did not route Remote Assist synonyms.");
+        IReadOnlyList<WorkspaceCommand> whisper = WorkspaceCommandCatalog.Query("dictation speech");
+        True(whisper.Count == 1 && whisper[0].Workspace == "whisper",
+            "The command query did not route Whisper synonyms.");
         True(WorkspaceCommandCatalog.Query("not-a-soltex-tool").Count == 0,
             "An unknown command query produced a fabricated result.");
     }

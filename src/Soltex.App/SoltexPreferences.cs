@@ -89,6 +89,7 @@ internal sealed record SoltexPreferences(
             "mixer" or
             "security" or
             "remote" or
+            "whisper" or
             "activity" or
             "updates" or
             "settings"

@@ -52,6 +52,7 @@ public partial class MainWindow
             Key.D7 or Key.NumPad7 => "activity",
             Key.D8 or Key.NumPad8 => "updates",
             Key.D9 or Key.NumPad9 => "settings",
+            Key.D0 or Key.NumPad0 => "whisper",
             _ => null
         };
         if (workspace is null)
