@@ -122,7 +122,7 @@ public sealed class WhisperTextPipeline
 
     private static void ValidateSnippets(WhisperSnippet[] snippets)
     {
-        if (snippets.Count > WhisperLimits.MaximumSnippetCount)
+        if (snippets.Length > WhisperLimits.MaximumSnippetCount)
         {
             throw new ArgumentOutOfRangeException(
                 nameof(snippets),
@@ -348,7 +348,7 @@ internal static class WhisperSmartFormatter
     }
 
     private static bool Matches(
-        IReadOnlyList<string> tokens,
+        List<string> tokens,
         int index,
         string first,
         string second)
