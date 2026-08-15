@@ -56,6 +56,12 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          foreach ($requiredAssembly in @('Soltex.Whisper.dll', 'Soltex.Whisper.Windows.dll')) {
+            $assemblyPath = Join-Path .\artifacts\publish\win-x64 $requiredAssembly
+            if (-not (Test-Path -LiteralPath $assemblyPath -PathType Leaf)) {
+              throw "The published package is missing $requiredAssembly."
+            }
+          }
           $exe = Resolve-Path .\artifacts\publish\win-x64\Soltex.exe
           $output = [System.IO.Path]::GetFullPath('.\artifacts\validation\package-home.png')
           $process = Start-Process `

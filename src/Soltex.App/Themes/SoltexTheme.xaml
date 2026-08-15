@@ -249,6 +249,120 @@
         <Setter Property="FontSize" Value="{StaticResource FontBody}" />
     </Style>
 
+    <Style x:Key="SoltexComboBoxStyle" TargetType="ComboBox">
+        <Setter Property="Background" Value="{StaticResource FieldBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ComboBoxItem">
+                    <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="Padding" Value="10,7" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ComboBoxItem">
+                                <Border x:Name="ItemSurface"
+                                        Background="{TemplateBinding Background}"
+                                        Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsHighlighted" Value="True">
+                                        <Setter TargetName="ItemSurface" Property="Background" Value="{StaticResource RaisedBrush}" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="ItemSurface" Property="Background" Value="{StaticResource AccentQuietBrush}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid x:Name="ComboRoot">
+                        <Border x:Name="FocusRing"
+                                Margin="-2"
+                                BorderBrush="Transparent"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusMd}"
+                                IsHitTestVisible="False" />
+                        <ToggleButton x:Name="DropDownToggle"
+                                      Focusable="False"
+                                      ClickMode="Press"
+                                      AutomationProperties.Name="Open choices"
+                                      IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="FieldSurface"
+                                            Background="{Binding Background, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                            BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                            BorderThickness="{Binding BorderThickness, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                            CornerRadius="{StaticResource RadiusSm}"
+                                            Padding="{Binding Padding, RelativeSource={RelativeSource AncestorType=ComboBox}}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <ContentPresenter Content="{Binding SelectionBoxItem, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                              ContentTemplate="{Binding SelectionBoxItemTemplate, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                              VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1"
+                                                       Margin="12,0,0,0"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{StaticResource MutedBrush}"
+                                                       FontFamily="{StaticResource IconFont}"
+                                                       Text="&#xE70D;" />
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="FieldSurface" Property="BorderBrush" Value="{StaticResource StrongBorderBrush}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                        <Popup x:Name="PART_Popup"
+                               Placement="Bottom"
+                               IsOpen="{TemplateBinding IsDropDownOpen}"
+                               AllowsTransparency="True"
+                               Focusable="False">
+                            <Border Width="{Binding ActualWidth, ElementName=ComboRoot}"
+                                    MaxHeight="280"
+                                    Margin="0,3,0,0"
+                                    Background="{StaticResource ElevatedBrush}"
+                                    BorderBrush="{StaticResource StrongBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="{StaticResource RadiusSm}">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsPresenter />
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="FocusRing" Property="BorderBrush" Value="{StaticResource AccentFocusBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ComboRoot" Property="Opacity" Value="0.42" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ===================== Typography ===================== -->
 
     <Style x:Key="PageEyebrowStyle" TargetType="TextBlock">

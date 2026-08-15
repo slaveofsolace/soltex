@@ -38,7 +38,7 @@ public sealed class WhisperDeterministicCaptureSource : IWhisperCaptureSource
         int sampleCount = (int)(_sampleRateHz * _duration.TotalSeconds);
         byte[] pcm = new byte[Math.Max(2, sampleCount * 2)];
 
-        return ValueTask.FromResult(new WhisperAudioClip(
+        return ValueTask.FromResult(WhisperAudioClip.CreateOwned(
             pcm,
             _sampleRateHz,
             channelCount: 1,

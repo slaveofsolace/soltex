@@ -19,7 +19,7 @@ is reproduced, and no affiliation is implied.
 ## Implemented and verified
 
 The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
-85-test suite in `tests/Soltex.Whisper.Tests`.
+87-test suite in `tests/Soltex.Whisper.Tests`.
 
 | Area | State |
 |---|---|
@@ -40,38 +40,61 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Overlay presentation | Pure state machine producing every visual state including fallback and error |
 | Scratchpad | Up to 5 tabs, bounded content, bounded undo depth |
 | Test doubles | Deterministic capture, transcriber (including a failing one), scripted inspector, recording delivery |
+| Windows capture | Shared-mode WASAPI capture endpoints only; selected-device persistence, one default-device recovery attempt, PCM/float normalization to 16 kHz mono PCM16, a 20-minute byte bound, explicit stop versus cancellation, and throttled content-free metering |
+| Capture privacy | Soltex-owned packet, conversion, accumulation, and final clip buffers are cleared on disposal; the Windows-owned WASAPI packet is released without being retained |
+| Capture UI | Working device refresh, persisted selection, explicit five-second microphone test, recovery/error status, and live overlay level meter |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, and Privacy tabs, and the floating listening surface — render this core.
-They are honest about capability: the navigation entry is marked `SCAFFOLD` and the
-readiness checklist reports capture, providers, shortcuts, and target inspection as
-unavailable.
+They are honest about capability: the navigation entry remains marked `SCAFFOLD`
+while providers, shortcuts, target inspection, delivery, and verified submission are
+unavailable. The capture controls are enabled only when a selected device exists.
 
 ## Not implemented
 
 Nothing below exists yet. Any claim that it works is false until runtime evidence
 from an owner-controlled Windows host says otherwise.
 
-1. Microphone capture (WASAPI), device selection, and disconnect recovery.
-2. A real transcription provider adapter and its credential storage.
-3. Global Windows keyboard and mouse hook registration.
-4. UI Automation inspection of real focused controls.
-5. Insertion into another application, and the clipboard paste fallback.
-6. Emission of Enter.
-7. Live level metering.
-8. Scratchpad UI, snippet/vocabulary/style editors, and history UI.
-9. Encrypted transcript retention.
-10. Accessibility, performance, and packaging evidence for the Whisper surfaces.
+1. A real transcription provider adapter and its credential storage.
+2. Global Windows keyboard and mouse hook registration.
+3. UI Automation inspection of real focused controls.
+4. Insertion into another application, and the clipboard paste fallback.
+5. Emission of Enter.
+6. Scratchpad UI, snippet/vocabulary/style editors, and history UI.
+7. Encrypted transcript retention.
+8. Full accessibility, scale, theme, performance, install, update, and uninstall
+   evidence for the Whisper surfaces.
+9. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
+   deterministic tests currently prove the recovery policy and one owner-host device
+   proves the normal live path.
 
 ## Remaining work
 
 ### 1. Capture
 
-Implement `IWhisperCaptureSource` over WASAPI or one narrowly vetted dependency.
-User-selected input device; mono PCM normalization; device-change and disconnect
-recovery; no loopback or system-audio capture; bounded buffering; cancellation;
-raw audio deleted on success, failure, and cancellation; level metering separated
-from retained audio; distinguishable permission and device errors.
+Implemented in `src/Soltex.Whisper.Windows` without an external audio dependency.
+`WhisperWasapiCaptureSource` uses shared-mode WASAPI capture endpoints only, persists
+the selected endpoint through the versioned Whisper settings document, normalizes
+supported PCM and 32-bit float input to 16 kHz mono PCM16, and makes shortcut release
+an explicit successful stop while cancellation remains the discard path. Capture is
+bounded to 38,400,000 bytes (20 minutes), and one invalidated selected device can
+recover to the current Windows default during the same session.
+
+Level metering is computed from the packet being appended, emitted no more often than
+roughly 20 Hz, and retains no additional audio. Permission denied, no device,
+exclusive use, disconnect, unsupported format, no-audio, and unavailable failures are
+stable categories mapped into readiness. Soltex-owned raw copies, normalized packets,
+pooled accumulation chunks, and final clips are explicitly cleared on every disposal
+path. WASAPI's engine-owned buffer is released through `IAudioCaptureClient` and is
+never retained or modified.
+
+Deterministic tests cover selected-device fallback, disconnect recovery, cancellation
+during enumeration/open/read, the byte bound, float-stereo normalization, readiness
+mapping, metering, and buffer clearing. An owner-host run observed 6 active capture
+devices and captured 31,360 PCM bytes over 980 ms from the selected default device
+without fallback; the clip was then disposed. That proves one normal live path only.
+It does not prove every microphone driver, a physical unplug/reconnect, or Windows
+privacy-denial recovery.
 
 ### 2. Transcription provider
 

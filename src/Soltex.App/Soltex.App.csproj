@@ -18,6 +18,7 @@
     <ProjectReference Include="..\Soltex.Audio\Soltex.Audio.csproj" />
     <ProjectReference Include="..\Soltex.Benchmarks\Soltex.Benchmarks.csproj" />
     <ProjectReference Include="..\Soltex.Whisper\Soltex.Whisper.csproj" />
+    <ProjectReference Include="..\Soltex.Whisper.Windows\Soltex.Whisper.Windows.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Soltex.App.Tests" />

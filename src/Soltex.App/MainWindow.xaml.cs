@@ -117,6 +117,7 @@ public partial class MainWindow : Window
             Path.Combine(_runtime.DataRoot, "benchmark-result.json"));
         MonitoringPanel.UpdateBenchmarkLoad(_benchmarkResultStore.Load());
         MonitoringPanel.SetDetailsVisible(_preferences.OpenPerformanceDetails);
+        InitializeWhisperCapture();
         _updateStagingRoot = Path.Combine(_runtime.DataRoot, "update", "staging");
         _updateJournal = new UpdatePlanningJournal(Path.Combine(_runtime.DataRoot, "update", "journal"));
         QuarantineGrid.ItemsSource = _quarantineRows;
@@ -190,6 +191,7 @@ public partial class MainWindow : Window
 
         Task audioRefresh = RefreshAudioAsync();
         Task applicationRefresh = RefreshApplicationsAsync();
+        Task whisperCaptureRefresh = RefreshWhisperCaptureDevicesAsync();
 
         _importMonitor = new ImportFolderMonitor(
             _runtime.ImportsPath,
@@ -203,7 +205,8 @@ public partial class MainWindow : Window
             RefreshAllAsync(),
             RefreshUpdateJournalAsync(),
             audioRefresh,
-            applicationRefresh);
+            applicationRefresh,
+            whisperCaptureRefresh);
         if (_shutdownStarted)
         {
             _startupCompleted.TrySetCanceled();
@@ -243,12 +246,15 @@ public partial class MainWindow : Window
         _operationCancellation?.Cancel();
         _audioMixCancellation?.Cancel();
         _benchmarkCancellation?.Cancel();
+        _whisperCaptureCancellation?.Cancel();
+        _whisperCapture?.CompleteCurrentCapture();
         await _telemetryLoop.StopAsync();
         bool ownedWorkDrained = await OwnedTaskDrain.WaitAsync(
             TimeSpan.FromSeconds(20),
             _activeOperationDrained,
             _audioMixOperationDrained,
             _benchmarkOperationDrained,
+            _whisperCaptureDrained,
             _startupTask);
         if (!ownedWorkDrained)
         {
@@ -271,6 +277,8 @@ public partial class MainWindow : Window
             _protectionMonitor.Updated -= OnProtectionMonitorUpdated;
             await _protectionMonitor.DisposeAsync();
         }
+
+        await DisposeWhisperCaptureAsync();
 
         _updateJournal.Dispose();
         _runtime.Dispose();
@@ -1351,7 +1359,17 @@ public partial class MainWindow : Window
         if (_whisperOverlay is null)
         {
             _whisperOverlay = new WhisperOverlayWindow { Owner = this };
-            _whisperOverlay.ActionRequested += (_, _) => _whisperOverlay?.Hide();
+            _whisperOverlay.ActionRequested += (_, _) =>
+            {
+                if (!_whisperCaptureDrained.IsCompleted)
+                {
+                    _whisperCapture?.CompleteCurrentCapture();
+                }
+                else
+                {
+                    _whisperOverlay?.Hide();
+                }
+            };
             _whisperOverlay.Closed += (_, _) => _whisperOverlay = null;
         }
 
@@ -1620,6 +1638,13 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (string.Equals(normalized, "whisper", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            _renderSmokeFocusTarget = WhisperPanel.WhisperInputDevicePicker;
+            return true;
+        }
+
         if (string.Equals(normalized, "update", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(normalized, "updates", StringComparison.OrdinalIgnoreCase))
         {
@@ -1723,6 +1748,7 @@ public partial class MainWindow : Window
         ClipsPanel.Visibility = panel == ClipsPanel ? Visibility.Visible : Visibility.Collapsed;
         SecurityPanel.Visibility = panel == SecurityPanel ? Visibility.Visible : Visibility.Collapsed;
         RemotePanel.Visibility = panel == RemotePanel ? Visibility.Visible : Visibility.Collapsed;
+        WhisperPanel.Visibility = panel == WhisperPanel ? Visibility.Visible : Visibility.Collapsed;
         UpdatePanel.Visibility = panel == UpdatePanel ? Visibility.Visible : Visibility.Collapsed;
         CancelBenchmarkIfInactive();
         foreach (System.Windows.Controls.Button button in new[]
@@ -1735,6 +1761,7 @@ public partial class MainWindow : Window
                      ClipsNavButton,
                      SecurityNavButton,
                      RemoteNavButton,
+                     WhisperNavButton,
                      ActivityNavButton,
                      UpdateNavButton,
                      SettingsNavButton
@@ -1751,6 +1778,7 @@ public partial class MainWindow : Window
             panel == MixerPanel ? "mixer" :
             panel == SecurityPanel ? "security" :
             panel == RemotePanel ? "remote" :
+            panel == WhisperPanel ? "whisper" :
             panel == ActivityPanel ? "activity" :
             panel == UpdatePanel ? "updates" :
             panel == SettingsPanel ? "settings" :
@@ -1782,6 +1810,7 @@ public partial class MainWindow : Window
                      ClipsPanel,
                      SecurityPanel,
                      RemotePanel,
+                     WhisperPanel,
                      ActivityPanel,
                      UpdatePanel,
                      SettingsPanel

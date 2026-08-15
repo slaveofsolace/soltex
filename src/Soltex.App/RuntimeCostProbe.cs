@@ -153,6 +153,7 @@ internal static class RuntimeCostProbe
             "mixer",
             "security",
             "remote",
+            "whisper",
             "activity",
             "update",
             "settings"

@@ -134,6 +134,24 @@ jobs:
             Tee-Object -FilePath .\artifacts\validation\tests-benchmarks.log
           if ($LASTEXITCODE -ne 0) { throw "Benchmark suite failed with exit code $LASTEXITCODE." }
 
+      - name: Run Whisper policy suite
+        id: whisper_core_tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\tests\Soltex.Whisper.Tests\Soltex.Whisper.Tests.csproj --configuration Release --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\tests-whisper-core.log
+          if ($LASTEXITCODE -ne 0) { throw "Whisper policy suite failed with exit code $LASTEXITCODE." }
+
+      - name: Run Whisper Windows capture suite
+        id: whisper_windows_tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run --project .\tests\Soltex.Whisper.Windows.Tests\Soltex.Whisper.Windows.Tests.csproj --configuration Release --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\tests-whisper-windows.log
+          if ($LASTEXITCODE -ne 0) { throw "Whisper Windows capture suite failed with exit code $LASTEXITCODE." }
+
       - name: Run WPF control suite
         id: app_tests
         shell: pwsh
@@ -198,6 +216,8 @@ jobs:
             device_fabric_tests = '${{ steps.device_fabric_tests.outcome }}'
             monitoring_tests = '${{ steps.monitoring_tests.outcome }}'
             audio_tests = '${{ steps.audio_tests.outcome }}'
+            whisper_core_tests = '${{ steps.whisper_core_tests.outcome }}'
+            whisper_windows_tests = '${{ steps.whisper_windows_tests.outcome }}'
             app_tests = '${{ steps.app_tests.outcome }}'
             runtime_cost = '${{ steps.runtime_cost.outcome }}'
             render_matrix = '${{ steps.render_matrix.outcome }}'

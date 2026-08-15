@@ -98,6 +98,7 @@ $matrix = @(
     [ordered]@{ id = 'security-default'; panel = 'security'; state = 'default'; file = 'security-current-source.png' },
     [ordered]@{ id = 'security-activity'; panel = 'security-activity'; state = 'expanded'; file = 'security-activity-current-source.png' },
     [ordered]@{ id = 'remote-default'; panel = 'remote'; state = 'default'; file = 'remote-assist-current-source.png' },
+    [ordered]@{ id = 'whisper-default'; panel = 'whisper'; state = 'capture-setup'; file = 'whisper-current-source.png' },
     [ordered]@{ id = 'updates-default'; panel = 'update'; state = 'default'; file = 'updates-current-source.png' }
 )
 

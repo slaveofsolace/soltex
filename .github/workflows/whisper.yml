@@ -1,17 +1,33 @@
-name: whisper-core
+name: whisper-windows
 
 on:
   push:
     paths:
       - 'src/Soltex.Whisper/**'
+      - 'src/Soltex.Whisper.Windows/**'
+      - 'src/Soltex.App/Views/WhisperView.xaml'
+      - 'src/Soltex.App/Views/WhisperView.xaml.cs'
+      - 'src/Soltex.App/WhisperOverlayWindow.xaml'
+      - 'src/Soltex.App/WhisperOverlayWindow.xaml.cs'
+      - 'src/Soltex.App/MainWindow.Whisper.cs'
+      - 'src/Soltex.App/WhisperSettingsStore.cs'
       - 'tests/Soltex.Whisper.Tests/**'
+      - 'tests/Soltex.Whisper.Windows.Tests/**'
       - 'docs/WHISPER_TOOL_SPEC.md'
       - 'docs/WHISPER_IMPLEMENTATION_PLAN.md'
       - '.github/workflows/whisper.yml'
   pull_request:
     paths:
       - 'src/Soltex.Whisper/**'
+      - 'src/Soltex.Whisper.Windows/**'
+      - 'src/Soltex.App/Views/WhisperView.xaml'
+      - 'src/Soltex.App/Views/WhisperView.xaml.cs'
+      - 'src/Soltex.App/WhisperOverlayWindow.xaml'
+      - 'src/Soltex.App/WhisperOverlayWindow.xaml.cs'
+      - 'src/Soltex.App/MainWindow.Whisper.cs'
+      - 'src/Soltex.App/WhisperSettingsStore.cs'
       - 'tests/Soltex.Whisper.Tests/**'
+      - 'tests/Soltex.Whisper.Windows.Tests/**'
       - 'docs/WHISPER_TOOL_SPEC.md'
       - 'docs/WHISPER_IMPLEMENTATION_PLAN.md'
       - '.github/workflows/whisper.yml'
@@ -25,7 +41,7 @@ env:
   DOTNET_NOLOGO: true
 
 jobs:
-  whisper-core:
+  whisper-windows:
     runs-on: windows-latest
     timeout-minutes: 10
     steps:
@@ -41,12 +57,19 @@ jobs:
         shell: pwsh
         run: New-Item -ItemType Directory -Force .\artifacts\whisper | Out-Null
 
-      - name: Build Whisper core
+      - name: Build Whisper Windows integration
         id: build
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           dotnet build .\tests\Soltex.Whisper.Tests\Soltex.Whisper.Tests.csproj `
+            --configuration Release `
+            --nologo 2>&1 |
+            Tee-Object -FilePath .\artifacts\whisper\build-core-release.log
+          if ($LASTEXITCODE -ne 0) {
+            throw "Whisper core Release build failed with exit code $LASTEXITCODE."
+          }
+          dotnet build .\tests\Soltex.Whisper.Windows.Tests\Soltex.Whisper.Windows.Tests.csproj `
             --configuration Release `
             --nologo 2>&1 |
             Tee-Object -FilePath .\artifacts\whisper\build-release.log
@@ -55,7 +78,7 @@ jobs:
           }
 
       - name: Run Whisper core suite
-        id: tests
+        id: core_tests
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
@@ -68,19 +91,35 @@ jobs:
             throw "Whisper core suite failed with exit code $LASTEXITCODE."
           }
 
+      - name: Run Whisper Windows capture suite
+        id: windows_tests
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet run `
+            --project .\tests\Soltex.Whisper.Windows.Tests\Soltex.Whisper.Windows.Tests.csproj `
+            --configuration Release `
+            --no-build 2>&1 |
+            Tee-Object -FilePath .\artifacts\whisper\tests-windows-capture.log
+          if ($LASTEXITCODE -ne 0) {
+            throw "Whisper Windows capture suite failed with exit code $LASTEXITCODE."
+          }
+
       - name: Record Whisper gate classification
         if: always()
         shell: pwsh
         run: |
           $classification = if ('${{ steps.build.outcome }}' -eq 'success' -and
-                                '${{ steps.tests.outcome }}' -eq 'success') {
-            'The provider-neutral Whisper core built and all named policy tests passed. Live capture, transcription, focused-control delivery, global shortcuts, WPF integration, accessibility proof, and owner-host submission proof remain outside this scaffold gate.'
+                                '${{ steps.core_tests.outcome }}' -eq 'success' -and
+                                '${{ steps.windows_tests.outcome }}' -eq 'success') {
+            'The Whisper policy core and Windows capture adapter built and passed deterministic tests. Hosted CI does not prove microphone permission, live device capture, transcription, focused-control delivery, global shortcuts, accessibility, or submission.'
           } else {
-            "The Whisper core gate is incomplete: build=${{ steps.build.outcome }}; tests=${{ steps.tests.outcome }}."
+            "The Whisper gate is incomplete: build=${{ steps.build.outcome }}; core_tests=${{ steps.core_tests.outcome }}; windows_tests=${{ steps.windows_tests.outcome }}."
           }
           @(
             "build=${{ steps.build.outcome }}"
-            "tests=${{ steps.tests.outcome }}"
+            "core_tests=${{ steps.core_tests.outcome }}"
+            "windows_tests=${{ steps.windows_tests.outcome }}"
             $classification
           ) | Set-Content -Encoding UTF8 .\artifacts\whisper\gate-classification.log
           Add-Content -Encoding UTF8 -Path $env:GITHUB_STEP_SUMMARY -Value '## Soltex Whisper core gate'

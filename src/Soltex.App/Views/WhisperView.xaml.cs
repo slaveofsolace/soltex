@@ -1,7 +1,9 @@
+using System.Windows.Automation;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Soltex.Whisper;
+using Soltex.Whisper.Windows;
 
 namespace Soltex.App.Views;
 
@@ -13,6 +15,8 @@ namespace Soltex.App.Views;
 public partial class WhisperView : UserControl
 {
     private readonly List<Button> _tabs;
+    private bool _updatingInputDevices;
+    private bool _microphoneTestRunning;
 
     public WhisperView()
     {
@@ -25,6 +29,14 @@ public partial class WhisperView : UserControl
 
     /// <summary>Raised when the user asks to see the listening surface.</summary>
     public event EventHandler? PreviewOverlayRequested;
+
+    public event EventHandler? DeviceRefreshRequested;
+
+    public event EventHandler<WhisperInputDeviceRequestedEventArgs>? InputDeviceRequested;
+
+    public event EventHandler? MicrophoneTestRequested;
+
+    public event EventHandler? MicrophoneTestStopRequested;
 
     /// <summary>
     /// Renders a readiness report. The host supplies the observed facts; this view
@@ -54,8 +66,85 @@ public partial class WhisperView : UserControl
         WhisperReadinessAction.Foreground = stateBrush;
     }
 
+    public void UpdateCaptureDevices(
+        WhisperCaptureDeviceSnapshot snapshot,
+        string? configuredDeviceId,
+        string detail)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+
+        _updatingInputDevices = true;
+        try
+        {
+            List<InputDeviceOption> options =
+            [
+                new InputDeviceOption(null, "Choose a microphone")
+            ];
+            options.AddRange(snapshot.Devices.Select(device => new InputDeviceOption(
+                device.Id,
+                device.IsDefault ? $"{device.Name} · Windows default" : device.Name)));
+            WhisperInputDevicePicker.ItemsSource = options;
+            WhisperInputDevicePicker.SelectedItem = options.FirstOrDefault(option =>
+                string.Equals(option.Id, configuredDeviceId, StringComparison.Ordinal)) ?? options[0];
+            WhisperCaptureStatus.Text = detail;
+            WhisperMicrophoneTestButton.IsEnabled =
+                !_microphoneTestRunning &&
+                WhisperInputDevicePicker.SelectedItem is InputDeviceOption { Id: not null };
+        }
+        finally
+        {
+            _updatingInputDevices = false;
+        }
+    }
+
+    public void SetMicrophoneTestState(bool running, string detail)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+        _microphoneTestRunning = running;
+        WhisperCaptureStatus.Text = detail;
+        WhisperInputDevicePicker.IsEnabled = !running;
+        WhisperRefreshDevicesButton.IsEnabled = !running;
+        WhisperMicrophoneTestButton.IsEnabled = running ||
+            WhisperInputDevicePicker.SelectedItem is InputDeviceOption { Id: not null };
+        WhisperMicrophoneTestButton.Content = running ? "Stop test" : "Test microphone";
+        AutomationProperties.SetName(
+            WhisperMicrophoneTestButton,
+            running ? "Stop the microphone test" : "Start a five second microphone test");
+    }
+
     private void PreviewOverlay_Click(object sender, RoutedEventArgs e) =>
         PreviewOverlayRequested?.Invoke(this, EventArgs.Empty);
+
+    private void RefreshDevices_Click(object sender, RoutedEventArgs e) =>
+        DeviceRefreshRequested?.Invoke(this, EventArgs.Empty);
+
+    private void InputDevicePicker_SelectionChanged(
+        object sender,
+        SelectionChangedEventArgs e)
+    {
+        if (_updatingInputDevices ||
+            WhisperInputDevicePicker.SelectedItem is not InputDeviceOption option)
+        {
+            return;
+        }
+
+        InputDeviceRequested?.Invoke(
+            this,
+            new WhisperInputDeviceRequestedEventArgs(option.Id));
+    }
+
+    private void MicrophoneTest_Click(object sender, RoutedEventArgs e)
+    {
+        if (_microphoneTestRunning)
+        {
+            MicrophoneTestStopRequested?.Invoke(this, EventArgs.Empty);
+        }
+        else
+        {
+            MicrophoneTestRequested?.Invoke(this, EventArgs.Empty);
+        }
+    }
 
     private void WhisperSetupTab_Click(object sender, RoutedEventArgs e) =>
         SelectTab(WhisperSetupTab, WhisperSetupPanel);
@@ -187,4 +276,19 @@ public partial class WhisperView : UserControl
 
         public string Description { get; }
     }
+
+    private sealed record InputDeviceOption(string? Id, string DisplayName)
+    {
+        public override string ToString() => DisplayName;
+    }
+}
+
+public sealed class WhisperInputDeviceRequestedEventArgs : EventArgs
+{
+    public WhisperInputDeviceRequestedEventArgs(string? deviceId)
+    {
+        DeviceId = deviceId;
+    }
+
+    public string? DeviceId { get; }
 }

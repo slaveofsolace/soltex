@@ -14,6 +14,8 @@ using Soltex.Audio;
 using Soltex.Benchmarks;
 using Soltex.DeviceFabric;
 using Soltex.Monitoring;
+using Soltex.Whisper;
+using Soltex.Whisper.Windows;
 
 namespace Soltex.App.Tests;
 
@@ -63,6 +65,8 @@ internal static class Program
             ("Applications view progressively discloses startup and services", () =>
                 ApplicationsViewRenders(applicationSnapshot, serviceSnapshot)),
             ("Preference store recovers and round-trips bounded local state", PreferencesRoundTripAndRecovery),
+            ("Whisper device selection persists and oversized state fails safe", WhisperSettingsRoundTripAndRecovery),
+            ("Whisper capture controls expose only working capture actions", WhisperCaptureControlsAreHonest),
             ("Activity store bounds, sanitizes, persists, and recovers", ActivityStoreBoundsAndRecovers),
             ("Activity view renders and filters meaningful events", ActivityViewRenders),
             ("Settings view renders working local preferences", SettingsViewRenders),
@@ -901,6 +905,73 @@ internal static class Program
                 Directory.Delete(directory);
             }
         }
+    }
+
+    private static void WhisperSettingsRoundTripAndRecovery()
+    {
+        string directory = Path.Combine(
+            Path.GetTempPath(),
+            "soltex-whisper-settings-tests-" + Guid.NewGuid().ToString("N"));
+        string filePath = Path.Combine(directory, "whisper-settings.json");
+        Directory.CreateDirectory(directory);
+        try
+        {
+            WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
+            document.InputDeviceId = "microphone-id-1";
+            WhisperSettings expected = WhisperSettingsMigrator.Load(document).Settings;
+            WhisperSettingsStore store = new(filePath);
+            store.Save(expected);
+
+            WhisperSettingsLoadResult loaded = store.Load();
+            True(loaded.Settings.InputDeviceId == "microphone-id-1",
+                "The selected Whisper input device did not round-trip.");
+
+            File.WriteAllText(filePath, "{ invalid", Encoding.UTF8);
+            WhisperSettingsLoadResult invalid = store.Load();
+            True(invalid.Settings.InputDeviceId is null,
+                "Invalid Whisper settings did not recover to a safe device selection.");
+
+            File.WriteAllBytes(
+                filePath,
+                new byte[WhisperSettingsStore.MaximumDocumentBytes + 1]);
+            WhisperSettingsLoadResult oversized = store.Load();
+            True(oversized.Settings.InputDeviceId is null,
+                "Oversized Whisper settings did not fail closed.");
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    private static void WhisperCaptureControlsAreHonest()
+    {
+        WhisperView view = new();
+        WhisperCaptureDeviceSnapshot devices = new(
+        [
+            new WhisperCaptureDevice("device-a", "Desk microphone", IsDefault: true),
+            new WhisperCaptureDevice("device-b", "Headset microphone", IsDefault: false)
+        ]);
+        view.UpdateCaptureDevices(devices, configuredDeviceId: null, "2 input devices available.");
+        True(view.WhisperInputDevicePicker.Items.Count == 3,
+            "The device picker did not include the explicit choose state.");
+        True(!view.WhisperMicrophoneTestButton.IsEnabled,
+            "Microphone testing looked operable before a device was selected.");
+
+        view.UpdateCaptureDevices(devices, "device-a", "Selection loaded.");
+        True(view.WhisperMicrophoneTestButton.IsEnabled,
+            "Microphone testing did not become available for a selected device.");
+        view.SetMicrophoneTestState(true, "Listening.");
+        True((string)view.WhisperMicrophoneTestButton.Content == "Stop test" &&
+             !view.WhisperInputDevicePicker.IsEnabled,
+            "The live capture surface did not expose one stop action and lock selection.");
+
+        byte[] pixels = Render(view, 980, 720);
+        True(CountVisiblePixels(pixels) > 5_000,
+            "The Whisper capture surface render was unexpectedly empty.");
     }
 
     private static void ActivityStoreBoundsAndRecovers()

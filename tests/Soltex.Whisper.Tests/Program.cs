@@ -189,12 +189,24 @@ var tests = new (string Name, Action Run)[]
     }),
     ("audio clips enforce format and duration bounds", () =>
     {
-        WhisperAudioClip clip = new(new byte[] { 0, 0, 1, 0 }, 16_000, 1, TimeSpan.FromMilliseconds(1));
+        using WhisperAudioClip clip = new(new byte[] { 0, 0, 1, 0 }, 16_000, 1, TimeSpan.FromMilliseconds(1));
         Equal(16_000, clip.SampleRateHz);
         Throws<ArgumentOutOfRangeException>(() => new WhisperAudioClip(
             new byte[] { 0, 0 }, 4_000, 1, TimeSpan.FromSeconds(1)));
         Throws<ArgumentOutOfRangeException>(() => new WhisperAudioClip(
             new byte[] { 0, 0 }, 16_000, 1, TimeSpan.FromMinutes(21)));
+    }),
+    ("owned audio clips clear their exact buffer on disposal", () =>
+    {
+        byte[] owned = [1, 2, 3, 4];
+        WhisperAudioClip clip = WhisperAudioClip.CreateOwned(
+            owned,
+            16_000,
+            1,
+            TimeSpan.FromMilliseconds(1));
+        clip.Dispose();
+        True(owned.All(value => value == 0));
+        Throws<ObjectDisposedException>(() => _ = clip.Pcm16);
     }),
 
     // ---------- Target identity and submit gate ----------
@@ -436,6 +448,14 @@ var tests = new (string Name, Action Run)[]
         Equal("microphone", report.PrimaryBlocker!.Id);
         Equal(WhisperReadinessState.Blocked, report.PrimaryBlocker.State);
         True(report.PrimaryBlocker.NextAction is { Length: > 0 });
+    }),
+    ("a microphone runtime failure blocks readiness without exposing raw detail", () =>
+    {
+        WhisperReadinessReport report = WhisperReadinessEvaluator.Evaluate(
+            ReadyInputs() with { MicrophoneError = @"busy at C:\Users\Person\private" });
+        False(report.CanDictate);
+        Equal(WhisperReadinessState.Blocked, report.PrimaryBlocker!.State);
+        False(report.PrimaryBlocker.Detail.Contains("Person", StringComparison.Ordinal));
     }),
     ("auto-send with no approved application is surfaced as setup", () =>
     {

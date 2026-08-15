@@ -1,16 +1,99 @@
+using System.Security.Cryptography;
+
 namespace Soltex.Whisper;
 
-public sealed class WhisperAudioClip
+/// <summary>
+/// An owned, disposable PCM buffer. Disposal clears the exact backing array before
+/// releasing it so completed, failed, or cancelled provider work does not leave a
+/// second unmanaged lifetime for captured speech.
+/// </summary>
+public sealed class WhisperAudioClip : IDisposable
 {
+    private byte[]? _pcm16;
+
     public WhisperAudioClip(
         ReadOnlyMemory<byte> pcm16,
         int sampleRateHz,
         int channelCount,
         TimeSpan duration)
     {
-        if (pcm16.IsEmpty)
+        Validate(pcm16.Length, sampleRateHz, channelCount, duration);
+        _pcm16 = pcm16.ToArray();
+        SampleRateHz = sampleRateHz;
+        ChannelCount = channelCount;
+        Duration = duration;
+    }
+
+    private WhisperAudioClip(
+        byte[] pcm16,
+        int sampleRateHz,
+        int channelCount,
+        TimeSpan duration,
+        bool takeOwnership)
+    {
+        ArgumentNullException.ThrowIfNull(pcm16);
+        Validate(pcm16.Length, sampleRateHz, channelCount, duration);
+
+        _pcm16 = takeOwnership ? pcm16 : (byte[])pcm16.Clone();
+        SampleRateHz = sampleRateHz;
+        ChannelCount = channelCount;
+        Duration = duration;
+    }
+
+    /// <summary>
+    /// Transfers ownership of <paramref name="pcm16"/> into a clip. The caller must
+    /// not retain or mutate the array and must dispose the returned clip.
+    /// </summary>
+    public static WhisperAudioClip CreateOwned(
+        byte[] pcm16,
+        int sampleRateHz,
+        int channelCount,
+        TimeSpan duration)
+    {
+        ArgumentNullException.ThrowIfNull(pcm16);
+        try
         {
-            throw new ArgumentException("Captured audio cannot be empty.", nameof(pcm16));
+            return new WhisperAudioClip(
+                pcm16,
+                sampleRateHz,
+                channelCount,
+                duration,
+                takeOwnership: true);
+        }
+        catch
+        {
+            CryptographicOperations.ZeroMemory(pcm16);
+            throw;
+        }
+    }
+
+    public ReadOnlyMemory<byte> Pcm16 =>
+        _pcm16 ?? throw new ObjectDisposedException(nameof(WhisperAudioClip));
+
+    public int SampleRateHz { get; }
+
+    public int ChannelCount { get; }
+
+    public TimeSpan Duration { get; }
+
+    public void Dispose()
+    {
+        byte[]? buffer = Interlocked.Exchange(ref _pcm16, null);
+        if (buffer is not null)
+        {
+            CryptographicOperations.ZeroMemory(buffer);
+        }
+    }
+
+    private static void Validate(
+        int byteLength,
+        int sampleRateHz,
+        int channelCount,
+        TimeSpan duration)
+    {
+        if (byteLength == 0)
+        {
+            throw new ArgumentException("Captured audio cannot be empty.");
         }
 
         if (sampleRateHz is < 8_000 or > 192_000)
@@ -34,20 +117,7 @@ public sealed class WhisperAudioClip
                 nameof(duration),
                 "Audio duration must be greater than zero and no longer than 20 minutes.");
         }
-
-        Pcm16 = pcm16;
-        SampleRateHz = sampleRateHz;
-        ChannelCount = channelCount;
-        Duration = duration;
     }
-
-    public ReadOnlyMemory<byte> Pcm16 { get; }
-
-    public int SampleRateHz { get; }
-
-    public int ChannelCount { get; }
-
-    public TimeSpan Duration { get; }
 }
 
 public sealed record WhisperTranscriptionContext(

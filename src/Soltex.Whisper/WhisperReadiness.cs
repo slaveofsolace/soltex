@@ -68,7 +68,8 @@ public sealed record WhisperReadinessInputs(
     bool TargetInspectionAvailable,
     bool AutoSendEnabled,
     bool AutoSendWarningAccepted,
-    int EnabledAutoSendProfileCount);
+    int EnabledAutoSendProfileCount,
+    string? MicrophoneError = null);
 
 /// <summary>
 /// A complete, ordered readiness report plus the one thing to do next.
@@ -148,6 +149,16 @@ public static class WhisperReadinessEvaluator
                 WhisperReadinessState.Blocked,
                 "Windows has not granted Soltex microphone access.",
                 "Open Windows microphone privacy settings");
+        }
+
+        if (!string.IsNullOrWhiteSpace(inputs.MicrophoneError))
+        {
+            return new WhisperReadinessCheck(
+                "microphone",
+                "Microphone",
+                WhisperReadinessState.Blocked,
+                WhisperRedaction.Sanitize(inputs.MicrophoneError, 160),
+                "Choose another input device");
         }
 
         return inputs.MicrophoneSelected
