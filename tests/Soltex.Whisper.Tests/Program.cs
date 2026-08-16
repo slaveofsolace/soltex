@@ -592,6 +592,105 @@ var tests = new (string Name, Action Run)[]
         True(result.IsClean);
         Equal(WhisperSettings.CurrentVersion, result.LoadedVersion);
     }),
+    ("snippet style and application settings round-trip through validation", () =>
+    {
+        WhisperSettingsLoadResult loaded = WhisperSettingsMigrator.Load(new WhisperSettingsDocument
+        {
+            Version = WhisperSettings.CurrentVersion,
+            Snippets =
+            [
+                new WhisperSnippetDocument { Cue = "insert greeting", Content = "Hello there." }
+            ],
+            CustomStyles =
+            [
+                new WhisperStyleProfileDocument
+                {
+                    Name = "Concise",
+                    Kind = nameof(WhisperStyleKind.Message),
+                    ProseCleanup = true,
+                    SpokenPunctuation = true,
+                    PreserveLiteralTokens = false,
+                    CapitalizeSentences = true
+                }
+            ],
+            ApplicationProfiles =
+            [
+                new WhisperAppProfileDocument
+                {
+                    ProcessName = "chat.exe",
+                    AutoSendAllowed = true,
+                    TerminalAutoSendAllowed = false,
+                    ClipboardFallbackAllowed = true,
+                    ContextFormattingAllowed = true,
+                    StyleName = "Concise"
+                }
+            ]
+        });
+
+        True(loaded.IsClean);
+        Equal("insert greeting", loaded.Settings.Snippets.Single().Cue);
+        Equal("Concise", loaded.Settings.CustomStyles.Single().Name);
+        WhisperAppProfile profile = loaded.Settings.ApplicationProfiles.Single();
+        Equal("chat", profile.ProcessName);
+        True(profile.AutoSendAllowed);
+        False(profile.TerminalAutoSendAllowed);
+        True(profile.ContextFormattingAllowed);
+
+        WhisperSettingsLoadResult roundTrip = WhisperSettingsMigrator.Load(
+            loaded.Settings.ToDocument());
+        True(roundTrip.IsClean);
+        Equal("Hello there.", roundTrip.Settings.Snippets.Single().Content);
+        Equal("Concise", roundTrip.Settings.ApplicationProfiles.Single().StyleName);
+    }),
+    ("invalid persisted personalization rules repair to safe", () =>
+    {
+        WhisperSettingsLoadResult result = WhisperSettingsMigrator.Load(new WhisperSettingsDocument
+        {
+            Version = WhisperSettings.CurrentVersion,
+            Snippets =
+            [
+                new WhisperSnippetDocument { Cue = "signature", Content = "A" },
+                new WhisperSnippetDocument { Cue = "SIGNATURE", Content = "B" }
+            ],
+            CustomStyles =
+            [
+                new WhisperStyleProfileDocument
+                {
+                    Name = "Message",
+                    Kind = nameof(WhisperStyleKind.Message),
+                    ProseCleanup = true,
+                    SpokenPunctuation = true,
+                    PreserveLiteralTokens = false,
+                    CapitalizeSentences = true
+                }
+            ],
+            ApplicationProfiles =
+            [
+                new WhisperAppProfileDocument
+                {
+                    ProcessName = @"C:\\Windows\\unsafe.exe",
+                    AutoSendAllowed = true,
+                    TerminalAutoSendAllowed = true,
+                    StyleName = "Missing"
+                },
+                new WhisperAppProfileDocument
+                {
+                    ProcessName = "terminal",
+                    AutoSendAllowed = false,
+                    TerminalAutoSendAllowed = true,
+                    StyleName = "Terminal"
+                }
+            ]
+        });
+
+        Equal(1, result.Settings.Snippets.Count);
+        Equal(0, result.Settings.CustomStyles.Count);
+        WhisperAppProfile safe = result.Settings.ApplicationProfiles.Single();
+        False(safe.AutoSendAllowed);
+        False(safe.TerminalAutoSendAllowed);
+        False(safe.ContextFormattingAllowed);
+        True(result.Corrections.Count >= 3);
+    }),
 
     // ---------- Readiness ----------
 

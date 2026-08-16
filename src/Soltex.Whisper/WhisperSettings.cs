@@ -66,6 +66,49 @@ public sealed class WhisperSettingsDocument
     /// caller holding the document, and so it is not treated as a settable collection.
     /// </summary>
     public IReadOnlyList<string>? VocabularyTerms { get; set; }
+
+    public IReadOnlyList<WhisperSnippetDocument>? Snippets { get; set; }
+
+    public IReadOnlyList<WhisperStyleProfileDocument>? CustomStyles { get; set; }
+
+    public IReadOnlyList<WhisperAppProfileDocument>? ApplicationProfiles { get; set; }
+}
+
+public sealed class WhisperSnippetDocument
+{
+    public string? Cue { get; set; }
+
+    public string? Content { get; set; }
+}
+
+public sealed class WhisperStyleProfileDocument
+{
+    public string? Name { get; set; }
+
+    public string? Kind { get; set; }
+
+    public bool? ProseCleanup { get; set; }
+
+    public bool? SpokenPunctuation { get; set; }
+
+    public bool? PreserveLiteralTokens { get; set; }
+
+    public bool? CapitalizeSentences { get; set; }
+}
+
+public sealed class WhisperAppProfileDocument
+{
+    public string? ProcessName { get; set; }
+
+    public bool? AutoSendAllowed { get; set; }
+
+    public bool? TerminalAutoSendAllowed { get; set; }
+
+    public bool? ClipboardFallbackAllowed { get; set; }
+
+    public bool? ContextFormattingAllowed { get; set; }
+
+    public string? StyleName { get; set; }
 }
 
 /// <summary>
@@ -74,10 +117,14 @@ public sealed class WhisperSettingsDocument
 /// </summary>
 public sealed class WhisperSettings
 {
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
     public const int MinimumRetentionDays = 1;
     public const int MaximumRetentionDays = 90;
     public const int MaximumDeviceIdCharacters = 256;
+    public const int MaximumStoredSnippetCount = 64;
+    public const int MaximumStoredSnippetContentCharacters = 4_000;
+    public const int MaximumCustomStyleCount = 16;
+    public const int MaximumApplicationProfileCount = 64;
 
     private WhisperSettings(
         bool enabled,
@@ -92,7 +139,10 @@ public sealed class WhisperSettings
         int historyRetentionDays,
         WhisperClipboardBehavior clipboardBehavior,
         bool showTranscriptPreview,
-        WhisperVocabulary vocabulary)
+        WhisperVocabulary vocabulary,
+        IEnumerable<WhisperSnippet> snippets,
+        IEnumerable<WhisperStyleProfile> customStyles,
+        IEnumerable<WhisperAppProfile> applicationProfiles)
     {
         Enabled = enabled;
         InputDeviceId = inputDeviceId;
@@ -107,6 +157,9 @@ public sealed class WhisperSettings
         ClipboardBehavior = clipboardBehavior;
         ShowTranscriptPreview = showTranscriptPreview;
         Vocabulary = vocabulary;
+        Snippets = Array.AsReadOnly(snippets.ToArray());
+        CustomStyles = Array.AsReadOnly(customStyles.ToArray());
+        ApplicationProfiles = Array.AsReadOnly(applicationProfiles.ToArray());
     }
 
     public bool Enabled { get; }
@@ -137,6 +190,12 @@ public sealed class WhisperSettings
 
     public WhisperVocabulary Vocabulary { get; }
 
+    public ReadOnlyCollection<WhisperSnippet> Snippets { get; }
+
+    public ReadOnlyCollection<WhisperStyleProfile> CustomStyles { get; }
+
+    public ReadOnlyCollection<WhisperAppProfile> ApplicationProfiles { get; }
+
     /// <summary>
     /// The shipped defaults. Every capability that can act outside Soltex — auto-send,
     /// context reads, disk retention — starts off.
@@ -154,7 +213,10 @@ public sealed class WhisperSettings
         historyRetentionDays: 7,
         WhisperClipboardBehavior.RestorePrevious,
         showTranscriptPreview: false,
-        WhisperVocabulary.Empty);
+        WhisperVocabulary.Empty,
+        [],
+        [],
+        []);
 
     internal static WhisperSettings Create(
         bool enabled,
@@ -169,7 +231,10 @@ public sealed class WhisperSettings
         int historyRetentionDays,
         WhisperClipboardBehavior clipboardBehavior,
         bool showTranscriptPreview,
-        WhisperVocabulary vocabulary) => new(
+        WhisperVocabulary vocabulary,
+        IEnumerable<WhisperSnippet> snippets,
+        IEnumerable<WhisperStyleProfile> customStyles,
+        IEnumerable<WhisperAppProfile> applicationProfiles) => new(
             enabled,
             inputDeviceId,
             transcriberId,
@@ -180,9 +245,12 @@ public sealed class WhisperSettings
             contextReadsAllowed,
             historyMode,
             historyRetentionDays,
-            clipboardBehavior,
-            showTranscriptPreview,
-            vocabulary);
+        clipboardBehavior,
+        showTranscriptPreview,
+        vocabulary,
+        snippets,
+        customStyles,
+        applicationProfiles);
 
     public WhisperSettingsDocument ToDocument() => new()
     {
@@ -199,7 +267,30 @@ public sealed class WhisperSettings
         HistoryRetentionDays = HistoryRetentionDays,
         ClipboardBehavior = ClipboardBehavior.ToString(),
         ShowTranscriptPreview = ShowTranscriptPreview,
-        VocabularyTerms = Vocabulary.Terms.ToList()
+        VocabularyTerms = Vocabulary.Terms.ToList(),
+        Snippets = Snippets.Select(snippet => new WhisperSnippetDocument
+        {
+            Cue = snippet.Cue,
+            Content = snippet.Content
+        }).ToList(),
+        CustomStyles = CustomStyles.Select(style => new WhisperStyleProfileDocument
+        {
+            Name = style.Name,
+            Kind = style.Kind.ToString(),
+            ProseCleanup = style.ProseCleanup,
+            SpokenPunctuation = style.SpokenPunctuation,
+            PreserveLiteralTokens = style.PreserveLiteralTokens,
+            CapitalizeSentences = style.CapitalizeSentences
+        }).ToList(),
+        ApplicationProfiles = ApplicationProfiles.Select(profile => new WhisperAppProfileDocument
+        {
+            ProcessName = profile.ProcessName,
+            AutoSendAllowed = profile.AutoSendAllowed,
+            TerminalAutoSendAllowed = profile.TerminalAutoSendAllowed,
+            ClipboardFallbackAllowed = profile.ClipboardFallbackAllowed,
+            ContextFormattingAllowed = profile.ContextFormattingAllowed,
+            StyleName = profile.StyleName
+        }).ToList()
     };
 }
 
@@ -300,6 +391,23 @@ public static class WhisperSettingsMigrator
         WhisperClipboardBehavior clipboard = ReadClipboardBehavior(document.ClipboardBehavior, corrections);
         bool preview = document.ShowTranscriptPreview ?? false;
         WhisperVocabulary vocabulary = ReadVocabulary(document.VocabularyTerms, corrections);
+        ReadOnlyCollection<WhisperSnippet> snippets = ReadSnippets(document.Snippets, corrections);
+        ReadOnlyCollection<WhisperStyleProfile> customStyles = ReadCustomStyles(
+            document.CustomStyles,
+            corrections);
+        if (!WhisperStyleProfile.BuiltIn
+                .Select(style => style.Name)
+                .Concat(customStyles.Select(style => style.Name))
+                .Contains(styleName, StringComparer.OrdinalIgnoreCase))
+        {
+            styleName = WhisperStyleProfile.Message.Name;
+            corrections.Add("Default style was reset because the stored style no longer exists.");
+        }
+
+        ReadOnlyCollection<WhisperAppProfile> applicationProfiles = ReadApplicationProfiles(
+            document.ApplicationProfiles,
+            customStyles,
+            corrections);
 
         // Version 1 had no explicit consent flag, so anything it recorded as enabled
         // has to be re-consented rather than inherited.
@@ -325,7 +433,10 @@ public static class WhisperSettingsMigrator
             retentionDays,
             clipboard,
             preview,
-            vocabulary);
+            vocabulary,
+            snippets,
+            customStyles,
+            applicationProfiles);
 
         return new WhisperSettingsLoadResult(settings, loadedVersion, migrated, corrections);
     }
@@ -471,6 +582,172 @@ public static class WhisperSettingsMigrator
         }
 
         return new WhisperVocabulary(accepted);
+    }
+
+    private static ReadOnlyCollection<WhisperSnippet> ReadSnippets(
+        IReadOnlyList<WhisperSnippetDocument>? documents,
+        List<string> corrections)
+    {
+        if (documents is null || documents.Count == 0)
+        {
+            return Array.AsReadOnly(Array.Empty<WhisperSnippet>());
+        }
+
+        List<WhisperSnippet> accepted = [];
+        HashSet<string> cues = new(StringComparer.OrdinalIgnoreCase);
+        int rejected = 0;
+        foreach (WhisperSnippetDocument document in documents.Take(WhisperSettings.MaximumStoredSnippetCount))
+        {
+            try
+            {
+                if (document.Cue is null || document.Content is null ||
+                    document.Content.Length > WhisperSettings.MaximumStoredSnippetContentCharacters)
+                {
+                    throw new ArgumentException("Snippet fields were missing or oversized.");
+                }
+
+                WhisperSnippet snippet = new(document.Cue, document.Content);
+                if (!cues.Add(snippet.Cue))
+                {
+                    throw new ArgumentException("Snippet cues must be unique.");
+                }
+
+                accepted.Add(snippet);
+            }
+            catch (ArgumentException)
+            {
+                rejected++;
+            }
+        }
+
+        rejected += Math.Max(0, documents.Count - WhisperSettings.MaximumStoredSnippetCount);
+        if (rejected > 0)
+        {
+            corrections.Add(
+                $"{rejected} snippet(s) were dropped because they were duplicate, incomplete, or outside the stored size limits.");
+        }
+
+        return Array.AsReadOnly(accepted.ToArray());
+    }
+
+    private static ReadOnlyCollection<WhisperStyleProfile> ReadCustomStyles(
+        IReadOnlyList<WhisperStyleProfileDocument>? documents,
+        List<string> corrections)
+    {
+        if (documents is null || documents.Count == 0)
+        {
+            return Array.AsReadOnly(Array.Empty<WhisperStyleProfile>());
+        }
+
+        List<WhisperStyleProfile> accepted = [];
+        HashSet<string> names = new(
+            WhisperStyleProfile.BuiltIn.Select(style => style.Name),
+            StringComparer.OrdinalIgnoreCase);
+        int rejected = 0;
+        foreach (WhisperStyleProfileDocument document in documents.Take(WhisperSettings.MaximumCustomStyleCount))
+        {
+            try
+            {
+                if (document.Name is null || document.Kind is null ||
+                    !Enum.TryParse(document.Kind, ignoreCase: true, out WhisperStyleKind kind) ||
+                    !Enum.IsDefined(kind) ||
+                    document.ProseCleanup is null ||
+                    document.SpokenPunctuation is null ||
+                    document.PreserveLiteralTokens is null ||
+                    document.CapitalizeSentences is null)
+                {
+                    throw new ArgumentException("Custom style fields were missing or invalid.");
+                }
+
+                WhisperStyleProfile style = new(
+                    document.Name,
+                    kind,
+                    document.ProseCleanup.Value,
+                    document.SpokenPunctuation.Value,
+                    document.PreserveLiteralTokens.Value,
+                    document.CapitalizeSentences.Value);
+                if (!names.Add(style.Name))
+                {
+                    throw new ArgumentException("Custom style names must be unique.");
+                }
+
+                accepted.Add(style);
+            }
+            catch (ArgumentException)
+            {
+                rejected++;
+            }
+        }
+
+        rejected += Math.Max(0, documents.Count - WhisperSettings.MaximumCustomStyleCount);
+        if (rejected > 0)
+        {
+            corrections.Add(
+                $"{rejected} custom style(s) were dropped because their name, kind, or visible rules were invalid.");
+        }
+
+        return Array.AsReadOnly(accepted.ToArray());
+    }
+
+    private static ReadOnlyCollection<WhisperAppProfile> ReadApplicationProfiles(
+        IReadOnlyList<WhisperAppProfileDocument>? documents,
+        IReadOnlyList<WhisperStyleProfile> customStyles,
+        List<string> corrections)
+    {
+        if (documents is null || documents.Count == 0)
+        {
+            return Array.AsReadOnly(Array.Empty<WhisperAppProfile>());
+        }
+
+        HashSet<string> knownStyles = new(
+            WhisperStyleProfile.BuiltIn.Select(style => style.Name)
+                .Concat(customStyles.Select(style => style.Name)),
+            StringComparer.OrdinalIgnoreCase);
+        List<WhisperAppProfile> accepted = [];
+        HashSet<string> processes = new(StringComparer.OrdinalIgnoreCase);
+        int rejected = 0;
+        foreach (WhisperAppProfileDocument document in documents.Take(WhisperSettings.MaximumApplicationProfileCount))
+        {
+            try
+            {
+                string styleName = string.IsNullOrWhiteSpace(document.StyleName)
+                    ? WhisperStyleProfile.Message.Name
+                    : document.StyleName;
+                if (!knownStyles.Contains(styleName))
+                {
+                    throw new ArgumentException("Application profile style was not recognized.");
+                }
+
+                bool autoSendAllowed = document.AutoSendAllowed ?? false;
+                WhisperAppProfile profile = new(
+                    document.ProcessName ?? string.Empty,
+                    autoSendAllowed,
+                    terminalAutoSendAllowed: autoSendAllowed &&
+                        (document.TerminalAutoSendAllowed ?? false),
+                    clipboardFallbackAllowed: document.ClipboardFallbackAllowed ?? true,
+                    contextFormattingAllowed: document.ContextFormattingAllowed ?? false,
+                    styleName);
+                if (!processes.Add(profile.ProcessName))
+                {
+                    throw new ArgumentException("Application process names must be unique.");
+                }
+
+                accepted.Add(profile);
+            }
+            catch (ArgumentException)
+            {
+                rejected++;
+            }
+        }
+
+        rejected += Math.Max(0, documents.Count - WhisperSettings.MaximumApplicationProfileCount);
+        if (rejected > 0)
+        {
+            corrections.Add(
+                $"{rejected} application profile(s) were dropped because their process, style, or permissions were invalid.");
+        }
+
+        return Array.AsReadOnly(accepted.ToArray());
     }
 
     private static string Preview(string value)
