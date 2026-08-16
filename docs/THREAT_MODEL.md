@@ -143,8 +143,10 @@ This boundary cannot defend against a malicious same-user process that lies thro
 its own accessibility provider, process injection, an administrator, or a compromised
 Windows UI Automation subsystem. Identity checks and later insertion verification
 must therefore be repeated immediately before insertion and submission. Current live
-evidence covers one owner-host rich-text target only; the full application and
-elevation matrix remains required before a shipped-support claim.
+evidence covers controlled Win32 Edit plus WPF TextBox, RichTextBox, PasswordBox,
+read-only, and focus-changing targets. WinUI, Chromium, Electron, Windows Terminal,
+elevated applications, hostile third-party providers, and the rest of the application
+matrix remain required before a shipped-support claim.
 
 ### Whisper insertion and clipboard boundary
 

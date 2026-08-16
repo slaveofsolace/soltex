@@ -6,6 +6,7 @@
     <RootNamespace>Soltex.Whisper.Windows.Tests</RootNamespace>
     <AssemblyName>Soltex.Whisper.Windows.Tests</AssemblyName>
     <UseWindowsForms>true</UseWindowsForms>
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Soltex.Whisper.Windows\Soltex.Whisper.Windows.csproj" />

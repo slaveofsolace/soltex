@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Soltex.Whisper;
@@ -81,6 +82,14 @@ if (string.Equals(
     StringComparison.Ordinal))
 {
     tests.Add(("owner-host text control receives one clipboard-owned insertion", LiveTextInsertion));
+}
+
+if (string.Equals(
+    Environment.GetEnvironmentVariable("SOLTEX_RUN_WHISPER_TARGET_MATRIX"),
+    "1",
+    StringComparison.Ordinal))
+{
+    tests.Add(("owner-host WPF target matrix fails closed and preserves editing semantics", LiveWpfTargetMatrix));
 }
 
 int failures = 0;
@@ -969,6 +978,89 @@ static async Task LiveTextInsertion()
         "input_events=6 enter_events=1 content_logged=0");
 }
 
+static async Task LiveWpfTargetMatrix()
+{
+    await using LiveWpfTargetMatrixHost target = await LiveWpfTargetMatrixHost.CreateAsync();
+    WindowsWhisperTargetInspector inspector = new();
+    WindowsWhisperTextDelivery delivery = new(inspector);
+
+    await target.FocusAsync(WpfMatrixTarget.TextBox);
+    await target.SelectAllTextBoxAsync();
+    WhisperTargetSnapshot plain = await inspector.InspectAsync(CancellationToken.None)
+        ?? throw new InvalidOperationException("Controlled WPF TextBox inspection was unavailable.");
+    Equal(WhisperTargetKind.PlainText, plain.Context.Kind);
+    True(plain.Context.IsEditable);
+    WhisperTextDeliveryResult plainResult = await delivery.DeliverAsync(
+        MatrixDeliveryRequest(plain),
+        CancellationToken.None);
+    await target.WaitForTextAsync(WpfMatrixTarget.TextBox, "matrix replacement".Length);
+    Equal(WhisperInsertionMethod.AutomationValue, plainResult.Method);
+
+    await target.FocusAsync(WpfMatrixTarget.RichTextBox);
+    WhisperTargetSnapshot rich = await inspector.InspectAsync(CancellationToken.None)
+        ?? throw new InvalidOperationException("Controlled WPF RichTextBox inspection was unavailable.");
+    Equal(WhisperTargetKind.RichText, rich.Context.Kind);
+    WhisperTextDeliveryResult richResult = await delivery.DeliverAsync(
+        MatrixDeliveryRequest(rich),
+        CancellationToken.None);
+    await target.WaitForTextAsync(WpfMatrixTarget.RichTextBox, "matrix replacement".Length);
+    True(richResult.MutationDispatched);
+
+    await target.FocusAsync(WpfMatrixTarget.PasswordBox);
+    WhisperTargetSnapshot password = await inspector.InspectAsync(CancellationToken.None)
+        ?? throw new InvalidOperationException("Controlled WPF PasswordBox inspection was unavailable.");
+    True(password.Context.IsPassword);
+    WhisperInsertionAuthorization passwordAuthorization = WhisperInsertionPolicy.Evaluate(
+        MatrixDeliveryRequest(password),
+        password);
+    Equal(WhisperInsertionAction.Copy, passwordAuthorization.Action);
+    Equal(
+        WhisperInsertionFallbackReason.ProtectedField,
+        passwordAuthorization.FallbackReason);
+
+    await target.FocusAsync(WpfMatrixTarget.ReadOnlyTextBox);
+    WhisperTargetSnapshot readOnly = await inspector.InspectAsync(CancellationToken.None)
+        ?? throw new InvalidOperationException("Controlled read-only WPF target inspection was unavailable.");
+    True(readOnly.Context.IsReadOnly);
+    WhisperInsertionAuthorization readOnlyAuthorization = WhisperInsertionPolicy.Evaluate(
+        MatrixDeliveryRequest(readOnly),
+        readOnly);
+    Equal(WhisperInsertionAction.Copy, readOnlyAuthorization.Action);
+    Equal(
+        WhisperInsertionFallbackReason.TargetNotEditable,
+        readOnlyAuthorization.FallbackReason);
+
+    await target.FocusAsync(WpfMatrixTarget.TextBox);
+    WhisperTargetSnapshot captured = await inspector.InspectAsync(CancellationToken.None)
+        ?? throw new InvalidOperationException("Controlled focus-drift source was unavailable.");
+    await target.FocusAsync(WpfMatrixTarget.SecondTextBox);
+    WhisperTargetSnapshot changed = await inspector.InspectAsync(CancellationToken.None)
+        ?? throw new InvalidOperationException("Controlled focus-drift destination was unavailable.");
+    WhisperInsertionAuthorization driftAuthorization = WhisperInsertionPolicy.Evaluate(
+        MatrixDeliveryRequest(captured),
+        changed);
+    Equal(WhisperInsertionAction.Copy, driftAuthorization.Action);
+    Equal(
+        WhisperInsertionFallbackReason.TargetChanged,
+        driftAuthorization.FallbackReason);
+
+    Console.WriteLine(
+        $"MEASURE whisper_wpf_matrix plain={plain.Context.Kind}:{plainResult.Method} " +
+        $"rich={rich.Context.Kind}:{richResult.Method} " +
+        $"password=protected:{passwordAuthorization.FallbackReason} " +
+        $"readonly={readOnlyAuthorization.FallbackReason} " +
+        $"drift={driftAuthorization.FallbackReason} content_logged=0");
+}
+
+static WhisperTextDeliveryRequest MatrixDeliveryRequest(WhisperTargetSnapshot captured) => new(
+    new WhisperDeliveryDecision(
+        WhisperDeliveryKind.InsertText,
+        "matrix replacement",
+        WhisperSubmitOrigin.None,
+        RestoreClipboard: true,
+        "owner-controlled target matrix"),
+    captured);
+
 static void SendInjectedShortcut()
 {
     NativeInput[] inputs =
@@ -1695,6 +1787,216 @@ internal sealed class FakeClipboardLease(WhisperClipboardRestoreOutcome restoreO
     }
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}
+
+internal enum WpfMatrixTarget
+{
+    TextBox,
+    RichTextBox,
+    PasswordBox,
+    ReadOnlyTextBox,
+    SecondTextBox
+}
+
+internal sealed class LiveWpfTargetMatrixHost : IAsyncDisposable
+{
+    private readonly TaskCompletionSource _ready = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly Thread _thread;
+    private System.Windows.Window? _window;
+    private System.Windows.Controls.TextBox? _textBox;
+    private System.Windows.Controls.RichTextBox? _richTextBox;
+    private System.Windows.Controls.PasswordBox? _passwordBox;
+    private System.Windows.Controls.TextBox? _readOnlyTextBox;
+    private System.Windows.Controls.TextBox? _secondTextBox;
+
+    private LiveWpfTargetMatrixHost()
+    {
+        _thread = new Thread(ThreadMain)
+        {
+            IsBackground = true,
+            Name = "Soltex Whisper WPF target matrix"
+        };
+        _thread.SetApartmentState(ApartmentState.STA);
+    }
+
+    internal static async ValueTask<LiveWpfTargetMatrixHost> CreateAsync()
+    {
+        LiveWpfTargetMatrixHost host = new();
+        host._thread.Start();
+        await host._ready.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        return host;
+    }
+
+    internal async ValueTask FocusAsync(WpfMatrixTarget target)
+    {
+        System.Windows.Window window = _window ??
+            throw new InvalidOperationException("The controlled WPF target is not ready.");
+        await window.Dispatcher.InvokeAsync(() =>
+        {
+            System.Windows.UIElement element = Resolve(target);
+            window.Show();
+            window.WindowState = System.Windows.WindowState.Normal;
+            _ = window.Activate();
+            _ = TestNativeMethods.SetForegroundWindow(
+                new System.Windows.Interop.WindowInteropHelper(window).Handle);
+            _ = element.Focus();
+            _ = System.Windows.Input.Keyboard.Focus(element);
+            if (element is System.Windows.Controls.TextBox textBox)
+            {
+                textBox.CaretIndex = textBox.Text.Length;
+                textBox.SelectionLength = 0;
+            }
+        });
+        await Task.Delay(125);
+    }
+
+    internal async ValueTask SelectAllTextBoxAsync()
+    {
+        System.Windows.Window window = _window ??
+            throw new InvalidOperationException("The controlled WPF target is not ready.");
+        await window.Dispatcher.InvokeAsync(() =>
+        {
+            System.Windows.Controls.TextBox textBox = _textBox ??
+                throw new InvalidOperationException("The controlled WPF target is not ready.");
+            _ = window.Activate();
+            _ = TestNativeMethods.SetForegroundWindow(
+                new System.Windows.Interop.WindowInteropHelper(window).Handle);
+            _ = textBox.Focus();
+            textBox.SelectAll();
+        });
+        await Task.Delay(100);
+    }
+
+    internal async ValueTask WaitForTextAsync(
+        WpfMatrixTarget target,
+        int expectedLength)
+    {
+        Stopwatch deadline = Stopwatch.StartNew();
+        while (deadline.Elapsed < TimeSpan.FromSeconds(3))
+        {
+            int length = await GetTextLengthAsync(target);
+            if (length == expectedLength)
+            {
+                return;
+            }
+
+            await Task.Delay(20);
+        }
+
+        throw new InvalidOperationException(
+            "The controlled WPF target did not receive the expected insertion.");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        System.Windows.Window? window = _window;
+        if (window is not null)
+        {
+            try
+            {
+                await window.Dispatcher.InvokeAsync(window.Close);
+            }
+            catch (TaskCanceledException)
+            {
+                // The controlled window dispatcher already exited.
+            }
+        }
+
+        _ = _thread.Join(millisecondsTimeout: 750);
+    }
+
+    private async ValueTask<int> GetTextLengthAsync(WpfMatrixTarget target)
+    {
+        System.Windows.Window window = _window ??
+            throw new InvalidOperationException("The controlled WPF target is not ready.");
+        return await window.Dispatcher.InvokeAsync(() =>
+        {
+            if (target == WpfMatrixTarget.RichTextBox)
+            {
+                System.Windows.Controls.RichTextBox richTextBox = _richTextBox ??
+                    throw new InvalidOperationException("The controlled WPF target is not ready.");
+                return new System.Windows.Documents.TextRange(
+                    richTextBox.Document.ContentStart,
+                    richTextBox.Document.ContentEnd).Text.TrimEnd('\r', '\n').Length;
+            }
+
+            return ((System.Windows.Controls.TextBox)Resolve(target)).Text.Length;
+        });
+    }
+
+    private System.Windows.UIElement Resolve(WpfMatrixTarget target)
+    {
+        System.Windows.UIElement? element = target switch
+        {
+            WpfMatrixTarget.TextBox => _textBox,
+            WpfMatrixTarget.RichTextBox => _richTextBox,
+            WpfMatrixTarget.PasswordBox => _passwordBox,
+            WpfMatrixTarget.ReadOnlyTextBox => _readOnlyTextBox,
+            WpfMatrixTarget.SecondTextBox => _secondTextBox,
+            _ => null
+        };
+        return element ??
+            throw new InvalidOperationException("The controlled WPF target is not ready.");
+    }
+
+    private void ThreadMain()
+    {
+        System.Windows.Window window = new()
+        {
+            Title = "Soltex Whisper target matrix",
+            ShowInTaskbar = false,
+            Topmost = true,
+            WindowStartupLocation = System.Windows.WindowStartupLocation.Manual,
+            Left = 24,
+            Top = 24,
+            Width = 460,
+            Height = 360,
+            ResizeMode = System.Windows.ResizeMode.NoResize
+        };
+        System.Windows.Controls.StackPanel panel = new()
+        {
+            Margin = new System.Windows.Thickness(16)
+        };
+        _textBox = new System.Windows.Controls.TextBox
+        {
+            Text = "plain fixture",
+            Margin = new System.Windows.Thickness(0, 0, 0, 10)
+        };
+        _richTextBox = new System.Windows.Controls.RichTextBox
+        {
+            Height = 70,
+            Margin = new System.Windows.Thickness(0, 0, 0, 10)
+        };
+        _passwordBox = new System.Windows.Controls.PasswordBox
+        {
+            Password = "protected fixture",
+            Margin = new System.Windows.Thickness(0, 0, 0, 10)
+        };
+        _readOnlyTextBox = new System.Windows.Controls.TextBox
+        {
+            Text = "read only fixture",
+            IsReadOnly = true,
+            Margin = new System.Windows.Thickness(0, 0, 0, 10)
+        };
+        _secondTextBox = new System.Windows.Controls.TextBox
+        {
+            Text = "focus drift fixture"
+        };
+        _ = panel.Children.Add(_textBox);
+        _ = panel.Children.Add(_richTextBox);
+        _ = panel.Children.Add(_passwordBox);
+        _ = panel.Children.Add(_readOnlyTextBox);
+        _ = panel.Children.Add(_secondTextBox);
+        window.Content = panel;
+        window.Closed += (_, _) =>
+            System.Windows.Threading.Dispatcher.CurrentDispatcher.BeginInvokeShutdown(
+                System.Windows.Threading.DispatcherPriority.Normal);
+        _window = window;
+        window.Show();
+        _ready.TrySetResult();
+        System.Windows.Threading.Dispatcher.Run();
+    }
 }
 
 internal sealed class LiveTextTarget : IAsyncDisposable

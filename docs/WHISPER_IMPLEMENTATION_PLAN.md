@@ -200,14 +200,22 @@ terminal, plain-text, and rich-text categories remain content-free. Soltex stays
 `asInvoker` with `uiAccess=false`; high/system/protected targets are identified and
 the existing delivery policy falls back to copy.
 
-Target-specific coverage is included in the current 40-case Windows adapter suite.
+Target-specific deterministic coverage is included in the current 40-case Windows adapter suite.
 It covers all five target categories, pattern capability mapping,
 protected/read-only/unknown controls, provider timeout, provider failure, and
 cancellation. An opt-in owner-host run at commit `d11edec` also inspected a real
 focused rich-text control in 72.04 ms and reported zero content reads. This is
 adapter proof, not the full Win32/WPF/WinUI/Chromium/Electron/Terminal/elevated
-matrix and not shipped session wiring. Context reads remain off; a future visible
-per-application permission must precede any bounded contextual read.
+matrix and not shipped session wiring. An additional opt-in owner-host matrix creates
+controlled native WPF targets and drives the production inspector against WPF
+TextBox, RichTextBox, PasswordBox, read-only TextBox, and a focus-changing TextBox.
+The same run proves direct whole-value replacement for TextBox, clipboard paste with
+owned restoration for RichTextBox, and core copy-only authorization for protected,
+read-only, and drifted snapshots. It emits categories and outcomes only. WinForms
+TextBox continues to provide the controlled Win32 Edit proof. WinUI, Chromium,
+Electron, Windows Terminal, and an elevated editor remain unproven. Context reads
+remain off; a future visible per-application permission must precede any bounded
+contextual read.
 
 ### 5. Insertion
 
@@ -320,6 +328,12 @@ and corruption failure. The 40-case Windows adapter suite covers the Whisper map
 and rewrite boundary. This is application-level encrypted retention, not forensic
 secure erasure: filesystem snapshots, SSD remapping, page files, crash dumps, and a
 same-user process able to invoke DPAPI remain outside its guarantee.
+
+The owner-host WPF matrix is intentionally excluded from hosted CI because an
+interactive desktop and real UI Automation providers are required. Run it explicitly
+with `SOLTEX_RUN_WHISPER_TARGET_MATRIX=1`; the current local proof reports 41/41,
+including PlainText/AutomationValue, RichText/ClipboardPaste, protected-field,
+read-only, and focus-drift outcomes with `content_logged=0`.
 
 ### 9. Threat model
 
