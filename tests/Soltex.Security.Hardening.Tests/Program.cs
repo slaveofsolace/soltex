@@ -14,6 +14,12 @@ List<(string Name, Func<Task> Test)> tests =
     ("Unverifiable current and backup envelopes fail closed", UnverifiableEnvelopeSetFailsAsync),
     ("Same-generation authenticated envelope equivocation fails closed", EnvelopeEquivocationFailsAsync),
     ("Authenticated state rejects duplicate JSON properties", AuthenticatedStateRejectsDuplicatePropertiesAsync),
+    ("Protected history round trips without plaintext state", ProtectedHistoryRoundTripsWithoutPlaintextAsync),
+    ("Protected history expiry rewrites prior generations", ProtectedHistoryExpiryRewritesPriorGenerationsAsync),
+    ("Protected history rejects oversized content and entry sets", ProtectedHistoryRejectsOversizedInputAsync),
+    ("Protected history corruption fails closed", ProtectedHistoryCorruptionFailsClosedAsync),
+    ("Protected history clear removes current and backup artifacts", ProtectedHistoryClearRemovesOwnedArtifactsAsync),
+    ("Protected history honors pre-cancelled operations", ProtectedHistoryHonorsCancellationAsync),
     ("ZIP preflight rejects excessive central-directory entry counts", ZipPreflightRejectsExcessiveCountsAsync),
     ("ZIP preflight rejects malformed central-directory records", ZipPreflightRejectsMalformedDirectoryAsync),
     ("ZIP preflight rejects truncated archives", ZipPreflightRejectsTruncatedArchiveAsync),
@@ -230,6 +236,164 @@ static async Task AuthenticatedStateRejectsDuplicatePropertiesAsync()
         {
             CryptographicOperations.ZeroMemory(key);
         }
+    });
+}
+
+static async Task ProtectedHistoryRoundTripsWithoutPlaintextAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        const string retainedText = "private dictation fixture";
+        await using AuthenticatedProtectedHistoryStore store = new(root, "history-roundtrip");
+        ProtectedHistoryRecord expected = new(
+            DateTimeOffset.UtcNow,
+            "notepad",
+            "Insert",
+            retainedText);
+        await store.SaveAsync([expected], retentionDays: 7);
+
+        IReadOnlyList<ProtectedHistoryRecord> actual = await store.LoadAsync(7);
+        Equal(1, actual.Count);
+        Equal(expected, actual[0]);
+
+        byte[] needle = Encoding.UTF8.GetBytes(retainedText);
+        foreach (string path in new[]
+                 {
+                     Path.Combine(root, "history-roundtrip.json"),
+                     Path.Combine(root, "history-roundtrip.json.bak")
+                 })
+        {
+            if (!File.Exists(path))
+            {
+                continue;
+            }
+
+            byte[] state = await File.ReadAllBytesAsync(path);
+            True(
+                !ContainsSequence(state, needle),
+                "Authenticated protected history exposed retained text in its state envelope.");
+        }
+
+        CryptographicOperations.ZeroMemory(needle);
+    });
+}
+
+static async Task ProtectedHistoryExpiryRewritesPriorGenerationsAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        DateTimeOffset start = new(2026, 8, 1, 12, 0, 0, TimeSpan.Zero);
+        MutableTimeProvider time = new(start);
+        await using AuthenticatedProtectedHistoryStore store = new(
+            root,
+            "history-expiry",
+            time);
+        await store.SaveAsync(
+            [new ProtectedHistoryRecord(start, "notepad", "Insert", "expiry fixture")],
+            retentionDays: 7);
+        time.UtcNow = start.AddDays(8);
+
+        IReadOnlyList<ProtectedHistoryRecord> loaded = await store.LoadAsync(7);
+        Equal(0, loaded.Count);
+        True(
+            !File.Exists(Path.Combine(root, "history-expiry.json")),
+            "Expired protected history left its current generation behind.");
+        True(
+            !File.Exists(Path.Combine(root, "history-expiry.json.bak")),
+            "Expired protected history left its backup generation behind.");
+    });
+}
+
+static async Task ProtectedHistoryRejectsOversizedInputAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        await using AuthenticatedProtectedHistoryStore store = new(root, "history-bounds");
+        ProtectedHistoryRecord oversized = new(
+            DateTimeOffset.UtcNow,
+            "notepad",
+            "Insert",
+            new string('x', AuthenticatedProtectedHistoryStore.MaximumTextCharacters + 1));
+        await ThrowsAsync<ArgumentOutOfRangeException>(
+            () => store.SaveAsync([oversized], 7).AsTask());
+
+        ProtectedHistoryRecord[] tooMany = Enumerable
+            .Range(0, AuthenticatedProtectedHistoryStore.MaximumEntries + 1)
+            .Select(_ => new ProtectedHistoryRecord(
+                DateTimeOffset.UtcNow,
+                "notepad",
+                "Insert",
+                "bounded"))
+            .ToArray();
+        await ThrowsAsync<ArgumentOutOfRangeException>(
+            () => store.SaveAsync(tooMany, 7).AsTask());
+    });
+}
+
+static async Task ProtectedHistoryCorruptionFailsClosedAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        await using AuthenticatedProtectedHistoryStore store = new(root, "history-corrupt");
+        ProtectedHistoryRecord record = new(
+            DateTimeOffset.UtcNow,
+            "notepad",
+            "Insert",
+            "corruption fixture");
+        await store.SaveAsync([record], 7);
+        await store.SaveAsync([record with { CreatedAtUtc = DateTimeOffset.UtcNow }], 7);
+        await File.AppendAllTextAsync(Path.Combine(root, "history-corrupt.json"), "changed");
+        await File.AppendAllTextAsync(Path.Combine(root, "history-corrupt.json.bak"), "changed");
+
+        await ThrowsAsync<InvalidDataException>(() => store.LoadAsync(7).AsTask());
+    });
+}
+
+static async Task ProtectedHistoryClearRemovesOwnedArtifactsAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        await using AuthenticatedProtectedHistoryStore store = new(root, "history-clear");
+        ProtectedHistoryRecord record = new(
+            DateTimeOffset.UtcNow,
+            "notepad",
+            "Insert",
+            "clear fixture");
+        await store.SaveAsync([record], 7);
+        await store.SaveAsync([record], 7);
+        await store.ClearAsync();
+
+        True(
+            !File.Exists(Path.Combine(root, "history-clear.json")),
+            "Protected history current state remained after clear.");
+        True(
+            !File.Exists(Path.Combine(root, "history-clear.json.bak")),
+            "Protected history backup state remained after clear.");
+        True(
+            File.Exists(Path.Combine(root, "state.key")),
+            "Clearing one protected store removed the shared authenticated-state key.");
+        Equal(0, (await store.LoadAsync(7)).Count);
+    });
+}
+
+static async Task ProtectedHistoryHonorsCancellationAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        await using AuthenticatedProtectedHistoryStore store = new(root, "history-cancel");
+        using CancellationTokenSource cancellation = new();
+        cancellation.Cancel();
+        await ThrowsAsync<OperationCanceledException>(
+            () => store.LoadAsync(7, cancellation.Token).AsTask());
+        await ThrowsAsync<OperationCanceledException>(
+            () => store.SaveAsync(
+                [new ProtectedHistoryRecord(
+                    DateTimeOffset.UtcNow,
+                    "notepad",
+                    "Insert",
+                    "cancel fixture")],
+                7,
+                cancellation.Token).AsTask());
     });
 }
 
@@ -463,6 +627,26 @@ static void Throws<T>(Action action) where T : Exception
     throw new InvalidOperationException($"Expected {typeof(T).Name}.");
 }
 
+static bool ContainsSequence(byte[] haystack, byte[] needle)
+{
+    ArgumentNullException.ThrowIfNull(haystack);
+    ArgumentNullException.ThrowIfNull(needle);
+    if (needle.Length == 0)
+    {
+        return true;
+    }
+
+    for (int index = 0; index <= haystack.Length - needle.Length; index++)
+    {
+        if (haystack.AsSpan(index, needle.Length).SequenceEqual(needle))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 static async Task<T> ThrowsAsync<T>(Func<Task> action) where T : Exception
 {
     try
@@ -478,3 +662,10 @@ static async Task<T> ThrowsAsync<T>(Func<Task> action) where T : Exception
 }
 
 sealed record FixtureState(int Sequence, string Value);
+
+sealed class MutableTimeProvider(DateTimeOffset utcNow) : TimeProvider
+{
+    public DateTimeOffset UtcNow { get; set; } = utcNow;
+
+    public override DateTimeOffset GetUtcNow() => UtcNow;
+}

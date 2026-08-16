@@ -6,6 +6,7 @@ namespace Soltex.Security;
 internal static class Dpapi
 {
     private const uint CryptProtectUiForbidden = 0x1;
+    private static readonly byte[] ZeroBuffer = new byte[4 * 1024];
 
     public static byte[] Protect(byte[] clearText) => Transform(clearText, protect: true);
 
@@ -63,12 +64,25 @@ internal static class Dpapi
             }
             finally
             {
+                ClearUnmanaged(outputBlob.Data, outputBlob.Size);
                 _ = NativeMethods.LocalFree(outputBlob.Data);
             }
         }
         finally
         {
+            ClearUnmanaged(inputPointer, input.Length);
             Marshal.FreeHGlobal(inputPointer);
+        }
+    }
+
+    private static void ClearUnmanaged(nint memory, int byteCount)
+    {
+        int offset = 0;
+        while (offset < byteCount)
+        {
+            int count = Math.Min(ZeroBuffer.Length, byteCount - offset);
+            Marshal.Copy(ZeroBuffer, 0, memory + offset, count);
+            offset += count;
         }
     }
 

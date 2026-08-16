@@ -194,3 +194,27 @@ public interface IWhisperShortcutHost : IAsyncDisposable
         Func<WhisperShortcutSignal, CancellationToken, ValueTask> handler,
         CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// Optional bounded transcript retention. Implementations must protect content at
+/// rest and ensure RewriteAsync removes prior owned generations containing deleted
+/// or expired entries.
+/// </summary>
+public interface IWhisperHistoryRetentionStore : IAsyncDisposable
+{
+    ValueTask<IReadOnlyList<WhisperHistoryEntry>> LoadAsync(
+        int retentionDays,
+        CancellationToken cancellationToken);
+
+    ValueTask SaveAsync(
+        IReadOnlyCollection<WhisperHistoryEntry> entries,
+        int retentionDays,
+        CancellationToken cancellationToken);
+
+    ValueTask RewriteAsync(
+        IReadOnlyCollection<WhisperHistoryEntry> entries,
+        int retentionDays,
+        CancellationToken cancellationToken);
+
+    ValueTask ClearAsync(CancellationToken cancellationToken);
+}

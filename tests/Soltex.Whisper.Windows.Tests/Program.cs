@@ -47,7 +47,8 @@ List<(string Name, Func<Task> Run)> tests =
     ("submit-only authorization emits Enter without a text read", VerifiedSubmitOnly),
     ("a rejected Enter dispatch cannot reuse its authorization", VerifiedSubmitDispatchRejected),
     ("target read-back is bounded and provider failures fail closed", TargetReadbackFailures),
-    ("target read-back cancellation is honored", TargetReadbackCancellation)
+    ("target read-back cancellation is honored", TargetReadbackCancellation),
+    ("encrypted history adapter preserves bounded Whisper records", HistoryRetentionAdapter)
 ];
 
 if (string.Equals(
@@ -1252,6 +1253,42 @@ static Task HResultMapping()
             WasapiNative.DeviceInvalidated,
             "ignored").Kind);
     return Task.CompletedTask;
+}
+
+static async Task HistoryRetentionAdapter()
+{
+    string root = Path.Combine(
+        Path.GetTempPath(),
+        "Soltex.Whisper.Windows.Tests",
+        Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    try
+    {
+        await using WindowsWhisperHistoryRetentionStore store = new(root);
+        WhisperHistoryEntry expected = new(
+            DateTimeOffset.UtcNow,
+            "notepad",
+            WhisperDeliveryKind.InsertText,
+            "adapter fixture");
+        await store.SaveAsync([expected], 7, CancellationToken.None);
+        IReadOnlyList<WhisperHistoryEntry> loaded = await store.LoadAsync(
+            7,
+            CancellationToken.None);
+        Equal(1, loaded.Count);
+        Equal(expected, loaded[0]);
+
+        await store.RewriteAsync([], 7, CancellationToken.None);
+        Equal(0, (await store.LoadAsync(7, CancellationToken.None)).Count);
+        False(File.Exists(Path.Combine(root, "whisper-history.json")));
+        False(File.Exists(Path.Combine(root, "whisper-history.json.bak")));
+    }
+    finally
+    {
+        if (Directory.Exists(root))
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
 }
 
 static byte[] CreatePcmPacket()
