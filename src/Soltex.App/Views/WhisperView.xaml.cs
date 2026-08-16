@@ -16,11 +16,16 @@ namespace Soltex.App.Views;
 public partial class WhisperView : UserControl
 {
     private readonly List<Button> _tabs;
+    private readonly List<Button> _libraryTabs;
     private bool _updatingInputDevices;
     private bool _microphoneTestRunning;
     private bool _featureEnabled;
     private bool _updatingPersonalization;
     private string[] _vocabularyTerms = [];
+    private WhisperSnippet[] _snippets = [];
+    private WhisperStyleProfile[] _customStyles = [];
+    private WhisperAppProfile[] _applicationProfiles = [];
+    private string _defaultStyleName = WhisperStyleProfile.Message.Name;
     private readonly WhisperScratchpad _scratchpad = new();
     private bool _updatingScratchpad;
     private int? _pendingScratchpadClose;
@@ -34,11 +39,21 @@ public partial class WhisperView : UserControl
             WhisperSetupTab,
             WhisperShortcutsTab,
             WhisperPersonalizeTab,
+            WhisperLibraryTab,
             WhisperScratchpadTab,
             WhisperPrivacyTab
         ];
+        _libraryTabs =
+        [
+            WhisperSnippetsSectionTab,
+            WhisperStylesSectionTab,
+            WhisperApplicationsSectionTab
+        ];
         WhisperShortcutList.ItemsSource = BuildShortcutRows();
         SetPersonalization(
+            WhisperSettings.CreateDefault(),
+            "Saved locally for this Windows account.");
+        SetLibrary(
             WhisperSettings.CreateDefault(),
             "Saved locally for this Windows account.");
         RefreshScratchpad();
@@ -61,6 +76,8 @@ public partial class WhisperView : UserControl
 
     public event EventHandler<WhisperPersonalizationRequestedEventArgs>?
         PersonalizationRequested;
+
+    public event EventHandler<WhisperLibraryRequestedEventArgs>? LibraryRequested;
 
     /// <summary>
     /// Renders a readiness report. The host supplies the observed facts; this view
@@ -192,6 +209,7 @@ public partial class WhisperView : UserControl
                 string.Equals(option.Tag, languageTag, StringComparison.OrdinalIgnoreCase));
 
             List<StyleOption> styles = WhisperStyleProfile.BuiltIn
+                .Concat(settings.CustomStyles)
                 .Select(style => new StyleOption(style.Name, style.Name))
                 .ToList();
             if (!styles.Any(option => string.Equals(
@@ -211,6 +229,7 @@ public partial class WhisperView : UserControl
                 StringComparison.OrdinalIgnoreCase));
 
             _vocabularyTerms = settings.Vocabulary.Terms.ToArray();
+            _defaultStyleName = settings.DefaultStyleName;
             WhisperVocabularyList.ItemsSource = _vocabularyTerms
                 .Select(term => new VocabularyRow(term))
                 .ToArray();
@@ -231,11 +250,106 @@ public partial class WhisperView : UserControl
         WhisperPersonalizationStatus.Text = detail;
     }
 
+    public void SetLibrary(WhisperSettings settings, string detail)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+
+        _snippets = settings.Snippets.ToArray();
+        _customStyles = settings.CustomStyles.ToArray();
+        _applicationProfiles = settings.ApplicationProfiles.ToArray();
+        _defaultStyleName = settings.DefaultStyleName;
+
+        WhisperSnippetList.ItemsSource = _snippets
+            .Select(snippet => new SnippetRow(snippet))
+            .ToArray();
+        WhisperSnippetCount.Text =
+            $"{_snippets.Length} of {WhisperSettings.MaximumStoredSnippetCount}";
+        WhisperSnippetAddButton.IsEnabled =
+            _snippets.Length < WhisperSettings.MaximumStoredSnippetCount;
+
+        WhisperCustomStyleList.ItemsSource = _customStyles
+            .Select(style => new CustomStyleRow(style))
+            .ToArray();
+        WhisperCustomStyleCount.Text =
+            $"{_customStyles.Length} of {WhisperSettings.MaximumCustomStyleCount}";
+        WhisperCustomStyleAddButton.IsEnabled =
+            _customStyles.Length < WhisperSettings.MaximumCustomStyleCount;
+
+        StyleBaseOption[] bases = WhisperStyleProfile.BuiltIn
+            .Select(style => new StyleBaseOption(style, DescribeStyle(style)))
+            .ToArray();
+        WhisperCustomStyleBasePicker.ItemsSource = bases;
+        WhisperCustomStyleBasePicker.SelectedItem = bases[0];
+
+        StyleOption[] styles = WhisperStyleProfile.BuiltIn
+            .Concat(_customStyles)
+            .Select(style => new StyleOption(style.Name, style.Name))
+            .ToArray();
+        WhisperApplicationStylePicker.ItemsSource = styles;
+        WhisperApplicationStylePicker.SelectedItem = styles.First();
+
+        PermissionOption[] clipboardOptions =
+        [
+            new PermissionOption(true, "Allow copy fallback"),
+            new PermissionOption(false, "Block copy fallback")
+        ];
+        WhisperApplicationClipboardPicker.ItemsSource = clipboardOptions;
+        WhisperApplicationClipboardPicker.SelectedItem = clipboardOptions[0];
+
+        PermissionOption[] optInOptions =
+        [
+            new PermissionOption(false, "Off"),
+            new PermissionOption(true, "Eligible")
+        ];
+        WhisperApplicationContextPicker.ItemsSource = optInOptions;
+        WhisperApplicationContextPicker.SelectedItem = optInOptions[0];
+        WhisperApplicationAutoSendPicker.ItemsSource = optInOptions;
+        WhisperApplicationAutoSendPicker.SelectedItem = optInOptions[0];
+        WhisperApplicationTerminalSubmitPicker.ItemsSource = optInOptions;
+        WhisperApplicationTerminalSubmitPicker.SelectedItem = optInOptions[0];
+
+        WhisperApplicationProfileList.ItemsSource = _applicationProfiles
+            .Select(profile => new ApplicationProfileRow(profile))
+            .ToArray();
+        WhisperApplicationProfileCount.Text =
+            $"{_applicationProfiles.Length} of {WhisperSettings.MaximumApplicationProfileCount}";
+        WhisperApplicationProfileAddButton.IsEnabled =
+            _applicationProfiles.Length < WhisperSettings.MaximumApplicationProfileCount;
+
+        WhisperSnippetCueInput.Clear();
+        WhisperSnippetContentInput.Clear();
+        WhisperCustomStyleNameInput.Clear();
+        WhisperApplicationProcessInput.Clear();
+        WhisperLibraryStatus.Text = detail;
+    }
+
+    public void SetLibraryError(string detail)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+        WhisperLibraryStatus.Text = detail;
+    }
+
     internal void ShowPersonalizationForEvidence() =>
         SelectTab(WhisperPersonalizeTab, WhisperPersonalizePanel);
 
     internal void ShowScratchpad() =>
         SelectTab(WhisperScratchpadTab, WhisperScratchpadPanel);
+
+    internal void ShowLibraryForEvidence() =>
+        SelectTab(WhisperLibraryTab, WhisperLibraryPanel);
+
+    internal void ShowLibraryStylesForEvidence()
+    {
+        ShowLibraryForEvidence();
+        SelectLibrarySection(WhisperStylesSectionTab, WhisperStylesSection);
+    }
+
+    internal void ShowLibraryApplicationsForEvidence()
+    {
+        ShowLibraryForEvidence();
+        SelectLibrarySection(WhisperApplicationsSectionTab, WhisperApplicationsSection);
+    }
 
     private void PreviewOverlay_Click(object sender, RoutedEventArgs e) =>
         PreviewOverlayRequested?.Invoke(this, EventArgs.Empty);
@@ -284,6 +398,9 @@ public partial class WhisperView : UserControl
     private void WhisperPersonalizeTab_Click(object sender, RoutedEventArgs e) =>
         SelectTab(WhisperPersonalizeTab, WhisperPersonalizePanel);
 
+    private void WhisperLibraryTab_Click(object sender, RoutedEventArgs e) =>
+        SelectTab(WhisperLibraryTab, WhisperLibraryPanel);
+
     private void WhisperScratchpadTab_Click(object sender, RoutedEventArgs e) =>
         ShowScratchpad();
 
@@ -301,6 +418,7 @@ public partial class WhisperView : UserControl
         WhisperSetupPanel.Visibility = Visibility.Collapsed;
         WhisperShortcutsPanel.Visibility = Visibility.Collapsed;
         WhisperPersonalizePanel.Visibility = Visibility.Collapsed;
+        WhisperLibraryPanel.Visibility = Visibility.Collapsed;
         WhisperScratchpadPanel.Visibility = Visibility.Collapsed;
         WhisperPrivacyPanel.Visibility = Visibility.Collapsed;
         panel.Visibility = Visibility.Visible;
@@ -355,6 +473,191 @@ public partial class WhisperView : UserControl
                 language.Tag,
                 style.Name,
                 vocabularyTerms));
+    }
+
+    private void WhisperSnippetsSectionTab_Click(object sender, RoutedEventArgs e) =>
+        SelectLibrarySection(WhisperSnippetsSectionTab, WhisperSnippetsSection);
+
+    private void WhisperStylesSectionTab_Click(object sender, RoutedEventArgs e) =>
+        SelectLibrarySection(WhisperStylesSectionTab, WhisperStylesSection);
+
+    private void WhisperApplicationsSectionTab_Click(object sender, RoutedEventArgs e) =>
+        SelectLibrarySection(WhisperApplicationsSectionTab, WhisperApplicationsSection);
+
+    private void SelectLibrarySection(Button tab, UIElement panel)
+    {
+        foreach (Button candidate in _libraryTabs)
+        {
+            candidate.Tag = ReferenceEquals(candidate, tab) ? "Selected" : null;
+        }
+
+        WhisperSnippetsSection.Visibility = Visibility.Collapsed;
+        WhisperStylesSection.Visibility = Visibility.Collapsed;
+        WhisperApplicationsSection.Visibility = Visibility.Collapsed;
+        panel.Visibility = Visibility.Visible;
+    }
+
+    private void AddSnippet_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            WhisperSnippet snippet = new(
+                WhisperSnippetCueInput.Text,
+                WhisperSnippetContentInput.Text);
+            if (snippet.Content.Length > WhisperSettings.MaximumStoredSnippetContentCharacters)
+            {
+                throw new ArgumentException("Snippet content exceeded the stored size limit.");
+            }
+
+            if (_snippets.Any(existing => string.Equals(
+                    existing.Cue,
+                    snippet.Cue,
+                    StringComparison.OrdinalIgnoreCase)))
+            {
+                SetLibraryError("That spoken cue already exists.");
+                return;
+            }
+
+            RequestLibrary(_snippets.Append(snippet), _customStyles, _applicationProfiles);
+        }
+        catch (ArgumentException)
+        {
+            SetLibraryError("Use a unique printable cue and no more than 4,000 characters of text.");
+        }
+    }
+
+    private void RemoveSnippet_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: SnippetRow row })
+        {
+            RequestLibrary(
+                _snippets.Where(snippet => !string.Equals(
+                    snippet.Cue,
+                    row.Cue,
+                    StringComparison.OrdinalIgnoreCase)),
+                _customStyles,
+                _applicationProfiles);
+        }
+    }
+
+    private void AddCustomStyle_Click(object sender, RoutedEventArgs e)
+    {
+        if (WhisperCustomStyleBasePicker.SelectedItem is not StyleBaseOption selected)
+        {
+            SetLibraryError("Choose one visible formatting rule set.");
+            return;
+        }
+
+        try
+        {
+            WhisperStyleProfile template = selected.Profile;
+            WhisperStyleProfile style = new(
+                WhisperCustomStyleNameInput.Text,
+                template.Kind,
+                template.ProseCleanup,
+                template.SpokenPunctuation,
+                template.PreserveLiteralTokens,
+                template.CapitalizeSentences);
+            if (WhisperStyleProfile.BuiltIn.Concat(_customStyles).Any(existing =>
+                    string.Equals(existing.Name, style.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                SetLibraryError("That style name already exists.");
+                return;
+            }
+
+            RequestLibrary(_snippets, _customStyles.Append(style), _applicationProfiles);
+        }
+        catch (ArgumentException)
+        {
+            SetLibraryError("Use a unique printable style name of at most 64 characters.");
+        }
+    }
+
+    private void RemoveCustomStyle_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: CustomStyleRow row })
+        {
+            return;
+        }
+
+        if (string.Equals(_defaultStyleName, row.Name, StringComparison.OrdinalIgnoreCase) ||
+            _applicationProfiles.Any(profile => string.Equals(
+                profile.StyleName,
+                row.Name,
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            SetLibraryError("Change the default and app rules that use this style before removing it.");
+            return;
+        }
+
+        RequestLibrary(
+            _snippets,
+            _customStyles.Where(style => !string.Equals(
+                style.Name,
+                row.Name,
+                StringComparison.OrdinalIgnoreCase)),
+            _applicationProfiles);
+    }
+
+    private void AddApplicationProfile_Click(object sender, RoutedEventArgs e)
+    {
+        if (WhisperApplicationStylePicker.SelectedItem is not StyleOption style ||
+            WhisperApplicationClipboardPicker.SelectedItem is not PermissionOption clipboard ||
+            WhisperApplicationContextPicker.SelectedItem is not PermissionOption context ||
+            WhisperApplicationAutoSendPicker.SelectedItem is not PermissionOption autoSend ||
+            WhisperApplicationTerminalSubmitPicker.SelectedItem is not PermissionOption terminal)
+        {
+            SetLibraryError("Choose each application permission before saving.");
+            return;
+        }
+
+        if (terminal.IsAllowed && !autoSend.IsAllowed)
+        {
+            SetLibraryError("Terminal submit eligibility also requires app auto-send eligibility.");
+            return;
+        }
+
+        try
+        {
+            WhisperAppProfile profile = new(
+                WhisperApplicationProcessInput.Text,
+                autoSend.IsAllowed,
+                terminal.IsAllowed,
+                clipboard.IsAllowed,
+                context.IsAllowed,
+                style.Name);
+            IEnumerable<WhisperAppProfile> remaining = _applicationProfiles.Where(existing =>
+                !existing.MatchesProcess(profile.ProcessName));
+            RequestLibrary(_snippets, _customStyles, remaining.Append(profile));
+        }
+        catch (ArgumentException)
+        {
+            SetLibraryError("Use a process name only, without a path or reserved characters.");
+        }
+    }
+
+    private void RemoveApplicationProfile_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: ApplicationProfileRow row })
+        {
+            RequestLibrary(
+                _snippets,
+                _customStyles,
+                _applicationProfiles.Where(profile => !profile.MatchesProcess(row.ProcessName)));
+        }
+    }
+
+    private void RequestLibrary(
+        IEnumerable<WhisperSnippet> snippets,
+        IEnumerable<WhisperStyleProfile> customStyles,
+        IEnumerable<WhisperAppProfile> applicationProfiles)
+    {
+        LibraryRequested?.Invoke(
+            this,
+            new WhisperLibraryRequestedEventArgs(
+                snippets.ToArray(),
+                customStyles.ToArray(),
+                applicationProfiles.ToArray()));
     }
 
     private void ScratchpadText_Changed(object sender, TextChangedEventArgs e)
@@ -607,6 +910,83 @@ public partial class WhisperView : UserControl
         public override string ToString() => DisplayName;
     }
 
+    internal sealed record StyleBaseOption(WhisperStyleProfile Profile, string DisplayName)
+    {
+        public override string ToString() => DisplayName;
+    }
+
+    internal sealed record PermissionOption(bool IsAllowed, string DisplayName)
+    {
+        public override string ToString() => DisplayName;
+    }
+
+    internal sealed class SnippetRow
+    {
+        internal SnippetRow(WhisperSnippet snippet)
+        {
+            Cue = snippet.Cue;
+            string collapsed = string.Join(
+                ' ',
+                snippet.Content.Split(
+                    (char[]?)null,
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+            Preview = collapsed.Length <= 140 ? collapsed : $"{collapsed[..140]}…";
+        }
+
+        public string Cue { get; }
+
+        public string Preview { get; }
+
+        public string RemoveAutomationName => $"Remove snippet {Cue}";
+    }
+
+    internal sealed class CustomStyleRow
+    {
+        internal CustomStyleRow(WhisperStyleProfile style)
+        {
+            Name = style.Name;
+            Summary = DescribeStyle(style);
+        }
+
+        public string Name { get; }
+
+        public string Summary { get; }
+
+        public string RemoveAutomationName => $"Remove custom style {Name}";
+    }
+
+    internal sealed class ApplicationProfileRow
+    {
+        internal ApplicationProfileRow(WhisperAppProfile profile)
+        {
+            ProcessName = profile.ProcessName;
+            List<string> permissions = [$"Style: {profile.StyleName}"];
+            permissions.Add(profile.ClipboardFallbackAllowed ? "copy fallback" : "copy blocked");
+            if (profile.ContextFormattingAllowed)
+            {
+                permissions.Add("context eligible");
+            }
+
+            if (profile.AutoSendAllowed)
+            {
+                permissions.Add("auto-send eligible");
+            }
+
+            if (profile.TerminalAutoSendAllowed)
+            {
+                permissions.Add("terminal submit eligible");
+            }
+
+            Summary = string.Join(" · ", permissions);
+        }
+
+        public string ProcessName { get; }
+
+        public string Summary { get; }
+
+        public string RemoveAutomationName => $"Remove application rule for {ProcessName}";
+    }
+
     internal sealed record ScratchpadTabRow(int Index, string Title, bool IsActive)
     {
         public string? SelectionTag => IsActive ? "Selected" : null;
@@ -619,6 +999,20 @@ public partial class WhisperView : UserControl
     private sealed record InputDeviceOption(string? Id, string DisplayName)
     {
         public override string ToString() => DisplayName;
+    }
+
+    private static string DescribeStyle(WhisperStyleProfile style)
+    {
+        List<string> rules = [];
+        rules.Add(style.ProseCleanup ? "clean prose" : "keep literal phrasing");
+        rules.Add(style.SpokenPunctuation ? "spoken punctuation" : "literal punctuation words");
+        if (style.PreserveLiteralTokens)
+        {
+            rules.Add("preserve identifiers");
+        }
+
+        rules.Add(style.CapitalizeSentences ? "sentence case" : "preserve case");
+        return $"{style.Kind} · {string.Join(" · ", rules)}";
     }
 }
 
@@ -656,4 +1050,26 @@ public sealed class WhisperPersonalizationRequestedEventArgs : EventArgs
     public string StyleName { get; }
 
     public IReadOnlyList<string> VocabularyTerms { get; }
+}
+
+public sealed class WhisperLibraryRequestedEventArgs : EventArgs
+{
+    public WhisperLibraryRequestedEventArgs(
+        IReadOnlyList<WhisperSnippet> snippets,
+        IReadOnlyList<WhisperStyleProfile> customStyles,
+        IReadOnlyList<WhisperAppProfile> applicationProfiles)
+    {
+        ArgumentNullException.ThrowIfNull(snippets);
+        ArgumentNullException.ThrowIfNull(customStyles);
+        ArgumentNullException.ThrowIfNull(applicationProfiles);
+        Snippets = Array.AsReadOnly(snippets.ToArray());
+        CustomStyles = Array.AsReadOnly(customStyles.ToArray());
+        ApplicationProfiles = Array.AsReadOnly(applicationProfiles.ToArray());
+    }
+
+    public IReadOnlyList<WhisperSnippet> Snippets { get; }
+
+    public IReadOnlyList<WhisperStyleProfile> CustomStyles { get; }
+
+    public IReadOnlyList<WhisperAppProfile> ApplicationProfiles { get; }
 }

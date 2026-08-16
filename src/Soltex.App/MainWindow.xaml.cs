@@ -1683,6 +1683,39 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (string.Equals(
+                normalized,
+                "whisper-library",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowLibraryForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperSnippetCueInput;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-library-styles",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowLibraryStylesForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperCustomStyleNameInput;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-library-apps",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowLibraryApplicationsForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperApplicationProcessInput;
+            return true;
+        }
+
         if (string.Equals(normalized, "update", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(normalized, "updates", StringComparison.OrdinalIgnoreCase))
         {

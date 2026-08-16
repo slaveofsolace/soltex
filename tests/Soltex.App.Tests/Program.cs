@@ -72,6 +72,7 @@ internal static class Program
             ("Whisper capture controls expose only working capture actions", WhisperCaptureControlsAreHonest),
             ("Whisper runtime toggle is explicit and reversible", WhisperRuntimeToggleIsExplicit),
             ("Whisper personalization controls persist explicit choices", WhisperPersonalizationControlsAreWorking),
+            ("Whisper library editors persist bounded rules", WhisperLibraryControlsAreWorking),
             ("Whisper Scratchpad controls are bounded and reversible", WhisperScratchpadControlsAreWorking),
             ("Activity store bounds, sanitizes, persists, and recovers", ActivityStoreBoundsAndRecovers),
             ("Activity view renders and filters meaningful events", ActivityViewRenders),
@@ -981,6 +982,34 @@ internal static class Program
             document.PreferredLanguageTag = "fr";
             document.DefaultStyleName = WhisperStyleProfile.Developer.Name;
             document.VocabularyTerms = ["Soltex", "Aether Foundry"];
+            document.Snippets =
+            [
+                new WhisperSnippetDocument { Cue = "insert greeting", Content = "Hello." }
+            ];
+            document.CustomStyles =
+            [
+                new WhisperStyleProfileDocument
+                {
+                    Name = "Compact",
+                    Kind = nameof(WhisperStyleKind.Message),
+                    ProseCleanup = true,
+                    SpokenPunctuation = true,
+                    PreserveLiteralTokens = false,
+                    CapitalizeSentences = true
+                }
+            ];
+            document.ApplicationProfiles =
+            [
+                new WhisperAppProfileDocument
+                {
+                    ProcessName = "chat",
+                    ClipboardFallbackAllowed = true,
+                    ContextFormattingAllowed = false,
+                    AutoSendAllowed = false,
+                    TerminalAutoSendAllowed = false,
+                    StyleName = "Compact"
+                }
+            ];
             WhisperSettings expected = WhisperSettingsMigrator.Load(document).Settings;
             WhisperSettingsStore store = new(filePath);
             store.Save(expected);
@@ -990,7 +1019,10 @@ internal static class Program
                 "The selected Whisper input device did not round-trip.");
             True(loaded.Settings.Language.LanguageTag == "fr" &&
                  loaded.Settings.DefaultStyleName == WhisperStyleProfile.Developer.Name &&
-                 loaded.Settings.Vocabulary.Contains("Aether Foundry"),
+                 loaded.Settings.Vocabulary.Contains("Aether Foundry") &&
+                 loaded.Settings.Snippets.Single().Cue == "insert greeting" &&
+                 loaded.Settings.CustomStyles.Single().Name == "Compact" &&
+                 loaded.Settings.ApplicationProfiles.Single().ProcessName == "chat",
                 "Whisper personalization did not round-trip through the bounded store.");
 
             File.WriteAllText(filePath, "{ invalid", Encoding.UTF8);
@@ -1121,6 +1153,87 @@ internal static class Program
         True(requested?.StyleName == WhisperStyleProfile.Email.Name &&
              requested.LanguageTag == "fr",
             "Changing the default style did not preserve the selected language.");
+    }
+
+    private static void WhisperLibraryControlsAreWorking()
+    {
+        WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
+        document.Snippets =
+        [
+            new WhisperSnippetDocument { Cue = "insert greeting", Content = "Hello there." }
+        ];
+        document.CustomStyles =
+        [
+            new WhisperStyleProfileDocument
+            {
+                Name = "Compact",
+                Kind = nameof(WhisperStyleKind.Message),
+                ProseCleanup = true,
+                SpokenPunctuation = true,
+                PreserveLiteralTokens = false,
+                CapitalizeSentences = true
+            }
+        ];
+        document.ApplicationProfiles =
+        [
+            new WhisperAppProfileDocument
+            {
+                ProcessName = "chat.exe",
+                AutoSendAllowed = false,
+                TerminalAutoSendAllowed = false,
+                ClipboardFallbackAllowed = true,
+                ContextFormattingAllowed = false,
+                StyleName = "Compact"
+            }
+        ];
+        WhisperSettings settings = WhisperSettingsMigrator.Load(document).Settings;
+
+        WhisperView view = new();
+        WhisperLibraryRequestedEventArgs? requested = null;
+        view.LibraryRequested += (_, args) => requested = args;
+        view.SetLibrary(settings, "Loaded.");
+        view.ShowLibraryForEvidence();
+
+        True(view.WhisperLibraryPanel.Visibility == Visibility.Visible &&
+             view.WhisperSnippetList.Items.Count == 1 &&
+             view.WhisperCustomStyleList.Items.Count == 1 &&
+             view.WhisperApplicationProfileList.Items.Count == 1,
+            "The persisted Whisper library did not render all three bounded rule types.");
+
+        view.WhisperSnippetCueInput.Text = "insert closing";
+        view.WhisperSnippetContentInput.Text = "Regards,";
+        view.WhisperSnippetAddButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requested?.Snippets.Count == 2 &&
+             requested.Snippets[^1].Cue == "insert closing",
+            "Saving a snippet did not request one explicit library update.");
+
+        requested = null;
+        view.WhisperStylesSectionTab.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        view.WhisperCustomStyleNameInput.Text = "Literal";
+        view.WhisperCustomStyleBasePicker.SelectedItem = view.WhisperCustomStyleBasePicker.Items
+            .Cast<WhisperView.StyleBaseOption>()
+            .Single(option => option.Profile.Kind == WhisperStyleKind.Terminal);
+        view.WhisperCustomStyleAddButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requested?.CustomStyles.Count == 2 &&
+             requested.CustomStyles[^1].PreserveLiteralTokens,
+            "Saving a custom style did not preserve its visible deterministic rules.");
+
+        requested = null;
+        view.WhisperApplicationsSectionTab.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        view.WhisperApplicationProcessInput.Text = "editor.exe";
+        view.WhisperApplicationStylePicker.SelectedItem = view.WhisperApplicationStylePicker.Items
+            .Cast<WhisperView.StyleOption>()
+            .Single(option => option.Name == "Compact");
+        view.WhisperApplicationContextPicker.SelectedItem =
+            view.WhisperApplicationContextPicker.Items
+                .Cast<WhisperView.PermissionOption>()
+                .Single(option => option.IsAllowed);
+        view.WhisperApplicationProfileAddButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested?.ApplicationProfiles.Count == 2 &&
+             requested.ApplicationProfiles[^1].ProcessName == "editor" &&
+             requested.ApplicationProfiles[^1].ContextFormattingAllowed,
+            "Saving an app rule did not normalize the process or retain explicit permission choices.");
     }
 
     private static void WhisperScratchpadControlsAreWorking()

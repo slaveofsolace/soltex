@@ -100,6 +100,83 @@
             </Border>
         </DataTemplate>
 
+        <DataTemplate x:Key="SnippetRowTemplate">
+            <Border Margin="0,0,0,8" Style="{StaticResource QuietCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding Cue}" FontWeight="SemiBold" />
+                        <TextBlock Margin="0,4,0,0"
+                                   MaxHeight="42"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   Text="{Binding Preview}"
+                                   TextWrapping="Wrap"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Margin="12,0,0,0"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Remove"
+                            AutomationProperties.Name="{Binding RemoveAutomationName}"
+                            Click="RemoveSnippet_Click" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="CustomStyleRowTemplate">
+            <Border Margin="0,0,0,8" Style="{StaticResource QuietCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   Text="{Binding Summary}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Margin="12,0,0,0"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Remove"
+                            AutomationProperties.Name="{Binding RemoveAutomationName}"
+                            Click="RemoveCustomStyle_Click" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="ApplicationProfileRowTemplate">
+            <Border Margin="0,0,0,8" Style="{StaticResource QuietCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding ProcessName}" FontWeight="SemiBold" />
+                        <TextBlock Margin="0,4,0,0"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   Text="{Binding Summary}"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Margin="12,0,0,0"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Remove"
+                            AutomationProperties.Name="{Binding RemoveAutomationName}"
+                            Click="RemoveApplicationProfile_Click" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
         <DataTemplate x:Key="ScratchpadTabTemplate">
             <Border Margin="0,0,8,0"
                     Background="{StaticResource InsetBrush}"
@@ -204,7 +281,7 @@
 
         <!-- Local switcher -->
         <Border Grid.Row="4" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
-            <StackPanel Orientation="Horizontal">
+            <WrapPanel>
                 <Button x:Name="WhisperSetupTab"
                         Tag="Selected"
                         Style="{StaticResource TabButtonStyle}"
@@ -223,6 +300,12 @@
                         Content="Personalize"
                         AutomationProperties.Name="Show Whisper personalization"
                         Click="WhisperPersonalizeTab_Click" />
+                <Button x:Name="WhisperLibraryTab"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource TabButtonStyle}"
+                        Content="Library"
+                        AutomationProperties.Name="Show Whisper snippets styles and application rules"
+                        Click="WhisperLibraryTab_Click" />
                 <Button x:Name="WhisperScratchpadTab"
                         Margin="8,0,0,0"
                         Style="{StaticResource TabButtonStyle}"
@@ -235,7 +318,7 @@
                         Content="Privacy"
                         AutomationProperties.Name="Show Whisper privacy boundaries"
                         Click="WhisperPrivacyTab_Click" />
-            </StackPanel>
+            </WrapPanel>
         </Border>
 
         <Border Grid.Row="6" Style="{StaticResource WorkbenchStyle}">
@@ -480,6 +563,266 @@
                                          VirtualizingPanel.VirtualizationMode="Recycling" />
                             </Grid>
                         </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Library: one editor at a time keeps dense rules understandable. -->
+                <ScrollViewer x:Name="WhisperLibraryPanel"
+                              Margin="18"
+                              Visibility="Collapsed"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource SectionTitleStyle}"
+                                           Text="Personal library" />
+                                <TextBlock Margin="0,3,0,0"
+                                           Style="{StaticResource MutedTextStyle}"
+                                           Text="Reusable text and app-specific rules, stored only for this Windows account." />
+                            </StackPanel>
+                            <TextBlock x:Name="WhisperLibraryStatus"
+                                       Grid.Column="1"
+                                       MaxWidth="420"
+                                       VerticalAlignment="Center"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="Saved locally for this Windows account."
+                                       TextTrimming="CharacterEllipsis"
+                                       AutomationProperties.LiveSetting="Polite" />
+                        </Grid>
+
+                        <WrapPanel Margin="0,14,0,14">
+                            <Button x:Name="WhisperSnippetsSectionTab"
+                                    Tag="Selected"
+                                    Style="{StaticResource TabButtonStyle}"
+                                    Content="Snippets"
+                                    AutomationProperties.Name="Edit Whisper snippets"
+                                    Click="WhisperSnippetsSectionTab_Click" />
+                            <Button x:Name="WhisperStylesSectionTab"
+                                    Margin="8,0,0,0"
+                                    Style="{StaticResource TabButtonStyle}"
+                                    Content="Styles"
+                                    AutomationProperties.Name="Edit Whisper custom styles"
+                                    Click="WhisperStylesSectionTab_Click" />
+                            <Button x:Name="WhisperApplicationsSectionTab"
+                                    Margin="8,0,0,0"
+                                    Style="{StaticResource TabButtonStyle}"
+                                    Content="App rules"
+                                    AutomationProperties.Name="Edit Whisper application rules"
+                                    Click="WhisperApplicationsSectionTab_Click" />
+                        </WrapPanel>
+
+                        <StackPanel x:Name="WhisperSnippetsSection">
+                            <Border Style="{StaticResource QuietCardStyle}">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="New snippet" FontWeight="SemiBold" />
+                                            <TextBlock Margin="0,3,0,0"
+                                                       Style="{StaticResource MutedTextStyle}"
+                                                       Text="Say the exact cue to insert the saved text." />
+                                        </StackPanel>
+                                        <TextBlock x:Name="WhisperSnippetCount"
+                                                   Grid.Column="1"
+                                                   VerticalAlignment="Center"
+                                                   Style="{StaticResource MutedTextStyle}"
+                                                   Text="0 of 64" />
+                                    </Grid>
+                                    <TextBlock Margin="0,12,0,5" Text="Spoken cue" />
+                                    <TextBox x:Name="WhisperSnippetCueInput"
+                                             MaxLength="80"
+                                             Style="{StaticResource FieldStyle}"
+                                             AutomationProperties.Name="New snippet spoken cue" />
+                                    <TextBlock Margin="0,10,0,5" Text="Text to insert" />
+                                    <TextBox x:Name="WhisperSnippetContentInput"
+                                             MinHeight="96"
+                                             MaxHeight="180"
+                                             MaxLength="4000"
+                                             Style="{StaticResource FieldStyle}"
+                                             AcceptsReturn="True"
+                                             TextWrapping="Wrap"
+                                             VerticalScrollBarVisibility="Auto"
+                                             AutomationProperties.Name="New snippet content" />
+                                    <Button x:Name="WhisperSnippetAddButton"
+                                            Margin="0,10,0,0"
+                                            HorizontalAlignment="Left"
+                                            Style="{StaticResource ActionButton}"
+                                            Content="Save snippet"
+                                            AutomationProperties.Name="Save new Whisper snippet"
+                                            Click="AddSnippet_Click" />
+                                </StackPanel>
+                            </Border>
+                            <ItemsControl x:Name="WhisperSnippetList"
+                                          Margin="0,12,0,0"
+                                          ItemTemplate="{StaticResource SnippetRowTemplate}"
+                                          AutomationProperties.Name="Saved Whisper snippets" />
+                        </StackPanel>
+
+                        <StackPanel x:Name="WhisperStylesSection" Visibility="Collapsed">
+                            <Border Style="{StaticResource QuietCardStyle}">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="New style" FontWeight="SemiBold" />
+                                            <TextBlock Margin="0,3,0,0"
+                                                       Style="{StaticResource MutedTextStyle}"
+                                                       Text="Start from visible, deterministic formatting rules." />
+                                        </StackPanel>
+                                        <TextBlock x:Name="WhisperCustomStyleCount"
+                                                   Grid.Column="1"
+                                                   VerticalAlignment="Center"
+                                                   Style="{StaticResource MutedTextStyle}"
+                                                   Text="0 of 16" />
+                                    </Grid>
+                                    <Grid Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Margin="0,0,0,5" Text="Style name" />
+                                            <TextBox x:Name="WhisperCustomStyleNameInput"
+                                                     MaxLength="64"
+                                                     Style="{StaticResource FieldStyle}"
+                                                     AutomationProperties.Name="New custom style name" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Margin="0,0,0,5" Text="Formatting rules" />
+                                            <ComboBox x:Name="WhisperCustomStyleBasePicker"
+                                                      Style="{StaticResource SoltexComboBoxStyle}"
+                                                      DisplayMemberPath="DisplayName"
+                                                      AutomationProperties.Name="Custom style formatting rules" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Button x:Name="WhisperCustomStyleAddButton"
+                                            Margin="0,10,0,0"
+                                            HorizontalAlignment="Left"
+                                            Style="{StaticResource ActionButton}"
+                                            Content="Save style"
+                                            AutomationProperties.Name="Save custom Whisper style"
+                                            Click="AddCustomStyle_Click" />
+                                </StackPanel>
+                            </Border>
+                            <ItemsControl x:Name="WhisperCustomStyleList"
+                                          Margin="0,12,0,0"
+                                          ItemTemplate="{StaticResource CustomStyleRowTemplate}"
+                                          AutomationProperties.Name="Custom Whisper styles" />
+                        </StackPanel>
+
+                        <StackPanel x:Name="WhisperApplicationsSection" Visibility="Collapsed">
+                            <Border Style="{StaticResource QuietCardStyle}">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Text="New app rule" FontWeight="SemiBold" />
+                                            <TextBlock Margin="0,3,0,0"
+                                                       Style="{StaticResource MutedTextStyle}"
+                                                       Text="Use the process name only. App rules never choose a recipient or window." />
+                                        </StackPanel>
+                                        <TextBlock x:Name="WhisperApplicationProfileCount"
+                                                   Grid.Column="1"
+                                                   VerticalAlignment="Center"
+                                                   Style="{StaticResource MutedTextStyle}"
+                                                   Text="0 of 64" />
+                                    </Grid>
+                                    <Grid Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Margin="0,0,0,5" Text="Process name" />
+                                            <TextBox x:Name="WhisperApplicationProcessInput"
+                                                     MaxLength="128"
+                                                     Style="{StaticResource FieldStyle}"
+                                                     AutomationProperties.Name="Application process name" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Margin="0,0,0,5" Text="Style" />
+                                            <ComboBox x:Name="WhisperApplicationStylePicker"
+                                                      Style="{StaticResource SoltexComboBoxStyle}"
+                                                      DisplayMemberPath="DisplayName"
+                                                      AutomationProperties.Name="Application Whisper style" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Margin="0,0,0,5" Text="Clipboard fallback" />
+                                            <ComboBox x:Name="WhisperApplicationClipboardPicker"
+                                                      Style="{StaticResource SoltexComboBoxStyle}"
+                                                      DisplayMemberPath="DisplayName"
+                                                      AutomationProperties.Name="Application clipboard fallback permission" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Margin="0,0,0,5" Text="Context reads" />
+                                            <ComboBox x:Name="WhisperApplicationContextPicker"
+                                                      Style="{StaticResource SoltexComboBoxStyle}"
+                                                      DisplayMemberPath="DisplayName"
+                                                      AutomationProperties.Name="Application context read permission" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <Grid Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="12" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel>
+                                            <TextBlock Margin="0,0,0,5" Text="Auto-send eligibility" />
+                                            <ComboBox x:Name="WhisperApplicationAutoSendPicker"
+                                                      Style="{StaticResource SoltexComboBoxStyle}"
+                                                      DisplayMemberPath="DisplayName"
+                                                      AutomationProperties.Name="Application auto-send eligibility" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Margin="0,0,0,5" Text="Terminal submit eligibility" />
+                                            <ComboBox x:Name="WhisperApplicationTerminalSubmitPicker"
+                                                      Style="{StaticResource SoltexComboBoxStyle}"
+                                                      DisplayMemberPath="DisplayName"
+                                                      AutomationProperties.Name="Application terminal submit eligibility" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <TextBlock Margin="0,10,0,0"
+                                               Style="{StaticResource MutedTextStyle}"
+                                               TextWrapping="Wrap"
+                                               Text="Eligibility never enables global auto-send. The first-use warning and verified-submit gate still apply." />
+                                    <Button x:Name="WhisperApplicationProfileAddButton"
+                                            Margin="0,10,0,0"
+                                            HorizontalAlignment="Left"
+                                            Style="{StaticResource ActionButton}"
+                                            Content="Save app rule"
+                                            AutomationProperties.Name="Save Whisper application rule"
+                                            Click="AddApplicationProfile_Click" />
+                                </StackPanel>
+                            </Border>
+                            <ItemsControl x:Name="WhisperApplicationProfileList"
+                                          Margin="0,12,0,0"
+                                          ItemTemplate="{StaticResource ApplicationProfileRowTemplate}"
+                                          AutomationProperties.Name="Whisper application rules" />
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
 

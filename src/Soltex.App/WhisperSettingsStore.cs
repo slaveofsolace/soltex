@@ -8,7 +8,7 @@ namespace Soltex.App;
 
 internal sealed class WhisperSettingsStore
 {
-    internal const int MaximumDocumentBytes = 64 * 1024;
+    internal const int MaximumDocumentBytes = 2 * 1024 * 1024;
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {

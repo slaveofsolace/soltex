@@ -40,6 +40,7 @@ public partial class MainWindow
         WhisperPanel.MicrophoneTestStopRequested += WhisperPanel_MicrophoneTestStopRequested;
         WhisperPanel.FeatureEnabledRequested += WhisperPanel_FeatureEnabledRequested;
         WhisperPanel.PersonalizationRequested += WhisperPanel_PersonalizationRequested;
+        WhisperPanel.LibraryRequested += WhisperPanel_LibraryRequested;
         WhisperPanel.UpdateCaptureDevices(
             _whisperDevices,
             _whisperSettings.InputDeviceId,
@@ -60,7 +61,72 @@ public partial class MainWindow
                 : loaded.IsClean
                 ? "Saved locally for this Windows account."
                 : "Unsafe or outdated fields were repaired to safe values.");
+        WhisperPanel.SetLibrary(
+            _whisperSettings,
+            loaded.LoadedVersion == 0
+                ? "Shipped defaults are ready for this Windows account."
+                : loaded.IsClean
+                    ? "Saved locally for this Windows account."
+                    : "Unsafe or outdated fields were repaired to safe values.");
         UpdateWhisperReadiness();
+    }
+
+    private void WhisperPanel_LibraryRequested(
+        object? sender,
+        WhisperLibraryRequestedEventArgs e)
+    {
+        try
+        {
+            WhisperSettingsDocument document = _whisperSettings.ToDocument();
+            document.Snippets = e.Snippets.Select(snippet => new WhisperSnippetDocument
+            {
+                Cue = snippet.Cue,
+                Content = snippet.Content
+            }).ToArray();
+            document.CustomStyles = e.CustomStyles.Select(style =>
+                new WhisperStyleProfileDocument
+                {
+                    Name = style.Name,
+                    Kind = style.Kind.ToString(),
+                    ProseCleanup = style.ProseCleanup,
+                    SpokenPunctuation = style.SpokenPunctuation,
+                    PreserveLiteralTokens = style.PreserveLiteralTokens,
+                    CapitalizeSentences = style.CapitalizeSentences
+                }).ToArray();
+            document.ApplicationProfiles = e.ApplicationProfiles.Select(profile =>
+                new WhisperAppProfileDocument
+                {
+                    ProcessName = profile.ProcessName,
+                    AutoSendAllowed = profile.AutoSendAllowed,
+                    TerminalAutoSendAllowed = profile.TerminalAutoSendAllowed,
+                    ClipboardFallbackAllowed = profile.ClipboardFallbackAllowed,
+                    ContextFormattingAllowed = profile.ContextFormattingAllowed,
+                    StyleName = profile.StyleName
+                }).ToArray();
+
+            WhisperSettingsLoadResult loaded = WhisperSettingsMigrator.Load(document);
+            if (!loaded.IsClean)
+            {
+                WhisperPanel.SetLibraryError(
+                    "That rule was not saved because it did not pass safe settings validation.");
+                return;
+            }
+
+            _whisperSettingsStore?.Save(loaded.Settings);
+            _whisperSettings = loaded.Settings;
+            WhisperPanel.SetLibrary(
+                _whisperSettings,
+                "Personal library saved locally for this Windows account.");
+            WhisperPanel.SetPersonalization(
+                _whisperSettings,
+                "Personalization saved locally for this Windows account.");
+            UpdateWhisperReadiness();
+        }
+        catch (Exception exception) when (IsExpectedWhisperSettingsFailure(exception))
+        {
+            WhisperPanel.SetLibraryError(
+                "That rule was not saved. Check its name, size, and permissions.");
+        }
     }
 
     private void WhisperPanel_PersonalizationRequested(
@@ -513,7 +579,8 @@ public partial class MainWindow
             TargetInspectionAvailable: OperatingSystem.IsWindows(),
             AutoSendEnabled: _whisperSettings.AutoSendEnabled,
             AutoSendWarningAccepted: _whisperSettings.AutoSendWarningAccepted,
-            EnabledAutoSendProfileCount: 0);
+            EnabledAutoSendProfileCount: _whisperSettings.ApplicationProfiles.Count(
+                profile => profile.AutoSendAllowed));
         WhisperPanel.UpdateReadiness(WhisperCaptureReadiness.Apply(
             inputs,
             _whisperCaptureFailure,

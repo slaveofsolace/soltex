@@ -207,7 +207,7 @@ default for navigation, tabs, headings, and buttons.
 | Audio | Repeated channel lanes with volume sliders; Devices/More as local tabs |
 | Security | Posture/status band + scan command deck + Activity/Quarantine local tabs |
 | Remote Assist | Device/session master-detail deck + compact permission disclosure |
-| Whisper | Readiness checklist + dictation controls; Shortcuts/Snippets/History as local tabs |
+| Whisper | Readiness checklist + dictation controls; Shortcuts, Personalize, Library, Scratchpad, and Privacy as local tabs |
 | Activity | Filter command band + bounded event table |
 | Updates | Prepared update detail + History/Recovery local tabs |
 | Settings | Category rail/tabs + one bounded settings panel at a time |
@@ -266,6 +266,11 @@ should be able to open Whisper and read the single reason why.
 
 Blocked capability is shown as a row with an action, never as a control that looks
 operable and silently does nothing.
+
+The Library keeps dense configuration behind a second local switcher. Snippets,
+styles, and exact-process app rules are never shown simultaneously. Each editor leads
+with one bounded creation action and follows with the saved rows, so a large personal
+library does not turn the default Whisper page into a settings wall.
 
 ### Keycaps
 
