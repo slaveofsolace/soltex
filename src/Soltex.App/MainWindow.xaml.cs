@@ -43,6 +43,7 @@ public partial class MainWindow : Window
     private ProtectionMonitor? _protectionMonitor;
     private ProtectionMonitorState? _lastMonitorState;
     private WhisperOverlayWindow? _whisperOverlay;
+    private Action? _whisperOverlayAction;
     private RemoteAssistExecutable? _remoteAssistExecutable;
     private AuthenticodeVerificationResult? _remoteAssistTrust;
     private bool _securityActivityVisible;
@@ -194,6 +195,8 @@ public partial class MainWindow : Window
         Task whisperCaptureRefresh = CoreAudioStartupCoordinator.RunWhisperAfterAudioAsync(
             audioRefresh,
             RefreshWhisperCaptureDevicesAsync);
+        _whisperShortcutDrained = ReconcileWhisperShortcutsAsync(
+            _whisperRuntimeCancellation.Token);
 
         _importMonitor = new ImportFolderMonitor(
             _runtime.ImportsPath,
@@ -208,7 +211,8 @@ public partial class MainWindow : Window
             RefreshUpdateJournalAsync(),
             audioRefresh,
             applicationRefresh,
-            whisperCaptureRefresh);
+            whisperCaptureRefresh,
+            _whisperShortcutDrained);
         if (_shutdownStarted)
         {
             _startupCompleted.TrySetCanceled();
@@ -249,6 +253,7 @@ public partial class MainWindow : Window
         _audioMixCancellation?.Cancel();
         _benchmarkCancellation?.Cancel();
         _whisperCaptureCancellation?.Cancel();
+        _whisperRuntimeCancellation.Cancel();
         _whisperCapture?.CompleteCurrentCapture();
         await _telemetryLoop.StopAsync();
         bool ownedWorkDrained = await OwnedTaskDrain.WaitAsync(
@@ -257,6 +262,7 @@ public partial class MainWindow : Window
             _audioMixOperationDrained,
             _benchmarkOperationDrained,
             _whisperCaptureDrained,
+            _whisperShortcutDrained,
             _startupTask);
         if (!ownedWorkDrained)
         {
@@ -280,6 +286,7 @@ public partial class MainWindow : Window
             await _protectionMonitor.DisposeAsync();
         }
 
+        await DisposeWhisperRuntimeAsync();
         await DisposeWhisperCaptureAsync();
 
         _updateJournal.Dispose();
@@ -1361,19 +1368,25 @@ public partial class MainWindow : Window
         if (_whisperOverlay is null)
         {
             _whisperOverlay = new WhisperOverlayWindow { Owner = this };
-            _whisperOverlay.ActionRequested += (_, _) =>
+            _whisperOverlay.ActionRequested += (_, _) => _whisperOverlayAction?.Invoke();
+            _whisperOverlay.Closed += (_, _) =>
             {
-                if (!_whisperCaptureDrained.IsCompleted)
-                {
-                    _whisperCapture?.CompleteCurrentCapture();
-                }
-                else
-                {
-                    _whisperOverlay?.Hide();
-                }
+                _whisperOverlay = null;
+                _whisperOverlayAction = null;
             };
-            _whisperOverlay.Closed += (_, _) => _whisperOverlay = null;
         }
+
+        _whisperOverlayAction = () =>
+        {
+            if (!_whisperCaptureDrained.IsCompleted)
+            {
+                _whisperCapture?.CompleteCurrentCapture();
+            }
+            else
+            {
+                _whisperOverlay?.Hide();
+            }
+        };
 
         WhisperOverlayView frame = WhisperOverlayPresenter.Project(new WhisperOverlayInputs(
             new WhisperSessionSnapshot(

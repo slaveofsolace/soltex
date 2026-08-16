@@ -70,6 +70,7 @@ internal static class Program
             ("Preference store recovers and round-trips bounded local state", PreferencesRoundTripAndRecovery),
             ("Whisper device selection persists and oversized state fails safe", WhisperSettingsRoundTripAndRecovery),
             ("Whisper capture controls expose only working capture actions", WhisperCaptureControlsAreHonest),
+            ("Whisper runtime toggle is explicit and reversible", WhisperRuntimeToggleIsExplicit),
             ("Activity store bounds, sanitizes, persists, and recovers", ActivityStoreBoundsAndRecovers),
             ("Activity view renders and filters meaningful events", ActivityViewRenders),
             ("Settings view renders working local preferences", SettingsViewRenders),
@@ -1029,6 +1030,48 @@ internal static class Program
         byte[] pixels = Render(view, 980, 720);
         True(CountVisiblePixels(pixels) > 5_000,
             "The Whisper capture surface render was unexpectedly empty.");
+    }
+
+    private static void WhisperRuntimeToggleIsExplicit()
+    {
+        WhisperView view = new();
+        bool? requested = null;
+        view.FeatureEnabledRequested += (_, args) => requested = args.Enabled;
+
+        view.SetFeatureState(
+            enabled: false,
+            updating: false,
+            shortcutsRegistered: false,
+            "Whisper is off.");
+        view.WhisperFeatureToggleButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested == true,
+            "The runtime control did not explicitly request enablement.");
+
+        requested = null;
+        view.SetFeatureState(
+            enabled: true,
+            updating: false,
+            shortcutsRegistered: true,
+            "Whisper shortcuts are active.");
+        True((string)view.WhisperFeatureToggleButton.Content == "Turn off" &&
+             view.WhisperShortcutStatus.Text.Contains(
+                 "registered",
+                 StringComparison.OrdinalIgnoreCase),
+            "The enabled runtime state did not disclose active shortcut registration.");
+        view.WhisperFeatureToggleButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested == false,
+            "The runtime control did not explicitly request disablement.");
+
+        view.SetFeatureState(
+            enabled: true,
+            updating: true,
+            shortcutsRegistered: true,
+            "Applying.");
+        True(!view.WhisperFeatureToggleButton.IsEnabled &&
+             (string)view.WhisperFeatureToggleButton.Content == "Applying",
+            "The runtime control remained operable while a lifecycle change was in flight.");
     }
 
     private static void ActivityStoreBoundsAndRecovers()

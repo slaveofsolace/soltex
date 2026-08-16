@@ -17,6 +17,12 @@ public partial class MainWindow
     private WhisperCaptureException? _whisperCaptureFailure;
     private CancellationTokenSource? _whisperCaptureCancellation;
     private Task _whisperCaptureDrained = Task.CompletedTask;
+    private readonly SemaphoreSlim _whisperShortcutGate = new(1, 1);
+    private readonly WhisperShortcutGestureInterpreter _whisperShortcutGestures = new();
+    private readonly CancellationTokenSource _whisperRuntimeCancellation = new();
+    private WindowsWhisperShortcutHost? _whisperShortcutHost;
+    private Task _whisperShortcutDrained = Task.CompletedTask;
+    private string? _whisperShortcutError;
 
     private void InitializeWhisperCapture()
     {
@@ -32,13 +38,235 @@ public partial class MainWindow
         WhisperPanel.InputDeviceRequested += WhisperPanel_InputDeviceRequested;
         WhisperPanel.MicrophoneTestRequested += WhisperPanel_MicrophoneTestRequested;
         WhisperPanel.MicrophoneTestStopRequested += WhisperPanel_MicrophoneTestStopRequested;
+        WhisperPanel.FeatureEnabledRequested += WhisperPanel_FeatureEnabledRequested;
         WhisperPanel.UpdateCaptureDevices(
             _whisperDevices,
             _whisperSettings.InputDeviceId,
             _renderSmokeMode
                 ? "Microphone discovery is skipped during render evidence."
                 : "Refresh to enumerate Windows input devices.");
+        WhisperPanel.SetFeatureState(
+            _whisperSettings.Enabled,
+            updating: false,
+            shortcutsRegistered: false,
+            _whisperSettings.Enabled
+                ? "Whisper is on. Windows shortcut registration will be checked at startup."
+                : "Whisper is off. No global shortcuts are registered.");
         UpdateWhisperReadiness();
+    }
+
+    private async void WhisperPanel_FeatureEnabledRequested(
+        object? sender,
+        WhisperFeatureEnabledRequestedEventArgs e)
+    {
+        if (!_whisperShortcutDrained.IsCompleted || _shutdownStarted)
+        {
+            return;
+        }
+
+        _whisperShortcutDrained = SetWhisperEnabledAsync(
+            e.Enabled,
+            _whisperRuntimeCancellation.Token);
+        await _whisperShortcutDrained;
+    }
+
+    private async Task SetWhisperEnabledAsync(
+        bool enabled,
+        CancellationToken cancellationToken)
+    {
+        WhisperPanel.SetFeatureState(
+            enabled,
+            updating: true,
+            shortcutsRegistered: _whisperShortcutHost?.IsRegistered == true,
+            enabled ? "Turning on the validated Windows shortcut runtime." : "Removing Whisper shortcuts.");
+        try
+        {
+            WhisperSettingsDocument document = _whisperSettings.ToDocument();
+            document.Enabled = enabled;
+            WhisperSettings validated = WhisperSettingsMigrator.Load(document).Settings;
+            _whisperSettingsStore?.Save(validated);
+            _whisperSettings = validated;
+            if (!enabled)
+            {
+                _whisperCaptureCancellation?.Cancel();
+                _whisperCapture?.CompleteCurrentCapture();
+            }
+
+            await ReconcileWhisperShortcutsAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (
+            cancellationToken.IsCancellationRequested && _shutdownStarted)
+        {
+            // Shutdown owns cancellation and the final disposal pass.
+        }
+        catch (Exception exception) when (IsExpectedWhisperSettingsFailure(exception))
+        {
+            await Dispatcher.InvokeAsync(() =>
+            {
+                WhisperPanel.SetFeatureState(
+                    _whisperSettings.Enabled,
+                    updating: false,
+                    shortcutsRegistered: _whisperShortcutHost?.IsRegistered == true,
+                    "The Whisper runtime setting could not be saved.");
+                UpdateWhisperReadiness();
+            });
+        }
+    }
+
+    private async Task ReconcileWhisperShortcutsAsync(
+        CancellationToken cancellationToken)
+    {
+        await _whisperShortcutGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_renderSmokeMode || !_whisperSettings.Enabled)
+            {
+                await DisposeWhisperShortcutHostAsync().ConfigureAwait(false);
+                _whisperShortcutError = null;
+            }
+            else if (_whisperShortcutHost?.IsRegistered != true)
+            {
+                await DisposeWhisperShortcutHostAsync().ConfigureAwait(false);
+                WindowsWhisperShortcutHost candidate = new();
+                candidate.Faulted += WhisperShortcutHost_Faulted;
+                try
+                {
+                    await candidate.RegisterAsync(
+                        WhisperShortcutSet.CreateDefault(),
+                        HandleWhisperShortcutSignalAsync,
+                        cancellationToken).ConfigureAwait(false);
+                    _whisperShortcutHost = candidate;
+                    _whisperShortcutError = null;
+                }
+                catch (WhisperShortcutRegistrationException exception)
+                {
+                    candidate.Faulted -= WhisperShortcutHost_Faulted;
+                    await candidate.DisposeAsync().ConfigureAwait(false);
+                    _whisperShortcutError = WhisperRedaction.Sanitize(
+                        exception.Message,
+                        160);
+                }
+            }
+        }
+        finally
+        {
+            _whisperShortcutGate.Release();
+        }
+
+        await Dispatcher.InvokeAsync(() =>
+        {
+            bool registered = _whisperShortcutHost?.IsRegistered == true;
+            string detail = !_whisperSettings.Enabled
+                ? "Whisper is off. No global shortcuts are registered."
+                : _renderSmokeMode
+                    ? "Shortcuts are skipped during controlled render evidence."
+                    : registered
+                        ? "Whisper is on and its validated shortcuts are registered. Choose a transcription provider to begin dictating."
+                        : _whisperShortcutError ??
+                          "Windows did not confirm shortcut registration.";
+            WhisperPanel.SetFeatureState(
+                _whisperSettings.Enabled,
+                updating: false,
+                registered,
+                detail);
+            UpdateWhisperReadiness();
+        });
+    }
+
+    private ValueTask HandleWhisperShortcutSignalAsync(
+        WhisperShortcutSignal signal,
+        CancellationToken cancellationToken)
+    {
+        WhisperShortcutIntent? intent = _whisperShortcutGestures.Observe(signal);
+        if (intent is null)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        Task dispatch = Dispatcher.InvokeAsync(
+            () => HandleWhisperShortcutIntent(intent.Value),
+            System.Windows.Threading.DispatcherPriority.Normal,
+            cancellationToken).Task;
+        return new ValueTask(dispatch);
+    }
+
+    private void HandleWhisperShortcutIntent(WhisperShortcutIntent intent)
+    {
+        if (intent == WhisperShortcutIntent.Cancel)
+        {
+            _whisperCaptureCancellation?.Cancel();
+            _whisperCapture?.CompleteCurrentCapture();
+            _whisperOverlay?.Hide();
+            return;
+        }
+
+        if (intent is WhisperShortcutIntent.EndPushToTalk or
+            WhisperShortcutIntent.EndCommandMode)
+        {
+            return;
+        }
+
+        if (intent == WhisperShortcutIntent.OpenScratchpad)
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            return;
+        }
+
+        ShowWhisperProviderUnavailable();
+    }
+
+    private void ShowWhisperProviderUnavailable()
+    {
+        const string detail =
+            "Choose a transcription provider before starting dictation.";
+        if (_whisperOverlay is null)
+        {
+            _whisperOverlay = new WhisperOverlayWindow { Owner = this };
+            _whisperOverlay.ActionRequested += (_, _) => _whisperOverlayAction?.Invoke();
+            _whisperOverlay.Closed += (_, _) =>
+            {
+                _whisperOverlay = null;
+                _whisperOverlayAction = null;
+            };
+        }
+
+        _whisperOverlayAction = () =>
+        {
+            _whisperOverlay?.Hide();
+            ShowPanel(WhisperPanel, WhisperNavButton);
+        };
+        _whisperOverlay.Render(WhisperOverlayPresenter.Project(new WhisperOverlayInputs(
+            new WhisperSessionSnapshot(
+                WhisperSessionState.Faulted,
+                Mode: null,
+                StartedAtUtc: null,
+                LastError: detail),
+            Mode: null,
+            TargetProcessName: null,
+            TargetIsKnown: false,
+            HandsFreeLocked: false,
+            TimeSpan.Zero,
+            WhisperDurationState.Current,
+            WhisperDeliveryKind.None,
+            ErrorDetail: detail)));
+        _whisperOverlay.Left = Left + ((Width - _whisperOverlay.Width) / 2);
+        _whisperOverlay.Top = Top + Height - 140;
+    }
+
+    private void WhisperShortcutHost_Faulted(
+        object? sender,
+        WhisperShortcutHostFaultEventArgs e)
+    {
+        _whisperShortcutError = WhisperRedaction.Sanitize(e.Detail, 160);
+        _ = Dispatcher.BeginInvoke(() =>
+        {
+            WhisperPanel.SetFeatureState(
+                _whisperSettings.Enabled,
+                updating: false,
+                shortcutsRegistered: false,
+                _whisperShortcutError);
+            UpdateWhisperReadiness();
+        });
     }
 
     private async Task RefreshWhisperCaptureDevicesAsync()
@@ -244,11 +472,11 @@ public partial class MainWindow
             FeatureEnabled: _whisperSettings.Enabled,
             MicrophoneSelected: selectedDeviceAvailable,
             MicrophonePermissionGranted: true,
-            ShortcutsRegistered: false,
-            ShortcutRegistrationError: null,
+            ShortcutsRegistered: _whisperShortcutHost?.IsRegistered == true,
+            ShortcutRegistrationError: _whisperShortcutError,
             TranscriberConfigured: false,
             TranscriberCredentialAvailable: false,
-            TargetInspectionAvailable: false,
+            TargetInspectionAvailable: OperatingSystem.IsWindows(),
             AutoSendEnabled: _whisperSettings.AutoSendEnabled,
             AutoSendWarningAccepted: _whisperSettings.AutoSendWarningAccepted,
             EnabledAutoSendProfileCount: 0);
@@ -273,6 +501,35 @@ public partial class MainWindow
         _whisperCaptureCancellation?.Dispose();
         _whisperCaptureCancellation = null;
         _whisperDeviceRefreshGate.Dispose();
+    }
+
+    private async Task DisposeWhisperRuntimeAsync()
+    {
+        _whisperRuntimeCancellation.Cancel();
+        await _whisperShortcutGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            await DisposeWhisperShortcutHostAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            _whisperShortcutGate.Release();
+            _whisperShortcutGate.Dispose();
+            _whisperRuntimeCancellation.Dispose();
+        }
+    }
+
+    private async ValueTask DisposeWhisperShortcutHostAsync()
+    {
+        WindowsWhisperShortcutHost? host =
+            Interlocked.Exchange(ref _whisperShortcutHost, null);
+        if (host is null)
+        {
+            return;
+        }
+
+        host.Faulted -= WhisperShortcutHost_Faulted;
+        await host.DisposeAsync().ConfigureAwait(false);
     }
 
     private static bool IsExpectedWhisperSettingsFailure(Exception exception) =>

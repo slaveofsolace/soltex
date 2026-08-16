@@ -17,6 +17,7 @@ public partial class WhisperView : UserControl
     private readonly List<Button> _tabs;
     private bool _updatingInputDevices;
     private bool _microphoneTestRunning;
+    private bool _featureEnabled;
 
     public WhisperView()
     {
@@ -37,6 +38,9 @@ public partial class WhisperView : UserControl
     public event EventHandler? MicrophoneTestRequested;
 
     public event EventHandler? MicrophoneTestStopRequested;
+
+    public event EventHandler<WhisperFeatureEnabledRequestedEventArgs>?
+        FeatureEnabledRequested;
 
     /// <summary>
     /// Renders a readiness report. The host supplies the observed facts; this view
@@ -113,6 +117,35 @@ public partial class WhisperView : UserControl
             running ? "Stop the microphone test" : "Start a five second microphone test");
     }
 
+    public void SetFeatureState(
+        bool enabled,
+        bool updating,
+        bool shortcutsRegistered,
+        string detail)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+        _featureEnabled = enabled;
+        WhisperFeatureStatus.Text = detail;
+        WhisperFeatureToggleButton.IsEnabled = !updating;
+        WhisperFeatureToggleButton.Content = updating
+            ? "Applying"
+            : enabled
+                ? "Turn off"
+                : "Turn on";
+        AutomationProperties.SetName(
+            WhisperFeatureToggleButton,
+            updating
+                ? "Applying Whisper runtime setting"
+                : enabled
+                    ? "Turn Whisper off"
+                    : "Turn Whisper on");
+        WhisperShortcutStatus.Text = shortcutsRegistered
+            ? "Validated global shortcuts are registered. Until a provider is configured, a shortcut opens a clear setup message instead of recording."
+            : enabled
+                ? "Whisper is on, but Windows shortcuts are not registered. Review the readiness error above."
+                : "Whisper is off, so no global shortcut is registered.";
+    }
+
     private void PreviewOverlay_Click(object sender, RoutedEventArgs e) =>
         PreviewOverlayRequested?.Invoke(this, EventArgs.Empty);
 
@@ -146,6 +179,11 @@ public partial class WhisperView : UserControl
         }
     }
 
+    private void FeatureToggle_Click(object sender, RoutedEventArgs e) =>
+        FeatureEnabledRequested?.Invoke(
+            this,
+            new WhisperFeatureEnabledRequestedEventArgs(!_featureEnabled));
+
     private void WhisperSetupTab_Click(object sender, RoutedEventArgs e) =>
         SelectTab(WhisperSetupTab, WhisperSetupPanel);
 
@@ -169,8 +207,8 @@ public partial class WhisperView : UserControl
     }
 
     /// <summary>
-    /// The facts this build can honestly report. Capture, providers, and global hooks
-    /// do not exist yet, so the checklist says so instead of showing a ready state.
+    /// The facts this view can honestly report before its runtime host supplies
+    /// validated settings and observed Windows capability.
     /// </summary>
     private static WhisperReadinessInputs CreateScaffoldInputs() => new(
         FeatureEnabled: false,
@@ -291,4 +329,9 @@ public sealed class WhisperInputDeviceRequestedEventArgs : EventArgs
     }
 
     public string? DeviceId { get; }
+}
+
+public sealed class WhisperFeatureEnabledRequestedEventArgs(bool enabled) : EventArgs
+{
+    public bool Enabled { get; } = enabled;
 }

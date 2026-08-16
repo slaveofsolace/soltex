@@ -102,7 +102,7 @@
                 <Border x:Name="WhisperScaffoldPill"
                         Margin="0,0,10,0"
                         Style="{StaticResource StatusPillStyle}"
-                        ToolTip="Native microphone capture is available. Transcription, global shortcuts, and insertion into other applications are still being implemented.">
+                        ToolTip="Native microphone capture and the validated shortcut lifecycle are available. Provider-backed transcription and shipped delivery are still being implemented.">
                     <TextBlock Text="Scaffold"
                                Foreground="{StaticResource WarningBrush}"
                                FontFamily="{StaticResource MonoFont}"
@@ -187,6 +187,8 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="10" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="12" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
@@ -208,6 +210,30 @@
                                    Foreground="{StaticResource MutedBrush}" />
                     </Grid>
                     <Border Grid.Row="2" Style="{StaticResource QuietCardStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Whisper runtime" FontWeight="SemiBold" />
+                                <TextBlock x:Name="WhisperFeatureStatus"
+                                           Margin="0,3,12,0"
+                                           Text="Whisper is off. No global shortcuts are registered."
+                                           Style="{StaticResource MutedTextStyle}"
+                                           AutomationProperties.LiveSetting="Polite"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                            <Button x:Name="WhisperFeatureToggleButton"
+                                    Grid.Column="1"
+                                    MinWidth="92"
+                                    Style="{StaticResource ActionButton}"
+                                    Content="Turn on"
+                                    AutomationProperties.Name="Turn Whisper on"
+                                    Click="FeatureToggle_Click" />
+                        </Grid>
+                    </Border>
+                    <Border Grid.Row="4" Style="{StaticResource QuietCardStyle}">
                         <Grid>
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
@@ -253,7 +279,7 @@
                         </Grid>
                     </Border>
                     <ItemsControl x:Name="WhisperReadinessList"
-                                  Grid.Row="4"
+                                  Grid.Row="6"
                                   ItemTemplate="{StaticResource ReadinessRowTemplate}"
                                   AutomationProperties.Name="Whisper readiness checks"
                                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
@@ -284,9 +310,11 @@
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusSm}"
                             Padding="10">
-                        <TextBlock Style="{StaticResource MutedTextStyle}"
+                        <TextBlock x:Name="WhisperShortcutStatus"
+                                   Style="{StaticResource MutedTextStyle}"
                                    TextWrapping="Wrap"
-                                   Text="These chords are not registered with Windows in this build, so pressing them does nothing yet." />
+                                   AutomationProperties.LiveSetting="Polite"
+                                   Text="Whisper is off, so no global shortcut is registered." />
                     </Border>
                 </Grid>
 

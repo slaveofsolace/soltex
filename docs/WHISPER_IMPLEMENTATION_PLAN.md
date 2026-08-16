@@ -48,14 +48,17 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Windows target inspection | Metadata-only UI Automation adapter returns one atomic identity-and-capability snapshot; process integrity, runtime identity, editable/protected/read-only state, Value/Text/Text2 pattern availability, selection/caret support, and category are bounded behind a 750 ms single-flight timeout |
 | Windows insertion adapter | Core reauthorization before mutation and again before paste; whole-value-only UIA direct set; otherwise one clipboard paste chord with a unique token, sequence ownership, bounded restore, focus-drift copy fallback, and cancellation cleanup |
 | Windows verified submission | Bounded target-owned read-back, a final target reinspection, `WhisperSubmitGate` authorization, a one-use permit, and one two-event Enter dispatch; unavailable/mismatched reads, cancellation, drift, and modifier state fail closed |
+| Shipped shortcut lifecycle | Persisted on/off control, registration only after settings migration/validation, visible registration state/failure, managed intent dispatch, cancellation routing, and owned shutdown drain/unregistration |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, and Privacy tabs, and the floating listening surface — render this core.
 They are honest about capability: the navigation entry remains marked `SCAFFOLD`
-while providers and shipped shortcut/target/insertion/submission session wiring are
-unavailable. The Windows adapters exist but are not yet connected to a shipped
-session, so the page does not claim it is ready. The capture controls are enabled
-only when a selected device exists.
+while providers and shipped capture-to-transcription-to-delivery session wiring are
+unavailable. Validated shortcuts can now be enabled and removed from the shipped
+page; without a provider they show one explicit setup message instead of recording or
+silently doing nothing. The remaining Windows adapters are not yet connected to a
+complete shipped session, so the page does not claim it is ready. Capture controls
+are enabled only when a selected device exists.
 
 ## Not implemented
 
@@ -63,7 +66,9 @@ Nothing below exists yet. Any claim that it works is false until runtime evidenc
 from an owner-controlled Windows host says otherwise.
 
 1. A real transcription provider adapter and its credential storage.
-2. Shipped shortcut registration and dispatch into the real session coordinator.
+2. Dispatch from registered shortcut intents into a real provider-backed session
+   coordinator (startup registration, cancellation, feedback, and shutdown
+   unregistration are implemented).
 3. Shipped session wiring for the UI Automation inspector, plus the complete
    owner-controlled target matrix (the adapter and one live focused-control proof
    exist).
@@ -146,12 +151,21 @@ fed one six-event injected sequence. Production correctly dispatched zero action
 from that sequence while still recording content-free Soltex callback work before
 control passes to the next hook. That proves
 installation, callback entry, injected-input rejection, measurement, and teardown; it
-does not prove a physical keyboard/mouse matrix or shipped session dispatch.
+does not prove a physical keyboard/mouse matrix or a provider-backed shipped session.
 
-Still required: register only after the validated runtime settings and real provider
-are available, route intents into the session coordinator, surface registration
-failures in readiness, prove physical push-to-talk release and mouse buttons, and
-record shortcut-to-listening latency in the packaged app.
+The shipped WPF page now owns a persisted runtime toggle. Enabling it after
+`WhisperSettingsMigrator` validation registers the default set; disabling it or
+closing Soltex drains the owned lifecycle task and disposes the hook host. Readiness
+uses the observed registration state and sanitized failure. Until a provider exists,
+begin/toggle/paste/copy intents render the presenter's explicit setup error,
+Open Scratchpad navigates to Whisper, release transitions do nothing, and Cancel
+stops any owned microphone test. Render-evidence mode never installs global hooks.
+
+Still required: route begin/release/toggle intents into the provider-backed session
+coordinator, prove physical push-to-talk release and mouse buttons in the shipped
+app, and record shortcut-to-listening latency. Current owner-host proof covers the
+adapter lifecycle; the new WPF lifecycle path has deterministic UI/build/render
+coverage but not a physical packaged-app run.
 
 ### 4. Target inspection
 
@@ -174,7 +188,7 @@ terminal, plain-text, and rich-text categories remain content-free. Soltex stays
 `asInvoker` with `uiAccess=false`; high/system/protected targets are identified and
 the existing delivery policy falls back to copy.
 
-Target-specific coverage is included in the current 28-case Windows adapter suite.
+Target-specific coverage is included in the current 39-case Windows adapter suite.
 It covers all five target categories, pattern capability mapping,
 protected/read-only/unknown controls, provider timeout, provider failure, and
 cancellation. An opt-in owner-host run at commit `d11edec` also inspected a real
