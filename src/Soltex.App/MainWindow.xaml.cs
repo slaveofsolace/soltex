@@ -1671,6 +1671,18 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (string.Equals(
+                normalized,
+                "whisper-scratchpad",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowScratchpad();
+            _ = WhisperNavButton.Focus();
+            _renderSmokeFocusTarget = WhisperNavButton;
+            return true;
+        }
+
         if (string.Equals(normalized, "update", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(normalized, "updates", StringComparison.OrdinalIgnoreCase))
         {

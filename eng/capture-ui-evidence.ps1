@@ -100,6 +100,7 @@ $matrix = @(
     [ordered]@{ id = 'remote-default'; panel = 'remote'; state = 'default'; file = 'remote-assist-current-source.png' },
     [ordered]@{ id = 'whisper-default'; panel = 'whisper'; state = 'capture-setup'; file = 'whisper-current-source.png' },
     [ordered]@{ id = 'whisper-personalize'; panel = 'whisper-personalize'; state = 'personalization'; file = 'whisper-personalize-current-source.png' },
+    [ordered]@{ id = 'whisper-scratchpad'; panel = 'whisper-scratchpad'; state = 'session-memory'; file = 'whisper-scratchpad-current-source.png' },
     [ordered]@{ id = 'updates-default'; panel = 'update'; state = 'default'; file = 'updates-current-source.png' }
 )
 

@@ -241,6 +241,7 @@ public partial class MainWindow
 
         if (intent == WhisperShortcutIntent.OpenScratchpad)
         {
+            WhisperPanel.ShowScratchpad();
             ShowPanel(WhisperPanel, WhisperNavButton);
             return;
         }

@@ -99,6 +99,28 @@
                 </Grid>
             </Border>
         </DataTemplate>
+
+        <DataTemplate x:Key="ScratchpadTabTemplate">
+            <Border Margin="0,0,8,0"
+                    Background="{StaticResource InsetBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusSm}">
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource TabButtonStyle}"
+                            Content="{Binding Title}"
+                            Tag="{Binding SelectionTag}"
+                            AutomationProperties.Name="{Binding OpenAutomationName}"
+                            Click="ActivateScratchpadTab_Click" />
+                    <Button MinWidth="30"
+                            Padding="7,4"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="×"
+                            AutomationProperties.Name="{Binding CloseAutomationName}"
+                            Click="CloseScratchpadTab_Click" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
     </UserControl.Resources>
 
     <Grid>
@@ -201,6 +223,12 @@
                         Content="Personalize"
                         AutomationProperties.Name="Show Whisper personalization"
                         Click="WhisperPersonalizeTab_Click" />
+                <Button x:Name="WhisperScratchpadTab"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource TabButtonStyle}"
+                        Content="Scratchpad"
+                        AutomationProperties.Name="Show Whisper Scratchpad"
+                        Click="WhisperScratchpadTab_Click" />
                 <Button x:Name="WhisperPrivacyTab"
                         Margin="8,0,0,0"
                         Style="{StaticResource TabButtonStyle}"
@@ -454,6 +482,110 @@
                         </Border>
                     </StackPanel>
                 </ScrollViewer>
+
+                <!-- Scratchpad: session-only text with bounded tabs and undo. -->
+                <Grid x:Name="WhisperScratchpadPanel"
+                      Margin="18"
+                      Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SectionTitleStyle}"
+                                       Text="Scratchpad" />
+                            <TextBlock Margin="0,3,0,0"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="Up to five session-only notes. Closing Soltex clears them." />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <Button x:Name="WhisperScratchpadUndoButton"
+                                    Margin="0,0,8,0"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Undo"
+                                    AutomationProperties.Name="Undo Scratchpad change"
+                                    Click="ScratchpadUndo_Click" />
+                            <Button x:Name="WhisperScratchpadRedoButton"
+                                    Margin="0,0,8,0"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Redo"
+                                    AutomationProperties.Name="Redo Scratchpad change"
+                                    Click="ScratchpadRedo_Click" />
+                            <Button x:Name="WhisperScratchpadClearButton"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Clear"
+                                    AutomationProperties.Name="Clear active Scratchpad note"
+                                    Click="ScratchpadClear_Click" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ItemsControl x:Name="WhisperScratchpadTabs"
+                                      ItemTemplate="{StaticResource ScratchpadTabTemplate}"
+                                      AutomationProperties.Name="Scratchpad tabs">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                        <Button x:Name="WhisperScratchpadAddTabButton"
+                                Grid.Column="1"
+                                MinWidth="84"
+                                Style="{StaticResource ActionButton}"
+                                Content="New note"
+                                AutomationProperties.Name="Add Scratchpad note"
+                                Click="ScratchpadAddTab_Click" />
+                    </Grid>
+                    <Border Grid.Row="4"
+                            Background="{StaticResource FieldBrush}"
+                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource RadiusSm}"
+                            Padding="1">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBox x:Name="WhisperScratchpadTextBox"
+                                     MinHeight="260"
+                                     Padding="14"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     Foreground="{StaticResource TextBrightBrush}"
+                                     CaretBrush="{StaticResource AccentBrush}"
+                                     SelectionBrush="{StaticResource SelectionBrush}"
+                                     FontFamily="{StaticResource MonoFont}"
+                                     AcceptsReturn="True"
+                                     AcceptsTab="True"
+                                     MaxLength="100000"
+                                     TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto"
+                                     AutomationProperties.Name="Active Scratchpad note"
+                                     TextChanged="ScratchpadText_Changed" />
+                            <TextBlock x:Name="WhisperScratchpadStatus"
+                                       Grid.Row="1"
+                                       Margin="12,8"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="Session memory only · 0 characters"
+                                       AutomationProperties.LiveSetting="Polite" />
+                        </Grid>
+                    </Border>
+                </Grid>
 
                 <!-- Privacy -->
                 <Grid x:Name="WhisperPrivacyPanel" Margin="18" Visibility="Collapsed">

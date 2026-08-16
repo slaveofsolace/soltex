@@ -21,6 +21,9 @@ public partial class WhisperView : UserControl
     private bool _featureEnabled;
     private bool _updatingPersonalization;
     private string[] _vocabularyTerms = [];
+    private readonly WhisperScratchpad _scratchpad = new();
+    private bool _updatingScratchpad;
+    private int? _pendingScratchpadClose;
 
     public WhisperView()
     {
@@ -31,12 +34,14 @@ public partial class WhisperView : UserControl
             WhisperSetupTab,
             WhisperShortcutsTab,
             WhisperPersonalizeTab,
+            WhisperScratchpadTab,
             WhisperPrivacyTab
         ];
         WhisperShortcutList.ItemsSource = BuildShortcutRows();
         SetPersonalization(
             WhisperSettings.CreateDefault(),
             "Saved locally for this Windows account.");
+        RefreshScratchpad();
         UpdateReadiness(CreateScaffoldInputs());
     }
 
@@ -229,6 +234,9 @@ public partial class WhisperView : UserControl
     internal void ShowPersonalizationForEvidence() =>
         SelectTab(WhisperPersonalizeTab, WhisperPersonalizePanel);
 
+    internal void ShowScratchpad() =>
+        SelectTab(WhisperScratchpadTab, WhisperScratchpadPanel);
+
     private void PreviewOverlay_Click(object sender, RoutedEventArgs e) =>
         PreviewOverlayRequested?.Invoke(this, EventArgs.Empty);
 
@@ -276,11 +284,15 @@ public partial class WhisperView : UserControl
     private void WhisperPersonalizeTab_Click(object sender, RoutedEventArgs e) =>
         SelectTab(WhisperPersonalizeTab, WhisperPersonalizePanel);
 
+    private void WhisperScratchpadTab_Click(object sender, RoutedEventArgs e) =>
+        ShowScratchpad();
+
     private void WhisperPrivacyTab_Click(object sender, RoutedEventArgs e) =>
         SelectTab(WhisperPrivacyTab, WhisperPrivacyPanel);
 
     private void SelectTab(Button tab, UIElement panel)
     {
+        _pendingScratchpadClose = null;
         foreach (Button candidate in _tabs)
         {
             candidate.Tag = ReferenceEquals(candidate, tab) ? "Selected" : null;
@@ -289,6 +301,7 @@ public partial class WhisperView : UserControl
         WhisperSetupPanel.Visibility = Visibility.Collapsed;
         WhisperShortcutsPanel.Visibility = Visibility.Collapsed;
         WhisperPersonalizePanel.Visibility = Visibility.Collapsed;
+        WhisperScratchpadPanel.Visibility = Visibility.Collapsed;
         WhisperPrivacyPanel.Visibility = Visibility.Collapsed;
         panel.Visibility = Visibility.Visible;
     }
@@ -342,6 +355,109 @@ public partial class WhisperView : UserControl
                 language.Tag,
                 style.Name,
                 vocabularyTerms));
+    }
+
+    private void ScratchpadText_Changed(object sender, TextChangedEventArgs e)
+    {
+        if (_updatingScratchpad)
+        {
+            return;
+        }
+
+        _pendingScratchpadClose = null;
+        _scratchpad.Active.Replace(WhisperScratchpadTextBox.Text);
+        RefreshScratchpad();
+    }
+
+    private void ScratchpadAddTab_Click(object sender, RoutedEventArgs e)
+    {
+        _pendingScratchpadClose = null;
+        _scratchpad.AddTab();
+        RefreshScratchpad("New session-only note created.");
+        WhisperScratchpadTextBox.Focus();
+    }
+
+    private void ActivateScratchpadTab_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: ScratchpadTabRow row })
+        {
+            return;
+        }
+
+        _pendingScratchpadClose = null;
+        _scratchpad.Activate(row.Index);
+        RefreshScratchpad();
+        WhisperScratchpadTextBox.Focus();
+    }
+
+    private void CloseScratchpadTab_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: ScratchpadTabRow row })
+        {
+            return;
+        }
+
+        WhisperScratchpadTab tab = _scratchpad.Tabs[row.Index];
+        if (tab.Content.Length > 0 && _pendingScratchpadClose != row.Index)
+        {
+            _pendingScratchpadClose = row.Index;
+            RefreshScratchpad($"Press close again to remove {tab.Title} from this session.");
+            return;
+        }
+
+        _pendingScratchpadClose = null;
+        bool clearingLastTab = _scratchpad.Tabs.Count == 1;
+        _scratchpad.CloseTab(row.Index);
+        RefreshScratchpad(clearingLastTab
+            ? "Last note cleared. Undo is available."
+            : "Scratchpad note closed.");
+    }
+
+    private void ScratchpadUndo_Click(object sender, RoutedEventArgs e)
+    {
+        _pendingScratchpadClose = null;
+        _ = _scratchpad.Active.Undo();
+        RefreshScratchpad("Last Scratchpad change undone.");
+    }
+
+    private void ScratchpadRedo_Click(object sender, RoutedEventArgs e)
+    {
+        _pendingScratchpadClose = null;
+        _ = _scratchpad.Active.Redo();
+        RefreshScratchpad("Scratchpad change restored.");
+    }
+
+    private void ScratchpadClear_Click(object sender, RoutedEventArgs e)
+    {
+        _pendingScratchpadClose = null;
+        _scratchpad.Active.Clear();
+        RefreshScratchpad("Active note cleared. Undo is available.");
+    }
+
+    private void RefreshScratchpad(string? detail = null)
+    {
+        _updatingScratchpad = true;
+        try
+        {
+            WhisperScratchpadTabs.ItemsSource = _scratchpad.Tabs
+                .Select((tab, index) => new ScratchpadTabRow(
+                    index,
+                    tab.Title,
+                    index == _scratchpad.ActiveIndex))
+                .ToArray();
+            WhisperScratchpadTextBox.Text = _scratchpad.Active.Content;
+            WhisperScratchpadTextBox.CaretIndex = WhisperScratchpadTextBox.Text.Length;
+            WhisperScratchpadUndoButton.IsEnabled = _scratchpad.Active.CanUndo;
+            WhisperScratchpadRedoButton.IsEnabled = _scratchpad.Active.CanRedo;
+            WhisperScratchpadClearButton.IsEnabled = _scratchpad.Active.Content.Length > 0;
+            WhisperScratchpadAddTabButton.IsEnabled = _scratchpad.CanAddTab;
+            WhisperScratchpadStatus.Text = detail ??
+                $"Session memory only · {_scratchpad.Active.Content.Length:N0} characters";
+        }
+        finally
+        {
+            _updatingScratchpad = false;
+        }
     }
 
     /// <summary>
@@ -489,6 +605,15 @@ public partial class WhisperView : UserControl
     internal sealed record StyleOption(string Name, string DisplayName)
     {
         public override string ToString() => DisplayName;
+    }
+
+    internal sealed record ScratchpadTabRow(int Index, string Title, bool IsActive)
+    {
+        public string? SelectionTag => IsActive ? "Selected" : null;
+
+        public string OpenAutomationName => $"Open Scratchpad note {Title}";
+
+        public string CloseAutomationName => $"Close Scratchpad note {Title}";
     }
 
     private sealed record InputDeviceOption(string? Id, string DisplayName)

@@ -72,6 +72,7 @@ internal static class Program
             ("Whisper capture controls expose only working capture actions", WhisperCaptureControlsAreHonest),
             ("Whisper runtime toggle is explicit and reversible", WhisperRuntimeToggleIsExplicit),
             ("Whisper personalization controls persist explicit choices", WhisperPersonalizationControlsAreWorking),
+            ("Whisper Scratchpad controls are bounded and reversible", WhisperScratchpadControlsAreWorking),
             ("Activity store bounds, sanitizes, persists, and recovers", ActivityStoreBoundsAndRecovers),
             ("Activity view renders and filters meaningful events", ActivityViewRenders),
             ("Settings view renders working local preferences", SettingsViewRenders),
@@ -1120,6 +1121,54 @@ internal static class Program
         True(requested?.StyleName == WhisperStyleProfile.Email.Name &&
              requested.LanguageTag == "fr",
             "Changing the default style did not preserve the selected language.");
+    }
+
+    private static void WhisperScratchpadControlsAreWorking()
+    {
+        WhisperView view = new();
+        view.ShowScratchpad();
+        True(view.WhisperScratchpadPanel.Visibility == Visibility.Visible &&
+             view.WhisperScratchpadTabs.Items.Count == 1,
+            "The Scratchpad did not open with one session-only note.");
+
+        view.WhisperScratchpadTextBox.Text = "first note";
+        True(view.WhisperScratchpadUndoButton.IsEnabled &&
+             view.WhisperScratchpadClearButton.IsEnabled,
+            "Editing did not enable reversible Scratchpad actions.");
+        view.WhisperScratchpadUndoButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(view.WhisperScratchpadTextBox.Text.Length == 0 &&
+             view.WhisperScratchpadRedoButton.IsEnabled,
+            "Scratchpad undo did not restore the previous bounded state.");
+        view.WhisperScratchpadRedoButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(view.WhisperScratchpadTextBox.Text == "first note",
+            "Scratchpad redo did not restore the edited state.");
+
+        view.WhisperScratchpadClearButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(view.WhisperScratchpadTextBox.Text.Length == 0 &&
+             view.WhisperScratchpadUndoButton.IsEnabled,
+            "Clearing a note was not reversible.");
+        view.WhisperScratchpadUndoButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(view.WhisperScratchpadTextBox.Text == "first note",
+            "Undo did not recover the cleared note.");
+
+        for (int index = 1; index < WhisperScratchpad.MaximumTabs; index++)
+        {
+            view.WhisperScratchpadAddTabButton.RaiseEvent(
+                new RoutedEventArgs(Button.ClickEvent));
+        }
+
+        True(view.WhisperScratchpadTabs.Items.Count == WhisperScratchpad.MaximumTabs &&
+             !view.WhisperScratchpadAddTabButton.IsEnabled,
+            "The Scratchpad did not enforce its five-tab UI bound.");
+
+        WhisperView fresh = new();
+        fresh.ShowScratchpad();
+        True(fresh.WhisperScratchpadTextBox.Text.Length == 0,
+            "Scratchpad text escaped its session-only lifetime.");
     }
 
     private static void ActivityStoreBoundsAndRecovers()

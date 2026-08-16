@@ -51,9 +51,11 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Windows verified submission | Bounded target-owned read-back, a final target reinspection, `WhisperSubmitGate` authorization, a one-use permit, and one two-event Enter dispatch; unavailable/mismatched reads, cancellation, drift, and modifier state fail closed |
 | Shipped shortcut lifecycle | Persisted on/off control, registration only after settings migration/validation, visible registration state/failure, managed intent dispatch, cancellation routing, and owned shutdown drain/unregistration |
 | Personalization UI | Working language and built-in style selectors plus bounded add/remove personal vocabulary, all validated through `WhisperSettingsMigrator` and persisted in the bounded per-user settings store |
+| Scratchpad UI | Five session-only tabs backed by the bounded core with working edit, undo, redo, reversible clear, close confirmation for non-empty notes, and direct shortcut navigation; nothing is written to disk |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
-Shortcuts, Personalize, and Privacy tabs, and the floating listening surface — render this core.
+Shortcuts, Personalize, Scratchpad, and Privacy tabs, and the floating listening
+surface — render this core.
 They are honest about capability: the navigation entry remains marked `SCAFFOLD`
 while a real provider and shipped capture-to-transcription-to-delivery session wiring
 are unavailable. Validated shortcuts can now be enabled and removed from the shipped
@@ -78,8 +80,8 @@ from an owner-controlled Windows host says otherwise.
    adapter (one controlled WinForms target has live direct and clipboard proof).
 5. Shipped verified-submission wiring and the complete application/denial matrix
    (the adapter and one controlled target proof exist).
-6. Scratchpad UI, snippet and custom-style editors, per-application permissions,
-   and history UI. Language, built-in style, and vocabulary controls are implemented.
+6. Snippet and custom-style editors, per-application permissions, and history UI.
+   Scratchpad, language, built-in style, and vocabulary controls are implemented.
 7. Encrypted transcript retention.
 8. Full accessibility, scale, theme, performance, install, update, and uninstall
    evidence for the Whisper surfaces.
