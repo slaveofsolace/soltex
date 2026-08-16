@@ -19,7 +19,7 @@ is reproduced, and no affiliation is implied.
 ## Implemented and verified
 
 The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
-107-test suite in `tests/Soltex.Whisper.Tests`.
+109-test suite in `tests/Soltex.Whisper.Tests`.
 
 | Area | State |
 |---|---|
@@ -53,9 +53,10 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Personalization UI | Working language and built-in style selectors plus bounded add/remove personal vocabulary, all validated through `WhisperSettingsMigrator` and persisted in the bounded per-user settings store |
 | Personal library UI | Working bounded editors for snippets, named deterministic styles, and exact-process application rules; every update passes through versioned repair-to-safe settings validation, terminal eligibility depends on app auto-send eligibility, and global auto-send remains a separate consent |
 | Scratchpad UI | Five session-only tabs backed by the bounded core with working edit, undo, redo, reversible clear, close confirmation for non-empty notes, and direct shortcut navigation; nothing is written to disk |
+| History and privacy UI | Bounded session history has per-entry delete and clear; history-off clears it immediately; auto-send uses an inline first-use warning and atomic consent; context reads, clipboard behavior, and overlay preview are explicit persisted controls; unavailable encrypted retention is not offered as an operable choice |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
-Shortcuts, Personalize, Library, Scratchpad, and Privacy tabs, and the floating listening
+Shortcuts, Personalize, Library, Scratchpad, History, and Privacy tabs, and the floating listening
 surface — render this core.
 They are honest about capability: the navigation entry remains marked `SCAFFOLD`
 while a real provider and shipped capture-to-transcription-to-delivery session wiring
@@ -81,12 +82,10 @@ from an owner-controlled Windows host says otherwise.
    adapter (one controlled WinForms target has live direct and clipboard proof).
 5. Shipped verified-submission wiring and the complete application/denial matrix
    (the adapter and one controlled target proof exist).
-6. History UI. Snippets, custom styles, per-application rules, Scratchpad, language,
-   built-in styles, and vocabulary controls are implemented.
-7. Encrypted transcript retention.
-8. Full accessibility, scale, theme, performance, install, update, and uninstall
+6. Encrypted transcript retention.
+7. Full accessibility, scale, theme, performance, install, update, and uninstall
    evidence for the Whisper surfaces.
-9. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
+8. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
    deterministic tests currently prove the recovery policy and one owner-host device
    proves the normal live path.
 
@@ -238,7 +237,7 @@ after staging or paste input is rejected, the transcript remains copied and the
 result names the fallback. Clipboard acquisition and restoration use bounded retries
 on one background STA thread.
 
-The core suite has 107 cases and the Windows suite has 39 deterministic cases. The
+The core suite has 109 cases and the Windows suite has 39 deterministic cases. The
 Windows cases cover direct-before-clipboard ordering, ownership restoration and loss,
 focus drift after staging, unknown targets, rejected paste, and cancellation cleanup.
 An opt-in owner-host test uses a controlled WinForms text target to prove clipboard
@@ -280,9 +279,9 @@ requires a confirmed editable target.
 
 ### 7. Remaining UI
 
-History with per-entry delete and clear, provider selection, and the first-use
-auto-send warning remain. Snippet, vocabulary, custom-style, per-application,
-Scratchpad, language, and device controls are implemented. Every enabled control must execute. Unavailable
+Provider selection remains. Session history with per-entry deletion and clear, the
+first-use auto-send warning, snippet, vocabulary, custom-style, per-application,
+Scratchpad, language, privacy, and device controls are implemented. Every enabled control must execute. Unavailable
 capability is an explicit state, not a disabled control that looks operable.
 
 At narrow window widths all core controls stay reachable without horizontal

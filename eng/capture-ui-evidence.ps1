@@ -104,6 +104,9 @@ $matrix = @(
     [ordered]@{ id = 'whisper-library-styles'; panel = 'whisper-library-styles'; state = 'styles'; file = 'whisper-library-styles-current-source.png' },
     [ordered]@{ id = 'whisper-library-apps'; panel = 'whisper-library-apps'; state = 'application-rules'; file = 'whisper-library-apps-current-source.png' },
     [ordered]@{ id = 'whisper-scratchpad'; panel = 'whisper-scratchpad'; state = 'session-memory'; file = 'whisper-scratchpad-current-source.png' },
+    [ordered]@{ id = 'whisper-history'; panel = 'whisper-history'; state = 'empty-session'; file = 'whisper-history-current-source.png' },
+    [ordered]@{ id = 'whisper-privacy'; panel = 'whisper-privacy'; state = 'safe-defaults'; file = 'whisper-privacy-current-source.png' },
+    [ordered]@{ id = 'whisper-privacy-warning'; panel = 'whisper-privacy-warning'; state = 'auto-send-consent'; file = 'whisper-privacy-warning-current-source.png' },
     [ordered]@{ id = 'updates-default'; panel = 'update'; state = 'default'; file = 'updates-current-source.png' }
 )
 

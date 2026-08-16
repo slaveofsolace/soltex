@@ -26,6 +26,12 @@ public partial class WhisperView : UserControl
     private WhisperStyleProfile[] _customStyles = [];
     private WhisperAppProfile[] _applicationProfiles = [];
     private string _defaultStyleName = WhisperStyleProfile.Message.Name;
+    private WhisperHistoryEntry[] _historyEntries = [];
+    private bool _updatingPrivacy;
+    private bool _autoSendEnabled;
+    private bool _autoSendWarningAccepted;
+    private bool _contextReadsAllowed;
+    private bool _showTranscriptPreview;
     private readonly WhisperScratchpad _scratchpad = new();
     private bool _updatingScratchpad;
     private int? _pendingScratchpadClose;
@@ -41,6 +47,7 @@ public partial class WhisperView : UserControl
             WhisperPersonalizeTab,
             WhisperLibraryTab,
             WhisperScratchpadTab,
+            WhisperHistoryTab,
             WhisperPrivacyTab
         ];
         _libraryTabs =
@@ -56,6 +63,8 @@ public partial class WhisperView : UserControl
         SetLibrary(
             WhisperSettings.CreateDefault(),
             "Saved locally for this Windows account.");
+        SetHistory([], WhisperHistoryMode.SessionMemory, "Session memory only. Closing Soltex clears it.");
+        SetPrivacy(WhisperSettings.CreateDefault(), "Safe defaults are active.");
         RefreshScratchpad();
         UpdateReadiness(CreateScaffoldInputs());
     }
@@ -78,6 +87,13 @@ public partial class WhisperView : UserControl
         PersonalizationRequested;
 
     public event EventHandler<WhisperLibraryRequestedEventArgs>? LibraryRequested;
+
+    public event EventHandler<WhisperHistoryEntryRequestedEventArgs>?
+        HistoryEntryDeleteRequested;
+
+    public event EventHandler? HistoryClearRequested;
+
+    public event EventHandler<WhisperPrivacyRequestedEventArgs>? PrivacyRequested;
 
     /// <summary>
     /// Renders a readiness report. The host supplies the observed facts; this view
@@ -330,6 +346,121 @@ public partial class WhisperView : UserControl
         WhisperLibraryStatus.Text = detail;
     }
 
+    public void SetHistory(
+        IReadOnlyList<WhisperHistoryEntry> entries,
+        WhisperHistoryMode mode,
+        string detail)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+        _historyEntries = entries.ToArray();
+        WhisperHistoryList.ItemsSource = _historyEntries
+            .Reverse()
+            .Select(entry => new HistoryRow(entry))
+            .ToArray();
+        WhisperHistoryCount.Text = $"{_historyEntries.Length} " +
+            (_historyEntries.Length == 1 ? "entry" : "entries");
+        WhisperHistoryClearButton.IsEnabled = _historyEntries.Length > 0;
+        WhisperHistoryEmptyState.Visibility = _historyEntries.Length == 0
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        WhisperHistoryStatus.Text = mode switch
+        {
+            WhisperHistoryMode.Off => "History is off. Completed transcripts are not retained.",
+            WhisperHistoryMode.SessionMemory => detail,
+            _ => "Encrypted history is unavailable in this build."
+        };
+    }
+
+    public void SetPrivacy(WhisperSettings settings, string detail)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+        _updatingPrivacy = true;
+        try
+        {
+            _autoSendEnabled = settings.AutoSendEnabled;
+            _autoSendWarningAccepted = settings.AutoSendWarningAccepted;
+            _contextReadsAllowed = settings.ContextReadsAllowed;
+            _showTranscriptPreview = settings.ShowTranscriptPreview;
+
+            WhisperAutoSendDetail.Text = settings.AutoSendEnabled
+                ? "On · every app, target, read-back, and submit check still applies."
+                : "Off · Enter cannot be emitted.";
+            WhisperAutoSendButton.Content = settings.AutoSendEnabled
+                ? "Turn off"
+                : settings.AutoSendWarningAccepted
+                    ? "Turn on"
+                    : "Review";
+            AutomationProperties.SetName(
+                WhisperAutoSendButton,
+                settings.AutoSendEnabled
+                    ? "Turn Whisper auto-send off"
+                    : settings.AutoSendWarningAccepted
+                        ? "Turn Whisper auto-send on"
+                        : "Review the Whisper auto-send warning");
+
+            WhisperContextReadsDetail.Text = settings.ContextReadsAllowed
+                ? "On · only apps with their own visible permission are eligible."
+                : "Off · text around the caret is not read.";
+            WhisperContextReadsButton.Content = settings.ContextReadsAllowed
+                ? "Turn off"
+                : "Turn on";
+            AutomationProperties.SetName(
+                WhisperContextReadsButton,
+                settings.ContextReadsAllowed
+                    ? "Turn Whisper context reads off"
+                    : "Turn Whisper context reads on");
+
+            WhisperTranscriptPreviewDetail.Text = settings.ShowTranscriptPreview
+                ? "On · dictated text may be visible above other applications."
+                : "Off · the floating surface does not echo dictated text.";
+            WhisperTranscriptPreviewButton.Content = settings.ShowTranscriptPreview
+                ? "Turn off"
+                : "Turn on";
+            AutomationProperties.SetName(
+                WhisperTranscriptPreviewButton,
+                settings.ShowTranscriptPreview
+                    ? "Turn Whisper transcript preview off"
+                    : "Turn Whisper transcript preview on");
+
+            HistoryModeOption[] historyModes =
+            [
+                new HistoryModeOption(WhisperHistoryMode.Off, "Off"),
+                new HistoryModeOption(WhisperHistoryMode.SessionMemory, "This session only")
+            ];
+            WhisperHistoryModePicker.ItemsSource = historyModes;
+            WhisperHistoryModePicker.SelectedItem = historyModes.Single(option =>
+                option.Mode == settings.HistoryMode);
+
+            ClipboardBehaviorOption[] clipboardBehaviors =
+            [
+                new ClipboardBehaviorOption(
+                    WhisperClipboardBehavior.RestorePrevious,
+                    "Restore previous contents when still owned"),
+                new ClipboardBehaviorOption(
+                    WhisperClipboardBehavior.LeaveTranscript,
+                    "Leave transcript on clipboard")
+            ];
+            WhisperClipboardBehaviorPicker.ItemsSource = clipboardBehaviors;
+            WhisperClipboardBehaviorPicker.SelectedItem = clipboardBehaviors.Single(option =>
+                option.Behavior == settings.ClipboardBehavior);
+
+            WhisperAutoSendWarningPanel.Visibility = Visibility.Collapsed;
+            WhisperPrivacyStatus.Text = detail;
+        }
+        finally
+        {
+            _updatingPrivacy = false;
+        }
+    }
+
+    public void SetPrivacyError(string detail)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+        WhisperPrivacyStatus.Text = detail;
+    }
+
     internal void ShowPersonalizationForEvidence() =>
         SelectTab(WhisperPersonalizeTab, WhisperPersonalizePanel);
 
@@ -349,6 +480,19 @@ public partial class WhisperView : UserControl
     {
         ShowLibraryForEvidence();
         SelectLibrarySection(WhisperApplicationsSectionTab, WhisperApplicationsSection);
+    }
+
+    internal void ShowHistoryForEvidence() =>
+        SelectTab(WhisperHistoryTab, WhisperHistoryPanel);
+
+    internal void ShowPrivacyForEvidence() =>
+        SelectTab(WhisperPrivacyTab, WhisperPrivacyPanel);
+
+    internal void ShowPrivacyWarningForEvidence()
+    {
+        ShowPrivacyForEvidence();
+        WhisperAutoSendWarningPanel.Visibility = Visibility.Visible;
+        WhisperPrivacyStatus.Text = "Review the auto-send boundary before enabling it.";
     }
 
     private void PreviewOverlay_Click(object sender, RoutedEventArgs e) =>
@@ -404,6 +548,9 @@ public partial class WhisperView : UserControl
     private void WhisperScratchpadTab_Click(object sender, RoutedEventArgs e) =>
         ShowScratchpad();
 
+    private void WhisperHistoryTab_Click(object sender, RoutedEventArgs e) =>
+        SelectTab(WhisperHistoryTab, WhisperHistoryPanel);
+
     private void WhisperPrivacyTab_Click(object sender, RoutedEventArgs e) =>
         SelectTab(WhisperPrivacyTab, WhisperPrivacyPanel);
 
@@ -420,6 +567,7 @@ public partial class WhisperView : UserControl
         WhisperPersonalizePanel.Visibility = Visibility.Collapsed;
         WhisperLibraryPanel.Visibility = Visibility.Collapsed;
         WhisperScratchpadPanel.Visibility = Visibility.Collapsed;
+        WhisperHistoryPanel.Visibility = Visibility.Collapsed;
         WhisperPrivacyPanel.Visibility = Visibility.Collapsed;
         panel.Visibility = Visibility.Visible;
     }
@@ -658,6 +806,86 @@ public partial class WhisperView : UserControl
                 snippets.ToArray(),
                 customStyles.ToArray(),
                 applicationProfiles.ToArray()));
+    }
+
+    private void DeleteHistoryEntry_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: HistoryRow row })
+        {
+            RequestHistoryEntryDelete(row.Entry);
+        }
+    }
+
+    internal void RequestHistoryEntryDelete(WhisperHistoryEntry entry) =>
+        HistoryEntryDeleteRequested?.Invoke(
+            this,
+            new WhisperHistoryEntryRequestedEventArgs(entry));
+
+    private void ClearHistory_Click(object sender, RoutedEventArgs e) =>
+        HistoryClearRequested?.Invoke(this, EventArgs.Empty);
+
+    private void AutoSend_Click(object sender, RoutedEventArgs e)
+    {
+        if (_autoSendEnabled)
+        {
+            RequestPrivacy(autoSendEnabled: false);
+        }
+        else if (_autoSendWarningAccepted)
+        {
+            RequestPrivacy(autoSendEnabled: true);
+        }
+        else
+        {
+            WhisperAutoSendWarningPanel.Visibility = Visibility.Visible;
+            WhisperPrivacyStatus.Text = "Review the auto-send boundary before enabling it.";
+        }
+    }
+
+    private void ConfirmAutoSendWarning_Click(object sender, RoutedEventArgs e) =>
+        RequestPrivacy(autoSendEnabled: true, warningAccepted: true);
+
+    private void CancelAutoSendWarning_Click(object sender, RoutedEventArgs e)
+    {
+        WhisperAutoSendWarningPanel.Visibility = Visibility.Collapsed;
+        WhisperPrivacyStatus.Text = "Auto-send remains off.";
+    }
+
+    private void ContextReads_Click(object sender, RoutedEventArgs e) =>
+        RequestPrivacy(contextReadsAllowed: !_contextReadsAllowed);
+
+    private void TranscriptPreview_Click(object sender, RoutedEventArgs e) =>
+        RequestPrivacy(showTranscriptPreview: !_showTranscriptPreview);
+
+    private void PrivacyPicker_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_updatingPrivacy)
+        {
+            RequestPrivacy();
+        }
+    }
+
+    private void RequestPrivacy(
+        bool? autoSendEnabled = null,
+        bool? warningAccepted = null,
+        bool? contextReadsAllowed = null,
+        bool? showTranscriptPreview = null)
+    {
+        if (WhisperHistoryModePicker.SelectedItem is not HistoryModeOption history ||
+            WhisperClipboardBehaviorPicker.SelectedItem is not ClipboardBehaviorOption clipboard)
+        {
+            SetPrivacyError("Choose a supported history and clipboard mode.");
+            return;
+        }
+
+        PrivacyRequested?.Invoke(
+            this,
+            new WhisperPrivacyRequestedEventArgs(
+                autoSendEnabled ?? _autoSendEnabled,
+                warningAccepted ?? _autoSendWarningAccepted,
+                contextReadsAllowed ?? _contextReadsAllowed,
+                history.Mode,
+                clipboard.Behavior,
+                showTranscriptPreview ?? _showTranscriptPreview));
     }
 
     private void ScratchpadText_Changed(object sender, TextChangedEventArgs e)
@@ -987,6 +1215,45 @@ public partial class WhisperView : UserControl
         public string RemoveAutomationName => $"Remove application rule for {ProcessName}";
     }
 
+    internal sealed class HistoryRow
+    {
+        internal HistoryRow(WhisperHistoryEntry entry)
+        {
+            Entry = entry;
+            ProcessName = entry.ProcessName;
+            Meta = $"{entry.CreatedAtUtc.ToLocalTime():t} · {DescribeDelivery(entry.DeliveryKind)}";
+            string collapsed = string.Join(
+                ' ',
+                entry.Text.Split(
+                    (char[]?)null,
+                    StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+            Preview = collapsed.Length <= 180 ? collapsed : $"{collapsed[..180]}…";
+        }
+
+        internal WhisperHistoryEntry Entry { get; }
+
+        public string ProcessName { get; }
+
+        public string Meta { get; }
+
+        public string Preview { get; }
+
+        public string DeleteAutomationName =>
+            $"Delete Whisper history entry for {ProcessName} at {Entry.CreatedAtUtc.ToLocalTime():t}";
+    }
+
+    internal sealed record HistoryModeOption(WhisperHistoryMode Mode, string DisplayName)
+    {
+        public override string ToString() => DisplayName;
+    }
+
+    internal sealed record ClipboardBehaviorOption(
+        WhisperClipboardBehavior Behavior,
+        string DisplayName)
+    {
+        public override string ToString() => DisplayName;
+    }
+
     internal sealed record ScratchpadTabRow(int Index, string Title, bool IsActive)
     {
         public string? SelectionTag => IsActive ? "Selected" : null;
@@ -1014,6 +1281,15 @@ public partial class WhisperView : UserControl
         rules.Add(style.CapitalizeSentences ? "sentence case" : "preserve case");
         return $"{style.Kind} · {string.Join(" · ", rules)}";
     }
+
+    private static string DescribeDelivery(WhisperDeliveryKind kind) => kind switch
+    {
+        WhisperDeliveryKind.CopyText => "Copied",
+        WhisperDeliveryKind.InsertText => "Inserted",
+        WhisperDeliveryKind.InsertAndSubmit => "Inserted and submitted",
+        WhisperDeliveryKind.SubmitOnly => "Submitted",
+        _ => "Completed"
+    };
 }
 
 public sealed class WhisperInputDeviceRequestedEventArgs : EventArgs
@@ -1072,4 +1348,41 @@ public sealed class WhisperLibraryRequestedEventArgs : EventArgs
     public IReadOnlyList<WhisperStyleProfile> CustomStyles { get; }
 
     public IReadOnlyList<WhisperAppProfile> ApplicationProfiles { get; }
+}
+
+public sealed class WhisperHistoryEntryRequestedEventArgs(WhisperHistoryEntry entry) : EventArgs
+{
+    public WhisperHistoryEntry Entry { get; } =
+        entry ?? throw new ArgumentNullException(nameof(entry));
+}
+
+public sealed class WhisperPrivacyRequestedEventArgs : EventArgs
+{
+    public WhisperPrivacyRequestedEventArgs(
+        bool autoSendEnabled,
+        bool autoSendWarningAccepted,
+        bool contextReadsAllowed,
+        WhisperHistoryMode historyMode,
+        WhisperClipboardBehavior clipboardBehavior,
+        bool showTranscriptPreview)
+    {
+        AutoSendEnabled = autoSendEnabled;
+        AutoSendWarningAccepted = autoSendWarningAccepted;
+        ContextReadsAllowed = contextReadsAllowed;
+        HistoryMode = historyMode;
+        ClipboardBehavior = clipboardBehavior;
+        ShowTranscriptPreview = showTranscriptPreview;
+    }
+
+    public bool AutoSendEnabled { get; }
+
+    public bool AutoSendWarningAccepted { get; }
+
+    public bool ContextReadsAllowed { get; }
+
+    public WhisperHistoryMode HistoryMode { get; }
+
+    public WhisperClipboardBehavior ClipboardBehavior { get; }
+
+    public bool ShowTranscriptPreview { get; }
 }

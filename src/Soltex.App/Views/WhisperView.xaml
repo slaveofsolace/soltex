@@ -177,6 +177,38 @@
             </Border>
         </DataTemplate>
 
+        <DataTemplate x:Key="HistoryRowTemplate">
+            <Border Margin="0,0,0,8" Style="{StaticResource QuietCardStyle}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding ProcessName}" FontWeight="SemiBold" />
+                            <TextBlock Margin="8,0,0,0"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="{Binding Meta}" />
+                        </StackPanel>
+                        <TextBlock Margin="0,5,0,0"
+                                   MaxHeight="42"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   Text="{Binding Preview}"
+                                   TextWrapping="Wrap"
+                                   TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                    <Button Grid.Column="1"
+                            Margin="12,0,0,0"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Delete"
+                            AutomationProperties.Name="{Binding DeleteAutomationName}"
+                            Click="DeleteHistoryEntry_Click" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
         <DataTemplate x:Key="ScratchpadTabTemplate">
             <Border Margin="0,0,8,0"
                     Background="{StaticResource InsetBrush}"
@@ -312,6 +344,12 @@
                         Content="Scratchpad"
                         AutomationProperties.Name="Show Whisper Scratchpad"
                         Click="WhisperScratchpadTab_Click" />
+                <Button x:Name="WhisperHistoryTab"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource TabButtonStyle}"
+                        Content="History"
+                        AutomationProperties.Name="Show Whisper history"
+                        Click="WhisperHistoryTab_Click" />
                 <Button x:Name="WhisperPrivacyTab"
                         Margin="8,0,0,0"
                         Style="{StaticResource TabButtonStyle}"
@@ -930,61 +968,274 @@
                     </Border>
                 </Grid>
 
-                <!-- Privacy -->
-                <Grid x:Name="WhisperPrivacyPanel" Margin="18" Visibility="Collapsed">
+                <!-- History: bounded session memory, never the global Activity feed. -->
+                <Grid x:Name="WhisperHistoryPanel"
+                      Margin="18"
+                      Visibility="Collapsed">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="14" />
+                        <RowDefinition Height="12" />
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="14" />
-                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="10" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="What Whisper will and will not do" />
-                    <Grid Grid.Row="2">
+                    <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="16" />
-                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <Border Style="{StaticResource QuietCardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Off by default"
-                                           Foreground="{StaticResource SignalBrush}"
-                                           FontWeight="SemiBold" />
-                                <TextBlock Margin="0,8,0,0"
-                                           Style="{StaticResource MutedTextStyle}"
-                                           TextWrapping="Wrap"
-                                           Text="Auto-send, reading text around the caret, terminal submission, and keeping transcripts on disk all start off and stay off until you turn each one on." />
-                            </StackPanel>
-                        </Border>
-                        <Border Grid.Column="2" Style="{StaticResource QuietCardStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Never"
-                                           Foreground="{StaticResource DangerTextBrush}"
-                                           FontWeight="SemiBold" />
-                                <TextBlock Margin="0,8,0,0"
-                                           Style="{StaticResource MutedTextStyle}"
-                                           TextWrapping="Wrap"
-                                           Text="Whisper does not type into password fields, does not choose a recipient for you, and does not press Enter unless it can read back exactly what it inserted." />
-                            </StackPanel>
-                        </Border>
-                    </Grid>
-                    <Border Grid.Row="4"
-                            Background="{StaticResource InsetBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="{StaticResource RadiusSm}"
-                            Padding="12">
                         <StackPanel>
-                            <TextBlock Text="Evidence contains no transcript text" FontWeight="SemiBold" />
-                            <TextBlock Margin="0,6,0,0"
+                            <TextBlock Style="{StaticResource SectionTitleStyle}"
+                                       Text="Transcript history" />
+                            <TextBlock x:Name="WhisperHistoryStatus"
+                                       Margin="0,3,0,0"
                                        Style="{StaticResource MutedTextStyle}"
-                                       TextWrapping="Wrap"
-                                       Text="Diagnostics record the session state, a coarse duration band, the target category, and the policy decision. Quoted spans, paths, and URLs in provider errors are redacted before anything is written." />
+                                       Text="Session memory only. Closing Soltex clears it."
+                                       AutomationProperties.LiveSetting="Polite" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    VerticalAlignment="Center">
+                            <TextBlock x:Name="WhisperHistoryCount"
+                                       Margin="0,0,12,0"
+                                       VerticalAlignment="Center"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="0 entries" />
+                            <Button x:Name="WhisperHistoryClearButton"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Clear history"
+                                    AutomationProperties.Name="Clear all Whisper history"
+                                    Click="ClearHistory_Click" />
+                        </StackPanel>
+                    </Grid>
+                    <Border x:Name="WhisperHistoryEmptyState"
+                            Grid.Row="2"
+                            Style="{StaticResource QuietCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="No completed transcripts this session"
+                                       FontWeight="SemiBold" />
+                            <TextBlock Margin="0,5,0,0"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="History appears here only after provider-backed dictation succeeds." />
                         </StackPanel>
                     </Border>
+                    <ScrollViewer Grid.Row="4"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl x:Name="WhisperHistoryList"
+                                      ItemTemplate="{StaticResource HistoryRowTemplate}"
+                                      AutomationProperties.Name="Whisper transcript history" />
+                    </ScrollViewer>
                 </Grid>
+
+                <!-- Privacy: explicit settings with safe defaults and inline consent. -->
+                <ScrollViewer x:Name="WhisperPrivacyPanel"
+                              Margin="18"
+                              Visibility="Collapsed"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource SectionTitleStyle}"
+                                           Text="Privacy and delivery" />
+                                <TextBlock Margin="0,3,0,0"
+                                           Style="{StaticResource MutedTextStyle}"
+                                           Text="Every outward capability starts off or fails closed." />
+                            </StackPanel>
+                            <TextBlock x:Name="WhisperPrivacyStatus"
+                                       Grid.Column="1"
+                                       MaxWidth="420"
+                                       VerticalAlignment="Center"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="Safe defaults are active."
+                                       TextTrimming="CharacterEllipsis"
+                                       AutomationProperties.LiveSetting="Polite" />
+                        </Grid>
+
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource QuietCardStyle}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Auto-send" FontWeight="SemiBold" />
+                                        <TextBlock x:Name="WhisperAutoSendDetail"
+                                                   Margin="0,4,12,0"
+                                                   Style="{StaticResource MutedTextStyle}"
+                                                   Text="Off · Enter cannot be emitted."
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Button x:Name="WhisperAutoSendButton"
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Content="Review"
+                                            AutomationProperties.Name="Review Whisper auto-send"
+                                            Click="AutoSend_Click" />
+                                </Grid>
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource QuietCardStyle}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock Text="Context reads" FontWeight="SemiBold" />
+                                        <TextBlock x:Name="WhisperContextReadsDetail"
+                                                   Margin="0,4,12,0"
+                                                   Style="{StaticResource MutedTextStyle}"
+                                                   Text="Off · text around the caret is not read."
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Button x:Name="WhisperContextReadsButton"
+                                            Grid.Column="1"
+                                            VerticalAlignment="Center"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Content="Turn on"
+                                            AutomationProperties.Name="Turn Whisper context reads on"
+                                            Click="ContextReads_Click" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <Border x:Name="WhisperAutoSendWarningPanel"
+                                Margin="0,12,0,0"
+                                Background="{StaticResource InsetBrush}"
+                                BorderBrush="{StaticResource WarningBrush}"
+                                BorderThickness="1"
+                                CornerRadius="{StaticResource RadiusSm}"
+                                Padding="12"
+                                Visibility="Collapsed">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Auto-send can send text immediately"
+                                               Foreground="{StaticResource WarningBrush}"
+                                               FontWeight="SemiBold" />
+                                    <TextBlock Margin="0,5,16,0"
+                                               Style="{StaticResource MutedTextStyle}"
+                                               TextWrapping="Wrap"
+                                               Text="Whisper will still require an approved app rule, the same focused target, exact read-back verification, and an authorized submit request. Unknown, protected, elevated, stale, and unverifiable targets remain blocked." />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <Button x:Name="WhisperAutoSendKeepOffButton"
+                                            Margin="0,0,8,0"
+                                            Style="{StaticResource SecondaryButton}"
+                                            Content="Keep off"
+                                            AutomationProperties.Name="Keep Whisper auto-send off"
+                                            Click="CancelAutoSendWarning_Click" />
+                                    <Button x:Name="WhisperAutoSendConfirmButton"
+                                            Style="{StaticResource ActionButton}"
+                                            Content="I understand, turn on"
+                                            AutomationProperties.Name="Accept the Whisper auto-send warning and turn it on"
+                                            Click="ConfirmAutoSendWarning_Click" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource QuietCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Session history" FontWeight="SemiBold" />
+                                    <TextBlock Margin="0,4,0,8"
+                                               Style="{StaticResource MutedTextStyle}"
+                                               Text="Encrypted disk retention is not available yet." />
+                                    <ComboBox x:Name="WhisperHistoryModePicker"
+                                              Style="{StaticResource SoltexComboBoxStyle}"
+                                              DisplayMemberPath="DisplayName"
+                                              AutomationProperties.Name="Whisper history mode"
+                                              SelectionChanged="PrivacyPicker_SelectionChanged" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource QuietCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Clipboard fallback" FontWeight="SemiBold" />
+                                    <TextBlock Margin="0,4,0,8"
+                                               Style="{StaticResource MutedTextStyle}"
+                                               Text="Restore only while Whisper still owns the clipboard." />
+                                    <ComboBox x:Name="WhisperClipboardBehaviorPicker"
+                                              Style="{StaticResource SoltexComboBoxStyle}"
+                                              DisplayMemberPath="DisplayName"
+                                              AutomationProperties.Name="Whisper clipboard fallback behavior"
+                                              SelectionChanged="PrivacyPicker_SelectionChanged" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <Border Margin="0,12,0,0" Style="{StaticResource QuietCardStyle}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Overlay transcript preview" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="WhisperTranscriptPreviewDetail"
+                                               Margin="0,4,12,0"
+                                               Style="{StaticResource MutedTextStyle}"
+                                               Text="Off · the floating surface does not echo dictated text."
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                                <Button x:Name="WhisperTranscriptPreviewButton"
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Content="Turn on"
+                                        AutomationProperties.Name="Turn Whisper transcript preview on"
+                                        Click="TranscriptPreview_Click" />
+                            </Grid>
+                        </Border>
+
+                        <Grid Margin="0,12,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource QuietCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Never" Foreground="{StaticResource DangerTextBrush}" FontWeight="SemiBold" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Style="{StaticResource MutedTextStyle}"
+                                               TextWrapping="Wrap"
+                                               Text="Whisper does not type into password fields, choose a recipient, or press Enter without exact read-back verification." />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource QuietCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Content-free evidence" FontWeight="SemiBold" />
+                                    <TextBlock Margin="0,6,0,0"
+                                               Style="{StaticResource MutedTextStyle}"
+                                               TextWrapping="Wrap"
+                                               Text="Diagnostics retain categories and policy outcomes, never transcript or audio content." />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
             </Grid>
         </Border>
     </Grid>

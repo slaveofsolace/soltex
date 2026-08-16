@@ -67,7 +67,7 @@ public partial class App : Application
             {
                 throw new ArgumentException(
                     "The render-smoke panel must be one of: home, monitoring, monitoring-details, monitoring-benchmark, applications, applications-services, settings, devices, " +
-                    "security, security-activity, remote, whisper, whisper-personalize, whisper-library, whisper-library-styles, whisper-library-apps, whisper-scratchpad, activity, update, mixer, mixer-devices, mixer-more, command-palette, clips.");
+                    "security, security-activity, remote, whisper, whisper-personalize, whisper-library, whisper-library-styles, whisper-library-apps, whisper-scratchpad, whisper-history, whisper-privacy, whisper-privacy-warning, activity, update, mixer, mixer-devices, mixer-more, command-palette, clips.");
             }
 
             RenderSmokeSnapshot(window, panelOutputPath);

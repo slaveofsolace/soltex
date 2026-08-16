@@ -272,6 +272,11 @@ styles, and exact-process app rules are never shown simultaneously. Each editor 
 with one bounded creation action and follows with the saved rows, so a large personal
 library does not turn the default Whisper page into a settings wall.
 
+Auto-send consent stays inline on the Privacy surface. The warning names the remaining
+authorization gates and offers two explicit actions; it is never a generic modal or a
+toggle whose effect is hidden. History owns its own local tab and never appears in the
+global Activity feed.
+
 ### Keycaps
 
 Shortcut chords render as keycaps — `Ctrl` `Win` — rather than the string `Ctrl+Win`.

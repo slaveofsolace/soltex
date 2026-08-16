@@ -73,6 +73,8 @@ internal static class Program
             ("Whisper runtime toggle is explicit and reversible", WhisperRuntimeToggleIsExplicit),
             ("Whisper personalization controls persist explicit choices", WhisperPersonalizationControlsAreWorking),
             ("Whisper library editors persist bounded rules", WhisperLibraryControlsAreWorking),
+            ("Whisper history supports per-entry and clear deletion", WhisperHistoryControlsAreWorking),
+            ("Whisper privacy controls require explicit auto-send consent", WhisperPrivacyControlsAreWorking),
             ("Whisper Scratchpad controls are bounded and reversible", WhisperScratchpadControlsAreWorking),
             ("Activity store bounds, sanitizes, persists, and recovers", ActivityStoreBoundsAndRecovers),
             ("Activity view renders and filters meaningful events", ActivityViewRenders),
@@ -1234,6 +1236,86 @@ internal static class Program
              requested.ApplicationProfiles[^1].ProcessName == "editor" &&
              requested.ApplicationProfiles[^1].ContextFormattingAllowed,
             "Saving an app rule did not normalize the process or retain explicit permission choices.");
+    }
+
+    private static void WhisperHistoryControlsAreWorking()
+    {
+        WhisperHistoryEntry first = new(
+            new DateTimeOffset(2026, 8, 15, 18, 0, 0, TimeSpan.Zero),
+            "chat",
+            WhisperDeliveryKind.InsertText,
+            "first transcript");
+        WhisperHistoryEntry second = new(
+            new DateTimeOffset(2026, 8, 15, 18, 1, 0, TimeSpan.Zero),
+            "editor",
+            WhisperDeliveryKind.CopyText,
+            "second transcript");
+        WhisperView view = new();
+        WhisperHistoryEntry? requestedDelete = null;
+        bool clearRequested = false;
+        view.HistoryEntryDeleteRequested += (_, args) => requestedDelete = args.Entry;
+        view.HistoryClearRequested += (_, _) => clearRequested = true;
+        view.SetHistory(
+            [first, second],
+            WhisperHistoryMode.SessionMemory,
+            "Session memory only.");
+        view.ShowHistoryForEvidence();
+
+        True(view.WhisperHistoryPanel.Visibility == Visibility.Visible &&
+             view.WhisperHistoryList.Items.Count == 2 &&
+             view.WhisperHistoryEmptyState.Visibility == Visibility.Collapsed &&
+             view.WhisperHistoryClearButton.IsEnabled,
+            "Session history did not render its bounded controls.");
+
+        view.RequestHistoryEntryDelete(first);
+        True(requestedDelete == first,
+            "Per-entry history deletion did not retain exact entry identity.");
+        view.WhisperHistoryClearButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(clearRequested, "Clear history did not emit one explicit request.");
+
+        view.SetHistory([], WhisperHistoryMode.Off, "Ignored.");
+        True(view.WhisperHistoryEmptyState.Visibility == Visibility.Visible &&
+             !view.WhisperHistoryClearButton.IsEnabled &&
+             view.WhisperHistoryStatus.Text.Contains("off", StringComparison.OrdinalIgnoreCase),
+            "History-off state did not clear and explain the session surface.");
+    }
+
+    private static void WhisperPrivacyControlsAreWorking()
+    {
+        WhisperView view = new();
+        WhisperPrivacyRequestedEventArgs? requested = null;
+        view.PrivacyRequested += (_, args) => requested = args;
+        view.SetPrivacy(WhisperSettings.CreateDefault(), "Safe defaults are active.");
+        view.ShowPrivacyForEvidence();
+
+        view.WhisperAutoSendButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requested is null &&
+             view.WhisperAutoSendWarningPanel.Visibility == Visibility.Visible,
+            "First-use auto-send bypassed its inline warning.");
+        view.WhisperAutoSendConfirmButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requested is { AutoSendEnabled: true, AutoSendWarningAccepted: true },
+            "Accepting the warning did not request both consent fields atomically.");
+
+        WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
+        document.AutoSendEnabled = true;
+        document.AutoSendWarningAccepted = true;
+        WhisperSettings enabled = WhisperSettingsMigrator.Load(document).Settings;
+        view.SetPrivacy(enabled, "Saved.");
+        True((string)view.WhisperAutoSendButton.Content == "Turn off" &&
+             view.WhisperAutoSendWarningPanel.Visibility == Visibility.Collapsed,
+            "Saved auto-send consent did not render its explicit on state.");
+
+        requested = null;
+        view.WhisperContextReadsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requested is { AutoSendEnabled: true, ContextReadsAllowed: true },
+            "Context-read opt-in did not preserve the other validated privacy settings.");
+
+        requested = null;
+        view.WhisperHistoryModePicker.SelectedItem = view.WhisperHistoryModePicker.Items
+            .Cast<WhisperView.HistoryModeOption>()
+            .Single(option => option.Mode == WhisperHistoryMode.Off);
+        True(requested?.HistoryMode == WhisperHistoryMode.Off,
+            "History-off selection did not emit one supported privacy update.");
     }
 
     private static void WhisperScratchpadControlsAreWorking()

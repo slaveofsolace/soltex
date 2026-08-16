@@ -20,6 +20,7 @@ public partial class MainWindow
     private readonly SemaphoreSlim _whisperShortcutGate = new(1, 1);
     private readonly WhisperShortcutGestureInterpreter _whisperShortcutGestures = new();
     private readonly CancellationTokenSource _whisperRuntimeCancellation = new();
+    private readonly BoundedWhisperHistory _whisperHistory = new(WhisperLimits.MaximumHistoryEntries);
     private WindowsWhisperShortcutHost? _whisperShortcutHost;
     private Task _whisperShortcutDrained = Task.CompletedTask;
     private string? _whisperShortcutError;
@@ -41,6 +42,9 @@ public partial class MainWindow
         WhisperPanel.FeatureEnabledRequested += WhisperPanel_FeatureEnabledRequested;
         WhisperPanel.PersonalizationRequested += WhisperPanel_PersonalizationRequested;
         WhisperPanel.LibraryRequested += WhisperPanel_LibraryRequested;
+        WhisperPanel.HistoryEntryDeleteRequested += WhisperPanel_HistoryEntryDeleteRequested;
+        WhisperPanel.HistoryClearRequested += WhisperPanel_HistoryClearRequested;
+        WhisperPanel.PrivacyRequested += WhisperPanel_PrivacyRequested;
         WhisperPanel.UpdateCaptureDevices(
             _whisperDevices,
             _whisperSettings.InputDeviceId,
@@ -68,7 +72,78 @@ public partial class MainWindow
                 : loaded.IsClean
                     ? "Saved locally for this Windows account."
                     : "Unsafe or outdated fields were repaired to safe values.");
+        WhisperPanel.SetPrivacy(
+            _whisperSettings,
+            loaded.LoadedVersion == 0
+                ? "Safe defaults are active."
+                : loaded.IsClean
+                    ? "Privacy settings loaded for this Windows account."
+                    : "Unsafe or outdated fields were repaired to safe values.");
+        UpdateWhisperHistoryView();
         UpdateWhisperReadiness();
+    }
+
+    private void WhisperPanel_HistoryEntryDeleteRequested(
+        object? sender,
+        WhisperHistoryEntryRequestedEventArgs e)
+    {
+        _ = _whisperHistory.Remove(e.Entry);
+        UpdateWhisperHistoryView("History entry deleted from this session.");
+    }
+
+    private void WhisperPanel_HistoryClearRequested(object? sender, EventArgs e)
+    {
+        _whisperHistory.Clear();
+        UpdateWhisperHistoryView("Session history cleared.");
+    }
+
+    private void UpdateWhisperHistoryView(string? detail = null)
+    {
+        WhisperPanel.SetHistory(
+            _whisperHistory.CreateSnapshot(),
+            _whisperSettings.HistoryMode,
+            detail ?? "Session memory only. Closing Soltex clears it.");
+    }
+
+    private void WhisperPanel_PrivacyRequested(
+        object? sender,
+        WhisperPrivacyRequestedEventArgs e)
+    {
+        try
+        {
+            WhisperSettingsDocument document = _whisperSettings.ToDocument();
+            document.AutoSendEnabled = e.AutoSendEnabled;
+            document.AutoSendWarningAccepted = e.AutoSendWarningAccepted;
+            document.ContextReadsAllowed = e.ContextReadsAllowed;
+            document.HistoryMode = e.HistoryMode.ToString();
+            document.ClipboardBehavior = e.ClipboardBehavior.ToString();
+            document.ShowTranscriptPreview = e.ShowTranscriptPreview;
+
+            WhisperSettingsLoadResult loaded = WhisperSettingsMigrator.Load(document);
+            if (!loaded.IsClean)
+            {
+                WhisperPanel.SetPrivacyError(
+                    "That privacy change was not saved because it did not pass safe settings validation.");
+                return;
+            }
+
+            _whisperSettingsStore?.Save(loaded.Settings);
+            _whisperSettings = loaded.Settings;
+            if (_whisperSettings.HistoryMode == WhisperHistoryMode.Off)
+            {
+                _whisperHistory.Clear();
+            }
+
+            WhisperPanel.SetPrivacy(
+                _whisperSettings,
+                "Privacy and delivery settings saved for this Windows account.");
+            UpdateWhisperHistoryView();
+            UpdateWhisperReadiness();
+        }
+        catch (Exception exception) when (IsExpectedWhisperSettingsFailure(exception))
+        {
+            WhisperPanel.SetPrivacyError("That privacy change could not be saved.");
+        }
     }
 
     private void WhisperPanel_LibraryRequested(
