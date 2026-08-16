@@ -162,6 +162,27 @@ public interface IWhisperTargetInspector
         CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// A provider-scoped secret boundary. Implementations must keep credentials out of
+/// settings documents, process arguments, environment variables, and diagnostics.
+/// The returned lease owns its clear bytes and must be disposed by the caller.
+/// </summary>
+public interface IWhisperCredentialStore : IAsyncDisposable
+{
+    string ProviderId { get; }
+
+    ValueTask<bool> IsAvailableAsync(CancellationToken cancellationToken);
+
+    ValueTask SaveAsync(
+        ReadOnlyMemory<byte> credential,
+        CancellationToken cancellationToken);
+
+    ValueTask<WhisperCredentialLease?> AcquireAsync(
+        CancellationToken cancellationToken);
+
+    ValueTask DeleteAsync(CancellationToken cancellationToken);
+}
+
 public interface IWhisperTextDelivery
 {
     ValueTask<WhisperTextDeliveryResult> DeliverAsync(

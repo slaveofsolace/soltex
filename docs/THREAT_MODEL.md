@@ -120,6 +120,36 @@ only after validated settings, cancel active work on hook faults, unregister dur
 the owned shutdown drain, and prove physical-key behavior without collecting user
 content. Hook timing evidence contains only sample counts and percentile durations.
 
+### Whisper provider credential boundary
+
+Provider credentials are sensitive even when transcript and audio logging is off.
+The provider-neutral model exposes only bounded content-free status: provider id,
+display name, HTTPS endpoint, model identity, language and streaming capabilities,
+privacy statement, and whether a credential is available. It never carries the
+credential itself. Provider ids are restricted to a short ASCII identifier before
+they can select a provider-scoped store name; endpoint metadata rejects non-HTTPS
+addresses, embedded user information, and fragments.
+
+The Windows credential adapter accepts bounded bytes directly and does not obtain
+them from source, settings JSON, process arguments, or environment variables. It
+protects one provider-scoped value with current-user DPAPI inside Soltex's
+HMAC-authenticated state envelope. Clear managed and unmanaged working buffers are
+zeroed at the end of their owned lifetime. A provider can acquire clear bytes only
+through an owned lease; disposing that lease clears the same backing array observed
+by callers. Rotation deletes the old current and backup generations before writing
+the replacement, so a failed rotation prefers loss of availability over retaining an
+old credential in Soltex's backup. Corrupted state fails closed but remains removable
+through exact owned-artifact deletion.
+
+This boundary does not protect a credential from malware already running as the same
+user, an administrator, process injection, crash dumps, page files, storage snapshots,
+or a compromised Windows cryptographic service. It does not prove any provider's
+privacy properties and it does not configure, transmit, validate, or rotate an owner
+credential at the remote provider. The future HTTP adapter must keep request bodies,
+headers, response text, and exception details out of diagnostics and apply
+`WhisperRedaction.Sanitize` before any provider failure crosses into content-free
+evidence.
+
 ### Whisper focused-target boundary
 
 A hostile, inaccessible, or hung UI Automation provider could block its caller,

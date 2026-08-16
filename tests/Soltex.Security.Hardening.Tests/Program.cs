@@ -20,6 +20,9 @@ List<(string Name, Func<Task> Test)> tests =
     ("Protected history corruption fails closed", ProtectedHistoryCorruptionFailsClosedAsync),
     ("Protected history clear removes current and backup artifacts", ProtectedHistoryClearRemovesOwnedArtifactsAsync),
     ("Protected history honors pre-cancelled operations", ProtectedHistoryHonorsCancellationAsync),
+    ("Protected provider secret round trips without plaintext generations", ProtectedSecretRoundTripsWithoutPlaintextAsync),
+    ("Protected provider secret corruption fails closed and remains deletable", ProtectedSecretCorruptionFailsClosedAsync),
+    ("Protected provider secret honors pre-cancelled operations", ProtectedSecretHonorsCancellationAsync),
     ("ZIP preflight rejects excessive central-directory entry counts", ZipPreflightRejectsExcessiveCountsAsync),
     ("ZIP preflight rejects malformed central-directory records", ZipPreflightRejectsMalformedDirectoryAsync),
     ("ZIP preflight rejects truncated archives", ZipPreflightRejectsTruncatedArchiveAsync),
@@ -394,6 +397,111 @@ static async Task ProtectedHistoryHonorsCancellationAsync()
                     "cancel fixture")],
                 7,
                 cancellation.Token).AsTask());
+    });
+}
+
+static async Task ProtectedSecretRoundTripsWithoutPlaintextAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        byte[] first = "first-owner-provider-secret"u8.ToArray();
+        byte[] second = "rotated-owner-provider-secret"u8.ToArray();
+        try
+        {
+            await using AuthenticatedProtectedSecretStore store = new(
+                root,
+                "provider-secret");
+            True(!await store.IsAvailableAsync(), "A missing secret was reported as available.");
+
+            await store.SaveAsync(first);
+            True(await store.IsAvailableAsync(), "A saved secret was reported as unavailable.");
+            ProtectedSecretLease lease = await store.AcquireAsync()
+                ?? throw new InvalidOperationException("Saved protected secret was unavailable.");
+            ReadOnlyMemory<byte> observed = lease.Bytes;
+            True(observed.Span.SequenceEqual(first), "Protected secret round-trip changed bytes.");
+            lease.Dispose();
+            True(lease.IsDisposed, "Protected secret lease did not enter the disposed state.");
+            True(
+                observed.Span.ToArray().All(value => value == 0),
+                "Protected secret lease did not clear its owned byte array.");
+
+            await store.SaveAsync(second);
+            True(
+                !File.Exists(store.BackupPath),
+                "Credential rotation retained a last-known-good generation of the old secret.");
+            foreach (string path in Directory.EnumerateFiles(root))
+            {
+                byte[] state = await File.ReadAllBytesAsync(path);
+                True(
+                    !ContainsSequence(state, first) && !ContainsSequence(state, second),
+                    "Protected provider state exposed clear credential bytes.");
+            }
+
+            await store.DeleteAsync();
+            True(!File.Exists(store.StatePath), "Protected provider state remained after deletion.");
+            True(!File.Exists(store.BackupPath), "Protected provider backup remained after deletion.");
+            True(
+                File.Exists(Path.Combine(root, "state.key")),
+                "Deleting one provider secret removed the shared authenticated-state key.");
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(first);
+            CryptographicOperations.ZeroMemory(second);
+        }
+    });
+}
+
+static async Task ProtectedSecretCorruptionFailsClosedAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        byte[] secret = "corruption-fixture-secret"u8.ToArray();
+        try
+        {
+            await using AuthenticatedProtectedSecretStore store = new(
+                root,
+                "provider-corrupt");
+            await store.SaveAsync(secret);
+            await File.AppendAllTextAsync(store.StatePath, "changed");
+            await ThrowsAsync<InvalidDataException>(() => store.AcquireAsync().AsTask());
+
+            await store.DeleteAsync();
+            True(
+                !File.Exists(store.StatePath) && !File.Exists(store.BackupPath),
+                "A corrupted protected secret could not be removed by its owner.");
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(secret);
+        }
+    });
+}
+
+static async Task ProtectedSecretHonorsCancellationAsync()
+{
+    await WithTempDirectoryAsync(async root =>
+    {
+        byte[] secret = "cancelled-provider-secret"u8.ToArray();
+        try
+        {
+            await using AuthenticatedProtectedSecretStore store = new(
+                root,
+                "provider-cancel");
+            using CancellationTokenSource cancellation = new();
+            cancellation.Cancel();
+            await ThrowsAsync<OperationCanceledException>(
+                () => store.SaveAsync(secret, cancellation.Token).AsTask());
+            await ThrowsAsync<OperationCanceledException>(
+                () => store.AcquireAsync(cancellation.Token).AsTask());
+            True(
+                !File.Exists(store.StatePath),
+                "A pre-cancelled credential operation created provider state.");
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(secret);
+        }
     });
 }
 

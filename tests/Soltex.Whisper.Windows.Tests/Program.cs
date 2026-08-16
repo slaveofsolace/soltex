@@ -49,7 +49,8 @@ List<(string Name, Func<Task> Run)> tests =
     ("a rejected Enter dispatch cannot reuse its authorization", VerifiedSubmitDispatchRejected),
     ("target read-back is bounded and provider failures fail closed", TargetReadbackFailures),
     ("target read-back cancellation is honored", TargetReadbackCancellation),
-    ("encrypted history adapter preserves bounded Whisper records", HistoryRetentionAdapter)
+    ("encrypted history adapter preserves bounded Whisper records", HistoryRetentionAdapter),
+    ("provider credentials stay in the protected Windows boundary", ProviderCredentialBoundary)
 ];
 
 if (string.Equals(
@@ -1381,6 +1382,49 @@ static async Task HistoryRetentionAdapter()
             Directory.Delete(root, recursive: true);
         }
     }
+}
+
+static async Task ProviderCredentialBoundary()
+{
+    string root = Path.Combine(
+        Path.GetTempPath(),
+        "soltex-whisper-credential-tests-" + Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    byte[] credential = "owner-controlled-provider-secret"u8.ToArray();
+    try
+    {
+        await using WindowsWhisperCredentialStore store = new(root, "Example.Provider");
+        Equal("example.provider", store.ProviderId);
+        False(await store.IsAvailableAsync(CancellationToken.None));
+
+        await store.SaveAsync(credential, CancellationToken.None);
+        True(await store.IsAvailableAsync(CancellationToken.None));
+        WhisperCredentialLease lease = await store.AcquireAsync(CancellationToken.None)
+            ?? throw new InvalidOperationException("Saved credential was unavailable.");
+        ReadOnlyMemory<byte> observed = lease.Bytes;
+        True(observed.Span.SequenceEqual(credential));
+        lease.Dispose();
+        True(observed.Span.ToArray().All(value => value == 0));
+
+        string allState = string.Join(
+            "\n",
+            Directory.EnumerateFiles(root).Select(File.ReadAllText));
+        False(allState.Contains(
+            "owner-controlled-provider-secret",
+            StringComparison.Ordinal));
+
+        await store.DeleteAsync(CancellationToken.None);
+        False(await store.IsAvailableAsync(CancellationToken.None));
+        False(Directory.EnumerateFiles(root, "whisper-credential-*", SearchOption.TopDirectoryOnly).Any());
+    }
+    finally
+    {
+        CryptographicOperations.ZeroMemory(credential);
+        Directory.Delete(root, recursive: true);
+    }
+
+    Throws<ArgumentException>(() =>
+        _ = new WindowsWhisperCredentialStore(Path.GetTempPath(), "invalid/provider"));
 }
 
 static byte[] CreatePcmPacket()

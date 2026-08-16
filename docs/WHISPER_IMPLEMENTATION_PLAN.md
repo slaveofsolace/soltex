@@ -19,7 +19,7 @@ is reproduced, and no affiliation is implied.
 ## Implemented and verified
 
 The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
-109-test suite in `tests/Soltex.Whisper.Tests`.
+110-test suite in `tests/Soltex.Whisper.Tests`.
 
 | Area | State |
 |---|---|
@@ -55,6 +55,7 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Scratchpad UI | Five session-only tabs backed by the bounded core with working edit, undo, redo, reversible clear, close confirmation for non-empty notes, and direct shortcut navigation; nothing is written to disk |
 | History and privacy UI | Bounded session history has per-entry delete and clear; history-off clears it immediately; opt-in encrypted retention exposes a bounded period and clears prior authenticated generations on deletion; auto-send uses an inline first-use warning and atomic consent; context reads, clipboard behavior, and overlay preview are explicit persisted controls |
 | Encrypted history retention | Up to 24 entries and 16,000 characters per entry; transcript text is protected per record with current-user DPAPI inside the existing HMAC-authenticated state envelope; load, expiry, rewrite, clear, cancellation, corruption, and no-plaintext-envelope behavior have deterministic Windows coverage |
+| Provider secret boundary | Provider metadata is bounded and content-free; one provider-scoped credential is protected with current-user DPAPI inside the authenticated state envelope, acquired only through an owned zeroing lease, and rotated by removing prior Soltex generations before replacement |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, Personalize, Library, Scratchpad, History, and Privacy tabs, and the floating listening
@@ -72,7 +73,9 @@ are enabled only when a selected device exists.
 Nothing below exists yet. Any claim that it works is false until runtime evidence
 from an owner-controlled Windows host says otherwise.
 
-1. A real transcription provider adapter and its credential storage.
+1. A real transcription provider adapter, provider configuration UI, and owner
+   credential entry. The provider-neutral metadata and Windows credential-storage
+   boundary are implemented; no provider is selected or configured yet.
 2. Instantiation of the tested provider-neutral session runner with a real provider,
    followed by dispatch from registered shortcut intents (startup registration,
    cancellation, feedback, and shutdown unregistration are implemented).
@@ -125,11 +128,23 @@ privacy-denial recovery.
 
 ### 2. Transcription provider
 
-Implement `IWhisperTranscriber` for at least one real provider alongside the
-existing deterministic double. Provider settings expose endpoint/model identity,
-language capability, streaming capability, a privacy statement, and credential
-availability. Credentials use the repository's secret-storage boundary and never
-appear in source files, plain JSON, process arguments, or logs.
+The provider-neutral `WhisperProviderStatus` contract now exposes bounded
+endpoint/model identity, language capability, streaming capability, a privacy
+statement, and credential availability without carrying a credential. The Windows
+`WindowsWhisperCredentialStore` adapter uses a provider-scoped
+`AuthenticatedProtectedSecretStore`: current-user DPAPI protects the clear bytes,
+the existing authenticated envelope protects on-disk integrity, and callers receive
+an owned `WhisperCredentialLease` whose bytes are cleared on disposal. Rotation
+removes the prior current and backup generations before committing the replacement;
+deletion removes only the provider's exact state artifacts and preserves the shared
+authenticated-state key. Bounds, round-trip, no-plaintext state, corruption,
+cancellation, rotation, deletion, and lease clearing have deterministic coverage.
+
+Still required: implement `IWhisperTranscriber` for the selected real provider
+alongside the deterministic double, connect its descriptor and credential controls
+to the shipped setup page, and obtain owner-controlled live proof. Credentials must
+never appear in source files, plain JSON, process arguments, environment dumps, or
+logs.
 
 A provider returns transcription and optional polish metadata only. It never issues
 clicks, keypresses, application commands, or submission decisions. The deterministic
@@ -200,7 +215,7 @@ terminal, plain-text, and rich-text categories remain content-free. Soltex stays
 `asInvoker` with `uiAccess=false`; high/system/protected targets are identified and
 the existing delivery policy falls back to copy.
 
-Target-specific deterministic coverage is included in the current 40-case Windows adapter suite.
+Target-specific deterministic coverage is included in the current 41-case Windows adapter suite.
 It covers all five target categories, pattern capability mapping,
 protected/read-only/unknown controls, provider timeout, provider failure, and
 cancellation. An opt-in owner-host run at commit `d11edec` also inspected a real
@@ -245,7 +260,7 @@ after staging or paste input is rejected, the transcript remains copied and the
 result names the fallback. Clipboard acquisition and restoration use bounded retries
 on one background STA thread.
 
-The core suite has 109 cases and the Windows suite has 39 deterministic cases. The
+The core suite has 110 cases and the Windows suite has 41 deterministic cases. The
 Windows cases cover direct-before-clipboard ordering, ownership restoration and loss,
 focus drift after staging, unknown targets, rejected paste, and cancellation cleanup.
 An opt-in owner-host test uses a controlled WinForms text target to prove clipboard
@@ -324,7 +339,7 @@ global Activity feed or diagnostic events.
 
 The 18-case security-hardening suite covers authenticated round trip, absence of
 plaintext in either envelope, expiry, current/backup deletion, bounds, cancellation,
-and corruption failure. The 40-case Windows adapter suite covers the Whisper mapping
+and corruption failure. The 41-case Windows adapter suite covers the Whisper mapping
 and rewrite boundary. This is application-level encrypted retention, not forensic
 secure erasure: filesystem snapshots, SSD remapping, page files, crash dumps, and a
 same-user process able to invoke DPAPI remain outside its guarantee.

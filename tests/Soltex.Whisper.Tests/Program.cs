@@ -3,6 +3,59 @@ using Soltex.Whisper;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("provider status is bounded and credential leases clear owned bytes", () =>
+    {
+        WhisperProviderStatus status = new(
+            " Example.Provider ",
+            "Example transcription",
+            new Uri("https://api.example.test/v1/transcribe"),
+            "model-v1",
+            WhisperProviderLanguageCapability.AutomaticAndExplicit,
+            ["en-US", "es-ES", "EN-us"],
+            supportsStreaming: false,
+            "Audio is sent only when the user starts a dictation session.",
+            credentialAvailable: true);
+        Equal("example.provider", status.ProviderId);
+        Equal(2, status.LanguageTags.Count);
+        True(status.CredentialAvailable);
+        Throws<ArgumentException>(() => new WhisperProviderStatus(
+            "invalid/provider",
+            "Example",
+            new Uri("https://api.example.test"),
+            "model",
+            WhisperProviderLanguageCapability.AutomaticOnly,
+            [],
+            false,
+            "Private by contract.",
+            false));
+        Throws<ArgumentException>(() => new WhisperProviderStatus(
+            "example",
+            "Example",
+            new Uri("http://api.example.test"),
+            "model",
+            WhisperProviderLanguageCapability.AutomaticOnly,
+            [],
+            false,
+            "Private by contract.",
+            false));
+        Throws<ArgumentException>(() => new WhisperProviderStatus(
+            "example",
+            "Example",
+            new Uri("https://api.example.test/v1?api_key=forbidden"),
+            "model",
+            WhisperProviderLanguageCapability.AutomaticOnly,
+            [],
+            false,
+            "Private by contract.",
+            false));
+
+        using WhisperCredentialLease lease = new("temporary-secret"u8);
+        ReadOnlyMemory<byte> observed = lease.Bytes;
+        lease.Dispose();
+        True(lease.IsDisposed);
+        True(observed.Span.ToArray().All(value => value == 0));
+        Throws<ObjectDisposedException>(() => _ = lease.Bytes);
+    }),
     ("terminal submit phrase is stripped only at the end", () =>
     {
         WhisperPipelineResult result = Pipe("Send it now. press enter.");
