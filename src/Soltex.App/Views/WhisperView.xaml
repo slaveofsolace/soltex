@@ -73,6 +73,32 @@
                            TextTrimming="CharacterEllipsis" />
             </Grid>
         </DataTemplate>
+
+        <DataTemplate x:Key="VocabularyRowTemplate">
+            <Border Margin="0,0,0,6"
+                    Background="{StaticResource InsetBrush}"
+                    BorderBrush="{StaticResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusSm}"
+                    Padding="10,7">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock VerticalAlignment="Center"
+                               Text="{Binding Term}"
+                               TextTrimming="CharacterEllipsis" />
+                    <Button Grid.Column="1"
+                            Margin="12,0,0,0"
+                            Padding="8,3"
+                            Style="{StaticResource SecondaryButton}"
+                            Content="Remove"
+                            AutomationProperties.Name="{Binding RemoveAutomationName}"
+                            Click="RemoveVocabulary_Click" />
+                </Grid>
+            </Border>
+        </DataTemplate>
     </UserControl.Resources>
 
     <Grid>
@@ -169,6 +195,12 @@
                         Content="Shortcuts"
                         AutomationProperties.Name="Show Whisper shortcuts"
                         Click="WhisperShortcutsTab_Click" />
+                <Button x:Name="WhisperPersonalizeTab"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource TabButtonStyle}"
+                        Content="Personalize"
+                        AutomationProperties.Name="Show Whisper personalization"
+                        Click="WhisperPersonalizeTab_Click" />
                 <Button x:Name="WhisperPrivacyTab"
                         Margin="8,0,0,0"
                         Style="{StaticResource TabButtonStyle}"
@@ -317,6 +349,111 @@
                                    Text="Whisper is off, so no global shortcut is registered." />
                     </Border>
                 </Grid>
+
+                <!-- Personalization: provider hints and deterministic style settings. -->
+                <ScrollViewer x:Name="WhisperPersonalizePanel"
+                              Margin="18"
+                              Visibility="Collapsed"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionTitleStyle}"
+                                   Text="Personalization" />
+                        <TextBlock Margin="0,3,0,12"
+                                   Style="{StaticResource MutedTextStyle}"
+                                   TextWrapping="Wrap"
+                                   Text="These settings shape recognition and formatting. Vocabulary is sent as provider hints and is never substituted into a finished transcript." />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="12" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource QuietCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Language" FontWeight="SemiBold" />
+                                    <TextBlock Margin="0,3,0,8"
+                                               Style="{StaticResource MutedTextStyle}"
+                                               Text="Auto-detect keeps mixed-language speech available to the provider." />
+                                    <ComboBox x:Name="WhisperLanguagePicker"
+                                              Style="{StaticResource SoltexComboBoxStyle}"
+                                              DisplayMemberPath="DisplayName"
+                                              AutomationProperties.Name="Whisper language"
+                                              SelectionChanged="PersonalizationPicker_SelectionChanged" />
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource QuietCardStyle}">
+                                <StackPanel>
+                                    <TextBlock Text="Default style" FontWeight="SemiBold" />
+                                    <TextBlock Margin="0,3,0,8"
+                                               Style="{StaticResource MutedTextStyle}"
+                                               Text="A terminal target still forces the literal terminal style." />
+                                    <ComboBox x:Name="WhisperStylePicker"
+                                              Style="{StaticResource SoltexComboBoxStyle}"
+                                              DisplayMemberPath="DisplayName"
+                                              AutomationProperties.Name="Whisper default style"
+                                              SelectionChanged="PersonalizationPicker_SelectionChanged" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        <Border Margin="0,12,0,0" Style="{StaticResource QuietCardStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="10" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="10" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Personal vocabulary" FontWeight="SemiBold" />
+                                    <TextBlock x:Name="WhisperVocabularyCount"
+                                               Margin="0,3,0,0"
+                                               Style="{StaticResource MutedTextStyle}"
+                                               Text="0 of 512 terms" />
+                                </StackPanel>
+                                <TextBlock x:Name="WhisperPersonalizationStatus"
+                                           Grid.Column="1"
+                                           MaxWidth="420"
+                                           VerticalAlignment="Center"
+                                           Style="{StaticResource MutedTextStyle}"
+                                           Text="Saved locally for this Windows account."
+                                           TextTrimming="CharacterEllipsis"
+                                           AutomationProperties.LiveSetting="Polite" />
+                                <TextBox x:Name="WhisperVocabularyInput"
+                                         Grid.Row="2"
+                                         MaxLength="64"
+                                         Style="{StaticResource FieldStyle}"
+                                         AutomationProperties.Name="New Whisper vocabulary term" />
+                                <Button x:Name="WhisperVocabularyAddButton"
+                                        Grid.Row="2"
+                                        Grid.Column="1"
+                                        Margin="8,0,0,0"
+                                        MinWidth="76"
+                                        HorizontalAlignment="Right"
+                                        Style="{StaticResource ActionButton}"
+                                        Content="Add term"
+                                        AutomationProperties.Name="Add vocabulary term"
+                                        Click="AddVocabulary_Click" />
+                                <ListBox x:Name="WhisperVocabularyList"
+                                         Grid.Row="4"
+                                         Grid.ColumnSpan="2"
+                                         MaxHeight="220"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ItemTemplate="{StaticResource VocabularyRowTemplate}"
+                                         AutomationProperties.Name="Personal vocabulary"
+                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                         VirtualizingPanel.IsVirtualizing="True"
+                                         VirtualizingPanel.VirtualizationMode="Recycling" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
 
                 <!-- Privacy -->
                 <Grid x:Name="WhisperPrivacyPanel" Margin="18" Visibility="Collapsed">

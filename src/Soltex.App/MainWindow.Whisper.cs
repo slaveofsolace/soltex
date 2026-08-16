@@ -39,6 +39,7 @@ public partial class MainWindow
         WhisperPanel.MicrophoneTestRequested += WhisperPanel_MicrophoneTestRequested;
         WhisperPanel.MicrophoneTestStopRequested += WhisperPanel_MicrophoneTestStopRequested;
         WhisperPanel.FeatureEnabledRequested += WhisperPanel_FeatureEnabledRequested;
+        WhisperPanel.PersonalizationRequested += WhisperPanel_PersonalizationRequested;
         WhisperPanel.UpdateCaptureDevices(
             _whisperDevices,
             _whisperSettings.InputDeviceId,
@@ -52,7 +53,39 @@ public partial class MainWindow
             _whisperSettings.Enabled
                 ? "Whisper is on. Windows shortcut registration will be checked at startup."
                 : "Whisper is off. No global shortcuts are registered.");
+        WhisperPanel.SetPersonalization(
+            _whisperSettings,
+            loaded.LoadedVersion == 0
+                ? "Shipped defaults are ready for this Windows account."
+                : loaded.IsClean
+                ? "Saved locally for this Windows account."
+                : "Unsafe or outdated fields were repaired to safe values.");
         UpdateWhisperReadiness();
+    }
+
+    private void WhisperPanel_PersonalizationRequested(
+        object? sender,
+        WhisperPersonalizationRequestedEventArgs e)
+    {
+        try
+        {
+            WhisperVocabulary vocabulary = new(e.VocabularyTerms);
+            WhisperSettingsDocument document = _whisperSettings.ToDocument();
+            document.PreferredLanguageTag = e.LanguageTag;
+            document.DefaultStyleName = e.StyleName;
+            document.VocabularyTerms = vocabulary.Terms.ToArray();
+            WhisperSettings validated = WhisperSettingsMigrator.Load(document).Settings;
+            _whisperSettingsStore?.Save(validated);
+            _whisperSettings = validated;
+            WhisperPanel.SetPersonalization(
+                validated,
+                "Personalization saved locally for this Windows account.");
+        }
+        catch (Exception exception) when (IsExpectedWhisperSettingsFailure(exception))
+        {
+            WhisperPanel.SetPersonalizationError(
+                "That change was not saved. Use one printable term of at most 64 characters.");
+        }
     }
 
     private async void WhisperPanel_FeatureEnabledRequested(

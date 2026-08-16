@@ -1660,6 +1660,17 @@ public partial class MainWindow : Window
             return true;
         }
 
+        if (string.Equals(
+                normalized,
+                "whisper-personalize",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowPersonalizationForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel;
+            return true;
+        }
+
         if (string.Equals(normalized, "update", StringComparison.OrdinalIgnoreCase) ||
             string.Equals(normalized, "updates", StringComparison.OrdinalIgnoreCase))
         {

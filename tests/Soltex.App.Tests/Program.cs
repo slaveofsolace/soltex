@@ -71,6 +71,7 @@ internal static class Program
             ("Whisper device selection persists and oversized state fails safe", WhisperSettingsRoundTripAndRecovery),
             ("Whisper capture controls expose only working capture actions", WhisperCaptureControlsAreHonest),
             ("Whisper runtime toggle is explicit and reversible", WhisperRuntimeToggleIsExplicit),
+            ("Whisper personalization controls persist explicit choices", WhisperPersonalizationControlsAreWorking),
             ("Activity store bounds, sanitizes, persists, and recovers", ActivityStoreBoundsAndRecovers),
             ("Activity view renders and filters meaningful events", ActivityViewRenders),
             ("Settings view renders working local preferences", SettingsViewRenders),
@@ -976,6 +977,9 @@ internal static class Program
         {
             WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
             document.InputDeviceId = "microphone-id-1";
+            document.PreferredLanguageTag = "fr";
+            document.DefaultStyleName = WhisperStyleProfile.Developer.Name;
+            document.VocabularyTerms = ["Soltex", "Aether Foundry"];
             WhisperSettings expected = WhisperSettingsMigrator.Load(document).Settings;
             WhisperSettingsStore store = new(filePath);
             store.Save(expected);
@@ -983,6 +987,10 @@ internal static class Program
             WhisperSettingsLoadResult loaded = store.Load();
             True(loaded.Settings.InputDeviceId == "microphone-id-1",
                 "The selected Whisper input device did not round-trip.");
+            True(loaded.Settings.Language.LanguageTag == "fr" &&
+                 loaded.Settings.DefaultStyleName == WhisperStyleProfile.Developer.Name &&
+                 loaded.Settings.Vocabulary.Contains("Aether Foundry"),
+                "Whisper personalization did not round-trip through the bounded store.");
 
             File.WriteAllText(filePath, "{ invalid", Encoding.UTF8);
             WhisperSettingsLoadResult invalid = store.Load();
@@ -1072,6 +1080,46 @@ internal static class Program
         True(!view.WhisperFeatureToggleButton.IsEnabled &&
              (string)view.WhisperFeatureToggleButton.Content == "Applying",
             "The runtime control remained operable while a lifecycle change was in flight.");
+    }
+
+    private static void WhisperPersonalizationControlsAreWorking()
+    {
+        WhisperView view = new();
+        WhisperPersonalizationRequestedEventArgs? requested = null;
+        view.PersonalizationRequested += (_, args) => requested = args;
+
+        WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
+        document.PreferredLanguageTag = "fr";
+        document.DefaultStyleName = WhisperStyleProfile.Developer.Name;
+        document.VocabularyTerms = ["Soltex"];
+        view.SetPersonalization(
+            WhisperSettingsMigrator.Load(document).Settings,
+            "Loaded.");
+
+        True(view.WhisperVocabularyList.Items.Count == 1 &&
+             view.WhisperVocabularyCount.Text.StartsWith("1 of", StringComparison.Ordinal),
+            "The saved personal vocabulary was not rendered.");
+        True(view.WhisperLanguagePicker.SelectedItem is
+                WhisperView.LanguageOption { Tag: "fr" } &&
+             view.WhisperStylePicker.SelectedItem is
+                WhisperView.StyleOption { Name: "Developer" },
+            "The saved language and style were not selected.");
+
+        view.WhisperVocabularyInput.Text = "Aether Foundry";
+        view.WhisperVocabularyAddButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested?.VocabularyTerms.Count == 2 &&
+             requested.VocabularyTerms[0] == "Soltex" &&
+             requested.VocabularyTerms[1] == "Aether Foundry",
+            "Adding a vocabulary term did not request one explicit persisted update.");
+
+        requested = null;
+        view.WhisperStylePicker.SelectedItem = view.WhisperStylePicker.Items
+            .Cast<WhisperView.StyleOption>()
+            .Single(option => option.Name == WhisperStyleProfile.Email.Name);
+        True(requested?.StyleName == WhisperStyleProfile.Email.Name &&
+             requested.LanguageTag == "fr",
+            "Changing the default style did not preserve the selected language.");
     }
 
     private static void ActivityStoreBoundsAndRecovers()

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows.Automation;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,13 +19,24 @@ public partial class WhisperView : UserControl
     private bool _updatingInputDevices;
     private bool _microphoneTestRunning;
     private bool _featureEnabled;
+    private bool _updatingPersonalization;
+    private string[] _vocabularyTerms = [];
 
     public WhisperView()
     {
         InitializeComponent();
 
-        _tabs = [WhisperSetupTab, WhisperShortcutsTab, WhisperPrivacyTab];
+        _tabs =
+        [
+            WhisperSetupTab,
+            WhisperShortcutsTab,
+            WhisperPersonalizeTab,
+            WhisperPrivacyTab
+        ];
         WhisperShortcutList.ItemsSource = BuildShortcutRows();
+        SetPersonalization(
+            WhisperSettings.CreateDefault(),
+            "Saved locally for this Windows account.");
         UpdateReadiness(CreateScaffoldInputs());
     }
 
@@ -41,6 +53,9 @@ public partial class WhisperView : UserControl
 
     public event EventHandler<WhisperFeatureEnabledRequestedEventArgs>?
         FeatureEnabledRequested;
+
+    public event EventHandler<WhisperPersonalizationRequestedEventArgs>?
+        PersonalizationRequested;
 
     /// <summary>
     /// Renders a readiness report. The host supplies the observed facts; this view
@@ -146,6 +161,74 @@ public partial class WhisperView : UserControl
                 : "Whisper is off, so no global shortcut is registered.";
     }
 
+    public void SetPersonalization(WhisperSettings settings, string detail)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+
+        _updatingPersonalization = true;
+        try
+        {
+            List<LanguageOption> languages = BuildLanguageOptions().ToList();
+            string? languageTag = settings.Language.LanguageTag;
+            if (languageTag is not null && !languages.Any(option =>
+                string.Equals(option.Tag, languageTag, StringComparison.OrdinalIgnoreCase)))
+            {
+                CultureInfo culture = CultureInfo.GetCultureInfo(
+                    languageTag,
+                    predefinedOnly: true);
+                languages.Add(new LanguageOption(
+                    culture.Name,
+                    $"{culture.EnglishName} · {culture.Name}"));
+            }
+
+            WhisperLanguagePicker.ItemsSource = languages;
+            WhisperLanguagePicker.SelectedItem = languages.First(option =>
+                string.Equals(option.Tag, languageTag, StringComparison.OrdinalIgnoreCase));
+
+            List<StyleOption> styles = WhisperStyleProfile.BuiltIn
+                .Select(style => new StyleOption(style.Name, style.Name))
+                .ToList();
+            if (!styles.Any(option => string.Equals(
+                    option.Name,
+                    settings.DefaultStyleName,
+                    StringComparison.OrdinalIgnoreCase)))
+            {
+                styles.Add(new StyleOption(
+                    settings.DefaultStyleName,
+                    $"{settings.DefaultStyleName} · custom"));
+            }
+
+            WhisperStylePicker.ItemsSource = styles;
+            WhisperStylePicker.SelectedItem = styles.First(option => string.Equals(
+                option.Name,
+                settings.DefaultStyleName,
+                StringComparison.OrdinalIgnoreCase));
+
+            _vocabularyTerms = settings.Vocabulary.Terms.ToArray();
+            WhisperVocabularyList.ItemsSource = _vocabularyTerms
+                .Select(term => new VocabularyRow(term))
+                .ToArray();
+            WhisperVocabularyCount.Text =
+                $"{_vocabularyTerms.Length} of {WhisperVocabulary.MaximumEntries} terms";
+            WhisperPersonalizationStatus.Text = detail;
+            WhisperVocabularyInput.Clear();
+        }
+        finally
+        {
+            _updatingPersonalization = false;
+        }
+    }
+
+    public void SetPersonalizationError(string detail)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+        WhisperPersonalizationStatus.Text = detail;
+    }
+
+    internal void ShowPersonalizationForEvidence() =>
+        SelectTab(WhisperPersonalizeTab, WhisperPersonalizePanel);
+
     private void PreviewOverlay_Click(object sender, RoutedEventArgs e) =>
         PreviewOverlayRequested?.Invoke(this, EventArgs.Empty);
 
@@ -190,6 +273,9 @@ public partial class WhisperView : UserControl
     private void WhisperShortcutsTab_Click(object sender, RoutedEventArgs e) =>
         SelectTab(WhisperShortcutsTab, WhisperShortcutsPanel);
 
+    private void WhisperPersonalizeTab_Click(object sender, RoutedEventArgs e) =>
+        SelectTab(WhisperPersonalizeTab, WhisperPersonalizePanel);
+
     private void WhisperPrivacyTab_Click(object sender, RoutedEventArgs e) =>
         SelectTab(WhisperPrivacyTab, WhisperPrivacyPanel);
 
@@ -202,8 +288,60 @@ public partial class WhisperView : UserControl
 
         WhisperSetupPanel.Visibility = Visibility.Collapsed;
         WhisperShortcutsPanel.Visibility = Visibility.Collapsed;
+        WhisperPersonalizePanel.Visibility = Visibility.Collapsed;
         WhisperPrivacyPanel.Visibility = Visibility.Collapsed;
         panel.Visibility = Visibility.Visible;
+    }
+
+    private void PersonalizationPicker_SelectionChanged(
+        object sender,
+        SelectionChangedEventArgs e)
+    {
+        if (!_updatingPersonalization)
+        {
+            RequestPersonalization(_vocabularyTerms);
+        }
+    }
+
+    private void AddVocabulary_Click(object sender, RoutedEventArgs e)
+    {
+        string term = WhisperVocabularyInput.Text.Trim();
+        if (term.Length == 0)
+        {
+            SetPersonalizationError("Enter one name or term before adding it.");
+            return;
+        }
+
+        RequestPersonalization(_vocabularyTerms.Concat([term]).ToArray());
+    }
+
+    private void RemoveVocabulary_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { DataContext: VocabularyRow row })
+        {
+            return;
+        }
+
+        RequestPersonalization(_vocabularyTerms
+            .Where(term => !string.Equals(term, row.Term, StringComparison.OrdinalIgnoreCase))
+            .ToArray());
+    }
+
+    private void RequestPersonalization(IReadOnlyList<string> vocabularyTerms)
+    {
+        if (WhisperLanguagePicker.SelectedItem is not LanguageOption language ||
+            WhisperStylePicker.SelectedItem is not StyleOption style)
+        {
+            SetPersonalizationError("Choose a supported language and style.");
+            return;
+        }
+
+        PersonalizationRequested?.Invoke(
+            this,
+            new WhisperPersonalizationRequestedEventArgs(
+                language.Tag,
+                style.Name,
+                vocabularyTerms));
     }
 
     /// <summary>
@@ -231,6 +369,29 @@ public partial class WhisperView : UserControl
                 DescribeAction(binding.Action),
                 binding.Keys.ToArray(),
                 DescribeBehavior(binding.Action)))
+            .ToArray();
+    }
+
+    private static LanguageOption[] BuildLanguageOptions()
+    {
+        List<LanguageOption> options = [new(null, "Auto-detect")];
+        foreach (string languageName in WhisperTranslationLanguages.SupportedNames)
+        {
+            if (!WhisperTranslationLanguages.TryResolve(languageName, out string? tag) ||
+                tag is null)
+            {
+                continue;
+            }
+
+            CultureInfo culture = CultureInfo.GetCultureInfo(tag, predefinedOnly: true);
+            options.Add(new LanguageOption(
+                culture.Name,
+                $"{culture.EnglishName} · {culture.Name}"));
+        }
+
+        return options
+            .Take(1)
+            .Concat(options.Skip(1).OrderBy(option => option.DisplayName, StringComparer.Ordinal))
             .ToArray();
     }
 
@@ -315,6 +476,21 @@ public partial class WhisperView : UserControl
         public string Description { get; }
     }
 
+    internal sealed record VocabularyRow(string Term)
+    {
+        public string RemoveAutomationName => $"Remove {Term} from personal vocabulary";
+    }
+
+    internal sealed record LanguageOption(string? Tag, string DisplayName)
+    {
+        public override string ToString() => DisplayName;
+    }
+
+    internal sealed record StyleOption(string Name, string DisplayName)
+    {
+        public override string ToString() => DisplayName;
+    }
+
     private sealed record InputDeviceOption(string? Id, string DisplayName)
     {
         public override string ToString() => DisplayName;
@@ -334,4 +510,25 @@ public sealed class WhisperInputDeviceRequestedEventArgs : EventArgs
 public sealed class WhisperFeatureEnabledRequestedEventArgs(bool enabled) : EventArgs
 {
     public bool Enabled { get; } = enabled;
+}
+
+public sealed class WhisperPersonalizationRequestedEventArgs : EventArgs
+{
+    public WhisperPersonalizationRequestedEventArgs(
+        string? languageTag,
+        string styleName,
+        IReadOnlyList<string> vocabularyTerms)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(styleName);
+        ArgumentNullException.ThrowIfNull(vocabularyTerms);
+        LanguageTag = languageTag;
+        StyleName = styleName;
+        VocabularyTerms = Array.AsReadOnly(vocabularyTerms.ToArray());
+    }
+
+    public string? LanguageTag { get; }
+
+    public string StyleName { get; }
+
+    public IReadOnlyList<string> VocabularyTerms { get; }
 }
