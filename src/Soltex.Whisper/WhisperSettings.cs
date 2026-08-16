@@ -507,6 +507,13 @@ public static class WhisperSettingsMigrator
         if (Enum.TryParse(value.Trim(), ignoreCase: true, out WhisperHistoryMode parsed) &&
             Enum.IsDefined(parsed))
         {
+            if (parsed == WhisperHistoryMode.EncryptedDisk)
+            {
+                corrections.Add(
+                    "Encrypted history was reset to session memory because encrypted retention is not available in this build.");
+                return WhisperHistoryMode.SessionMemory;
+            }
+
             return parsed;
         }
 

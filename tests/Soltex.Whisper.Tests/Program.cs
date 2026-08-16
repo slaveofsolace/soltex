@@ -223,6 +223,19 @@ var tests = new (string Name, Action Run)[]
         Equal("second", snapshot[0].Text);
         Equal("third", snapshot[1].Text);
     }),
+    ("history supports exact per-entry deletion", () =>
+    {
+        BoundedWhisperHistory history = new(4);
+        WhisperHistoryEntry first = Entry("chat", "first");
+        WhisperHistoryEntry second = Entry("chat", "second");
+        history.Add(first);
+        history.Add(second);
+
+        True(history.Remove(first));
+        False(history.Remove(first));
+        Equal(1, history.CreateSnapshot().Count);
+        Equal("second", history.CreateSnapshot()[0].Text);
+    }),
     ("coordinator records finalized delivery when history is supplied", () =>
     {
         BoundedWhisperHistory history = new(4);
@@ -566,6 +579,16 @@ var tests = new (string Name, Action Run)[]
         });
         False(result.Settings.AutoSendEnabled);
         False(result.Migrated);
+    }),
+    ("unavailable encrypted history repairs to session memory", () =>
+    {
+        WhisperSettingsLoadResult result = WhisperSettingsMigrator.Load(new WhisperSettingsDocument
+        {
+            Version = WhisperSettings.CurrentVersion,
+            HistoryMode = nameof(WhisperHistoryMode.EncryptedDisk)
+        });
+        Equal(WhisperHistoryMode.SessionMemory, result.Settings.HistoryMode);
+        True(result.Corrections.Count == 1);
     }),
     ("invalid fields are repaired to the safer default and reported", () =>
     {

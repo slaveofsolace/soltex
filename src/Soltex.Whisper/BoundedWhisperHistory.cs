@@ -71,4 +71,30 @@ public sealed class BoundedWhisperHistory
             _entries.Clear();
         }
     }
+
+    public bool Remove(WhisperHistoryEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+
+        lock (_sync)
+        {
+            WhisperHistoryEntry[] snapshot = _entries.ToArray();
+            int index = Array.FindIndex(snapshot, candidate => candidate == entry);
+            if (index < 0)
+            {
+                return false;
+            }
+
+            _entries.Clear();
+            for (int candidateIndex = 0; candidateIndex < snapshot.Length; candidateIndex++)
+            {
+                if (candidateIndex != index)
+                {
+                    _entries.Enqueue(snapshot[candidateIndex]);
+                }
+            }
+
+            return true;
+        }
+    }
 }
