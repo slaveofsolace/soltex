@@ -3,7 +3,10 @@ using Soltex.Whisper;
 
 namespace Soltex.Whisper.Windows;
 
-public sealed class WhisperWasapiCaptureSource : IWhisperCaptureSource, IAsyncDisposable
+public sealed class WhisperWasapiCaptureSource :
+    IWhisperCaptureSource,
+    IWhisperCaptureControl,
+    IAsyncDisposable
 {
     public const int OutputSampleRateHz = 16_000;
     public const int OutputChannelCount = 1;

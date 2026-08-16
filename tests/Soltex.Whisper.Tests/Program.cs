@@ -808,6 +808,224 @@ var tests = new (string Name, Action Run)[]
             Snap("mail", "el-2", processId: 42));
         Equal("chat", Wait(inspector.InspectAsync(CancellationToken.None))?.Context.ProcessName);
         Equal("mail", Wait(inspector.InspectAsync(CancellationToken.None))?.Context.ProcessName);
+    }),
+    ("session runner composes the provider-neutral pipeline", () =>
+    {
+        WhisperDeterministicTranscriber transcriber = new("hello comma world");
+        WhisperRecordingTextDelivery delivery = new();
+        RecordingSubmitter submitter = new();
+        WhisperSessionRunner runner = new(
+            new WhisperDeterministicCaptureSource(),
+            transcriber,
+            new WhisperScriptedTargetInspector(Snap("chat", "el-1")),
+            delivery,
+            submitter);
+        List<WhisperSessionState> states = [];
+        runner.StateChanged += (_, args) => states.Add(args.Session.State);
+
+        WhisperSessionRunResult result = Wait(runner.RunAsync(
+            new WhisperSessionRunRequest(
+                WhisperCaptureMode.PushToTalk,
+                SessionSettings(vocabulary: ["Soltex"]),
+                []),
+            CancellationToken.None));
+
+        Equal("hello, world", result.Finalization.Pipeline.Text);
+        Equal(WhisperDeliveryKind.InsertText, result.PresentationDeliveryKind);
+        Equal("hello, world", runner.LastCompletedTranscript);
+        Equal(1, delivery.Requests.Count);
+        Equal(0, submitter.Requests.Count);
+        True(transcriber.ObservedContexts[0].DictionaryTerms.Contains("Soltex"));
+        True(states.SequenceEqual(new[]
+        {
+            WhisperSessionState.Listening,
+            WhisperSessionState.Listening,
+            WhisperSessionState.Transcribing,
+            WhisperSessionState.Processing,
+            WhisperSessionState.Delivering,
+            WhisperSessionState.Completed
+        }));
+        False(runner.CreateDiagnosticSnapshot().Any(item =>
+            item.ToEvidenceLine().Contains("hello", StringComparison.OrdinalIgnoreCase)));
+        WaitVoid(runner.DisposeAsync());
+    }),
+    ("session runner preserves the previous transcript after provider failure", () =>
+    {
+        OneSuccessThenFaultTranscriber transcriber = new(
+            "first transcript",
+            "provider echoed \"private dictated words\"");
+        WhisperSessionRunner runner = new(
+            new WhisperDeterministicCaptureSource(),
+            transcriber,
+            new WhisperScriptedTargetInspector(
+                Snap("chat", "el-1"),
+                Snap("chat", "el-1")),
+            new WhisperRecordingTextDelivery(),
+            new RecordingSubmitter());
+        WhisperSessionRunRequest request = new(
+            WhisperCaptureMode.PushToTalk,
+            SessionSettings(),
+            []);
+
+        _ = Wait(runner.RunAsync(request, CancellationToken.None));
+        Throws<InvalidOperationException>(() =>
+            Wait(runner.RunAsync(request, CancellationToken.None)));
+
+        Equal("first transcript", runner.LastCompletedTranscript);
+        Equal(WhisperSessionState.Faulted, runner.CreateSnapshot().State);
+        Equal("Whisper could not finish this session.", runner.CreateSnapshot().LastError);
+        string evidence = string.Join(
+            '\n',
+            runner.CreateDiagnosticSnapshot().Select(item => item.ToEvidenceLine()));
+        False(evidence.Contains("private", StringComparison.OrdinalIgnoreCase));
+        False(evidence.Contains("dictated", StringComparison.OrdinalIgnoreCase));
+        WaitVoid(runner.DisposeAsync());
+    }),
+    ("session runner cancellation remains reversible before delivery", () =>
+    {
+        ControlledCaptureSource capture = new();
+        WhisperRecordingTextDelivery delivery = new();
+        WhisperSessionRunner runner = new(
+            capture,
+            new WhisperDeterministicTranscriber("never delivered"),
+            new WhisperScriptedTargetInspector(Snap("chat", "el-1")),
+            delivery,
+            new RecordingSubmitter());
+
+        ValueTask<WhisperSessionRunResult> pending = runner.RunAsync(
+            new WhisperSessionRunRequest(
+                WhisperCaptureMode.PushToTalk,
+                SessionSettings(),
+                []),
+            CancellationToken.None);
+        True(capture.WaitUntilStarted());
+        True(runner.CancelActive());
+        Throws<OperationCanceledException>(() => Wait(pending));
+
+        Equal(WhisperSessionState.Cancelled, runner.CreateSnapshot().State);
+        Equal(0, delivery.Requests.Count);
+        False(runner.CreateDiagnosticSnapshot().Any(item =>
+            item.ToEvidenceLine().Contains("never delivered", StringComparison.OrdinalIgnoreCase)));
+        WaitVoid(runner.DisposeAsync());
+    }),
+    ("session runner release completes capture and rejects overlap", () =>
+    {
+        ControlledCaptureSource capture = new();
+        WhisperSessionRunner runner = new(
+            capture,
+            new WhisperDeterministicTranscriber("released"),
+            new WhisperScriptedTargetInspector(Snap("chat", "el-1")),
+            new WhisperRecordingTextDelivery(),
+            new RecordingSubmitter());
+        WhisperSessionRunRequest request = new(
+            WhisperCaptureMode.PushToTalk,
+            SessionSettings(),
+            []);
+
+        ValueTask<WhisperSessionRunResult> pending = runner.RunAsync(
+            request,
+            CancellationToken.None);
+        True(capture.WaitUntilStarted());
+        Throws<InvalidOperationException>(() =>
+            Wait(runner.RunAsync(request, CancellationToken.None)));
+        True(runner.CompleteCapture());
+        WhisperSessionRunResult result = Wait(pending);
+
+        Equal("released", result.Finalization.Pipeline.Text);
+        Equal(WhisperSessionState.Completed, runner.CreateSnapshot().State);
+        False(runner.HasActiveSession);
+        WaitVoid(runner.DisposeAsync());
+    }),
+    ("session runner invokes verified submission only after policy authorization", () =>
+    {
+        RecordingSubmitter submitter = new();
+        WhisperTargetSnapshot target = Snap("chat", "el-1");
+        WhisperSessionRunner runner = new(
+            new WhisperDeterministicCaptureSource(),
+            new WhisperDeterministicTranscriber("hello press enter"),
+            new WhisperScriptedTargetInspector(target),
+            new WhisperRecordingTextDelivery(),
+            submitter);
+
+        WhisperSessionRunResult result = Wait(runner.RunAsync(
+            new WhisperSessionRunRequest(
+                WhisperCaptureMode.PushToTalk,
+                SessionSettings(autoSend: true),
+                [],
+                new WhisperAppProfile("chat", autoSendAllowed: true)),
+            CancellationToken.None));
+
+        Equal(1, submitter.Requests.Count);
+        Equal(WhisperDeliveryKind.InsertAndSubmit, result.PresentationDeliveryKind);
+        True(result.Submission?.EnterDispatched == true);
+        True(runner.CreateDiagnosticSnapshot().Any(item =>
+            item.Kind == WhisperDiagnosticEventKind.SubmitAllowed));
+        WaitVoid(runner.DisposeAsync());
+    }),
+    ("session runner faults instead of accepting an empty provider result", () =>
+    {
+        WhisperSessionRunner runner = new(
+            new WhisperDeterministicCaptureSource(),
+            new WhisperDeterministicTranscriber("   "),
+            new WhisperScriptedTargetInspector(Snap("chat", "el-1")),
+            new WhisperRecordingTextDelivery(),
+            new RecordingSubmitter());
+
+        Throws<InvalidDataException>(() => Wait(runner.RunAsync(
+            new WhisperSessionRunRequest(
+                WhisperCaptureMode.PushToTalk,
+                SessionSettings(),
+                []),
+            CancellationToken.None)));
+
+        Equal(WhisperSessionState.Faulted, runner.CreateSnapshot().State);
+        Equal<string?>(null, runner.LastCompletedTranscript);
+        True(runner.CreateDiagnosticSnapshot().Any(item =>
+            item.Kind == WhisperDiagnosticEventKind.TranscriptionFailed));
+        WaitVoid(runner.DisposeAsync());
+    }),
+    ("session runner disposal cancels and drains owned work", () =>
+    {
+        ControlledCaptureSource capture = new();
+        WhisperSessionRunner runner = new(
+            capture,
+            new WhisperDeterministicTranscriber("not retained"),
+            new WhisperScriptedTargetInspector(Snap("chat", "el-1")),
+            new WhisperRecordingTextDelivery(),
+            new RecordingSubmitter());
+        ValueTask<WhisperSessionRunResult> pending = runner.RunAsync(
+            new WhisperSessionRunRequest(
+                WhisperCaptureMode.HandsFree,
+                SessionSettings(),
+                []),
+            CancellationToken.None);
+        True(capture.WaitUntilStarted());
+
+        WaitVoid(runner.DisposeAsync());
+        Throws<OperationCanceledException>(() => Wait(pending));
+        Equal(WhisperSessionState.Cancelled, runner.CreateSnapshot().State);
+        False(runner.HasActiveSession);
+    }),
+    ("session runner drains captured audio when target inspection fails", () =>
+    {
+        OwnedClipCaptureSource capture = new();
+        WhisperSessionRunner runner = new(
+            capture,
+            new WhisperDeterministicTranscriber("not reached"),
+            new ThrowingTargetInspector(),
+            new WhisperRecordingTextDelivery(),
+            new RecordingSubmitter());
+
+        Throws<InvalidOperationException>(() => Wait(runner.RunAsync(
+            new WhisperSessionRunRequest(
+                WhisperCaptureMode.PushToTalk,
+                SessionSettings(),
+                []),
+            CancellationToken.None)));
+
+        True(capture.OwnedBytes.All(value => value == 0));
+        Equal(WhisperSessionState.Faulted, runner.CreateSnapshot().State);
+        WaitVoid(runner.DisposeAsync());
     })
 };
 
@@ -866,6 +1084,19 @@ static WhisperHistoryEntry Entry(string processName, string text) => new(
 // The deterministic providers all complete synchronously, so unwrapping the
 // ValueTask here cannot deadlock and keeps the suite a plain list of Actions.
 static T Wait<T>(ValueTask<T> pending) => pending.GetAwaiter().GetResult();
+
+static void WaitVoid(ValueTask pending) => pending.GetAwaiter().GetResult();
+
+static WhisperSettings SessionSettings(
+    bool autoSend = false,
+    IReadOnlyList<string>? vocabulary = null) => WhisperSettingsMigrator.Load(new WhisperSettingsDocument
+{
+    Version = WhisperSettings.CurrentVersion,
+    Enabled = true,
+    AutoSendEnabled = autoSend,
+    AutoSendWarningAccepted = autoSend,
+    VocabularyTerms = vocabulary
+}).Settings;
 
 static WhisperTargetSnapshot Snap(
     string processName,
@@ -968,4 +1199,112 @@ static void Throws<TException>(Action action) where TException : Exception
     }
 
     throw new InvalidOperationException($"Expected {typeof(TException).Name}.");
+}
+
+internal sealed class RecordingSubmitter : IWhisperVerifiedSubmitter
+{
+    private readonly List<WhisperVerifiedSubmitRequest> _requests = [];
+
+    internal IReadOnlyList<WhisperVerifiedSubmitRequest> Requests => _requests;
+
+    public ValueTask<WhisperVerifiedSubmitResult> SubmitAsync(
+        WhisperVerifiedSubmitRequest request,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _requests.Add(request);
+        WhisperInsertionVerification verification = new(
+            Verified: true,
+            WhisperVerificationMethod.AdapterConfirmation,
+            "adapter confirmed");
+        WhisperSubmitAuthorization authorization = WhisperSubmitGate.Evaluate(
+            request.Decision,
+            request.CapturedTarget,
+            request.CapturedTarget,
+            verification,
+            request.FirstUseWarningAccepted,
+            cancellationRequested: false);
+        return ValueTask.FromResult(new WhisperVerifiedSubmitResult(
+            authorization,
+            verification,
+            request.CapturedTarget.Context.Kind,
+            request.Decision.SubmitOrigin,
+            authorization.Allowed
+                ? WhisperSubmitDispatchOutcome.Dispatched
+                : WhisperSubmitDispatchOutcome.Denied));
+    }
+}
+
+internal sealed class OneSuccessThenFaultTranscriber(
+    string transcript,
+    string failureMessage) : IWhisperTranscriber
+{
+    private int _calls;
+
+    public ValueTask<string> TranscribeAsync(
+        WhisperAudioClip audio,
+        WhisperTranscriptionContext context,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Interlocked.Increment(ref _calls) == 1
+            ? ValueTask.FromResult(transcript)
+            : ValueTask.FromException<string>(new InvalidOperationException(failureMessage));
+    }
+}
+
+internal sealed class ControlledCaptureSource :
+    IWhisperCaptureSource,
+    IWhisperCaptureControl
+{
+    private readonly TaskCompletionSource _started = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly TaskCompletionSource _complete = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
+
+    public async ValueTask<WhisperAudioClip> CaptureAsync(
+        WhisperCaptureMode mode,
+        CancellationToken cancellationToken)
+    {
+        _started.TrySetResult();
+        await _complete.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        byte[] pcm = new byte[320];
+        return WhisperAudioClip.CreateOwned(
+            pcm,
+            16_000,
+            1,
+            TimeSpan.FromMilliseconds(10));
+    }
+
+    public bool CompleteCurrentCapture() => _complete.TrySetResult();
+
+    internal bool WaitUntilStarted() => _started.Task.Wait(TimeSpan.FromSeconds(2));
+}
+
+internal sealed class OwnedClipCaptureSource : IWhisperCaptureSource
+{
+    internal byte[] OwnedBytes { get; } = Enumerable.Repeat((byte)0x5A, 320).ToArray();
+
+    public ValueTask<WhisperAudioClip> CaptureAsync(
+        WhisperCaptureMode mode,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(WhisperAudioClip.CreateOwned(
+            OwnedBytes,
+            16_000,
+            1,
+            TimeSpan.FromMilliseconds(10)));
+    }
+}
+
+internal sealed class ThrowingTargetInspector : IWhisperTargetInspector
+{
+    public ValueTask<WhisperTargetSnapshot?> InspectAsync(
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromException<WhisperTargetSnapshot?>(
+            new InvalidOperationException("target provider failed"));
+    }
 }

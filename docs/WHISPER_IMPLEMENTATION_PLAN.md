@@ -19,7 +19,7 @@ is reproduced, and no affiliation is implied.
 ## Implemented and verified
 
 The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
-97-test suite in `tests/Soltex.Whisper.Tests`.
+105-test suite in `tests/Soltex.Whisper.Tests`.
 
 | Area | State |
 |---|---|
@@ -40,6 +40,7 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Overlay presentation | Pure state machine producing every visual state including fallback and error |
 | Scratchpad | Up to 5 tabs, bounded content, bounded undo depth |
 | Test doubles | Deterministic capture, transcriber (including a failing one), scripted inspector, recording delivery |
+| Session runner | One serialized provider-neutral path composes capture, target inspection, transcription context, finalization, delivery, and verified submission; release and cancellation are distinct, overlap is rejected, the previous completed transcript survives faults, and evidence remains content-free |
 | Windows capture | Shared-mode WASAPI capture endpoints only; selected-device persistence, one default-device recovery attempt, PCM/float normalization to 16 kHz mono PCM16, a 20-minute byte bound, explicit stop versus cancellation, and throttled content-free metering |
 | Capture privacy | Soltex-owned packet, conversion, accumulation, and final clip buffers are cleared on disposal; the Windows-owned WASAPI packet is released without being retained |
 | Capture UI | Working device refresh, persisted selection, explicit five-second microphone test, recovery/error status, and live overlay level meter |
@@ -53,8 +54,8 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, and Privacy tabs, and the floating listening surface — render this core.
 They are honest about capability: the navigation entry remains marked `SCAFFOLD`
-while providers and shipped capture-to-transcription-to-delivery session wiring are
-unavailable. Validated shortcuts can now be enabled and removed from the shipped
+while a real provider and shipped capture-to-transcription-to-delivery session wiring
+are unavailable. Validated shortcuts can now be enabled and removed from the shipped
 page; without a provider they show one explicit setup message instead of recording or
 silently doing nothing. The remaining Windows adapters are not yet connected to a
 complete shipped session, so the page does not claim it is ready. Capture controls
@@ -66,9 +67,9 @@ Nothing below exists yet. Any claim that it works is false until runtime evidenc
 from an owner-controlled Windows host says otherwise.
 
 1. A real transcription provider adapter and its credential storage.
-2. Dispatch from registered shortcut intents into a real provider-backed session
-   coordinator (startup registration, cancellation, feedback, and shutdown
-   unregistration are implemented).
+2. Instantiation of the tested provider-neutral session runner with a real provider,
+   followed by dispatch from registered shortcut intents (startup registration,
+   cancellation, feedback, and shutdown unregistration are implemented).
 3. Shipped session wiring for the UI Automation inspector, plus the complete
    owner-controlled target matrix (the adapter and one live focused-control proof
    exist).
@@ -161,8 +162,15 @@ begin/toggle/paste/copy intents render the presenter's explicit setup error,
 Open Scratchpad navigates to Whisper, release transitions do nothing, and Cancel
 stops any owned microphone test. Render-evidence mode never installs global hooks.
 
-Still required: route begin/release/toggle intents into the provider-backed session
-coordinator, prove physical push-to-talk release and mouse buttons in the shipped
+`WhisperSessionRunner` now supplies the tested provider-neutral coordinator path. It
+starts target inspection alongside capture, passes vocabulary/language/style hints to
+the transcriber, rejects overlapping sessions, separates successful release from
+discarding cancellation, preserves the previous completed transcript after a fault,
+and delegates all delivery/submission authorization to the existing core policies.
+Its structured lifecycle evidence contains only categories and fixed reasons.
+
+Still required: instantiate that runner with the selected real provider, route
+begin/release/toggle intents into it, prove physical push-to-talk release and mouse buttons in the shipped
 app, and record shortcut-to-listening latency. Current owner-host proof covers the
 adapter lifecycle; the new WPF lifecycle path has deterministic UI/build/render
 coverage but not a physical packaged-app run.
@@ -225,7 +233,7 @@ after staging or paste input is rejected, the transcript remains copied and the
 result names the fallback. Clipboard acquisition and restoration use bounded retries
 on one background STA thread.
 
-The core suite has 97 cases and the Windows suite has 39 deterministic cases. The
+The core suite has 105 cases and the Windows suite has 39 deterministic cases. The
 Windows cases cover direct-before-clipboard ordering, ownership restoration and loss,
 focus drift after staging, unknown targets, rejected paste, and cancellation cleanup.
 An opt-in owner-host test uses a controlled WinForms text target to prove clipboard

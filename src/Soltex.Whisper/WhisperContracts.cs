@@ -134,6 +134,16 @@ public interface IWhisperCaptureSource
         CancellationToken cancellationToken);
 }
 
+/// <summary>
+/// The explicit successful-stop path for a capture source. Push-to-talk release
+/// completes the current clip through this boundary; cancellation remains the
+/// discard path.
+/// </summary>
+public interface IWhisperCaptureControl
+{
+    bool CompleteCurrentCapture();
+}
+
 public interface IWhisperTranscriber
 {
     ValueTask<string> TranscribeAsync(
