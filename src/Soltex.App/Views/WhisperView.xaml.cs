@@ -15,6 +15,8 @@ namespace Soltex.App.Views;
 /// </summary>
 public partial class WhisperView : UserControl
 {
+    private static readonly int[] StandardRetentionDays = [1, 7, 30, 90];
+
     private readonly List<Button> _tabs;
     private readonly List<Button> _libraryTabs;
     private bool _updatingInputDevices;
@@ -368,7 +370,8 @@ public partial class WhisperView : UserControl
         {
             WhisperHistoryMode.Off => "History is off. Completed transcripts are not retained.",
             WhisperHistoryMode.SessionMemory => detail,
-            _ => "Encrypted history is unavailable in this build."
+            WhisperHistoryMode.EncryptedDisk => detail,
+            _ => "History mode is unavailable."
         };
     }
 
@@ -427,11 +430,35 @@ public partial class WhisperView : UserControl
             HistoryModeOption[] historyModes =
             [
                 new HistoryModeOption(WhisperHistoryMode.Off, "Off"),
-                new HistoryModeOption(WhisperHistoryMode.SessionMemory, "This session only")
+                new HistoryModeOption(WhisperHistoryMode.SessionMemory, "This session only"),
+                new HistoryModeOption(WhisperHistoryMode.EncryptedDisk, "Encrypted on this PC")
             ];
             WhisperHistoryModePicker.ItemsSource = historyModes;
             WhisperHistoryModePicker.SelectedItem = historyModes.Single(option =>
                 option.Mode == settings.HistoryMode);
+            HistoryRetentionOption[] retentionOptions = StandardRetentionDays
+                .Append(settings.HistoryRetentionDays)
+                .Distinct()
+                .Order()
+                .Select(days => new HistoryRetentionOption(
+                    days,
+                    days == 1 ? "1 day" : $"{days} days"))
+                .ToArray();
+            WhisperHistoryRetentionPicker.ItemsSource = retentionOptions;
+            WhisperHistoryRetentionPicker.SelectedItem = retentionOptions.Single(option =>
+                option.Days == settings.HistoryRetentionDays);
+            WhisperHistoryRetentionPanel.Visibility =
+                settings.HistoryMode == WhisperHistoryMode.EncryptedDisk
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            WhisperHistoryStorageDetail.Text = settings.HistoryMode switch
+            {
+                WhisperHistoryMode.Off => "Completed transcripts are not retained.",
+                WhisperHistoryMode.SessionMemory => "Session memory is cleared when Soltex closes.",
+                WhisperHistoryMode.EncryptedDisk =>
+                    "Transcript text is DPAPI-protected inside authenticated Soltex state.",
+                _ => "Choose a supported history mode."
+            };
 
             ClipboardBehaviorOption[] clipboardBehaviors =
             [
@@ -487,6 +514,17 @@ public partial class WhisperView : UserControl
 
     internal void ShowPrivacyForEvidence() =>
         SelectTab(WhisperPrivacyTab, WhisperPrivacyPanel);
+
+    internal void ShowEncryptedPrivacyForEvidence()
+    {
+        WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
+        document.HistoryMode = WhisperHistoryMode.EncryptedDisk.ToString();
+        document.HistoryRetentionDays = 30;
+        SetPrivacy(
+            WhisperSettingsMigrator.Load(document).Settings,
+            "Encrypted retention is configured for this Windows account.");
+        SelectTab(WhisperPrivacyTab, WhisperPrivacyPanel);
+    }
 
     internal void ShowPrivacyWarningForEvidence()
     {
@@ -871,6 +909,7 @@ public partial class WhisperView : UserControl
         bool? showTranscriptPreview = null)
     {
         if (WhisperHistoryModePicker.SelectedItem is not HistoryModeOption history ||
+            WhisperHistoryRetentionPicker.SelectedItem is not HistoryRetentionOption retention ||
             WhisperClipboardBehaviorPicker.SelectedItem is not ClipboardBehaviorOption clipboard)
         {
             SetPrivacyError("Choose a supported history and clipboard mode.");
@@ -884,6 +923,7 @@ public partial class WhisperView : UserControl
                 warningAccepted ?? _autoSendWarningAccepted,
                 contextReadsAllowed ?? _contextReadsAllowed,
                 history.Mode,
+                retention.Days,
                 clipboard.Behavior,
                 showTranscriptPreview ?? _showTranscriptPreview));
     }
@@ -1247,6 +1287,11 @@ public partial class WhisperView : UserControl
         public override string ToString() => DisplayName;
     }
 
+    internal sealed record HistoryRetentionOption(int Days, string DisplayName)
+    {
+        public override string ToString() => DisplayName;
+    }
+
     internal sealed record ClipboardBehaviorOption(
         WhisperClipboardBehavior Behavior,
         string DisplayName)
@@ -1363,6 +1408,7 @@ public sealed class WhisperPrivacyRequestedEventArgs : EventArgs
         bool autoSendWarningAccepted,
         bool contextReadsAllowed,
         WhisperHistoryMode historyMode,
+        int historyRetentionDays,
         WhisperClipboardBehavior clipboardBehavior,
         bool showTranscriptPreview)
     {
@@ -1370,6 +1416,7 @@ public sealed class WhisperPrivacyRequestedEventArgs : EventArgs
         AutoSendWarningAccepted = autoSendWarningAccepted;
         ContextReadsAllowed = contextReadsAllowed;
         HistoryMode = historyMode;
+        HistoryRetentionDays = historyRetentionDays;
         ClipboardBehavior = clipboardBehavior;
         ShowTranscriptPreview = showTranscriptPreview;
     }
@@ -1381,6 +1428,8 @@ public sealed class WhisperPrivacyRequestedEventArgs : EventArgs
     public bool ContextReadsAllowed { get; }
 
     public WhisperHistoryMode HistoryMode { get; }
+
+    public int HistoryRetentionDays { get; }
 
     public WhisperClipboardBehavior ClipboardBehavior { get; }
 

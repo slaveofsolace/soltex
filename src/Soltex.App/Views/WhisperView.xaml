@@ -1160,14 +1160,27 @@
                             <Border Style="{StaticResource QuietCardStyle}">
                                 <StackPanel>
                                     <TextBlock Text="Session history" FontWeight="SemiBold" />
-                                    <TextBlock Margin="0,4,0,8"
+                                    <TextBlock x:Name="WhisperHistoryStorageDetail"
+                                               Margin="0,4,0,8"
                                                Style="{StaticResource MutedTextStyle}"
-                                               Text="Encrypted disk retention is not available yet." />
+                                               Text="Session memory is cleared when Soltex closes." />
                                     <ComboBox x:Name="WhisperHistoryModePicker"
                                               Style="{StaticResource SoltexComboBoxStyle}"
                                               DisplayMemberPath="DisplayName"
                                               AutomationProperties.Name="Whisper history mode"
                                               SelectionChanged="PrivacyPicker_SelectionChanged" />
+                                    <StackPanel x:Name="WhisperHistoryRetentionPanel"
+                                                Margin="0,10,0,0"
+                                                Visibility="Collapsed">
+                                        <TextBlock Margin="0,0,0,6"
+                                                   Style="{StaticResource MutedTextStyle}"
+                                                   Text="Delete retained entries after" />
+                                        <ComboBox x:Name="WhisperHistoryRetentionPicker"
+                                                  Style="{StaticResource SoltexComboBoxStyle}"
+                                                  DisplayMemberPath="DisplayName"
+                                                  AutomationProperties.Name="Whisper encrypted history retention period"
+                                                  SelectionChanged="PrivacyPicker_SelectionChanged" />
+                                    </StackPanel>
                                 </StackPanel>
                             </Border>
                             <Border Grid.Column="2" Style="{StaticResource QuietCardStyle}">

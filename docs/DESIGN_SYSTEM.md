@@ -277,6 +277,11 @@ authorization gates and offers two explicit actions; it is never a generic modal
 toggle whose effect is hidden. History owns its own local tab and never appears in the
 global Activity feed.
 
+Encrypted history is a third explicit mode, not a hidden switch. Its retention
+selector appears only while that mode is active, and the nearby copy states both the
+Windows-account protection boundary and the chosen lifetime. Off and session-only
+modes keep that extra control out of the default information hierarchy.
+
 ### Keycaps
 
 Shortcut chords render as keycaps — `Ctrl` `Win` — rather than the string `Ctrl+Win`.

@@ -197,6 +197,8 @@ public partial class MainWindow : Window
             RefreshWhisperCaptureDevicesAsync);
         _whisperShortcutDrained = ReconcileWhisperShortcutsAsync(
             _whisperRuntimeCancellation.Token);
+        _whisperHistoryDrained = LoadWhisperHistoryAsync(
+            _whisperRuntimeCancellation.Token);
 
         _importMonitor = new ImportFolderMonitor(
             _runtime.ImportsPath,
@@ -212,7 +214,8 @@ public partial class MainWindow : Window
             audioRefresh,
             applicationRefresh,
             whisperCaptureRefresh,
-            _whisperShortcutDrained);
+            _whisperShortcutDrained,
+            _whisperHistoryDrained);
         if (_shutdownStarted)
         {
             _startupCompleted.TrySetCanceled();
@@ -263,6 +266,7 @@ public partial class MainWindow : Window
             _benchmarkOperationDrained,
             _whisperCaptureDrained,
             _whisperShortcutDrained,
+            _whisperHistoryDrained,
             _startupTask);
         if (!ownedWorkDrained)
         {
@@ -288,6 +292,7 @@ public partial class MainWindow : Window
 
         await DisposeWhisperRuntimeAsync();
         await DisposeWhisperCaptureAsync();
+        await DisposeWhisperHistoryAsync();
 
         _updateJournal.Dispose();
         _runtime.Dispose();
@@ -1746,6 +1751,17 @@ public partial class MainWindow : Window
             ShowPanel(WhisperPanel, WhisperNavButton);
             WhisperPanel.ShowPrivacyWarningForEvidence();
             _renderSmokeFocusTarget = WhisperPanel.WhisperAutoSendKeepOffButton;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-privacy-encrypted",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowEncryptedPrivacyForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperHistoryRetentionPicker;
             return true;
         }
 

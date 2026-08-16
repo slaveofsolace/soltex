@@ -106,6 +106,7 @@ $matrix = @(
     [ordered]@{ id = 'whisper-scratchpad'; panel = 'whisper-scratchpad'; state = 'session-memory'; file = 'whisper-scratchpad-current-source.png' },
     [ordered]@{ id = 'whisper-history'; panel = 'whisper-history'; state = 'empty-session'; file = 'whisper-history-current-source.png' },
     [ordered]@{ id = 'whisper-privacy'; panel = 'whisper-privacy'; state = 'safe-defaults'; file = 'whisper-privacy-current-source.png' },
+    [ordered]@{ id = 'whisper-privacy-encrypted'; panel = 'whisper-privacy-encrypted'; state = 'encrypted-retention'; file = 'whisper-privacy-encrypted-current-source.png' },
     [ordered]@{ id = 'whisper-privacy-warning'; panel = 'whisper-privacy-warning'; state = 'auto-send-consent'; file = 'whisper-privacy-warning-current-source.png' },
     [ordered]@{ id = 'updates-default'; panel = 'update'; state = 'default'; file = 'updates-current-source.png' }
 )

@@ -53,7 +53,8 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Personalization UI | Working language and built-in style selectors plus bounded add/remove personal vocabulary, all validated through `WhisperSettingsMigrator` and persisted in the bounded per-user settings store |
 | Personal library UI | Working bounded editors for snippets, named deterministic styles, and exact-process application rules; every update passes through versioned repair-to-safe settings validation, terminal eligibility depends on app auto-send eligibility, and global auto-send remains a separate consent |
 | Scratchpad UI | Five session-only tabs backed by the bounded core with working edit, undo, redo, reversible clear, close confirmation for non-empty notes, and direct shortcut navigation; nothing is written to disk |
-| History and privacy UI | Bounded session history has per-entry delete and clear; history-off clears it immediately; auto-send uses an inline first-use warning and atomic consent; context reads, clipboard behavior, and overlay preview are explicit persisted controls; unavailable encrypted retention is not offered as an operable choice |
+| History and privacy UI | Bounded session history has per-entry delete and clear; history-off clears it immediately; opt-in encrypted retention exposes a bounded period and clears prior authenticated generations on deletion; auto-send uses an inline first-use warning and atomic consent; context reads, clipboard behavior, and overlay preview are explicit persisted controls |
+| Encrypted history retention | Up to 24 entries and 16,000 characters per entry; transcript text is protected per record with current-user DPAPI inside the existing HMAC-authenticated state envelope; load, expiry, rewrite, clear, cancellation, corruption, and no-plaintext-envelope behavior have deterministic Windows coverage |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, Personalize, Library, Scratchpad, History, and Privacy tabs, and the floating listening
@@ -82,10 +83,9 @@ from an owner-controlled Windows host says otherwise.
    adapter (one controlled WinForms target has live direct and clipboard proof).
 5. Shipped verified-submission wiring and the complete application/denial matrix
    (the adapter and one controlled target proof exist).
-6. Encrypted transcript retention.
-7. Full accessibility, scale, theme, performance, install, update, and uninstall
+6. Full accessibility, scale, theme, performance, install, update, and uninstall
    evidence for the Whisper surfaces.
-8. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
+7. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
    deterministic tests currently prove the recovery policy and one owner-host device
    proves the normal live path.
 
@@ -200,7 +200,7 @@ terminal, plain-text, and rich-text categories remain content-free. Soltex stays
 `asInvoker` with `uiAccess=false`; high/system/protected targets are identified and
 the existing delivery policy falls back to copy.
 
-Target-specific coverage is included in the current 39-case Windows adapter suite.
+Target-specific coverage is included in the current 40-case Windows adapter suite.
 It covers all five target categories, pattern capability mapping,
 protected/read-only/unknown controls, provider timeout, provider failure, and
 cancellation. An opt-in owner-host run at commit `d11edec` also inspected a real
@@ -290,10 +290,36 @@ follow-ups.
 
 ### 8. Retention
 
-Optional disk retention stays off by default, uses the existing authenticated state
-boundary plus DPAPI, exposes a retention period, and supports immediate deletion.
-Transcript and audio content must not appear in Activity, diagnostics, crash text,
-CI logs, or Windows event logs.
+Optional disk retention is implemented and stays off by default. The provider-neutral
+`IWhisperHistoryRetentionStore` is implemented on Windows by
+`WindowsWhisperHistoryRetentionStore`; it maps only fixed delivery categories and
+bounded metadata into `AuthenticatedProtectedHistoryStore`. Transcript text is
+UTF-8 encoded, protected per record with current-user DPAPI, and then stored inside
+the existing generation-numbered, HMAC-authenticated Soltex state envelope. The
+shared authenticated-state key remains DPAPI-protected and is not duplicated for
+Whisper.
+
+Retention is limited to 1–90 days, 24 disk entries, and 16,000 characters per disk
+entry. Session memory remains independently bounded to 100 entries. Startup rejects
+unsupported versions, entry counts, metadata, ciphertext sizes, authentication
+failures, DPAPI failures, and invalid UTF-8 rather than exposing partial history.
+Expiry and per-entry deletion use a privacy-prioritized rewrite: current and backup
+Whisper generations are removed before the surviving set is committed. Clear removes
+both exact Whisper history artifacts immediately while preserving the shared state
+key used by other Soltex stores. A failed transition into encrypted mode attempts to
+remove staged history before reporting an error.
+
+The Privacy page exposes Off, This session only, and Encrypted on this PC, with an
+explicit retention selector. Leaving encrypted mode deletes Soltex-owned retained
+history before the new setting is accepted. History text is never copied into the
+global Activity feed or diagnostic events.
+
+The 18-case security-hardening suite covers authenticated round trip, absence of
+plaintext in either envelope, expiry, current/backup deletion, bounds, cancellation,
+and corruption failure. The 40-case Windows adapter suite covers the Whisper mapping
+and rewrite boundary. This is application-level encrypted retention, not forensic
+secure erasure: filesystem snapshots, SSD remapping, page files, crash dumps, and a
+same-user process able to invoke DPAPI remain outside its guarantee.
 
 ### 9. Threat model
 

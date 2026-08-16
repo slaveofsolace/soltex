@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using System.IO;
 using System.Security;
+using System.Security.Cryptography;
 using System.Windows;
 using Soltex.App.Views;
 using Soltex.Whisper;
@@ -21,6 +23,9 @@ public partial class MainWindow
     private readonly WhisperShortcutGestureInterpreter _whisperShortcutGestures = new();
     private readonly CancellationTokenSource _whisperRuntimeCancellation = new();
     private readonly BoundedWhisperHistory _whisperHistory = new(WhisperLimits.MaximumHistoryEntries);
+    private readonly SemaphoreSlim _whisperHistoryGate = new(1, 1);
+    private IWhisperHistoryRetentionStore? _whisperHistoryStore;
+    private Task _whisperHistoryDrained = Task.CompletedTask;
     private WindowsWhisperShortcutHost? _whisperShortcutHost;
     private Task _whisperShortcutDrained = Task.CompletedTask;
     private string? _whisperShortcutError;
@@ -31,6 +36,8 @@ public partial class MainWindow
             Path.Combine(_runtime.DataRoot, "whisper-settings.json"));
         WhisperSettingsLoadResult loaded = _whisperSettingsStore.Load();
         _whisperSettings = loaded.Settings;
+        _whisperHistoryStore = new WindowsWhisperHistoryRetentionStore(
+            Path.Combine(_runtime.DataRoot, "state"));
         _whisperCapture = new WhisperWasapiCaptureSource(_whisperSettings.InputDeviceId);
         _whisperCapture.InputLevelChanged += WhisperCapture_InputLevelChanged;
         _whisperCapture.DeviceSelectionChanged += WhisperCapture_DeviceSelectionChanged;
@@ -83,18 +90,31 @@ public partial class MainWindow
         UpdateWhisperReadiness();
     }
 
-    private void WhisperPanel_HistoryEntryDeleteRequested(
+    private async void WhisperPanel_HistoryEntryDeleteRequested(
         object? sender,
         WhisperHistoryEntryRequestedEventArgs e)
     {
-        _ = _whisperHistory.Remove(e.Entry);
-        UpdateWhisperHistoryView("History entry deleted from this session.");
+        if (_shutdownStarted)
+        {
+            return;
+        }
+
+        _whisperHistoryDrained = DeleteWhisperHistoryEntryAsync(
+            e.Entry,
+            _whisperRuntimeCancellation.Token);
+        await _whisperHistoryDrained;
     }
 
-    private void WhisperPanel_HistoryClearRequested(object? sender, EventArgs e)
+    private async void WhisperPanel_HistoryClearRequested(object? sender, EventArgs e)
     {
-        _whisperHistory.Clear();
-        UpdateWhisperHistoryView("Session history cleared.");
+        if (_shutdownStarted)
+        {
+            return;
+        }
+
+        _whisperHistoryDrained = ClearWhisperHistoryAsync(
+            _whisperRuntimeCancellation.Token);
+        await _whisperHistoryDrained;
     }
 
     private void UpdateWhisperHistoryView(string? detail = null)
@@ -102,29 +122,73 @@ public partial class MainWindow
         WhisperPanel.SetHistory(
             _whisperHistory.CreateSnapshot(),
             _whisperSettings.HistoryMode,
-            detail ?? "Session memory only. Closing Soltex clears it.");
+            detail ?? (_whisperSettings.HistoryMode == WhisperHistoryMode.EncryptedDisk
+                ? $"Encrypted for {_whisperSettings.HistoryRetentionDays} days for this Windows account."
+                : "Session memory only. Closing Soltex clears it."));
     }
 
-    private void WhisperPanel_PrivacyRequested(
+    private async void WhisperPanel_PrivacyRequested(
         object? sender,
         WhisperPrivacyRequestedEventArgs e)
     {
+        if (_shutdownStarted)
+        {
+            return;
+        }
+
+        _whisperHistoryDrained = SaveWhisperPrivacyAsync(
+            e,
+            _whisperRuntimeCancellation.Token);
+        await _whisperHistoryDrained;
+    }
+
+    private async Task SaveWhisperPrivacyAsync(
+        WhisperPrivacyRequestedEventArgs e,
+        CancellationToken cancellationToken)
+    {
+        bool gateEntered = false;
+        bool stagedEncryptedState = false;
         try
         {
+            await _whisperHistoryGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            gateEntered = true;
             WhisperSettingsDocument document = _whisperSettings.ToDocument();
             document.AutoSendEnabled = e.AutoSendEnabled;
             document.AutoSendWarningAccepted = e.AutoSendWarningAccepted;
             document.ContextReadsAllowed = e.ContextReadsAllowed;
             document.HistoryMode = e.HistoryMode.ToString();
+            document.HistoryRetentionDays = e.HistoryRetentionDays;
             document.ClipboardBehavior = e.ClipboardBehavior.ToString();
             document.ShowTranscriptPreview = e.ShowTranscriptPreview;
 
             WhisperSettingsLoadResult loaded = WhisperSettingsMigrator.Load(document);
             if (!loaded.IsClean)
             {
-                WhisperPanel.SetPrivacyError(
-                    "That privacy change was not saved because it did not pass safe settings validation.");
+                await Dispatcher.InvokeAsync(() => WhisperPanel.SetPrivacyError(
+                    "That privacy change was not saved because it did not pass safe settings validation."));
                 return;
+            }
+
+            WhisperHistoryMode previousMode = _whisperSettings.HistoryMode;
+            bool retainedStateChanged =
+                previousMode != loaded.Settings.HistoryMode ||
+                _whisperSettings.HistoryRetentionDays != loaded.Settings.HistoryRetentionDays;
+            if (_whisperHistoryStore is not null && retainedStateChanged)
+            {
+                if (loaded.Settings.HistoryMode == WhisperHistoryMode.EncryptedDisk)
+                {
+                    await _whisperHistoryStore.RewriteAsync(
+                        _whisperHistory.CreateSnapshot(),
+                        loaded.Settings.HistoryRetentionDays,
+                        cancellationToken).ConfigureAwait(false);
+                    stagedEncryptedState =
+                        previousMode != WhisperHistoryMode.EncryptedDisk;
+                }
+                else
+                {
+                    await _whisperHistoryStore.ClearAsync(cancellationToken)
+                        .ConfigureAwait(false);
+                }
             }
 
             _whisperSettingsStore?.Save(loaded.Settings);
@@ -134,15 +198,176 @@ public partial class MainWindow
                 _whisperHistory.Clear();
             }
 
-            WhisperPanel.SetPrivacy(
-                _whisperSettings,
-                "Privacy and delivery settings saved for this Windows account.");
-            UpdateWhisperHistoryView();
-            UpdateWhisperReadiness();
+            await Dispatcher.InvokeAsync(() =>
+            {
+                WhisperPanel.SetPrivacy(
+                    _whisperSettings,
+                    "Privacy and delivery settings saved for this Windows account.");
+                UpdateWhisperHistoryView();
+                UpdateWhisperReadiness();
+            });
         }
-        catch (Exception exception) when (IsExpectedWhisperSettingsFailure(exception))
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            WhisperPanel.SetPrivacyError("That privacy change could not be saved.");
+            // Shutdown owns cancellation and waits for this operation to drain.
+        }
+        catch (Exception exception) when (
+            IsExpectedWhisperSettingsFailure(exception) ||
+            IsExpectedWhisperHistoryFailure(exception))
+        {
+            if (stagedEncryptedState && _whisperHistoryStore is not null)
+            {
+                try
+                {
+                    await _whisperHistoryStore.ClearAsync(CancellationToken.None)
+                        .ConfigureAwait(false);
+                }
+                catch (Exception rollbackException) when (
+                    IsExpectedWhisperHistoryFailure(rollbackException))
+                {
+                    // The visible error remains conservative and asks the user to
+                    // review retention rather than claiming the rollback succeeded.
+                }
+            }
+
+            await Dispatcher.InvokeAsync(() => WhisperPanel.SetPrivacyError(
+                "That privacy change could not be completed. Review the current history setting before dictating."));
+        }
+        finally
+        {
+            if (gateEntered)
+            {
+                _whisperHistoryGate.Release();
+            }
+        }
+    }
+
+    private async Task LoadWhisperHistoryAsync(CancellationToken cancellationToken)
+    {
+        if (_whisperSettings.HistoryMode != WhisperHistoryMode.EncryptedDisk ||
+            _whisperHistoryStore is null)
+        {
+            return;
+        }
+
+        bool gateEntered = false;
+        try
+        {
+            await _whisperHistoryGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            gateEntered = true;
+            IReadOnlyList<WhisperHistoryEntry> entries =
+                await _whisperHistoryStore.LoadAsync(
+                    _whisperSettings.HistoryRetentionDays,
+                    cancellationToken).ConfigureAwait(false);
+            foreach (WhisperHistoryEntry entry in entries)
+            {
+                _whisperHistory.Add(entry);
+            }
+
+            await Dispatcher.InvokeAsync(() => UpdateWhisperHistoryView());
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Shutdown owns cancellation and waits for this operation to drain.
+        }
+        catch (Exception exception) when (IsExpectedWhisperHistoryFailure(exception))
+        {
+            _whisperHistory.Clear();
+            await Dispatcher.InvokeAsync(() => UpdateWhisperHistoryView(
+                "Encrypted history could not be opened. Clear it or choose another history mode."));
+        }
+        finally
+        {
+            if (gateEntered)
+            {
+                _whisperHistoryGate.Release();
+            }
+        }
+    }
+
+    private async Task DeleteWhisperHistoryEntryAsync(
+        WhisperHistoryEntry entry,
+        CancellationToken cancellationToken)
+    {
+        bool gateEntered = false;
+        try
+        {
+            await _whisperHistoryGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            gateEntered = true;
+            WhisperHistoryEntry[] snapshot = _whisperHistory.CreateSnapshot().ToArray();
+            int removalIndex = Array.FindIndex(snapshot, candidate => candidate == entry);
+            if (removalIndex < 0)
+            {
+                return;
+            }
+
+            WhisperHistoryEntry[] desired = snapshot
+                .Where((_, index) => index != removalIndex)
+                .ToArray();
+            if (_whisperSettings.HistoryMode == WhisperHistoryMode.EncryptedDisk &&
+                _whisperHistoryStore is not null)
+            {
+                await _whisperHistoryStore.RewriteAsync(
+                    desired,
+                    _whisperSettings.HistoryRetentionDays,
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            _ = _whisperHistory.Remove(entry);
+            await Dispatcher.InvokeAsync(() => UpdateWhisperHistoryView(
+                _whisperSettings.HistoryMode == WhisperHistoryMode.EncryptedDisk
+                    ? "History entry deleted from encrypted retention."
+                    : "History entry deleted from this session."));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Shutdown owns cancellation and waits for this operation to drain.
+        }
+        catch (Exception exception) when (IsExpectedWhisperHistoryFailure(exception))
+        {
+            await Dispatcher.InvokeAsync(() => UpdateWhisperHistoryView(
+                "That entry could not be deleted from encrypted retention."));
+        }
+        finally
+        {
+            if (gateEntered)
+            {
+                _whisperHistoryGate.Release();
+            }
+        }
+    }
+
+    private async Task ClearWhisperHistoryAsync(CancellationToken cancellationToken)
+    {
+        bool gateEntered = false;
+        try
+        {
+            await _whisperHistoryGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            gateEntered = true;
+            if (_whisperHistoryStore is not null)
+            {
+                await _whisperHistoryStore.ClearAsync(cancellationToken).ConfigureAwait(false);
+            }
+
+            _whisperHistory.Clear();
+            await Dispatcher.InvokeAsync(() => UpdateWhisperHistoryView(
+                "History cleared from memory and Soltex-owned retained state."));
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Shutdown owns cancellation and waits for this operation to drain.
+        }
+        catch (Exception exception) when (IsExpectedWhisperHistoryFailure(exception))
+        {
+            await Dispatcher.InvokeAsync(() => UpdateWhisperHistoryView(
+                "History could not be cleared from encrypted retention."));
+        }
+        finally
+        {
+            if (gateEntered)
+            {
+                _whisperHistoryGate.Release();
+            }
         }
     }
 
@@ -695,6 +920,18 @@ public partial class MainWindow
         }
     }
 
+    private async Task DisposeWhisperHistoryAsync()
+    {
+        IWhisperHistoryRetentionStore? store =
+            Interlocked.Exchange(ref _whisperHistoryStore, null);
+        if (store is not null)
+        {
+            await store.DisposeAsync().ConfigureAwait(false);
+        }
+
+        _whisperHistoryGate.Dispose();
+    }
+
     private async ValueTask DisposeWhisperShortcutHostAsync()
     {
         WindowsWhisperShortcutHost? host =
@@ -710,5 +947,10 @@ public partial class MainWindow
 
     private static bool IsExpectedWhisperSettingsFailure(Exception exception) =>
         exception is IOException or UnauthorizedAccessException or SecurityException or
+            InvalidOperationException or ArgumentException;
+
+    private static bool IsExpectedWhisperHistoryFailure(Exception exception) =>
+        exception is IOException or UnauthorizedAccessException or SecurityException or
+            CryptographicException or Win32Exception or InvalidDataException or
             InvalidOperationException or ArgumentException;
 }

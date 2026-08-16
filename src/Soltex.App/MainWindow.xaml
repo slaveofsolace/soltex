@@ -89,7 +89,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE720;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                             <TextBlock Grid.Column="1" Text="Whisper" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="2" Text="SCAFFOLD" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                            <TextBlock Grid.Column="2" Margin="8,0,0,0" Text="SCAFFOLD" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Grid>
                     </Button>
                     <Button x:Name="RemoteNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Remote Assist" Click="RemoteNav_Click">
@@ -105,7 +105,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE772;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                             <TextBlock Grid.Column="1" Text="Device mesh" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="2" Text="PREVIEW" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                            <TextBlock Grid.Column="2" Margin="8,0,0,0" Text="PREVIEW" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Grid>
                     </Button>
                     <Button x:Name="ClipsNavButton" Visibility="Collapsed" Style="{StaticResource NavButton}" AutomationProperties.Name="Capture preview" Click="ClipsNav_Click">
@@ -113,7 +113,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE714;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                             <TextBlock Grid.Column="1" Text="Capture" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="2" Text="PREVIEW" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                            <TextBlock Grid.Column="2" Margin="8,0,0,0" Text="PREVIEW" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Grid>
                     </Button>
                     <Button x:Name="ActivityNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Activity" Click="ActivityNav_Click">

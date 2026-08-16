@@ -1316,6 +1316,31 @@ internal static class Program
             .Single(option => option.Mode == WhisperHistoryMode.Off);
         True(requested?.HistoryMode == WhisperHistoryMode.Off,
             "History-off selection did not emit one supported privacy update.");
+
+        WhisperSettingsDocument encryptedDocument = enabled.ToDocument();
+        encryptedDocument.HistoryMode = WhisperHistoryMode.EncryptedDisk.ToString();
+        encryptedDocument.HistoryRetentionDays = 30;
+        WhisperSettings encrypted = WhisperSettingsMigrator.Load(encryptedDocument).Settings;
+        view.SetPrivacy(encrypted, "Saved.");
+        True(
+            view.WhisperHistoryRetentionPanel.Visibility == Visibility.Visible &&
+            view.WhisperHistoryStorageDetail.Text.Contains(
+                "DPAPI",
+                StringComparison.Ordinal),
+            "Encrypted history did not render its protection and retention controls.");
+
+        requested = null;
+        view.WhisperHistoryRetentionPicker.SelectedItem =
+            view.WhisperHistoryRetentionPicker.Items
+                .Cast<WhisperView.HistoryRetentionOption>()
+                .Single(option => option.Days == 7);
+        True(
+            requested is
+            {
+                HistoryMode: WhisperHistoryMode.EncryptedDisk,
+                HistoryRetentionDays: 7
+            },
+            "Encrypted history retention did not emit one bounded privacy update.");
     }
 
     private static void WhisperScratchpadControlsAreWorking()

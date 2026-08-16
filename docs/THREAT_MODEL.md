@@ -33,6 +33,7 @@ Security-sensitive assets are user files, quarantined payloads, original restore
 12. **Whisper to focused application metadata.** UI Automation crosses into an untrusted provider process. Inspection is metadata-only, single-flight, deadline-bounded, and produces one identity-and-capability snapshot or unknown. Soltex does not request UIAccess, cross an integrity boundary, or read field, selection, caption, password, or surrounding text at this boundary.
 13. **Whisper to target and clipboard mutation.** The core reauthorizes the captured target before Windows code acts and again after clipboard staging. Direct UIA replacement is whole-value-only; other insertion uses one paste chord. Clipboard restore requires a matching sequence number and unique operation token and never inspects prior formats.
 14. **Whisper settings to global shortcut lifecycle.** The shipped host installs hooks only after versioned settings migration/validation and an explicit persisted enable action. Disable, shutdown, render evidence, registration failure, and runtime hook fault all fail closed to no active action path.
+15. **Whisper to retained transcript state.** Disk history is opt-in. Transcript text crosses into current-user DPAPI only through the provider-neutral retention boundary, then its ciphertext and bounded metadata enter the existing authenticated-state envelope. The global Activity and diagnostic paths never receive that text.
 
 ### Invariants
 
@@ -197,6 +198,32 @@ provider, or focus change in the final gap between the last UIA comparison and
 `SendInput` remains outside complete prevention. Soltex reduces that window, never
 selects a recipient/channel/address/terminal, and keeps auto-send unavailable in the
 shipped UI until the application matrix and coordinator lifecycle are proven.
+
+### Whisper retained-history boundary
+
+Transcript history is sensitive content. The default is bounded session memory;
+disk retention requires an explicit Encrypted on this PC choice and a 1–90 day
+period. At most 24 entries and 16,000 characters per entry cross the storage
+boundary. Process names and fixed delivery categories remain bounded metadata;
+transcript text is protected per record with current-user DPAPI before the document
+enters Soltex's HMAC-authenticated, generation-numbered state envelope. Cleartext and
+DPAPI working buffers are explicitly zeroed when their owned lifetime ends.
+
+Load authenticates the document before parsing it, rejects excessive or malformed
+records, decrypts only unexpired entries, and fails closed on authentication, DPAPI,
+UTF-8, or schema failure. Expiry and per-entry deletion remove both the current and
+last-known-good Whisper envelopes before committing surviving entries, so Soltex's
+own backup does not preserve deliberately deleted text. Clear removes those two
+exact Whisper artifacts and leaves the shared authenticated-state key intact for
+other stores. A cancelled or failed transition cannot be reported as successful.
+
+These controls do not provide forensic erasure. NTFS snapshots, backup software,
+SSD wear levelling, page files, hibernation, crash dumps, and storage captured before
+deletion may retain bytes outside Soltex's ownership. DPAPI and envelope
+authentication also do not defend against malware already running as the same user,
+an administrator, process injection, or a compromised Windows cryptographic service.
+The UI therefore says encrypted retention and exact Soltex-owned deletion, never
+secure erase or protection from a compromised account.
 
 ### External Remote Assist boundary
 

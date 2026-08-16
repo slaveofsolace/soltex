@@ -580,15 +580,15 @@ var tests = new (string Name, Action Run)[]
         False(result.Settings.AutoSendEnabled);
         False(result.Migrated);
     }),
-    ("unavailable encrypted history repairs to session memory", () =>
+    ("encrypted history remains available after safe migration", () =>
     {
         WhisperSettingsLoadResult result = WhisperSettingsMigrator.Load(new WhisperSettingsDocument
         {
             Version = WhisperSettings.CurrentVersion,
             HistoryMode = nameof(WhisperHistoryMode.EncryptedDisk)
         });
-        Equal(WhisperHistoryMode.SessionMemory, result.Settings.HistoryMode);
-        True(result.Corrections.Count == 1);
+        Equal(WhisperHistoryMode.EncryptedDisk, result.Settings.HistoryMode);
+        True(result.Corrections.Count == 0);
     }),
     ("invalid fields are repaired to the safer default and reported", () =>
     {
