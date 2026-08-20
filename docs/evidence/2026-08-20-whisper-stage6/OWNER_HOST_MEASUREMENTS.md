@@ -74,11 +74,11 @@ mutated field; the evidence log contains no target or transcript content.
 - Focus-changing field: `TargetChanged` fallback
 - Log SHA-256: `d91f142e719ae9f00d15f2f6c199ea8e7e29802a2254a5b29cfd547ed3273a02`
 
-These timings are one-host observations. They do not prove WinUI or production-model behavior.
+These timings are one-host observations. They do not prove production-model behavior.
 
 ## Extended owner target matrix
 
-The extended exact-head run adds three content-free owner-host rows:
+The extended exact-head evidence covers four content-free owner-host rows:
 
 - Electron 42.7.1 executable: `232794112` bytes; SHA-256
   `6482758560e64f4e99a62dd244223a238ff26a378bbe813790f1efbcec2bccc8`
@@ -96,9 +96,24 @@ The Electron runtime was a pinned repo-external proof dependency and is not ship
 The host policy rejected automatic recursive deletion of that temporary runtime root, so its local
 cache remains outside the repository. No Electron fixture process or profile remains active.
 
-A dedicated WinUI 3 sample built and opened, but its `TextBox` did not appear in UI Automation by
-exact HWND or desktop-root PID/automation-ID lookup. That experimental sample was removed rather
-than counted as proof. WinUI remains pending.
+At exact commit `d6704a9`, the owner-built unpackaged WinUI 3 target completed the remaining row:
+
+- Target: real WinUI 3 `TextBox`; category `PlainText`; framework `XAML`
+- Insertion: `AutomationValue`, `20.45 ms`; target-owned read-back verified
+- Submission: `109.16 ms`; current foreground process matched the inspected target; exactly one
+  target-received Enter key-down
+- Privacy: `content_logged=0`; no target or transcript content entered the log
+- Log: `artifacts/whisper-stage6/d6704a9-winui-target.log`; SHA-256
+  `038737c739d5c682851b08fb8d1419d025a78e8a01739a11ffce5abb8abcff83`
+
+These values are one-host observations for the controlled sample, not a guarantee for every WinUI
+control or application version.
+
+The Release solution build completed with zero warnings and zero errors. The provider-neutral core,
+Windows adapter, and application suites passed `115/115`, `61/61`, and `49/49`; identity,
+design-token, and accessibility-contract gates also passed. The separate live Windows protection
+integration gate remained intentionally deferred during host servicing, so this checkpoint makes no
+Defender health or EICAR claim.
 
 ## Installer compile checkpoint
 
@@ -140,7 +155,6 @@ not publisher reputation, SmartScreen acceptance, or production release authoriz
 - Release-to-transcription and full capture-to-verified-submit latency remain pending.
 - Physical shortcuts, live per-monitor DPI transitions, keyboard-only navigation, and
   a screen-reader walkthrough remain owner-proof gates.
-- WinUI editable-target proof remains pending.
 - The navigation `SCAFFOLD` marker remains until a real model-backed capture,
   transcription, insertion, verification, and safe cancellation complete on the owner
   host.

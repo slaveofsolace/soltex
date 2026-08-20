@@ -75,19 +75,16 @@ registered, the exact local provider tuple is selected, and the pinned model ver
 controls are enabled only when a selected device exists. Auto-send stays off by default, and no host
 code authorizes Enter outside the provider-neutral submit gate.
 
-## Not implemented
+## Owner proof not yet complete
 
-Nothing below exists yet. Any claim that it works is false until runtime evidence
-from an owner-controlled Windows host says otherwise.
+The implementation paths below exist, but the listed owner-controlled evidence is still required
+before the corresponding capability can be described as complete.
 
 1. Owner-controlled download and execution of the pinned 547 MiB production model, including
    accuracy, latency, working-set, cancellation, unload, and restart evidence.
-2. The complete owner-controlled target/insertion/submission matrix for Win32, WPF, WinUI,
-   Chromium, Electron, Windows Terminal, read-only, elevated, unknown, and focus-changing targets.
-   The shipped adapters are wired, but the full matrix is not proven.
-3. Physical keyboard and mouse shortcut coverage plus callback and shortcut-to-listening latency
+2. Physical keyboard and mouse shortcut coverage plus callback and shortcut-to-listening latency
    measurements in the packaged app.
-4. Owner-controlled per-monitor DPI transitions, keyboard-only and screen-reader walkthroughs,
+3. Owner-controlled per-monitor DPI transitions, keyboard-only and screen-reader walkthroughs,
    plus production-model performance evidence for the Whisper surfaces. The
    deterministic renderer now covers light/dark/high-contrast, minimum-width, synthetic
    100/150/200-percent raster profiles, and every overlay state. Synthetic high-density
@@ -95,7 +92,7 @@ from an owner-controlled Windows host says otherwise.
    proves its CPU native runtime and model exclusion, and the ephemeral Windows gate now proves
    per-user install, 0.0.1-to-0.0.2 update, exact runtime payload, and clean uninstall. The
    installer remains unsigned, so SmartScreen reputation and production signing are not proven.
-5. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
+4. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
    deterministic tests currently prove the recovery policy and one owner-host device
    proves the normal live path.
 
@@ -155,7 +152,7 @@ removes the exact model and recognized owned partials, preserving unrelated stat
 
 The pinned digest is an integrity expectation derived from the upstream LFS object
 at that revision. It is not described as independent publisher authenticity proof.
-The 59-case Windows adapter suite covers normal install, declared and streamed
+The 61-case Windows adapter suite covers normal install, declared and streamed
 oversize, truncation, digest mismatch, cancellation cleanup, concurrent rejection,
 repair, exact deletion, interrupted partial cleanup, and post-install change
 detection with small benign fixtures. The 547 MiB production model was not
@@ -197,7 +194,7 @@ Seven new benign adapter tests prove the model lease, no-copy WAVE projection,
 language and vocabulary propagation, lazy reuse, runtime-fault recovery, content-free
 failures, cancellation classification, short/empty/oversized rejection, explicit
 unload/reload, and owned PCM clearing. Together with the existing model-manager and
-Windows coverage, the suite reports 59/59. The production model was not downloaded
+Windows coverage, the suite reports 61/61. The production model was not downloaded
 or executed: there is no live accuracy, latency, working-set, readiness, or supported-
 hardware claim. The shipped Setup surface and session composition now use this adapter;
 owner-controlled live proof remains required.
@@ -275,7 +272,7 @@ terminal, plain-text, and rich-text categories remain content-free. Soltex stays
 `asInvoker` with `uiAccess=false`; high/system/protected targets are identified and
 the existing delivery policy falls back to copy.
 
-Target-specific deterministic coverage is included in the current 59-case Windows adapter suite.
+Target-specific deterministic coverage is included in the current 61-case Windows adapter suite.
 It covers all five target categories, pattern capability mapping,
 protected/read-only/unknown controls, provider timeout, provider failure, and
 cancellation. An opt-in owner-host run at commit `d11edec` also inspected a real
@@ -296,7 +293,10 @@ retain `Editor` precedence. Exact-head owner evidence at `0c59d0f` adds a local 
 fixture with verified clipboard insertion and one authorized Enter, a uniquely titled Windows
 Terminal window that proves the separate terminal opt-in without dispatching a command, and a
 UAC-approved `High`-integrity child that resolves to `UnknownTarget` and `CopyText` with zero
-mutation. A dedicated WinUI editable sample remains unproven. The exact support/proof split is maintained in
+mutation. Exact commit `d6704a9` adds the remaining WinUI 3 row: an owner-built unpackaged
+`TextBox` classified `PlainText` with framework `XAML`, accepted whole-value automation insertion,
+passed target-owned read-back, and received exactly one authorized Enter key-down. The exact
+support/proof split is maintained in
 `docs/WHISPER_TARGET_MATRIX.md`. Context reads
 remain off; a future visible per-application permission must precede any bounded
 contextual read.
@@ -329,7 +329,7 @@ after staging or paste input is rejected, the transcript remains copied and the
 result names the fallback. Clipboard acquisition and restoration use bounded retries
 on one background STA thread.
 
-The core suite has 115 cases and the Windows suite has 59 deterministic cases. The
+The core suite has 115 cases and the Windows suite has 61 deterministic cases. The
 Windows cases cover direct-before-clipboard ordering, ownership restoration and loss,
 focus drift after staging, unknown targets, rejected paste, and cancellation cleanup.
 An opt-in owner-host test uses a controlled WinForms text target to prove clipboard
@@ -354,8 +354,9 @@ The target is inspected once more immediately before submission. Every decision 
 passes through `WhisperSubmitGate`: requested origin, accepted first-use warning,
 cancellation, target drift, and verified insertion must all remain valid. An allowed
 authorization carries a one-use permit. The Windows adapter consumes it immediately
-before one Enter-down/Enter-up `SendInput` call; a denied or already-consumed
-authorization cannot emit input. Active Ctrl, Shift, Alt, or Windows modifiers reject
+before one untagged virtual-key Enter-down/Enter-up `SendInput` call; a denied or already-consumed
+authorization cannot emit input. The foreground root process must still match the final inspected
+target. Active Ctrl, Shift, Alt, or Windows modifiers reject
 the dispatch after consuming the permit, so no retry can accidentally submit later.
 
 The Windows suite exercises every gate branch end-to-end, altered and unavailable
@@ -421,7 +422,7 @@ global Activity feed or diagnostic events.
 
 The 18-case security-hardening suite covers authenticated round trip, absence of
 plaintext in either envelope, expiry, current/backup deletion, bounds, cancellation,
-and corruption failure. The 59-case Windows adapter suite covers the Whisper mapping
+and corruption failure. The 61-case Windows adapter suite covers the Whisper mapping
 and rewrite boundary. This is application-level encrypted retention, not forensic
 secure erasure: filesystem snapshots, SSD remapping, page files, crash dumps, and a
 same-user process able to invoke DPAPI remain outside its guarantee.
