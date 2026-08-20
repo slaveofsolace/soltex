@@ -153,7 +153,7 @@ removes the exact model and recognized owned partials, preserving unrelated stat
 
 The pinned digest is an integrity expectation derived from the upstream LFS object
 at that revision. It is not described as independent publisher authenticity proof.
-The 58-case Windows adapter suite covers normal install, declared and streamed
+The 59-case Windows adapter suite covers normal install, declared and streamed
 oversize, truncation, digest mismatch, cancellation cleanup, concurrent rejection,
 repair, exact deletion, interrupted partial cleanup, and post-install change
 detection with small benign fixtures. The 547 MiB production model was not
@@ -195,7 +195,7 @@ Seven new benign adapter tests prove the model lease, no-copy WAVE projection,
 language and vocabulary propagation, lazy reuse, runtime-fault recovery, content-free
 failures, cancellation classification, short/empty/oversized rejection, explicit
 unload/reload, and owned PCM clearing. Together with the existing model-manager and
-Windows coverage, the suite reports 58/58. The production model was not downloaded
+Windows coverage, the suite reports 59/59. The production model was not downloaded
 or executed: there is no live accuracy, latency, working-set, readiness, or supported-
 hardware claim. The shipped Setup surface and session composition now use this adapter;
 owner-controlled live proof remains required.
@@ -273,7 +273,7 @@ terminal, plain-text, and rich-text categories remain content-free. Soltex stays
 `asInvoker` with `uiAccess=false`; high/system/protected targets are identified and
 the existing delivery policy falls back to copy.
 
-Target-specific deterministic coverage is included in the current 58-case Windows adapter suite.
+Target-specific deterministic coverage is included in the current 59-case Windows adapter suite.
 It covers all five target categories, pattern capability mapping,
 protected/read-only/unknown controls, provider timeout, provider failure, and
 cancellation. An opt-in owner-host run at commit `d11edec` also inspected a real
@@ -324,7 +324,7 @@ after staging or paste input is rejected, the transcript remains copied and the
 result names the fallback. Clipboard acquisition and restoration use bounded retries
 on one background STA thread.
 
-The core suite has 115 cases and the Windows suite has 58 deterministic cases. The
+The core suite has 115 cases and the Windows suite has 59 deterministic cases. The
 Windows cases cover direct-before-clipboard ordering, ownership restoration and loss,
 focus drift after staging, unknown targets, rejected paste, and cancellation cleanup.
 An opt-in owner-host test uses a controlled WinForms text target to prove clipboard
@@ -416,7 +416,7 @@ global Activity feed or diagnostic events.
 
 The 18-case security-hardening suite covers authenticated round trip, absence of
 plaintext in either envelope, expiry, current/backup deletion, bounds, cancellation,
-and corruption failure. The 58-case Windows adapter suite covers the Whisper mapping
+and corruption failure. The 59-case Windows adapter suite covers the Whisper mapping
 and rewrite boundary. This is application-level encrypted retention, not forensic
 secure erasure: filesystem snapshots, SSD remapping, page files, crash dumps, and a
 same-user process able to invoke DPAPI remain outside its guarantee.
@@ -453,6 +453,17 @@ window, instantiate the normal app runtime, read the model store, enumerate capt
 devices, or report native feature strings. A passing probe proves that the shipped CPU
 dependency chain loads. It does not prove the production model, transcription,
 accuracy, latency, memory use, microphone permission, or insertion path.
+
+The per-user Inno installer copies the same exact four CPU runtime DLLs into the
+runtime-specific directory beside the installed single-file app. Its ephemeral-host
+gate installs version 0.0.1, verifies that exact runtime payload, stages bounded
+Whisper ownership fixtures, upgrades to 0.0.2 while proving those fixtures remain,
+then performs a silent uninstall. Before installed files are removed, the app's exact
+controlled cleanup removes the pinned model artifact, recognized interrupted model
+and settings files, encrypted Whisper history, and the local-provider credential
+generations. It preserves unrelated model-directory files, the shared authenticated
+state key, and all non-Whisper Soltex state. The cleanup is separately covered by a
+benign filesystem test and emits only a content-free result when evidence is requested.
 
 ## Evidence required before Whisper is called complete
 

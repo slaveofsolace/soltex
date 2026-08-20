@@ -56,6 +56,7 @@ List<(string Name, Func<Task> Run)> tests =
     ("target read-back cancellation is honored", TargetReadbackCancellation),
     ("encrypted history adapter preserves bounded Whisper records", HistoryRetentionAdapter),
     ("provider credentials stay in the protected Windows boundary", ProviderCredentialBoundary),
+    ("uninstall cleanup removes only exact-owned Whisper state", UninstallCleanupIsExact),
     ("local model installation verifies and atomically promotes exact bytes", LocalModelInstall),
     ("local model installation rejects oversized responses", LocalModelOversize),
     ("local model installation rejects digest mismatches", LocalModelDigestMismatch),
@@ -1560,6 +1561,91 @@ static async Task ProviderCredentialBoundary()
 
     Throws<ArgumentException>(() =>
         _ = new WindowsWhisperCredentialStore(Path.GetTempPath(), "invalid/provider"));
+}
+
+static async Task UninstallCleanupIsExact()
+{
+    string root = Path.Combine(
+        Path.GetTempPath(),
+        "soltex-whisper-uninstall-tests-" + Guid.NewGuid().ToString("N"));
+    string modelsRoot = Path.Combine(root, "whisper", "models");
+    string stateRoot = Path.Combine(root, "state");
+    Directory.CreateDirectory(modelsRoot);
+    Directory.CreateDirectory(stateRoot);
+    string modelPath = Path.Combine(
+        modelsRoot,
+        WhisperLocalModelArtifact.TurboQ5Cpu.FileName);
+    string partialPath = modelPath + "." + Guid.NewGuid().ToString("N") + ".partial";
+    string unrelatedModelFile = Path.Combine(modelsRoot, "owner-note.txt");
+    string settingsPath = Path.Combine(root, "whisper-settings.json");
+    string settingsTemporary = settingsPath + ".tmp-" + Guid.NewGuid().ToString("N");
+    string unrelatedTemporary = settingsPath + ".tmp-owner";
+    byte[] credential = "cleanup-fixture"u8.ToArray();
+    try
+    {
+        File.WriteAllBytes(modelPath, [1, 2, 3]);
+        File.WriteAllBytes(partialPath, [4, 5, 6]);
+        File.WriteAllText(Path.Combine(modelsRoot, ".install.lock"), string.Empty);
+        File.WriteAllText(unrelatedModelFile, "preserve");
+        File.WriteAllText(settingsPath, "{}");
+        File.WriteAllText(settingsTemporary, "temporary");
+        File.WriteAllText(unrelatedTemporary, "preserve");
+
+        await using (WindowsWhisperHistoryRetentionStore history = new(stateRoot))
+        {
+            await history.SaveAsync(
+                [new WhisperHistoryEntry(
+                    DateTimeOffset.UtcNow,
+                    "sample",
+                    WhisperDeliveryKind.InsertText,
+                    "private fixture")],
+                7,
+                CancellationToken.None);
+        }
+
+        await using (WindowsWhisperCredentialStore secret = new(
+                         stateRoot,
+                         WhisperLocalModelDefaults.ProviderId))
+        {
+            await secret.SaveAsync(credential, CancellationToken.None);
+        }
+
+        WhisperUninstallCleanupResult result =
+            await WindowsWhisperUninstallCleanup.CleanAsync(
+                root,
+                CancellationToken.None);
+        True(result.ModelArtifactRemoved);
+        Equal(1, result.InterruptedDownloadsRemoved);
+        True(result.InstallLockRemoved);
+        True(result.SettingsRemoved);
+        Equal(1, result.SettingsTemporaryArtifactsRemoved);
+        True(result.EncryptedHistoryRemoved);
+        True(result.ProviderCredentialRemoved);
+
+        False(File.Exists(modelPath));
+        False(File.Exists(partialPath));
+        False(File.Exists(settingsPath));
+        False(File.Exists(settingsTemporary));
+        False(Directory.EnumerateFiles(
+            stateRoot,
+            "whisper-history*",
+            SearchOption.TopDirectoryOnly).Any());
+        False(Directory.EnumerateFiles(
+            stateRoot,
+            "whisper-credential-*",
+            SearchOption.TopDirectoryOnly).Any());
+        True(File.Exists(Path.Combine(stateRoot, "state.key")));
+        True(File.Exists(unrelatedModelFile));
+        True(File.Exists(unrelatedTemporary));
+    }
+    finally
+    {
+        CryptographicOperations.ZeroMemory(credential);
+        if (Directory.Exists(root))
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
 }
 
 static async Task LocalModelInstall()

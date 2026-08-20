@@ -109,6 +109,7 @@ Write-Host "Using Inno Setup: $iscc"
 
 & $iscc `
     "/DSourceExe=$publishedExe" `
+    "/DRuntimeDir=$(Join-Path $publishDir 'runtimes\win-x64')" `
     "/DAppVersion=$Version" `
     (Join-Path $PSScriptRoot 'soltex.iss')
 if ($LASTEXITCODE -ne 0) {

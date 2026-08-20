@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Microsoft.Win32;
+using Soltex.Security;
 using Soltex.Whisper;
 using Soltex.Whisper.Windows;
 
@@ -47,6 +48,13 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (RuntimeLaunchPolicy.IsWhisperUninstallCleanup(e.Args))
+        {
+            RunWhisperUninstallCleanup(
+                Environment.GetEnvironmentVariable("SOLTEX_WHISPER_UNINSTALL_REPORT_PATH"));
+            return;
+        }
+
         if (RuntimeLaunchPolicy.IsWhisperRuntimeProbe(e.Args))
         {
             RunWhisperRuntimeProbe(
@@ -138,6 +146,104 @@ public partial class App : Application
         _notificationArea?.Dispose();
         _notificationArea = null;
         base.OnExit(e);
+    }
+
+    private void RunWhisperUninstallCleanup(string? reportPath)
+    {
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        try
+        {
+            ProductDataRootResolution resolution = ProductDataRootResolver.ResolveDefault();
+            WhisperUninstallCleanupResult result =
+                WindowsWhisperUninstallCleanup.CleanAsync(resolution.ProductRoot)
+                    .AsTask()
+                    .GetAwaiter()
+                    .GetResult();
+            if (!string.IsNullOrWhiteSpace(reportPath))
+            {
+                WriteWhisperUninstallReport(reportPath, result);
+            }
+
+            Environment.ExitCode = 0;
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException or InvalidDataException)
+        {
+            Environment.ExitCode = 1;
+            if (!string.IsNullOrWhiteSpace(reportPath))
+            {
+                WriteWhisperUninstallFailure(reportPath, exception);
+            }
+        }
+        finally
+        {
+            Shutdown(Environment.ExitCode);
+        }
+    }
+
+    private static void WriteWhisperUninstallReport(
+        string reportPath,
+        WhisperUninstallCleanupResult result)
+    {
+        string fullPath = PrepareFreshReportPath(reportPath);
+        var report = new
+        {
+            schemaVersion = 1,
+            outcome = "cleaned",
+            result.ModelArtifactRemoved,
+            result.InterruptedDownloadsRemoved,
+            result.InstallLockRemoved,
+            result.SettingsRemoved,
+            result.SettingsTemporaryArtifactsRemoved,
+            result.EncryptedHistoryRemoved,
+            result.ProviderCredentialRemoved,
+            contentCaptured = false,
+            recordedAtUtc = DateTimeOffset.UtcNow
+        };
+        File.WriteAllText(
+            fullPath,
+            JsonSerializer.Serialize(report, RuntimeReportJsonOptions));
+    }
+
+    private static void WriteWhisperUninstallFailure(
+        string reportPath,
+        Exception exception)
+    {
+        string fullPath = Path.GetFullPath(reportPath) + ".error.txt";
+        string? directory = Path.GetDirectoryName(fullPath);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            return;
+        }
+
+        Directory.CreateDirectory(directory);
+        string category = exception switch
+        {
+            UnauthorizedAccessException => "access-denied",
+            InvalidDataException => "unsafe-state",
+            _ => "io-failure"
+        };
+        File.WriteAllText(
+            fullPath,
+            "Whisper uninstall cleanup failed safely. category=" + category);
+    }
+
+    private static string PrepareFreshReportPath(string reportPath)
+    {
+        string fullPath = Path.GetFullPath(reportPath);
+        string? directory = Path.GetDirectoryName(fullPath);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            throw new InvalidDataException("The uninstall report requires a parent directory.");
+        }
+
+        Directory.CreateDirectory(directory);
+        if (File.Exists(fullPath))
+        {
+            throw new IOException("The uninstall report already exists.");
+        }
+
+        return fullPath;
     }
 
     internal void SetAppearancePreference(AppearancePreference preference)

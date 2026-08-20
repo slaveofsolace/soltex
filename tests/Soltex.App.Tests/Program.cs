@@ -537,6 +537,18 @@ internal static class Program
         True(!RuntimeLaunchPolicy.IsWhisperRuntimeProbe(
                 ["--whisper-runtime-probe", "--whisper-runtime-probe"]),
             "Duplicate Whisper runtime-probe options were accepted.");
+        True(RuntimeLaunchPolicy.IsWhisperUninstallCleanup(
+                ["--whisper-uninstall-cleanup"]),
+            "The exact Whisper uninstall cleanup option was not recognized.");
+        True(!RuntimeLaunchPolicy.IsWhisperUninstallCleanup(
+                ["--whisper-uninstall-cleanup", "--ordinary-option"]),
+            "Whisper uninstall cleanup accepted an unrelated argument.");
+        True(!RuntimeLaunchPolicy.IsWhisperUninstallCleanup(
+                ["--whisper-uninstall-cleanup", "--whisper-uninstall-cleanup"]),
+            "Whisper uninstall cleanup accepted a duplicate request.");
+        True(!RuntimeLaunchPolicy.IsRuntimeProbe(
+                ["--runtime-probe", "--whisper-uninstall-cleanup"]),
+            "Runtime probing accepted a conflicting uninstall cleanup request.");
         True(RuntimeLaunchPolicy.HasControlledRuntimeOption(
                 ["--runtime-probe", "--render-smoke"]),
             "A conflicting controlled-runtime request could fall through to normal startup.");
@@ -549,6 +561,9 @@ internal static class Program
         True(RuntimeLaunchPolicy.UsesSoftwareRendering(
                 ["--whisper-overlay-smoke", "overlay.png", "--state", "listening"]),
             "Whisper overlay evidence did not retain deterministic software rendering.");
+        True(!RuntimeLaunchPolicy.UsesSoftwareRendering(
+                ["--whisper-uninstall-cleanup"]),
+            "Whisper uninstall cleanup incorrectly enabled WPF software rendering.");
         True(RuntimeLaunchPolicy.TryParseRenderSmoke(
                 ["--render-smoke", "image.png", "--panel", "whisper", "--theme", "light", "--profile", "compact-200"],
                 out RenderSmokeRequest? lightRequest) &&
