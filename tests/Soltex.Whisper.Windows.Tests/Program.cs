@@ -13,6 +13,32 @@ using Soltex.Whisper.Windows.Tests;
 
 [assembly: DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
 
+if (args is ["--elevated-target-host", var elevatedMarker])
+{
+    return LiveElevatedTargetHost.RunChild(elevatedMarker);
+}
+
+if (args is ["--live-electron-target"])
+{
+    await LiveElectronTargetMatrix();
+    Console.WriteLine("PASS owner-host Electron input verifies bounded submission");
+    return 0;
+}
+
+if (args is ["--live-terminal-target"])
+{
+    await LiveWindowsTerminalTargetMatrix();
+    Console.WriteLine("PASS owner-host Windows Terminal preserves the separate submit opt-in");
+    return 0;
+}
+
+if (args is ["--live-elevated-target"])
+{
+    await LiveElevatedTargetMatrix();
+    Console.WriteLine("PASS owner-host elevated editor fails closed before mutation");
+    return 0;
+}
+
 List<(string Name, Func<Task> Run)> tests =
 [
     ("selected device is passed to the backend and fallback is reported", DeviceSelectionAndFallback),
@@ -122,6 +148,30 @@ if (string.Equals(
     StringComparison.Ordinal))
 {
     tests.Add(("owner-host Chromium input and contenteditable verify bounded submission", LiveChromiumTargetMatrix));
+}
+
+if (string.Equals(
+    Environment.GetEnvironmentVariable("SOLTEX_RUN_WHISPER_ELECTRON_TARGET_MATRIX"),
+    "1",
+    StringComparison.Ordinal))
+{
+    tests.Add(("owner-host Electron input verifies bounded submission", LiveElectronTargetMatrix));
+}
+
+if (string.Equals(
+    Environment.GetEnvironmentVariable("SOLTEX_RUN_WHISPER_TERMINAL_TARGET_MATRIX"),
+    "1",
+    StringComparison.Ordinal))
+{
+    tests.Add(("owner-host Windows Terminal preserves the separate submit opt-in", LiveWindowsTerminalTargetMatrix));
+}
+
+if (string.Equals(
+    Environment.GetEnvironmentVariable("SOLTEX_RUN_WHISPER_ELEVATED_TARGET_MATRIX"),
+    "1",
+    StringComparison.Ordinal))
+{
+    tests.Add(("owner-host elevated editor fails closed before mutation", LiveElevatedTargetMatrix));
 }
 
 int failures = 0;
@@ -1168,6 +1218,157 @@ static async Task LiveChromiumTargetMatrix()
         $"insert_ms={insertionTimer.Elapsed.TotalMilliseconds:F2} " +
         $"verified_submit_ms={submitTimer.Elapsed.TotalMilliseconds:F2} " +
         "enter_events=2 content_logged=0");
+}
+
+static async Task LiveElectronTargetMatrix()
+{
+    await using LiveElectronTargetHost target = await LiveElectronTargetHost.CreateAsync();
+    WindowsWhisperTargetInspector inspector = new();
+    WindowsWhisperTextDelivery delivery = new(inspector);
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector);
+
+    await target.FocusInputAsync();
+    WhisperTargetSnapshot captured = await WaitForControlledBrowserTargetAsync(inspector);
+    Equal(WhisperTargetKind.Browser, captured.Context.Kind);
+    True(captured.Context.IsEditable);
+    Equal("electron", captured.Context.ProcessName);
+
+    WhisperDeliveryDecision decision = new(
+        WhisperDeliveryKind.InsertAndSubmit,
+        LiveElectronTargetHost.ProbeText,
+        WhisperSubmitOrigin.DedicatedShortcut,
+        RestoreClipboard: true,
+        "owner-controlled Electron matrix");
+    Stopwatch insertionTimer = Stopwatch.StartNew();
+    WhisperTextDeliveryResult insertion = await delivery.DeliverAsync(
+        new WhisperTextDeliveryRequest(decision, captured),
+        CancellationToken.None);
+    insertionTimer.Stop();
+    True(insertion.MutationDispatched);
+    False(insertion.Copied);
+
+    Stopwatch submitTimer = Stopwatch.StartNew();
+    WhisperVerifiedSubmitResult submission = await submitter.SubmitAsync(
+        new WhisperVerifiedSubmitRequest(
+            decision,
+            captured,
+            insertion,
+            FirstUseWarningAccepted: true),
+        CancellationToken.None);
+    await target.WaitForEnterAsync();
+    submitTimer.Stop();
+
+    True(submission.Authorization.Allowed);
+    True(submission.Verification.Verified);
+    True(submission.EnterDispatched);
+    Console.WriteLine(
+        $"MEASURE whisper_electron_matrix category={captured.Context.Kind} " +
+        $"method={insertion.Method} insert_ms={insertionTimer.Elapsed.TotalMilliseconds:F2} " +
+        $"verified_submit_ms={submitTimer.Elapsed.TotalMilliseconds:F2} " +
+        "enter_events=1 content_logged=0");
+}
+
+static async Task LiveWindowsTerminalTargetMatrix()
+{
+    await using LiveWindowsTerminalTargetHost target =
+        await LiveWindowsTerminalTargetHost.CreateAsync();
+    WindowsWhisperTargetInspector inspector = new();
+
+    await target.FocusTerminalAsync();
+    WhisperTargetSnapshot captured = await WaitForControlledTerminalTargetAsync(inspector);
+    Equal(WhisperTargetKind.Terminal, captured.Context.Kind);
+    True(captured.Context.IsEditable);
+    False(captured.Context.IsElevated);
+
+    WhisperPipelineResult pipeline = new(
+        "echo soltex terminal matrix",
+        submitRequested: true,
+        WhisperSubmitOrigin.TerminalPhrase,
+        Array.Empty<string>());
+    WhisperDeliveryPolicy policy = new();
+    WhisperAppProfile disabledProfile = new(
+        captured.Context.ProcessName,
+        autoSendAllowed: true,
+        terminalAutoSendAllowed: false);
+    WhisperDeliveryDecision disabled = policy.Evaluate(
+        pipeline,
+        captured.Context,
+        disabledProfile,
+        autoSendEnabled: true);
+    Equal(WhisperDeliveryKind.InsertText, disabled.Kind);
+    Equal(WhisperSubmitOrigin.None, disabled.SubmitOrigin);
+
+    WhisperAppProfile enabledProfile = new(
+        captured.Context.ProcessName,
+        autoSendAllowed: true,
+        terminalAutoSendAllowed: true);
+    WhisperDeliveryDecision enabled = policy.Evaluate(
+        pipeline,
+        captured.Context,
+        enabledProfile,
+        autoSendEnabled: true);
+    Equal(WhisperDeliveryKind.InsertAndSubmit, enabled.Kind);
+    Equal(WhisperSubmitOrigin.TerminalPhrase, enabled.SubmitOrigin);
+    Console.WriteLine(
+        $"MEASURE whisper_terminal_matrix category={captured.Context.Kind} " +
+        $"integrity={captured.Context.IntegrityLevel} disabled={disabled.Kind} " +
+        $"opted_in={enabled.Kind} submit_dispatches=0 content_logged=0");
+}
+
+static async Task LiveElevatedTargetMatrix()
+{
+    await using LiveElevatedTargetHost target = await LiveElevatedTargetHost.CreateAsync();
+    WindowsWhisperTargetInspector inspector = new();
+
+    await target.FocusEditorAsync();
+    WhisperTargetIntegrityLevel processIntegrity =
+        WindowsProcessIntegrity.Read(target.ProcessId);
+    True(processIntegrity is
+        WhisperTargetIntegrityLevel.High or
+        WhisperTargetIntegrityLevel.System or
+        WhisperTargetIntegrityLevel.Protected);
+    WhisperTargetSnapshot? captured = await inspector.InspectAsync(CancellationToken.None);
+    True(captured is null || captured.Context.IsElevated);
+    WhisperTargetContext context = captured?.Context ?? WhisperTargetContext.Unknown;
+
+    WhisperPipelineResult pipeline = new(
+        "elevated matrix probe",
+        submitRequested: false,
+        WhisperSubmitOrigin.None,
+        Array.Empty<string>());
+    WhisperDeliveryDecision decision = new WhisperDeliveryPolicy().Evaluate(
+        pipeline,
+        context,
+        profile: null,
+        autoSendEnabled: false,
+        soltexIsElevated: false);
+    Equal(WhisperDeliveryKind.CopyText, decision.Kind);
+    Equal(WhisperSubmitOrigin.None, decision.SubmitOrigin);
+    Console.WriteLine(
+        $"MEASURE whisper_elevated_matrix category={context.Kind} " +
+        $"integrity={processIntegrity} editable={context.IsEditable} " +
+        $"inspection={inspector.LastFailure} " +
+        $"decision={decision.Kind} " +
+        "mutation_dispatches=0 submit_dispatches=0 content_logged=0");
+}
+
+static async Task<WhisperTargetSnapshot> WaitForControlledTerminalTargetAsync(
+    WindowsWhisperTargetInspector inspector)
+{
+    Stopwatch timeout = Stopwatch.StartNew();
+    while (timeout.Elapsed < TimeSpan.FromSeconds(10))
+    {
+        WhisperTargetSnapshot? snapshot = await inspector.InspectAsync(CancellationToken.None);
+        if (snapshot is { Context.Kind: WhisperTargetKind.Terminal, Context.IsEditable: true })
+        {
+            return snapshot;
+        }
+
+        await Task.Delay(100);
+    }
+
+    throw new InvalidOperationException(
+        $"The controlled Windows Terminal target did not become inspectable ({inspector.LastFailure}).");
 }
 
 static async Task<WhisperTargetSnapshot> WaitForControlledBrowserTargetAsync(
