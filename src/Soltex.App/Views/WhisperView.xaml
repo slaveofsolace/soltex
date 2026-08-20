@@ -259,7 +259,7 @@
                 <Border x:Name="WhisperScaffoldPill"
                         Margin="0,0,10,0"
                         Style="{StaticResource StatusPillStyle}"
-                        ToolTip="Native microphone capture and the validated shortcut lifecycle are available. Provider-backed transcription and shipped delivery are still being implemented.">
+                        ToolTip="Local transcription and verified delivery are wired. Readiness remains blocked until the model, microphone, shortcuts, and target prerequisites are proven on this PC.">
                     <TextBlock Text="Scaffold"
                                Foreground="{DynamicResource WarningBrush}"
                                FontFamily="{StaticResource MonoFont}"

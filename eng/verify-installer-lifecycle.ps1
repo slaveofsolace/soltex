@@ -195,7 +195,7 @@ try {
         Get-ChildItem -LiteralPath $runtimeRoot -File |
             Select-Object -ExpandProperty Name |
             Sort-Object)
-    if ((Compare-Object $expectedRuntimeFiles $actualRuntimeFiles).Count -ne 0) {
+    if (@(Compare-Object $expectedRuntimeFiles $actualRuntimeFiles).Count -ne 0) {
         throw 'The initial installer did not install exactly the four Whisper CPU runtime DLLs.'
     }
 
