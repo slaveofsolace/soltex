@@ -68,8 +68,8 @@ The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Set
 Shortcuts, Personalize, Library, Scratchpad, History, and Privacy tabs, and the floating listening
 surface — render this core.
 They are honest about capability: the navigation entry remains marked `SCAFFOLD`
-because the production model has not been downloaded or exercised on the owner-controlled host and
-the complete application matrix is still pending. The shipped session and model controls are real,
+because an owner-spoken capture-to-verified-insertion session and the remaining physical-input and
+accessibility checks are still pending. The shipped session and model controls are real,
 but readiness stays blocked until Whisper is enabled, one current input exists, shortcuts are
 registered, the exact local provider tuple is selected, and the pinned model verifies. Capture
 controls are enabled only when a selected device exists. Auto-send stays off by default, and no host
@@ -80,8 +80,10 @@ code authorizes Enter outside the provider-neutral submit gate.
 The implementation paths below exist, but the listed owner-controlled evidence is still required
 before the corresponding capability can be described as complete.
 
-1. Owner-controlled download and execution of the pinned 547 MiB production model, including
-   accuracy, latency, working-set, cancellation, unload, and restart evidence.
+1. Owner-controlled model proof is partial. The shipped UI downloaded and verified the pinned
+   547 MiB model after an explicit action. The real CPU runtime completed content-free initial and
+   post-unload transcription runs, observed cancellation during native work, and unloaded afterward.
+   Owner-spoken accuracy and full capture-to-verified-insertion evidence are still required.
 2. Physical keyboard and mouse shortcut coverage plus callback and shortcut-to-listening latency
    measurements in the packaged app.
 3. Owner-controlled per-monitor DPI transitions, keyboard-only and screen-reader walkthroughs,
@@ -152,12 +154,16 @@ removes the exact model and recognized owned partials, preserving unrelated stat
 
 The pinned digest is an integrity expectation derived from the upstream LFS object
 at that revision. It is not described as independent publisher authenticity proof.
-The 61-case Windows adapter suite covers normal install, declared and streamed
+The 62-case Windows adapter suite covers normal install, declared and streamed
 oversize, truncation, digest mismatch, cancellation cleanup, concurrent rejection,
 repair, exact deletion, interrupted partial cleanup, and post-install change
-detection with small benign fixtures. The 547 MiB production model was not
-downloaded in this stage, and no latency, memory, transcription-quality, or provider
-readiness claim is made.
+detection with small benign fixtures plus bounded, format-strict parsing for the opt-in live-model
+fixture. On 2026-08-20 the shipped Setup UI downloaded the exact 574,041,195-byte artifact in
+approximately 33.9 seconds after an explicit owner-authorized action, verified SHA-256
+`394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2`, and reported all six
+readiness checks ready. The model is stored at `whisper\models` beneath the current product root;
+the current installation uses the resolver's legacy-compatible product root because no canonical
+`Soltex` root exists. This is local install/readiness evidence, not an accuracy claim.
 
 The provider-neutral `WhisperProviderStatus` contract now exposes bounded
 endpoint/model identity, language capability, streaming capability, a privacy
@@ -190,14 +196,20 @@ creation disposes the newly created runtime before returning. Diagnostics contai
 only a duration bucket, fixed provider/model/runtime identities, result category, and
 fixed sanitized failure category.
 
-Seven new benign adapter tests prove the model lease, no-copy WAVE projection,
+Eight benign adapter tests prove the model lease, no-copy WAVE projection,
 language and vocabulary propagation, lazy reuse, runtime-fault recovery, content-free
 failures, cancellation classification, short/empty/oversized rejection, explicit
 unload/reload, and owned PCM clearing. Together with the existing model-manager and
-Windows coverage, the suite reports 61/61. The production model was not downloaded
-or executed: there is no live accuracy, latency, working-set, readiness, or supported-
-hardware claim. The shipped Setup surface and session composition now use this adapter;
-owner-controlled live proof remains required.
+Windows coverage, the suite reports 62/62. An opt-in owner-host run used the verified production
+model and a pinned 11-second public PCM fixture to complete one content-free local transcription in
+13,133.2 ms. Explicit runtime unload completed in 21.9 ms, a post-unload transcription completed in
+13,265.1 ms, native cancellation was observed in 107.4 ms, and the cancellation unload completed in
+less than 0.1 ms. Process working set was 38,395,904 bytes before transcription, peaked at
+1,064,660,992 bytes, and was 54,919,168 bytes after the final unload. The fixture bytes were removed
+after the run, and neither audio nor transcript content entered the evidence log. This proves one CPU
+execution, restart, and cancellation path on the owner host, not transcription accuracy or supported-
+hardware breadth. The shipped Setup surface and session composition use this adapter; the remaining
+owner proof is listed above.
 This local provider has no credential or cloud endpoint and uploads no audio or
 transcript.
 
@@ -247,8 +259,9 @@ The app now instantiates that runner with the selected local provider and all Wi
 It resolves an exact saved application profile only after inspection and keeps delivery and Enter
 authorization in the existing provider-neutral policies. Still required: prove physical
 push-to-talk release and mouse buttons in the shipped app and record shortcut-to-listening latency.
-Current owner-host proof covers the adapter lifecycle; the WPF lifecycle path has deterministic
-UI/build/render coverage but not a production-model packaged-app run.
+Current owner-host proof covers the adapter lifecycle, shipped-UI model installation, a five-second
+16 kHz mono microphone test whose audio was discarded, and one production-model CPU run. It does
+not yet cover a physical shortcut, owner-spoken capture-to-insertion, or a packaged-app model run.
 
 ### 4. Target inspection
 
@@ -272,7 +285,7 @@ terminal, plain-text, and rich-text categories remain content-free. Soltex stays
 `asInvoker` with `uiAccess=false`; high/system/protected targets are identified and
 the existing delivery policy falls back to copy.
 
-Target-specific deterministic coverage is included in the current 61-case Windows adapter suite.
+Target-specific deterministic coverage is included in the current 62-case Windows adapter suite.
 It covers all five target categories, pattern capability mapping,
 protected/read-only/unknown controls, provider timeout, provider failure, and
 cancellation. An opt-in owner-host run at commit `d11edec` also inspected a real
@@ -329,7 +342,7 @@ after staging or paste input is rejected, the transcript remains copied and the
 result names the fallback. Clipboard acquisition and restoration use bounded retries
 on one background STA thread.
 
-The core suite has 115 cases and the Windows suite has 61 deterministic cases. The
+The core suite has 115 cases and the Windows suite has 62 deterministic cases. The
 Windows cases cover direct-before-clipboard ordering, ownership restoration and loss,
 focus drift after staging, unknown targets, rejected paste, and cancellation cleanup.
 An opt-in owner-host test uses a controlled WinForms text target to prove clipboard
@@ -422,7 +435,7 @@ global Activity feed or diagnostic events.
 
 The 18-case security-hardening suite covers authenticated round trip, absence of
 plaintext in either envelope, expiry, current/backup deletion, bounds, cancellation,
-and corruption failure. The 61-case Windows adapter suite covers the Whisper mapping
+and corruption failure. The 62-case Windows adapter suite covers the Whisper mapping
 and rewrite boundary. This is application-level encrypted retention, not forensic
 secure erasure: filesystem snapshots, SSD remapping, page files, crash dumps, and a
 same-user process able to invoke DPAPI remain outside its guarantee.
