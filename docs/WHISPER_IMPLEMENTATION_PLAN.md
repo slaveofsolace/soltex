@@ -88,11 +88,13 @@ from an owner-controlled Windows host says otherwise.
 3. Physical keyboard and mouse shortcut coverage plus callback and shortcut-to-listening latency
    measurements in the packaged app.
 4. Owner-controlled per-monitor DPI transitions, keyboard-only and screen-reader walkthroughs,
-   performance, install, update, and uninstall evidence for the Whisper surfaces. The
+   plus production-model performance evidence for the Whisper surfaces. The
    deterministic renderer now covers light/dark/high-contrast, minimum-width, synthetic
    100/150/200-percent raster profiles, and every overlay state. Synthetic high-density
    output is not a claim that live Windows DPI transitions passed. The self-contained package
-   proves its CPU native runtime and model exclusion, but install/update/uninstall remain pending.
+   proves its CPU native runtime and model exclusion, and the ephemeral Windows gate now proves
+   per-user install, 0.0.1-to-0.0.2 update, exact runtime payload, and clean uninstall. The
+   installer remains unsigned, so SmartScreen reputation and production signing are not proven.
 5. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
    deterministic tests currently prove the recovery policy and one owner-host device
    proves the normal live path.
@@ -464,6 +466,10 @@ and settings files, encrypted Whisper history, and the local-provider credential
 generations. It preserves unrelated model-directory files, the shared authenticated
 state key, and all non-Whisper Soltex state. The cleanup is separately covered by a
 benign filesystem test and emits only a content-free result when evidence is requested.
+The exact-source ephemeral proof at `2215247e257a69e0c8c6317ffb347a1c244e69f2`
+passed install, update, package render, runtime load, model exclusion, and uninstall;
+its content-free lifecycle manifest SHA-256 is
+`5ad4a2eabdbf61f35135ae0ae9369ba864958284243f218520035c0dd34cb9c1`.
 
 ## Evidence required before Whisper is called complete
 
