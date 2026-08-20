@@ -256,7 +256,8 @@ cannot expose a stable identity and integrity level, the result is unknown. Only
 native inspection can remain in flight, which prevents a non-responsive provider
 from creating an unbounded thread or queue.
 
-The native adapter reads process ID/name, token integrity level, opaque runtime ID,
+The native adapter reads process ID/name, bounded content-free framework ID, token integrity level,
+opaque runtime ID,
 enabled/focusable/password state, control type, and advertised Value, Text, and
 TextPattern2 support. It queries Value/Text read-only and selection metadata only for
 non-password controls. It never requests UIA Name, a Value value, text-range text,
@@ -278,8 +279,14 @@ TextBox, RichTextBox, PasswordBox, read-only TextBox, and a focus-changing TextB
 The same run proves direct whole-value replacement for TextBox, clipboard paste with
 owned restoration for RichTextBox, and core copy-only authorization for protected,
 read-only, and drifted snapshots. It emits categories and outcomes only. WinForms
-TextBox continues to provide the controlled Win32 Edit proof. WinUI, Chromium,
-Electron, Windows Terminal, and an elevated editor remain unproven. Context reads
+TextBox continues to provide the controlled Win32 Edit proof. Separate controlled Chromium input and
+contenteditable targets now prove browser classification, clipboard insertion, target-owned
+read-back, and one authorized Enter per target; the isolated browser process tree and profile are
+exact-owned and removed after the run.
+Non-browser Chromium-framework providers can now classify as `Browser`, while known editor processes
+retain `Editor` precedence. WinUI, a distinct Electron application, Windows Terminal, and an elevated
+editor remain unproven. The exact support/proof split is maintained in
+`docs/WHISPER_TARGET_MATRIX.md`. Context reads
 remain off; a future visible per-application permission must precede any bounded
 contextual read.
 

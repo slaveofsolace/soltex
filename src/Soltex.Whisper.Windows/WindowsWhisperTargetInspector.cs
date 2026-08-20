@@ -84,6 +84,7 @@ internal enum WindowsWhisperControlKind
 internal sealed record WindowsWhisperTargetObservation(
     int ProcessId,
     string ProcessName,
+    string FrameworkId,
     IReadOnlyList<int> RuntimeId,
     WhisperTargetIntegrityLevel IntegrityLevel,
     WindowsWhisperControlKind ControlKind,
@@ -100,6 +101,8 @@ internal sealed record WindowsWhisperTargetObservation(
 
 internal static class WindowsWhisperTargetMapper
 {
+    private const int MaximumFrameworkIdCharacters = 64;
+
     private static readonly HashSet<string> TerminalProcesses = new(
         ["windowsterminal", "openconsole", "conhost", "pwsh", "powershell", "cmd"],
         StringComparer.OrdinalIgnoreCase);
@@ -110,6 +113,10 @@ internal static class WindowsWhisperTargetMapper
 
     private static readonly HashSet<string> EditorProcesses = new(
         ["code", "devenv", "notepad++", "sublime_text", "rider64"],
+        StringComparer.OrdinalIgnoreCase);
+
+    private static readonly HashSet<string> BrowserFrameworks = new(
+        ["chrome", "chromium", "gecko"],
         StringComparer.OrdinalIgnoreCase);
 
     internal static WhisperTargetSnapshot? Map(WindowsWhisperTargetObservation observation)
@@ -185,14 +192,16 @@ internal static class WindowsWhisperTargetMapper
             return WhisperTargetKind.Terminal;
         }
 
-        if (BrowserProcesses.Contains(processName))
-        {
-            return WhisperTargetKind.Browser;
-        }
-
         if (EditorProcesses.Contains(processName))
         {
             return WhisperTargetKind.Editor;
+        }
+
+        if (BrowserProcesses.Contains(processName) ||
+            observation.FrameworkId.Length <= MaximumFrameworkIdCharacters &&
+            BrowserFrameworks.Contains(observation.FrameworkId))
+        {
+            return WhisperTargetKind.Browser;
         }
 
         return observation.ControlKind switch

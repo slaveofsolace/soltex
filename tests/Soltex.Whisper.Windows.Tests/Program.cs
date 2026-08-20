@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Soltex.Whisper;
 using Soltex.Whisper.Windows;
+using Soltex.Whisper.Windows.Tests;
 
 [assembly: DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
 
@@ -111,6 +112,14 @@ if (string.Equals(
     StringComparison.Ordinal))
 {
     tests.Add(("owner-host WPF target matrix fails closed and preserves editing semantics", LiveWpfTargetMatrix));
+}
+
+if (string.Equals(
+    Environment.GetEnvironmentVariable("SOLTEX_RUN_WHISPER_CHROMIUM_TARGET_MATRIX"),
+    "1",
+    StringComparison.Ordinal))
+{
+    tests.Add(("owner-host Chromium input and contenteditable verify bounded submission", LiveChromiumTargetMatrix));
 }
 
 int failures = 0;
@@ -266,7 +275,19 @@ static async Task TargetCategories()
             WhisperTargetKind.Terminal),
         (TargetObservation("chrome", WindowsWhisperControlKind.Document, textPattern: true),
             WhisperTargetKind.Browser),
+        (TargetObservation(
+                "soltex-electron-harness",
+                WindowsWhisperControlKind.Document,
+                textPattern: true,
+                frameworkId: "Chrome"),
+            WhisperTargetKind.Browser),
         (TargetObservation("code", WindowsWhisperControlKind.Document, textPattern: true),
+            WhisperTargetKind.Editor),
+        (TargetObservation(
+                "code",
+                WindowsWhisperControlKind.Document,
+                textPattern: true,
+                frameworkId: "Chrome"),
             WhisperTargetKind.Editor)
     ];
 
@@ -403,9 +424,11 @@ static WindowsWhisperTargetObservation TargetObservation(
     bool textPattern = false,
     bool textPattern2 = false,
     bool selection = false,
-    bool password = false) => new(
+    bool password = false,
+    string frameworkId = "Win32") => new(
         ProcessId: 2048,
         processName,
+        frameworkId,
         RuntimeId: [42, 7, 11],
         WhisperTargetIntegrityLevel.Medium,
         controlKind,
@@ -1071,6 +1094,97 @@ static async Task LiveWpfTargetMatrix()
         $"password=protected:{passwordAuthorization.FallbackReason} " +
         $"readonly={readOnlyAuthorization.FallbackReason} " +
         $"drift={driftAuthorization.FallbackReason} content_logged=0");
+}
+
+static async Task LiveChromiumTargetMatrix()
+{
+    await using LiveChromiumTargetHost target = await LiveChromiumTargetHost.CreateAsync();
+    WindowsWhisperTargetInspector inspector = new();
+    WindowsWhisperTextDelivery delivery = new(inspector);
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector);
+
+    await target.FocusInputAsync();
+    WhisperTargetSnapshot captured = await WaitForControlledBrowserTargetAsync(inspector);
+    Equal(WhisperTargetKind.Browser, captured.Context.Kind);
+    True(captured.Context.IsEditable);
+
+    WhisperDeliveryDecision decision = new(
+        WhisperDeliveryKind.InsertAndSubmit,
+        LiveChromiumTargetHost.InputProbeText,
+        WhisperSubmitOrigin.DedicatedShortcut,
+        RestoreClipboard: true,
+        "owner-controlled Chromium matrix");
+    Stopwatch insertionTimer = Stopwatch.StartNew();
+    WhisperTextDeliveryResult insertion = await delivery.DeliverAsync(
+        new WhisperTextDeliveryRequest(decision, captured),
+        CancellationToken.None);
+    insertionTimer.Stop();
+    True(insertion.MutationDispatched);
+    False(insertion.Copied);
+
+    Stopwatch submitTimer = Stopwatch.StartNew();
+    WhisperVerifiedSubmitResult submission = await submitter.SubmitAsync(
+        new WhisperVerifiedSubmitRequest(
+            decision,
+            captured,
+            insertion,
+            FirstUseWarningAccepted: true),
+        CancellationToken.None);
+    await target.WaitForEnterCountAsync(expectedCount: 1);
+    submitTimer.Stop();
+
+    True(submission.Authorization.Allowed);
+    True(submission.Verification.Verified);
+    True(submission.EnterDispatched);
+
+    WhisperTargetSnapshot contentEditable = await WaitForControlledBrowserTargetAsync(inspector);
+    False(contentEditable.Identity.Equals(captured.Identity));
+    WhisperDeliveryDecision contentEditableDecision = new(
+        WhisperDeliveryKind.InsertAndSubmit,
+        LiveChromiumTargetHost.ContentEditableProbeText,
+        WhisperSubmitOrigin.DedicatedShortcut,
+        RestoreClipboard: true,
+        "owner-controlled Chromium contenteditable matrix");
+    WhisperTextDeliveryResult contentEditableInsertion = await delivery.DeliverAsync(
+        new WhisperTextDeliveryRequest(contentEditableDecision, contentEditable),
+        CancellationToken.None);
+    True(contentEditableInsertion.MutationDispatched);
+    WhisperVerifiedSubmitResult contentEditableSubmission = await submitter.SubmitAsync(
+        new WhisperVerifiedSubmitRequest(
+            contentEditableDecision,
+            contentEditable,
+            contentEditableInsertion,
+            FirstUseWarningAccepted: true),
+        CancellationToken.None);
+    await target.WaitForEnterCountAsync(expectedCount: 2);
+    True(contentEditableSubmission.Authorization.Allowed);
+    True(contentEditableSubmission.Verification.Verified);
+    True(contentEditableSubmission.EnterDispatched);
+    Console.WriteLine(
+        $"MEASURE whisper_chromium_matrix category={captured.Context.Kind} " +
+        $"input_method={insertion.Method} contenteditable_method={contentEditableInsertion.Method} " +
+        $"insert_ms={insertionTimer.Elapsed.TotalMilliseconds:F2} " +
+        $"verified_submit_ms={submitTimer.Elapsed.TotalMilliseconds:F2} " +
+        "enter_events=2 content_logged=0");
+}
+
+static async Task<WhisperTargetSnapshot> WaitForControlledBrowserTargetAsync(
+    WindowsWhisperTargetInspector inspector)
+{
+    Stopwatch timeout = Stopwatch.StartNew();
+    while (timeout.Elapsed < TimeSpan.FromSeconds(10))
+    {
+        WhisperTargetSnapshot? snapshot = await inspector.InspectAsync(CancellationToken.None);
+        if (snapshot is { Context.Kind: WhisperTargetKind.Browser, Context.IsEditable: true })
+        {
+            return snapshot;
+        }
+
+        await Task.Delay(100);
+    }
+
+    throw new InvalidOperationException(
+        $"The controlled Chromium input did not become inspectable ({inspector.LastFailure}).");
 }
 
 static WhisperTextDeliveryRequest MatrixDeliveryRequest(WhisperTargetSnapshot captured) => new(

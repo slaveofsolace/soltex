@@ -63,6 +63,7 @@ internal sealed class WindowsUiAutomationTargetBackend : IWhisperTargetInspectio
         WindowsWhisperTargetObservation observation = new(
             processId,
             processName,
+            current.FrameworkId ?? string.Empty,
             runtimeId,
             WindowsProcessIntegrity.Read(processId),
             MapControlType(current.ControlType),
