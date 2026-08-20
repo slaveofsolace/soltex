@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Soltex.Whisper;
@@ -50,7 +52,16 @@ List<(string Name, Func<Task> Run)> tests =
     ("target read-back is bounded and provider failures fail closed", TargetReadbackFailures),
     ("target read-back cancellation is honored", TargetReadbackCancellation),
     ("encrypted history adapter preserves bounded Whisper records", HistoryRetentionAdapter),
-    ("provider credentials stay in the protected Windows boundary", ProviderCredentialBoundary)
+    ("provider credentials stay in the protected Windows boundary", ProviderCredentialBoundary),
+    ("local model installation verifies and atomically promotes exact bytes", LocalModelInstall),
+    ("local model installation rejects oversized responses", LocalModelOversize),
+    ("local model installation rejects digest mismatches", LocalModelDigestMismatch),
+    ("local model verification detects truncation and change", LocalModelTruncationAndChange),
+    ("local model cancellation removes the exact temporary artifact", LocalModelCancellationCleanup),
+    ("local model installation rejects a concurrent writer", LocalModelConcurrentInstall),
+    ("local model repair replaces an invalid owned artifact", LocalModelRepair),
+    ("local model deletion preserves unrelated state", LocalModelOwnedDeletion),
+    ("local model installation cleans recognized interrupted downloads", LocalModelInterruptedCleanup)
 ];
 
 if (string.Equals(
@@ -1427,6 +1438,347 @@ static async Task ProviderCredentialBoundary()
         _ = new WindowsWhisperCredentialStore(Path.GetTempPath(), "invalid/provider"));
 }
 
+static async Task LocalModelInstall()
+{
+    byte[] model = Enumerable.Range(0, 4096).Select(index => (byte)(index % 251)).ToArray();
+    WhisperLocalModelArtifact artifact = TestModelArtifact(model);
+    using HttpClient client = new(new ScriptedModelHttpHandler(
+        (_, _) => Task.FromResult(ModelResponse(model))));
+    string root = CreateModelRoot();
+    try
+    {
+        await using WindowsWhisperLocalModelManager manager = new(
+            root,
+            client,
+            artifact);
+        List<WhisperModelInstallProgress> progress = [];
+        WhisperModelStatus installed = await manager.InstallAsync(
+            new InlineProgress<WhisperModelInstallProgress>(progress.Add),
+            CancellationToken.None);
+
+        True(installed.IsInstalled);
+        True(installed.IsVerified);
+        Equal(artifact.ExpectedBytes, installed.InstalledBytes);
+        Equal(1d, progress[^1].Fraction);
+        Equal(artifact.UpstreamRevision, WindowsWhisperLocalModelManager.PinnedUpstreamRevision);
+        True(File.ReadAllBytes(ModelPath(root, artifact)).SequenceEqual(model));
+        True((await manager.GetStatusAsync(CancellationToken.None)).IsVerified);
+    }
+    finally
+    {
+        DeleteModelRoot(root);
+        CryptographicOperations.ZeroMemory(model);
+    }
+}
+
+static async Task LocalModelOversize()
+{
+    byte[] expected = Enumerable.Repeat((byte)0x2A, 256).ToArray();
+    byte[] oversized = [.. expected, 0x7F];
+    WhisperLocalModelArtifact artifact = TestModelArtifact(expected);
+    using HttpClient client = new(new ScriptedModelHttpHandler(
+        (_, _) => Task.FromResult(ModelResponse(oversized)),
+        (_, _) => Task.FromResult(ModelResponse(oversized, artifact.ExpectedBytes))));
+    string root = CreateModelRoot();
+    try
+    {
+        await using WindowsWhisperLocalModelManager manager = new(root, client, artifact);
+        WhisperModelInstallException declared = await ThrowsValueAsync<WhisperModelInstallException>(
+            async () => await manager.InstallAsync(null, CancellationToken.None));
+        Equal(WhisperModelFailureKind.SizeMismatch, declared.Kind);
+        WhisperModelInstallException streamed = await ThrowsValueAsync<WhisperModelInstallException>(
+            async () => await manager.InstallAsync(null, CancellationToken.None));
+        Equal(WhisperModelFailureKind.SizeMismatch, streamed.Kind);
+        False(File.Exists(ModelPath(root, artifact)));
+        False(OwnedPartials(root, artifact).Any());
+    }
+    finally
+    {
+        DeleteModelRoot(root);
+    }
+}
+
+static async Task LocalModelDigestMismatch()
+{
+    byte[] expected = Enumerable.Repeat((byte)0x11, 512).ToArray();
+    byte[] changed = Enumerable.Repeat((byte)0x22, expected.Length).ToArray();
+    WhisperLocalModelArtifact artifact = TestModelArtifact(expected);
+    using HttpClient client = new(new ScriptedModelHttpHandler(
+        (_, _) => Task.FromResult(ModelResponse(changed))));
+    string root = CreateModelRoot();
+    try
+    {
+        await using WindowsWhisperLocalModelManager manager = new(root, client, artifact);
+        WhisperModelInstallException failure = await ThrowsValueAsync<WhisperModelInstallException>(
+            async () => await manager.InstallAsync(null, CancellationToken.None));
+        Equal(WhisperModelFailureKind.DigestMismatch, failure.Kind);
+        False(File.Exists(ModelPath(root, artifact)));
+    }
+    finally
+    {
+        DeleteModelRoot(root);
+    }
+}
+
+static async Task LocalModelTruncationAndChange()
+{
+    byte[] model = Enumerable.Range(0, 1024).Select(index => (byte)(index % 239)).ToArray();
+    WhisperLocalModelArtifact artifact = TestModelArtifact(model);
+    ScriptedModelHttpHandler handler = new(
+        (_, _) => Task.FromResult(ModelResponse(model[..^1], artifact.ExpectedBytes)),
+        (_, _) => Task.FromResult(ModelResponse(model)));
+    using HttpClient client = new(handler);
+    string root = CreateModelRoot();
+    try
+    {
+        await using WindowsWhisperLocalModelManager manager = new(root, client, artifact);
+        WhisperModelInstallException truncated = await ThrowsValueAsync<WhisperModelInstallException>(
+            async () => await manager.InstallAsync(null, CancellationToken.None));
+        Equal(WhisperModelFailureKind.SizeMismatch, truncated.Kind);
+
+        WhisperModelStatus installed = await manager.InstallAsync(null, CancellationToken.None);
+        True(installed.IsVerified);
+        byte[] changed = model.ToArray();
+        changed[^1] ^= 0xFF;
+        File.WriteAllBytes(ModelPath(root, artifact), changed);
+        WhisperModelStatus invalid = await manager.GetStatusAsync(CancellationToken.None);
+        Equal(WhisperModelInstallState.Invalid, invalid.State);
+        Equal(WhisperModelFailureKind.DigestMismatch, invalid.FailureKind);
+    }
+    finally
+    {
+        DeleteModelRoot(root);
+    }
+}
+
+static async Task LocalModelCancellationCleanup()
+{
+    byte[] model = Enumerable.Repeat((byte)0x5C, 8192).ToArray();
+    WhisperLocalModelArtifact artifact = TestModelArtifact(model);
+    using HttpClient client = new(new ScriptedModelHttpHandler(
+        (_, _) => Task.FromResult(ModelResponse(model))));
+    using CancellationTokenSource cancellation = new();
+    string root = CreateModelRoot();
+    try
+    {
+        await using WindowsWhisperLocalModelManager manager = new(root, client, artifact);
+        InlineProgress<WhisperModelInstallProgress> progress = new(value =>
+        {
+            if (value.ReceivedBytes == value.ExpectedBytes)
+            {
+                cancellation.Cancel();
+            }
+        });
+        await ThrowsAsync<OperationCanceledException>(async () =>
+            await manager.InstallAsync(progress, cancellation.Token));
+        False(File.Exists(ModelPath(root, artifact)));
+        False(OwnedPartials(root, artifact).Any());
+        Equal(
+            WhisperModelFailureKind.Cancelled,
+            (await manager.GetStatusAsync(CancellationToken.None)).FailureKind);
+    }
+    finally
+    {
+        DeleteModelRoot(root);
+    }
+}
+
+static async Task LocalModelConcurrentInstall()
+{
+    byte[] model = Enumerable.Repeat((byte)0x6D, 2048).ToArray();
+    WhisperLocalModelArtifact artifact = TestModelArtifact(model);
+    BlockingModelHttpHandler handler = new(model);
+    using HttpClient client = new(handler);
+    string root = CreateModelRoot();
+    try
+    {
+        await using WindowsWhisperLocalModelManager manager = new(root, client, artifact);
+        Task<WhisperModelStatus> first = manager
+            .InstallAsync(null, CancellationToken.None)
+            .AsTask();
+        await handler.Started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        WhisperModelInstallException busy = await ThrowsValueAsync<WhisperModelInstallException>(
+            async () => await manager.InstallAsync(null, CancellationToken.None));
+        Equal(WhisperModelFailureKind.Busy, busy.Kind);
+        handler.Release.TrySetResult();
+        True((await first).IsVerified);
+    }
+    finally
+    {
+        DeleteModelRoot(root);
+    }
+}
+
+static async Task LocalModelRepair()
+{
+    byte[] model = Enumerable.Range(0, 1536).Select(index => (byte)(index % 197)).ToArray();
+    WhisperLocalModelArtifact artifact = TestModelArtifact(model);
+    ScriptedModelHttpHandler handler = new(
+        (_, _) => Task.FromResult(ModelResponse(model)),
+        (_, _) => Task.FromResult(ModelResponse(model)));
+    using HttpClient client = new(handler);
+    string root = CreateModelRoot();
+    try
+    {
+        await using WindowsWhisperLocalModelManager manager = new(root, client, artifact);
+        _ = await manager.InstallAsync(null, CancellationToken.None);
+        byte[] invalid = Enumerable.Repeat((byte)0xA5, model.Length).ToArray();
+        File.WriteAllBytes(ModelPath(root, artifact), invalid);
+        Equal(
+            WhisperModelInstallState.Invalid,
+            (await manager.GetStatusAsync(CancellationToken.None)).State);
+
+        WhisperModelStatus repaired = await manager.RepairAsync(null, CancellationToken.None);
+        True(repaired.IsVerified);
+        True(File.ReadAllBytes(ModelPath(root, artifact)).SequenceEqual(model));
+    }
+    finally
+    {
+        DeleteModelRoot(root);
+    }
+}
+
+static async Task LocalModelOwnedDeletion()
+{
+    byte[] model = Enumerable.Repeat((byte)0x3E, 768).ToArray();
+    WhisperLocalModelArtifact artifact = TestModelArtifact(model);
+    using HttpClient client = new(new ScriptedModelHttpHandler(
+        (_, _) => Task.FromResult(ModelResponse(model))));
+    string root = CreateModelRoot();
+    try
+    {
+        await using WindowsWhisperLocalModelManager manager = new(root, client, artifact);
+        _ = await manager.InstallAsync(null, CancellationToken.None);
+        string unrelated = Path.Combine(root, "whisper", "models", "owner-note.txt");
+        File.WriteAllText(unrelated, "preserve");
+
+        await manager.DeleteAsync(CancellationToken.None);
+        False(File.Exists(ModelPath(root, artifact)));
+        True(File.Exists(unrelated));
+        Equal(
+            WhisperModelInstallState.NotInstalled,
+            (await manager.GetStatusAsync(CancellationToken.None)).State);
+    }
+    finally
+    {
+        DeleteModelRoot(root);
+    }
+}
+
+static async Task LocalModelInterruptedCleanup()
+{
+    byte[] model = Enumerable.Repeat((byte)0x4F, 640).ToArray();
+    WhisperLocalModelArtifact artifact = TestModelArtifact(model);
+    using HttpClient client = new(new ScriptedModelHttpHandler(
+        (_, _) => Task.FromResult(ModelResponse(model))));
+    string root = CreateModelRoot();
+    try
+    {
+        await using WindowsWhisperLocalModelManager manager = new(root, client, artifact);
+        string interrupted = Path.Combine(
+            root,
+            "whisper",
+            "models",
+            artifact.FileName + ".0123456789abcdef0123456789abcdef.partial");
+        File.WriteAllBytes(interrupted, [1, 2, 3]);
+        string unrelated = Path.Combine(
+            root,
+            "whisper",
+            "models",
+            artifact.FileName + ".not-owned.partial");
+        File.WriteAllBytes(unrelated, [4, 5, 6]);
+
+        True((await manager.InstallAsync(null, CancellationToken.None)).IsVerified);
+        False(File.Exists(interrupted));
+        True(File.Exists(unrelated));
+    }
+    finally
+    {
+        DeleteModelRoot(root);
+    }
+}
+
+static WhisperLocalModelArtifact TestModelArtifact(byte[] model)
+{
+    string sha256 = Convert.ToHexString(SHA256.HashData(model)).ToLowerInvariant();
+    return new WhisperLocalModelArtifact(
+        WhisperLocalModelDefaults.ProviderId,
+        WhisperLocalModelDefaults.ModelId,
+        WhisperLocalModelDefaults.RuntimeId,
+        "test-local-model.bin",
+        new Uri("https://models.example.test/test-local-model.bin"),
+        WindowsWhisperLocalModelManager.PinnedUpstreamRevision,
+        model.LongLength,
+        sha256);
+}
+
+static HttpResponseMessage ModelResponse(byte[] content, long? declaredLength = null)
+{
+    ByteArrayContent body = new(content);
+    if (declaredLength is not null)
+    {
+        body.Headers.ContentLength = declaredLength.Value;
+    }
+
+    return new HttpResponseMessage(HttpStatusCode.OK) { Content = body };
+}
+
+static string CreateModelRoot()
+{
+    string root = Path.Combine(
+        Path.GetTempPath(),
+        "Soltex.Whisper.Model.Tests",
+        Guid.NewGuid().ToString("N"));
+    Directory.CreateDirectory(root);
+    return Path.GetFullPath(root);
+}
+
+static string ModelPath(string root, WhisperLocalModelArtifact artifact) =>
+    Path.Combine(root, "whisper", "models", artifact.FileName);
+
+static IEnumerable<string> OwnedPartials(
+    string root,
+    WhisperLocalModelArtifact artifact) => Directory.Exists(Path.Combine(root, "whisper", "models"))
+    ? Directory.EnumerateFiles(
+        Path.Combine(root, "whisper", "models"),
+        artifact.FileName + ".*.partial",
+        SearchOption.TopDirectoryOnly)
+    : [];
+
+static void DeleteModelRoot(string root)
+{
+    string expectedParent = Path.GetFullPath(Path.Combine(
+        Path.GetTempPath(),
+        "Soltex.Whisper.Model.Tests"));
+    string fullRoot = Path.GetFullPath(root);
+    if (!fullRoot.StartsWith(
+            expectedParent + Path.DirectorySeparatorChar,
+            StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException("The test model root escaped its expected parent.");
+    }
+
+    if (Directory.Exists(fullRoot))
+    {
+        Directory.Delete(fullRoot, recursive: true);
+    }
+}
+
+static async Task<TException> ThrowsValueAsync<TException>(Func<Task> action)
+    where TException : Exception
+{
+    try
+    {
+        await action();
+    }
+    catch (TException exception)
+    {
+        return exception;
+    }
+
+    throw new InvalidOperationException($"Expected {typeof(TException).Name}.");
+}
+
 static byte[] CreatePcmPacket()
 {
     byte[] packet = new byte[320];
@@ -1530,6 +1882,58 @@ internal sealed class FakeFactory : IWhisperCaptureBackendFactory
 
         return backend;
     }
+}
+
+internal sealed class InlineProgress<T>(Action<T> report) : IProgress<T>
+{
+    public void Report(T value) => report(value);
+}
+
+internal sealed class ScriptedModelHttpHandler : HttpMessageHandler
+{
+    private readonly ConcurrentQueue<
+        Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>> _responses;
+
+    internal ScriptedModelHttpHandler(
+        params Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>[] responses)
+    {
+        _responses = new ConcurrentQueue<
+            Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>>>(responses);
+    }
+
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        if (!_responses.TryDequeue(out var response))
+        {
+            throw new InvalidOperationException("No scripted model response remained.");
+        }
+
+        return response(request, cancellationToken);
+    }
+}
+
+internal sealed class BlockingModelHttpHandler(byte[] content) : HttpMessageHandler
+{
+    internal TaskCompletionSource Started { get; } = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
+
+    internal TaskCompletionSource Release { get; } = new(
+        TaskCreationOptions.RunContinuationsAsynchronously);
+
+    protected override async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        _ = request;
+        Started.TrySetResult();
+        await Release.Task.WaitAsync(cancellationToken);
+        return ModelResponseForHandler(content);
+    }
+
+    private static HttpResponseMessage ModelResponseForHandler(byte[] model) =>
+        new(HttpStatusCode.OK) { Content = new ByteArrayContent(model) };
 }
 
 internal sealed class FakeBackend : IWhisperCaptureBackend

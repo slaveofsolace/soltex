@@ -668,6 +668,50 @@ var tests = new (string Name, Action Run)[]
         True(result.IsClean);
         Equal(WhisperSettings.CurrentVersion, result.LoadedVersion);
     }),
+    ("local provider settings round-trip with an explicit model and runtime", () =>
+    {
+        WhisperSettingsLoadResult result = WhisperSettingsMigrator.Load(
+            new WhisperSettingsDocument
+            {
+                Version = WhisperSettings.CurrentVersion,
+                TranscriberId = WhisperLocalModelDefaults.ProviderId,
+                TranscriptionModelId = WhisperLocalModelDefaults.ModelId,
+                TranscriptionRuntimeId = WhisperLocalModelDefaults.RuntimeId
+            });
+        True(result.IsClean);
+        Equal(WhisperLocalModelDefaults.ProviderId, result.Settings.TranscriberId);
+        Equal(WhisperLocalModelDefaults.ModelId, result.Settings.TranscriptionModelId);
+        Equal(WhisperLocalModelDefaults.RuntimeId, result.Settings.TranscriptionRuntimeId);
+    }),
+    ("version three local settings migrate to the pinned CPU configuration", () =>
+    {
+        WhisperSettingsLoadResult result = WhisperSettingsMigrator.Load(
+            new WhisperSettingsDocument
+            {
+                Version = 3,
+                TranscriberId = WhisperLocalModelDefaults.ProviderId
+            });
+        True(result.Migrated);
+        Equal(WhisperLocalModelDefaults.ModelId, result.Settings.TranscriptionModelId);
+        Equal(WhisperLocalModelDefaults.RuntimeId, result.Settings.TranscriptionRuntimeId);
+        True(result.Corrections.Any(correction =>
+            correction.Contains("Turbo Q5", StringComparison.Ordinal)));
+    }),
+    ("unknown provider model or runtime identities repair to disabled", () =>
+    {
+        WhisperSettingsLoadResult result = WhisperSettingsMigrator.Load(
+            new WhisperSettingsDocument
+            {
+                Version = WhisperSettings.CurrentVersion,
+                TranscriberId = WhisperLocalModelDefaults.ProviderId,
+                TranscriptionModelId = "unknown-model",
+                TranscriptionRuntimeId = "gpu"
+            });
+        Equal<string?>(null, result.Settings.TranscriberId);
+        Equal<string?>(null, result.Settings.TranscriptionModelId);
+        Equal<string?>(null, result.Settings.TranscriptionRuntimeId);
+        True(result.Corrections.Count > 0);
+    }),
     ("snippet style and application settings round-trip through validation", () =>
     {
         WhisperSettingsLoadResult loaded = WhisperSettingsMigrator.Load(new WhisperSettingsDocument
@@ -803,6 +847,28 @@ var tests = new (string Name, Action Run)[]
     ("target inspection is not required to dictate", () =>
         True(WhisperReadinessEvaluator.Evaluate(
             ReadyInputs() with { TargetInspectionAvailable = false }).CanDictate)),
+    ("a local provider needs its model but no credential", () =>
+    {
+        WhisperReadinessReport missing = WhisperReadinessEvaluator.Evaluate(
+            ReadyInputs() with
+            {
+                TranscriberCredentialAvailable = false,
+                TranscriberCredentialRequired = false,
+                ModelAvailable = false
+            });
+        False(missing.CanDictate);
+        Equal("Install the local model", missing.PrimaryBlocker?.NextAction);
+
+        WhisperReadinessReport ready = WhisperReadinessEvaluator.Evaluate(
+            ReadyInputs() with
+            {
+                TranscriberCredentialAvailable = false,
+                TranscriberCredentialRequired = false,
+                ModelAvailable = true,
+                TranscriberRuntimeAvailable = true
+            });
+        True(ready.CanDictate);
+    }),
 
     // ---------- Overlay presentation ----------
 

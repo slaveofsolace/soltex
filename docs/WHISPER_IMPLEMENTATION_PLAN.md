@@ -19,7 +19,7 @@ is reproduced, and no affiliation is implied.
 ## Implemented and verified
 
 The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
-110-test suite in `tests/Soltex.Whisper.Tests`.
+114-test suite in `tests/Soltex.Whisper.Tests`.
 
 | Area | State |
 |---|---|
@@ -56,6 +56,8 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | History and privacy UI | Bounded session history has per-entry delete and clear; history-off clears it immediately; opt-in encrypted retention exposes a bounded period and clears prior authenticated generations on deletion; auto-send uses an inline first-use warning and atomic consent; context reads, clipboard behavior, and overlay preview are explicit persisted controls |
 | Encrypted history retention | Up to 24 entries and 16,000 characters per entry; transcript text is protected per record with current-user DPAPI inside the existing HMAC-authenticated state envelope; load, expiry, rewrite, clear, cancellation, corruption, and no-plaintext-envelope behavior have deterministic Windows coverage |
 | Provider secret boundary | Provider metadata is bounded and content-free; one provider-scoped credential is protected with current-user DPAPI inside the authenticated state envelope, acquired only through an owned zeroing lease, and rotated by removing prior Soltex generations before replacement |
+| Local model ownership | `IWhisperModelManager` exposes path-free state, progress, install, repair, verification, and exact deletion. The Windows adapter pins Turbo Q5 to upstream revision `98aa99a0a9db05ae2342309f5096248665f7cba3`, exact length 574,041,195 bytes, and LFS SHA-256 `394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2`; downloads happen only after an explicit install/repair call, stream to one private bounded temporary artifact, and promote atomically after verification |
+| Local provider settings | Settings version 4 carries provider, model, and runtime identity. `local-whisper` + `large-v3-turbo-q5_0` + `cpu` round-trips; the version-3 local-provider shape migrates to that tuple, while unsupported or incomplete identities repair to the disabled state |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, Personalize, Library, Scratchpad, History, and Privacy tabs, and the floating listening
@@ -73,9 +75,9 @@ are enabled only when a selected device exists.
 Nothing below exists yet. Any claim that it works is false until runtime evidence
 from an owner-controlled Windows host says otherwise.
 
-1. A real transcription provider adapter, provider configuration UI, and owner
-   credential entry. The provider-neutral metadata and Windows credential-storage
-   boundary are implemented; no provider is selected or configured yet.
+1. The real local `IWhisperTranscriber`, its Whisper.net CPU runtime, and shipped
+   provider/model controls. Model ownership and the safe local settings tuple are
+   implemented, but the app does not yet download, load, or transcribe with it.
 2. Instantiation of the tested provider-neutral session runner with a real provider,
    followed by dispatch from registered shortcut intents (startup registration,
    cancellation, feedback, and shutdown unregistration are implemented).
@@ -128,6 +130,33 @@ privacy-denial recovery.
 
 ### 2. Transcription provider
 
+The first provider is fixed to fully local transcription: provider
+`local-whisper`, multilingual model `large-v3-turbo-q5_0`, runtime `cpu`. The model
+is not in the installer. `WindowsWhisperLocalModelManager` creates only
+`whisper\models` beneath the canonical Soltex data root, never exposes that path to
+UI policy, and performs network access only from an explicit `InstallAsync` or
+`RepairAsync` call. It accepts one exact HTTPS artifact pinned to upstream revision
+`98aa99a0a9db05ae2342309f5096248665f7cba3`, 574,041,195 bytes, and LFS SHA-256
+`394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2`.
+
+The response must be an unencoded 200 response with the exact declared length. The
+manager reads at most the expected length plus one byte, hashes while writing to one
+unique private partial file, flushes it durably, closes it, atomically moves it into
+place, then reopens the destination and compares Windows file identity with the
+identity captured from the owned write handle. One in-process gate and one
+cross-process exclusive lock reject concurrent writers. Recognized interrupted
+partial names are removed only during another explicit install/repair; deletion
+removes the exact model and recognized owned partials, preserving unrelated state.
+
+The pinned digest is an integrity expectation derived from the upstream LFS object
+at that revision. It is not described as independent publisher authenticity proof.
+The 50-case Windows adapter suite covers normal install, declared and streamed
+oversize, truncation, digest mismatch, cancellation cleanup, concurrent rejection,
+repair, exact deletion, interrupted partial cleanup, and post-install change
+detection with small benign fixtures. The 547 MiB production model was not
+downloaded in this stage, and no latency, memory, transcription-quality, or provider
+readiness claim is made.
+
 The provider-neutral `WhisperProviderStatus` contract now exposes bounded
 endpoint/model identity, language capability, streaming capability, a privacy
 statement, and credential availability without carrying a credential. The Windows
@@ -140,11 +169,11 @@ deletion removes only the provider's exact state artifacts and preserves the sha
 authenticated-state key. Bounds, round-trip, no-plaintext state, corruption,
 cancellation, rotation, deletion, and lease clearing have deterministic coverage.
 
-Still required: implement `IWhisperTranscriber` for the selected real provider
-alongside the deterministic double, connect its descriptor and credential controls
-to the shipped setup page, and obtain owner-controlled live proof. Credentials must
-never appear in source files, plain JSON, process arguments, environment dumps, or
-logs.
+Still required: add Whisper.net 1.9.1 and its CPU runtime, implement
+`IWhisperTranscriber` alongside the deterministic double, wire model install/delete
+and provider status into the shipped setup page, and obtain owner-controlled live
+proof. This local provider has no credential or cloud endpoint and uploads no audio
+or transcript.
 
 A provider returns transcription and optional polish metadata only. It never issues
 clicks, keypresses, application commands, or submission decisions. The deterministic
@@ -215,7 +244,7 @@ terminal, plain-text, and rich-text categories remain content-free. Soltex stays
 `asInvoker` with `uiAccess=false`; high/system/protected targets are identified and
 the existing delivery policy falls back to copy.
 
-Target-specific deterministic coverage is included in the current 41-case Windows adapter suite.
+Target-specific deterministic coverage is included in the current 50-case Windows adapter suite.
 It covers all five target categories, pattern capability mapping,
 protected/read-only/unknown controls, provider timeout, provider failure, and
 cancellation. An opt-in owner-host run at commit `d11edec` also inspected a real
@@ -260,7 +289,7 @@ after staging or paste input is rejected, the transcript remains copied and the
 result names the fallback. Clipboard acquisition and restoration use bounded retries
 on one background STA thread.
 
-The core suite has 110 cases and the Windows suite has 41 deterministic cases. The
+The core suite has 114 cases and the Windows suite has 50 deterministic cases. The
 Windows cases cover direct-before-clipboard ordering, ownership restoration and loss,
 focus drift after staging, unknown targets, rejected paste, and cancellation cleanup.
 An opt-in owner-host test uses a controlled WinForms text target to prove clipboard
@@ -339,7 +368,7 @@ global Activity feed or diagnostic events.
 
 The 18-case security-hardening suite covers authenticated round trip, absence of
 plaintext in either envelope, expiry, current/backup deletion, bounds, cancellation,
-and corruption failure. The 41-case Windows adapter suite covers the Whisper mapping
+and corruption failure. The 50-case Windows adapter suite covers the Whisper mapping
 and rewrite boundary. This is application-level encrypted retention, not forensic
 secure erasure: filesystem snapshots, SSD remapping, page files, crash dumps, and a
 same-user process able to invoke DPAPI remain outside its guarantee.

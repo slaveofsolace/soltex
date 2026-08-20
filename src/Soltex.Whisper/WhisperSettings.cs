@@ -43,6 +43,10 @@ public sealed class WhisperSettingsDocument
 
     public string? TranscriberId { get; set; }
 
+    public string? TranscriptionModelId { get; set; }
+
+    public string? TranscriptionRuntimeId { get; set; }
+
     public string? PreferredLanguageTag { get; set; }
 
     public string? DefaultStyleName { get; set; }
@@ -117,7 +121,7 @@ public sealed class WhisperAppProfileDocument
 /// </summary>
 public sealed class WhisperSettings
 {
-    public const int CurrentVersion = 3;
+    public const int CurrentVersion = 4;
     public const int MinimumRetentionDays = 1;
     public const int MaximumRetentionDays = 90;
     public const int MaximumDeviceIdCharacters = 256;
@@ -130,6 +134,8 @@ public sealed class WhisperSettings
         bool enabled,
         string? inputDeviceId,
         string? transcriberId,
+        string? transcriptionModelId,
+        string? transcriptionRuntimeId,
         WhisperLanguageSelection language,
         string defaultStyleName,
         bool autoSendEnabled,
@@ -147,6 +153,8 @@ public sealed class WhisperSettings
         Enabled = enabled;
         InputDeviceId = inputDeviceId;
         TranscriberId = transcriberId;
+        TranscriptionModelId = transcriptionModelId;
+        TranscriptionRuntimeId = transcriptionRuntimeId;
         Language = language;
         DefaultStyleName = defaultStyleName;
         AutoSendEnabled = autoSendEnabled;
@@ -167,6 +175,10 @@ public sealed class WhisperSettings
     public string? InputDeviceId { get; }
 
     public string? TranscriberId { get; }
+
+    public string? TranscriptionModelId { get; }
+
+    public string? TranscriptionRuntimeId { get; }
 
     public WhisperLanguageSelection Language { get; }
 
@@ -204,6 +216,8 @@ public sealed class WhisperSettings
         enabled: false,
         inputDeviceId: null,
         transcriberId: null,
+        transcriptionModelId: null,
+        transcriptionRuntimeId: null,
         WhisperLanguageSelection.AutoDetect,
         WhisperStyleProfile.Message.Name,
         autoSendEnabled: false,
@@ -222,6 +236,8 @@ public sealed class WhisperSettings
         bool enabled,
         string? inputDeviceId,
         string? transcriberId,
+        string? transcriptionModelId,
+        string? transcriptionRuntimeId,
         WhisperLanguageSelection language,
         string defaultStyleName,
         bool autoSendEnabled,
@@ -238,6 +254,8 @@ public sealed class WhisperSettings
             enabled,
             inputDeviceId,
             transcriberId,
+            transcriptionModelId,
+            transcriptionRuntimeId,
             language,
             defaultStyleName,
             autoSendEnabled,
@@ -258,6 +276,8 @@ public sealed class WhisperSettings
         Enabled = Enabled,
         InputDeviceId = InputDeviceId,
         TranscriberId = TranscriberId,
+        TranscriptionModelId = TranscriptionModelId,
+        TranscriptionRuntimeId = TranscriptionRuntimeId,
         PreferredLanguageTag = Language.LanguageTag,
         DefaultStyleName = DefaultStyleName,
         AutoSendEnabled = AutoSendEnabled,
@@ -371,6 +391,22 @@ public static class WhisperSettingsMigrator
             64,
             "Transcription provider id",
             corrections);
+        string? modelId = ReadBoundedText(
+            document.TranscriptionModelId,
+            128,
+            "Transcription model id",
+            corrections);
+        string? runtimeId = ReadBoundedText(
+            document.TranscriptionRuntimeId,
+            64,
+            "Transcription runtime id",
+            corrections);
+        ReadTranscriberConfiguration(
+            loadedVersion,
+            ref transcriberId,
+            ref modelId,
+            ref runtimeId,
+            corrections);
 
         WhisperLanguageSelection language = ReadLanguage(document.PreferredLanguageTag, corrections);
         string styleName = ReadStyleName(document.DefaultStyleName, corrections);
@@ -424,6 +460,8 @@ public static class WhisperSettingsMigrator
             enabled,
             inputDeviceId,
             transcriberId,
+            modelId,
+            runtimeId,
             language,
             styleName,
             autoSendEnabled,
@@ -582,6 +620,68 @@ public static class WhisperSettingsMigrator
         }
 
         return new WhisperVocabulary(accepted);
+    }
+
+    private static void ReadTranscriberConfiguration(
+        int loadedVersion,
+        ref string? providerId,
+        ref string? modelId,
+        ref string? runtimeId,
+        List<string> corrections)
+    {
+        if (providerId is null)
+        {
+            if (modelId is not null || runtimeId is not null)
+            {
+                modelId = null;
+                runtimeId = null;
+                corrections.Add(
+                    "Transcription model and runtime were cleared because no provider is selected.");
+            }
+
+            return;
+        }
+
+        if (!string.Equals(
+                providerId,
+                WhisperLocalModelDefaults.ProviderId,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            providerId = null;
+            modelId = null;
+            runtimeId = null;
+            corrections.Add(
+                "The transcription provider was disabled because its stored identity is not supported.");
+            return;
+        }
+
+        providerId = WhisperLocalModelDefaults.ProviderId;
+        if (loadedVersion < WhisperSettings.CurrentVersion &&
+            modelId is null &&
+            runtimeId is null)
+        {
+            modelId = WhisperLocalModelDefaults.ModelId;
+            runtimeId = WhisperLocalModelDefaults.RuntimeId;
+            corrections.Add(
+                "The local transcription provider was migrated to the Turbo Q5 CPU configuration.");
+            return;
+        }
+
+        if (!string.Equals(
+                modelId,
+                WhisperLocalModelDefaults.ModelId,
+                StringComparison.Ordinal) ||
+            !string.Equals(
+                runtimeId,
+                WhisperLocalModelDefaults.RuntimeId,
+                StringComparison.Ordinal))
+        {
+            providerId = null;
+            modelId = null;
+            runtimeId = null;
+            corrections.Add(
+                "The transcription provider was disabled because its model or runtime identity is not supported.");
+        }
     }
 
     private static ReadOnlyCollection<WhisperSnippet> ReadSnippets(

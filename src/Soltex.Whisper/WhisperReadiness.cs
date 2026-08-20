@@ -69,7 +69,11 @@ public sealed record WhisperReadinessInputs(
     bool AutoSendEnabled,
     bool AutoSendWarningAccepted,
     int EnabledAutoSendProfileCount,
-    string? MicrophoneError = null);
+    string? MicrophoneError = null,
+    bool TranscriberCredentialRequired = true,
+    bool ModelAvailable = true,
+    bool TranscriberRuntimeAvailable = true,
+    string? ModelInstallationError = null);
 
 /// <summary>
 /// A complete, ordered readiness report plus the one thing to do next.
@@ -215,12 +219,44 @@ public static class WhisperReadinessEvaluator
                 "Choose a provider");
         }
 
-        return inputs.TranscriberCredentialAvailable
+        if (!string.IsNullOrWhiteSpace(inputs.ModelInstallationError))
+        {
+            return new WhisperReadinessCheck(
+                "transcriber",
+                "Transcription",
+                WhisperReadinessState.Blocked,
+                WhisperRedaction.Sanitize(inputs.ModelInstallationError, 160),
+                "Repair the local model");
+        }
+
+        if (!inputs.TranscriberRuntimeAvailable)
+        {
+            return new WhisperReadinessCheck(
+                "transcriber",
+                "Transcription",
+                WhisperReadinessState.Blocked,
+                "The selected transcription runtime is unavailable.",
+                "Repair the Soltex installation");
+        }
+
+        if (!inputs.ModelAvailable)
+        {
+            return new WhisperReadinessCheck(
+                "transcriber",
+                "Transcription",
+                WhisperReadinessState.NeedsSetup,
+                "The selected local transcription model is not installed.",
+                "Install the local model");
+        }
+
+        return !inputs.TranscriberCredentialRequired || inputs.TranscriberCredentialAvailable
             ? new WhisperReadinessCheck(
                 "transcriber",
                 "Transcription",
                 WhisperReadinessState.Ready,
-                "A provider is selected and its credential is available.",
+                inputs.TranscriberCredentialRequired
+                    ? "A provider is selected and its credential is available."
+                    : "The local transcription model and runtime are available.",
                 nextAction: null)
             : new WhisperReadinessCheck(
                 "transcriber",
