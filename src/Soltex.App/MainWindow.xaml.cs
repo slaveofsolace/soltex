@@ -60,6 +60,9 @@ public partial class MainWindow : Window
     private bool _shutdownStarted;
     private readonly bool _renderSmokeMode = RuntimeLaunchPolicy.UsesControlledRuntime(
         Environment.GetCommandLineArgs());
+    private readonly bool _isolatedWhisperRenderWorkspace =
+        RuntimeLaunchPolicy.UsesIsolatedWhisperRenderWorkspace(
+            Environment.GetCommandLineArgs());
 
     internal bool NotificationAreaAvailable { get; private set; }
 
@@ -170,6 +173,12 @@ public partial class MainWindow : Window
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        if (_isolatedWhisperRenderWorkspace)
+        {
+            _startupCompleted.TrySetResult(true);
+            return;
+        }
+
         _startupTask ??= InitializeWorkspaceAsync();
         try
         {
@@ -211,8 +220,9 @@ public partial class MainWindow : Window
             _whisperRuntimeCancellation.Token);
         _whisperHistoryDrained = LoadWhisperHistoryAsync(
             _whisperRuntimeCancellation.Token);
-        _whisperModelDrained = RefreshWhisperModelStatusAsync(
-            _whisperRuntimeCancellation.Token);
+        _whisperModelDrained = _renderSmokeMode
+            ? Task.CompletedTask
+            : RefreshWhisperModelStatusAsync(_whisperRuntimeCancellation.Token);
 
         _importMonitor = new ImportFolderMonitor(
             _runtime.ImportsPath,
@@ -1679,6 +1689,17 @@ public partial class MainWindow : Window
         {
             ShowPanel(WhisperPanel, WhisperNavButton);
             _renderSmokeFocusTarget = WhisperPanel.WhisperInputDevicePicker;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-checks",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowChecksForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperOwnerCheckActionButton;
             return true;
         }
 

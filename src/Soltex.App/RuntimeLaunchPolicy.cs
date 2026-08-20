@@ -89,6 +89,13 @@ internal static class RuntimeLaunchPolicy
         CountOption(arguments, "--whisper-model-probe") == 0 &&
         CountOption(arguments, "--whisper-uninstall-cleanup") == 0;
 
+    internal static bool UsesIsolatedWhisperRenderWorkspace(
+        IReadOnlyList<string> arguments) =>
+        TryParseRenderSmoke(arguments, out RenderSmokeRequest? request) &&
+        request?.Panel is { } panel &&
+        (string.Equals(panel, "whisper", StringComparison.OrdinalIgnoreCase) ||
+         panel.StartsWith("whisper-", StringComparison.OrdinalIgnoreCase));
+
     internal static bool HasControlledRuntimeOption(IReadOnlyList<string> arguments) =>
         CountOption(arguments, "--runtime-probe") > 0 ||
         CountOption(arguments, "--whisper-runtime-probe") > 0 ||

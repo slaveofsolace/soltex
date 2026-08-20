@@ -1304,6 +1304,135 @@ var tests = new (string Name, Action Run)[]
         True(capture.OwnedBytes.All(value => value == 0));
         Equal(WhisperSessionState.Faulted, runner.CreateSnapshot().State);
         WaitVoid(runner.DisposeAsync());
+    }),
+    ("owner acceptance measures only an armed physical shortcut", () =>
+    {
+        WhisperOwnerAcceptanceTracker tracker = new();
+        WhisperOwnerAcceptanceSnapshot initial = tracker.CreateSnapshot();
+        Equal(0, initial.PassedCount);
+        Equal(WhisperOwnerCheckKind.PhysicalShortcut, initial.NextCheck);
+
+        tracker.Begin(WhisperOwnerCheckKind.PhysicalShortcut, microphoneAvailable: true);
+        tracker.ObserveShortcut(
+            new WhisperShortcutSignal(
+                WhisperShortcutAction.CommandMode,
+                WhisperShortcutTransition.Pressed,
+                TimeSpan.FromMilliseconds(900)),
+            WhisperShortcutIntent.BeginCommandMode);
+        WhisperOwnerAcceptanceSnapshot waiting = tracker.CreateSnapshot();
+        Equal(WhisperOwnerCheckState.Waiting, waiting.Checks[0].State);
+
+        tracker.ObserveShortcut(
+            new WhisperShortcutSignal(
+                WhisperShortcutAction.PushToTalk,
+                WhisperShortcutTransition.Pressed,
+                TimeSpan.FromMilliseconds(1_000)),
+            WhisperShortcutIntent.BeginPushToTalk);
+        WhisperOwnerAcceptanceSnapshot passed = tracker.ObserveSessionState(
+            WhisperSessionState.Listening,
+            TimeSpan.FromMilliseconds(1_042.5));
+        Equal(WhisperOwnerCheckState.Passed, passed.Checks[0].State);
+        Equal(42.5, passed.Checks[0].MeasurementMilliseconds);
+        True(passed.Checks.All(check =>
+            !check.Detail.Contains("Ctrl", StringComparison.Ordinal) &&
+            !check.Detail.Contains("Space", StringComparison.Ordinal)));
+    }),
+    ("owner acceptance requires target-owned insertion verification", () =>
+    {
+        WhisperOwnerAcceptanceTracker tracker = new();
+        WhisperTextDeliveryResult inserted = new(
+            WhisperInsertionMethod.AutomationValue,
+            WhisperInsertionFallbackReason.None,
+            WhisperClipboardRestoreOutcome.NotRequested,
+            MutationDispatched: true,
+            Copied: false);
+
+        tracker.Begin(
+            WhisperOwnerCheckKind.VerifiedSpokenInsertion,
+            microphoneAvailable: true);
+        WhisperOwnerAcceptanceSnapshot unverified = tracker.ObserveSpokenInsertion(
+            transcriptProduced: true,
+            inserted,
+            WhisperInsertionVerification.Unavailable);
+        Equal(WhisperOwnerCheckState.NeedsAttention, unverified.Checks[1].State);
+        False(unverified.IsComplete);
+
+        tracker.Begin(
+            WhisperOwnerCheckKind.VerifiedSpokenInsertion,
+            microphoneAvailable: true);
+        WhisperOwnerAcceptanceSnapshot verified = tracker.ObserveSpokenInsertion(
+            transcriptProduced: true,
+            inserted,
+            new WhisperInsertionVerification(
+                Verified: true,
+                WhisperVerificationMethod.AutomationValueRead,
+                "Target-owned read-back matched."));
+        Equal(WhisperOwnerCheckState.Passed, verified.Checks[1].State);
+        True(verified.Checks[1].Detail.Contains(
+            "Target-owned read-back verified",
+            StringComparison.Ordinal));
+    }),
+    ("owner acceptance distinguishes physical Escape from other cancellation", () =>
+    {
+        WhisperOwnerAcceptanceTracker tracker = new();
+        tracker.Begin(
+            WhisperOwnerCheckKind.EscapeCancellation,
+            microphoneAvailable: true);
+        WhisperOwnerAcceptanceSnapshot unrelated = tracker.ObserveSessionState(
+            WhisperSessionState.Cancelled,
+            TimeSpan.FromMilliseconds(100));
+        Equal(WhisperOwnerCheckState.NeedsAttention, unrelated.Checks[2].State);
+
+        tracker.Begin(
+            WhisperOwnerCheckKind.EscapeCancellation,
+            microphoneAvailable: true);
+        tracker.ObserveShortcut(
+            new WhisperShortcutSignal(
+                WhisperShortcutAction.Cancel,
+                WhisperShortcutTransition.Pressed,
+                TimeSpan.FromMilliseconds(200)),
+            WhisperShortcutIntent.Cancel);
+        WhisperOwnerAcceptanceSnapshot passed = tracker.ObserveSessionState(
+            WhisperSessionState.Cancelled,
+            TimeSpan.FromMilliseconds(240));
+        Equal(WhisperOwnerCheckState.Passed, passed.Checks[2].State);
+    }),
+    ("owner acceptance keeps hardware and assistive checks explicit", () =>
+    {
+        WhisperOwnerAcceptanceTracker tracker = new();
+        tracker.Begin(
+            WhisperOwnerCheckKind.MicrophoneReconnect,
+            microphoneAvailable: false);
+        Equal(
+            WhisperOwnerCheckState.NeedsAttention,
+            tracker.CreateSnapshot().Checks[3].State);
+
+        tracker.Begin(
+            WhisperOwnerCheckKind.MicrophoneReconnect,
+            microphoneAvailable: true);
+        tracker.ObserveMicrophoneAvailability(available: true);
+        Equal(WhisperOwnerCheckState.Waiting, tracker.CreateSnapshot().Checks[3].State);
+        tracker.ObserveMicrophoneAvailability(available: false);
+        WhisperOwnerAcceptanceSnapshot reconnected =
+            tracker.ObserveMicrophoneAvailability(available: true);
+        Equal(WhisperOwnerCheckState.Passed, reconnected.Checks[3].State);
+
+        tracker.Begin(
+            WhisperOwnerCheckKind.LiveDpiTransition,
+            microphoneAvailable: true);
+        tracker.ObserveDpiTransition(1.0, 1.0);
+        Equal(WhisperOwnerCheckState.Waiting, tracker.CreateSnapshot().Checks[4].State);
+        WhisperOwnerAcceptanceSnapshot dpi = tracker.ObserveDpiTransition(1.0, 1.5);
+        Equal(WhisperOwnerCheckState.Passed, dpi.Checks[4].State);
+        True(dpi.Checks[4].Detail.Contains("150%", StringComparison.Ordinal));
+
+        tracker.Begin(
+            WhisperOwnerCheckKind.KeyboardAndScreenReader,
+            microphoneAvailable: true);
+        WhisperOwnerAcceptanceSnapshot assisted =
+            tracker.ConfirmKeyboardAndScreenReader();
+        Equal(WhisperOwnerCheckState.Passed, assisted.Checks[5].State);
+        Equal(0, tracker.Reset().PassedCount);
     })
 };
 

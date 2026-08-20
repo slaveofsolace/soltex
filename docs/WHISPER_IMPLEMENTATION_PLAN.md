@@ -63,13 +63,15 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Shipped session composition | The app instantiates the production WASAPI capture, local transcriber, UI Automation inspector, insertion adapter, verified submitter, and provider-neutral session runner. Registered begin/release/toggle/cancel intents use this one owned path; saved exact-process profiles are resolved after target inspection; 19-minute warning/20-minute expiry, overlay state, optional bounded history, last-transcript actions, model mutation, and shutdown all share explicit owned task lifetimes |
 | Packaged CPU runtime | The `win-x64` package ships exactly the four Whisper.net CPU native DLLs beside the single-file app in the runtime layout the loader probes. The package is bounded below 256 MiB and rejects the 547 MiB model filename. A separate explicit, content-free packaged-process gate opens the verified externally installed model, completes initial and post-unload transcription, observes native cancellation, and proves no microphone, audio logging, or transcript logging. This proves one owner-host CPU execution path, not transcription accuracy or supported-hardware breadth |
 | Whisper UI evidence | The shipped manifest declares per-monitor-v2 awareness. A bounded direct-process renderer captures light, dark, high-contrast, minimum-width, and 100/150/200-percent raster profiles plus every presenter-owned overlay state; each artifact records the exact owned PID, dimensions, evidence class, commit identities, and SHA-256 without microphone, transcript, clipboard, target, or model content |
+| Owner acceptance center | A session-only Checks tab arms one owner observation at a time for the physical shortcut, verified spoken insertion, physical Escape, microphone reconnect, live DPI transition, and keyboard/screen-reader walkthrough. It stores only fixed result categories and one bounded shortcut latency; it never stores keys, audio, transcript or target text, process names, paths, or credentials |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
-Shortcuts, Personalize, Library, Scratchpad, History, and Privacy tabs, and the floating listening
+Shortcuts, Checks, Personalize, Library, Scratchpad, History, and Privacy tabs, and the floating listening
 surface — render this core.
 They are honest about capability: the navigation entry remains marked `SCAFFOLD`
 because an owner-spoken capture-to-verified-insertion session and the remaining physical-input and
-accessibility checks are still pending. The shipped session and model controls are real,
+accessibility checks are still pending. The label hides only after all six owner checks pass in the
+current process; those session-only observations are not persisted or inferred from CI. The shipped session and model controls are real,
 but readiness stays blocked until Whisper is enabled, one current input exists, shortcuts are
 registered, the exact local provider tuple is selected, and the pinned model verifies. Capture
 controls are enabled only when a selected device exists. Auto-send stays off by default, and no host
@@ -79,6 +81,11 @@ code authorizes Enter outside the provider-neutral submit gate.
 
 The implementation paths below exist, but the listed owner-controlled evidence is still required
 before the corresponding capability can be described as complete.
+
+The Checks tab now makes these gates executable in the shipped app without exposing sensitive
+content. Each check must be explicitly armed, can fail to a retryable needs-attention state, and
+passes only from its corresponding runtime observation. The keyboard/screen-reader walkthrough is
+the sole explicit owner-confirmation check; automated rendering does not mark it complete.
 
 1. Owner-controlled model proof is partial. The shipped UI downloaded and verified the pinned
    547 MiB model after an explicit action. The real CPU runtime completed content-free initial and
@@ -393,6 +400,12 @@ history with per-entry deletion and clear, the first-use auto-send warning, snip
 custom-style, per-application, Scratchpad, language, privacy, and device controls are implemented.
 Every enabled control must execute. Unavailable
 capability is an explicit state, not a disabled control that looks operable.
+
+The separate Checks tab keeps acceptance evidence out of the everyday setup hierarchy. It exposes
+one action for the armed check, a six-row status summary, explicit reset, and fixed content-free
+copy. The canonical application render matrix includes this state. Valid `whisper*` render requests
+use an isolated evidence startup so they do not query unrelated live system integrations; normal
+runtime and non-Whisper render contracts remain unchanged.
 
 At narrow window widths all core controls stay reachable without horizontal
 scrolling. The fixed navigation rail scrolls vertically at the supported minimum

@@ -99,6 +99,7 @@ $matrix = @(
     [ordered]@{ id = 'security-activity'; panel = 'security-activity'; state = 'expanded'; file = 'security-activity-current-source.png' },
     [ordered]@{ id = 'remote-default'; panel = 'remote'; state = 'default'; file = 'remote-assist-current-source.png' },
     [ordered]@{ id = 'whisper-default'; panel = 'whisper'; state = 'capture-setup'; file = 'whisper-current-source.png' },
+    [ordered]@{ id = 'whisper-checks'; panel = 'whisper-checks'; state = 'session-owner-checks'; file = 'whisper-checks-current-source.png' },
     [ordered]@{ id = 'whisper-personalize'; panel = 'whisper-personalize'; state = 'personalization'; file = 'whisper-personalize-current-source.png' },
     [ordered]@{ id = 'whisper-library'; panel = 'whisper-library'; state = 'snippets'; file = 'whisper-library-current-source.png' },
     [ordered]@{ id = 'whisper-library-styles'; panel = 'whisper-library-styles'; state = 'styles'; file = 'whisper-library-styles-current-source.png' },

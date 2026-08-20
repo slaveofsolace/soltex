@@ -35,6 +35,7 @@ public partial class WhisperView : UserControl
     private bool _autoSendWarningAccepted;
     private bool _contextReadsAllowed;
     private bool _showTranscriptPreview;
+    private WhisperOwnerAcceptanceAction _ownerAcceptanceAction;
     private readonly WhisperScratchpad _scratchpad = new();
     private bool _updatingScratchpad;
     private int? _pendingScratchpadClose;
@@ -47,6 +48,7 @@ public partial class WhisperView : UserControl
         [
             WhisperSetupTab,
             WhisperShortcutsTab,
+            WhisperChecksTab,
             WhisperPersonalizeTab,
             WhisperLibraryTab,
             WhisperScratchpadTab,
@@ -70,6 +72,9 @@ public partial class WhisperView : UserControl
         SetPrivacy(WhisperSettings.CreateDefault(), "Safe defaults are active.");
         RefreshScratchpad();
         UpdateReadiness(CreateScaffoldInputs());
+        SetOwnerAcceptance(
+            new WhisperOwnerAcceptanceTracker().CreateSnapshot(),
+            canDictate: false);
     }
 
     /// <summary>Raised when the user asks to see the listening surface.</summary>
@@ -104,6 +109,9 @@ public partial class WhisperView : UserControl
     public event EventHandler? HistoryClearRequested;
 
     public event EventHandler<WhisperPrivacyRequestedEventArgs>? PrivacyRequested;
+
+    public event EventHandler<WhisperOwnerAcceptanceRequestedEventArgs>?
+        OwnerAcceptanceRequested;
 
     /// <summary>
     /// Renders a readiness report. The host supplies the observed facts; this view
@@ -207,6 +215,84 @@ public partial class WhisperView : UserControl
             : enabled
                 ? "Whisper is on, but Windows shortcuts are not registered. Review the readiness error above."
                 : "Whisper is off, so no global shortcut is registered.";
+    }
+
+    public void SetOwnerAcceptance(
+        WhisperOwnerAcceptanceSnapshot snapshot,
+        bool canDictate)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        OwnerCheckRow[] rows = snapshot.Checks
+            .Select(check => new OwnerCheckRow(check))
+            .ToArray();
+        WhisperOwnerCheckList.ItemsSource = rows;
+        WhisperOwnerChecksCount.Text = $"{snapshot.PassedCount} of {rows.Length} passed";
+        WhisperOwnerCheckResetButton.IsEnabled = rows.Any(row =>
+            row.State != WhisperOwnerCheckState.Pending);
+        WhisperScaffoldPill.Visibility = snapshot.IsComplete
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+
+        WhisperOwnerAcceptanceCheck? focus = snapshot.ActiveCheck is WhisperOwnerCheckKind active
+            ? snapshot.Checks.Single(check => check.Kind == active)
+            : snapshot.NextCheck is WhisperOwnerCheckKind next
+                ? snapshot.Checks.Single(check => check.Kind == next)
+                : null;
+        if (snapshot.IsComplete)
+        {
+            WhisperOwnerCheckTitle.Text = "Owner checks complete";
+            WhisperOwnerCheckDetail.Text =
+                "All six checks passed in this session. No captured content was retained.";
+            WhisperOwnerCheckActionButton.Content = "Complete";
+            WhisperOwnerCheckActionButton.IsEnabled = false;
+            _ownerAcceptanceAction = WhisperOwnerAcceptanceAction.None;
+        }
+        else if (snapshot.ActiveCheck == WhisperOwnerCheckKind.KeyboardAndScreenReader)
+        {
+            WhisperOwnerCheckTitle.Text = $"Running: {focus!.Title}";
+            WhisperOwnerCheckDetail.Text = focus.Detail;
+            WhisperOwnerCheckActionButton.Content = "Mark checked";
+            WhisperOwnerCheckActionButton.IsEnabled = true;
+            _ownerAcceptanceAction = WhisperOwnerAcceptanceAction.ConfirmAssistiveWalkthrough;
+        }
+        else if (snapshot.ActiveCheck == WhisperOwnerCheckKind.MicrophoneReconnect)
+        {
+            WhisperOwnerCheckTitle.Text = $"Running: {focus!.Title}";
+            WhisperOwnerCheckDetail.Text = focus.Detail;
+            WhisperOwnerCheckActionButton.Content = "Check devices";
+            WhisperOwnerCheckActionButton.IsEnabled = true;
+            _ownerAcceptanceAction = WhisperOwnerAcceptanceAction.RefreshMicrophones;
+        }
+        else if (snapshot.ActiveCheck is not null)
+        {
+            WhisperOwnerCheckTitle.Text = $"Running: {focus!.Title}";
+            WhisperOwnerCheckDetail.Text = focus.Detail;
+            WhisperOwnerCheckActionButton.Content = "Waiting";
+            WhisperOwnerCheckActionButton.IsEnabled = false;
+            _ownerAcceptanceAction = WhisperOwnerAcceptanceAction.None;
+        }
+        else
+        {
+            WhisperOwnerCheckTitle.Text = $"Next: {focus!.Title}";
+            WhisperOwnerCheckDetail.Text = canDictate
+                ? focus.Detail
+                : "Finish every Setup prerequisite before starting owner checks.";
+            WhisperOwnerCheckActionButton.Content = "Start next check";
+            WhisperOwnerCheckActionButton.IsEnabled = canDictate;
+            _ownerAcceptanceAction = WhisperOwnerAcceptanceAction.BeginNext;
+        }
+
+        AutomationProperties.SetName(
+            WhisperOwnerCheckActionButton,
+            _ownerAcceptanceAction switch
+            {
+                WhisperOwnerAcceptanceAction.BeginNext => "Start the next Whisper owner check",
+                WhisperOwnerAcceptanceAction.RefreshMicrophones =>
+                    "Refresh microphones for the reconnect check",
+                WhisperOwnerAcceptanceAction.ConfirmAssistiveWalkthrough =>
+                    "Confirm the keyboard and screen-reader walkthrough",
+                _ => "Whisper owner check is waiting for an observed event"
+            });
     }
 
     public void SetLocalModelStatus(
@@ -608,6 +694,9 @@ public partial class WhisperView : UserControl
     internal void ShowPrivacyForEvidence() =>
         SelectTab(WhisperPrivacyTab, WhisperPrivacyPanel);
 
+    internal void ShowChecksForEvidence() =>
+        SelectTab(WhisperChecksTab, WhisperChecksPanel);
+
     internal void ShowEncryptedPrivacyForEvidence()
     {
         WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
@@ -681,6 +770,9 @@ public partial class WhisperView : UserControl
     private void WhisperShortcutsTab_Click(object sender, RoutedEventArgs e) =>
         SelectTab(WhisperShortcutsTab, WhisperShortcutsPanel);
 
+    private void WhisperChecksTab_Click(object sender, RoutedEventArgs e) =>
+        SelectTab(WhisperChecksTab, WhisperChecksPanel);
+
     private void WhisperPersonalizeTab_Click(object sender, RoutedEventArgs e) =>
         SelectTab(WhisperPersonalizeTab, WhisperPersonalizePanel);
 
@@ -706,6 +798,7 @@ public partial class WhisperView : UserControl
 
         WhisperSetupPanel.Visibility = Visibility.Collapsed;
         WhisperShortcutsPanel.Visibility = Visibility.Collapsed;
+        WhisperChecksPanel.Visibility = Visibility.Collapsed;
         WhisperPersonalizePanel.Visibility = Visibility.Collapsed;
         WhisperLibraryPanel.Visibility = Visibility.Collapsed;
         WhisperScratchpadPanel.Visibility = Visibility.Collapsed;
@@ -713,6 +806,21 @@ public partial class WhisperView : UserControl
         WhisperPrivacyPanel.Visibility = Visibility.Collapsed;
         panel.Visibility = Visibility.Visible;
     }
+
+    private void OwnerCheckAction_Click(object sender, RoutedEventArgs e)
+    {
+        if (_ownerAcceptanceAction != WhisperOwnerAcceptanceAction.None)
+        {
+            OwnerAcceptanceRequested?.Invoke(
+                this,
+                new WhisperOwnerAcceptanceRequestedEventArgs(_ownerAcceptanceAction));
+        }
+    }
+
+    private void OwnerCheckReset_Click(object sender, RoutedEventArgs e) =>
+        OwnerAcceptanceRequested?.Invoke(
+            this,
+            new WhisperOwnerAcceptanceRequestedEventArgs(WhisperOwnerAcceptanceAction.Reset));
 
     private void PersonalizationPicker_SelectionChanged(
         object sender,
@@ -1267,6 +1375,45 @@ public partial class WhisperView : UserControl
         public string Description { get; }
     }
 
+    internal sealed class OwnerCheckRow
+    {
+        internal OwnerCheckRow(WhisperOwnerAcceptanceCheck check)
+        {
+            Kind = check.Kind;
+            State = check.State;
+            Title = check.Title;
+            Detail = check.Detail;
+            StateLabel = check.State switch
+            {
+                WhisperOwnerCheckState.Pending => "NOT RUN",
+                WhisperOwnerCheckState.Waiting => "WAITING",
+                WhisperOwnerCheckState.Observed => "OBSERVED",
+                WhisperOwnerCheckState.Passed => "PASSED",
+                _ => "RETRY"
+            };
+            StateBrush = check.State switch
+            {
+                WhisperOwnerCheckState.Passed => ThemeBrush("SignalBrush"),
+                WhisperOwnerCheckState.Waiting or WhisperOwnerCheckState.Observed =>
+                    ThemeBrush("AccentBrush"),
+                WhisperOwnerCheckState.NeedsAttention => ThemeBrush("WarningBrush"),
+                _ => ThemeBrush("MutedBrush")
+            };
+        }
+
+        public WhisperOwnerCheckKind Kind { get; }
+
+        public WhisperOwnerCheckState State { get; }
+
+        public string Title { get; }
+
+        public string Detail { get; }
+
+        public string StateLabel { get; }
+
+        public Brush StateBrush { get; }
+    }
+
     internal sealed record VocabularyRow(string Term)
     {
         public string RemoveAutomationName => $"Remove {Term} from personal vocabulary";
@@ -1439,6 +1586,21 @@ public partial class WhisperView : UserControl
         WhisperDeliveryKind.SubmitOnly => "Submitted",
         _ => "Completed"
     };
+}
+
+public enum WhisperOwnerAcceptanceAction
+{
+    None,
+    BeginNext,
+    RefreshMicrophones,
+    ConfirmAssistiveWalkthrough,
+    Reset
+}
+
+public sealed class WhisperOwnerAcceptanceRequestedEventArgs(
+    WhisperOwnerAcceptanceAction action) : EventArgs
+{
+    public WhisperOwnerAcceptanceAction Action { get; } = action;
 }
 
 public sealed class WhisperInputDeviceRequestedEventArgs : EventArgs

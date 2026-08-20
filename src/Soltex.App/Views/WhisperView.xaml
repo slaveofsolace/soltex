@@ -12,7 +12,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="170" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
@@ -22,6 +22,7 @@
                              VerticalAlignment="Center"
                              Fill="{Binding StateBrush}" />
                     <TextBlock Grid.Column="1"
+                               Margin="0,0,16,0"
                                VerticalAlignment="Center"
                                Text="{Binding Title}"
                                FontWeight="SemiBold" />
@@ -326,6 +327,12 @@
                         Content="Shortcuts"
                         AutomationProperties.Name="Show Whisper shortcuts"
                         Click="WhisperShortcutsTab_Click" />
+                <Button x:Name="WhisperChecksTab"
+                        Margin="8,0,0,0"
+                        Style="{StaticResource TabButtonStyle}"
+                        Content="Checks"
+                        AutomationProperties.Name="Show owner-controlled Whisper checks"
+                        Click="WhisperChecksTab_Click" />
                 <Button x:Name="WhisperPersonalizeTab"
                         Margin="8,0,0,0"
                         Style="{StaticResource TabButtonStyle}"
@@ -529,6 +536,81 @@
                                   Grid.Row="8"
                                   ItemTemplate="{StaticResource ReadinessRowTemplate}"
                                   AutomationProperties.Name="Whisper readiness checks"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+                </Grid>
+
+                <!-- Owner-controlled checks remain isolated from the everyday setup flow. -->
+                <Grid x:Name="WhisperChecksPanel" Margin="18" Visibility="Collapsed">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SectionTitleStyle}"
+                                       Text="Finish on this PC" />
+                            <TextBlock Margin="0,3,0,0"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="One observed check at a time. Results live only for this Soltex session." />
+                        </StackPanel>
+                        <TextBlock x:Name="WhisperOwnerChecksCount"
+                                   Grid.Column="1"
+                                   VerticalAlignment="Center"
+                                   Text="0 of 6 passed"
+                                   Foreground="{DynamicResource MutedBrush}" />
+                    </Grid>
+                    <Border Grid.Row="2" Style="{StaticResource QuietCardStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock x:Name="WhisperOwnerCheckTitle"
+                                           Text="Next: Physical shortcut"
+                                           FontWeight="SemiBold"
+                                           AutomationProperties.LiveSetting="Polite" />
+                                <TextBlock x:Name="WhisperOwnerCheckDetail"
+                                           Margin="0,3,16,0"
+                                           Text="Finish Setup, then start the first owner check."
+                                           Style="{StaticResource MutedTextStyle}"
+                                           TextWrapping="Wrap"
+                                           AutomationProperties.LiveSetting="Polite" />
+                            </StackPanel>
+                            <Button x:Name="WhisperOwnerCheckResetButton"
+                                    Grid.Column="1"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Reset"
+                                    IsEnabled="False"
+                                    AutomationProperties.Name="Reset session-only Whisper owner checks"
+                                    Click="OwnerCheckReset_Click" />
+                            <Button x:Name="WhisperOwnerCheckActionButton"
+                                    Grid.Column="3"
+                                    MinWidth="126"
+                                    Style="{StaticResource ActionButton}"
+                                    Content="Start next check"
+                                    IsEnabled="False"
+                                    AutomationProperties.Name="Start the next Whisper owner check"
+                                    Click="OwnerCheckAction_Click" />
+                        </Grid>
+                    </Border>
+                    <TextBlock Grid.Row="3"
+                               VerticalAlignment="Center"
+                               Text="Content-free: no keys, audio, transcript, target text, process name, or path is retained."
+                               Style="{StaticResource MutedTextStyle}" />
+                    <ItemsControl x:Name="WhisperOwnerCheckList"
+                                  Grid.Row="4"
+                                  ItemTemplate="{StaticResource ReadinessRowTemplate}"
+                                  AutomationProperties.Name="Owner-controlled Whisper checks"
                                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
                 </Grid>
 

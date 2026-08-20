@@ -40,6 +40,7 @@ public partial class MainWindow
     private readonly WhisperShortcutGestureInterpreter _whisperShortcutGestures = new();
     private readonly CancellationTokenSource _whisperRuntimeCancellation = new();
     private readonly BoundedWhisperHistory _whisperHistory = new(WhisperLimits.MaximumHistoryEntries);
+    private readonly WhisperOwnerAcceptanceTracker _whisperOwnerAcceptance = new();
     private readonly SemaphoreSlim _whisperHistoryGate = new(1, 1);
     private IWhisperHistoryRetentionStore? _whisperHistoryStore;
     private Task _whisperHistoryDrained = Task.CompletedTask;
@@ -72,6 +73,7 @@ public partial class MainWindow
         _whisperSessionRunner.StateChanged += WhisperSessionRunner_StateChanged;
         _whisperCapture.InputLevelChanged += WhisperCapture_InputLevelChanged;
         _whisperCapture.DeviceSelectionChanged += WhisperCapture_DeviceSelectionChanged;
+        DpiChanged += MainWindow_WhisperDpiChanged;
 
         WhisperPanel.DeviceRefreshRequested += WhisperPanel_DeviceRefreshRequested;
         WhisperPanel.InputDeviceRequested += WhisperPanel_InputDeviceRequested;
@@ -86,6 +88,7 @@ public partial class MainWindow
         WhisperPanel.HistoryEntryDeleteRequested += WhisperPanel_HistoryEntryDeleteRequested;
         WhisperPanel.HistoryClearRequested += WhisperPanel_HistoryClearRequested;
         WhisperPanel.PrivacyRequested += WhisperPanel_PrivacyRequested;
+        WhisperPanel.OwnerAcceptanceRequested += WhisperPanel_OwnerAcceptanceRequested;
         WhisperPanel.UpdateCaptureDevices(
             _whisperDevices,
             _whisperSettings.InputDeviceId,
@@ -104,7 +107,9 @@ public partial class MainWindow
             CreateUncheckedWhisperModelStatus(),
             operationRunning: false,
             progress: 0,
-            "Checking exact-owned local model state. No download starts automatically.");
+            _renderSmokeMode
+                ? "Model verification is skipped during deterministic render evidence."
+                : "Checking exact-owned local model state. No download starts automatically.");
         WhisperPanel.SetPersonalization(
             _whisperSettings,
             loaded.LoadedVersion == 0
@@ -898,8 +903,15 @@ public partial class MainWindow
             return ValueTask.CompletedTask;
         }
 
+        WhisperOwnerAcceptanceSnapshot acceptance = _whisperOwnerAcceptance
+            .ObserveShortcut(signal, intent.Value);
+
         Task dispatch = Dispatcher.InvokeAsync(
-            () => HandleWhisperShortcutIntent(intent.Value),
+            () =>
+            {
+                RenderWhisperOwnerAcceptance(acceptance);
+                HandleWhisperShortcutIntent(intent.Value);
+            },
             System.Windows.Threading.DispatcherPriority.Normal,
             cancellationToken).Task;
         return new ValueTask(dispatch);
@@ -996,6 +1008,12 @@ public partial class MainWindow
                 cancellationToken).ConfigureAwait(false);
             await RetainCompletedWhisperSessionAsync(result, cancellationToken)
                 .ConfigureAwait(false);
+            WhisperOwnerAcceptanceSnapshot acceptance = _whisperOwnerAcceptance
+                .ObserveSpokenInsertion(
+                    result.Finalization.Pipeline.Text.Length > 0,
+                    result.Delivery,
+                    result.Submission?.Verification ?? WhisperInsertionVerification.Unavailable);
+            await Dispatcher.InvokeAsync(() => RenderWhisperOwnerAcceptance(acceptance));
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested ||
                                                  _shutdownStarted)
@@ -1004,6 +1022,9 @@ public partial class MainWindow
         }
         catch (Exception exception) when (IsExpectedWhisperSessionFailure(exception))
         {
+            WhisperOwnerAcceptanceSnapshot acceptance =
+                _whisperOwnerAcceptance.ObserveSessionFailure();
+            await Dispatcher.InvokeAsync(() => RenderWhisperOwnerAcceptance(acceptance));
             if (exception is WhisperLocalTranscriptionException localFailure &&
                 localFailure.Kind is WhisperLocalTranscriptionFailureKind.ModelUnavailable or
                     WhisperLocalTranscriptionFailureKind.ModelBusy)
@@ -1075,6 +1096,11 @@ public partial class MainWindow
             _whisperSessionTargetKnown = e.TargetKind != WhisperTargetKind.Unknown &&
                 !string.IsNullOrWhiteSpace(e.TargetProcessName);
             _whisperSessionDeliveryKind = e.DeliveryKind;
+            WhisperOwnerAcceptanceSnapshot acceptance = _whisperOwnerAcceptance
+                .ObserveSessionState(
+                    e.Session.State,
+                    TimeSpan.FromMilliseconds(Environment.TickCount64));
+            RenderWhisperOwnerAcceptance(acceptance);
             RenderWhisperSessionFrame(e.Session);
         });
     }
@@ -1379,6 +1405,8 @@ public partial class MainWindow
                 : null;
             await Dispatcher.InvokeAsync(() =>
             {
+                WhisperOwnerAcceptanceSnapshot acceptance = _whisperOwnerAcceptance
+                    .ObserveMicrophoneAvailability(IsConfiguredWhisperDeviceAvailable());
                 string detail = devices.Devices.Count == 0
                     ? "Windows reported no available microphone."
                     : $"{devices.Devices.Count} input device(s) available.";
@@ -1386,6 +1414,7 @@ public partial class MainWindow
                     devices,
                     _whisperSettings.InputDeviceId,
                     detail);
+                RenderWhisperOwnerAcceptance(acceptance);
                 UpdateWhisperReadiness();
             });
         }
@@ -1547,9 +1576,15 @@ public partial class MainWindow
             return;
         }
 
-        _ = Dispatcher.BeginInvoke(() => WhisperPanel.SetMicrophoneTestState(
-            running: true,
-            $"The saved input is unavailable; using {selection.DeviceName} for this test."));
+        WhisperOwnerAcceptanceSnapshot acceptance = _whisperOwnerAcceptance
+            .ObserveMicrophoneAvailability(available: false);
+        _ = Dispatcher.BeginInvoke(() =>
+        {
+            RenderWhisperOwnerAcceptance(acceptance);
+            WhisperPanel.SetMicrophoneTestState(
+                running: true,
+                $"The saved input is unavailable; using {selection.DeviceName} for this test.");
+        });
     }
 
     private WhisperReadinessInputs CreateWhisperReadinessInputs()
@@ -1597,11 +1632,67 @@ public partial class MainWindow
     private void UpdateWhisperReadiness()
     {
         WhisperReadinessInputs inputs = CreateWhisperReadinessInputs();
-        WhisperPanel.UpdateReadiness(WhisperCaptureReadiness.Apply(
+        WhisperReadinessInputs captureInputs = WhisperCaptureReadiness.Apply(
             inputs,
             _whisperCaptureFailure,
-            inputs.MicrophoneSelected));
+            inputs.MicrophoneSelected);
+        WhisperPanel.UpdateReadiness(captureInputs);
+        WhisperPanel.SetOwnerAcceptance(
+            _whisperOwnerAcceptance.CreateSnapshot(),
+            WhisperReadinessEvaluator.Evaluate(captureInputs).CanDictate);
     }
+
+    private bool IsConfiguredWhisperDeviceAvailable() =>
+        _whisperSettings.InputDeviceId is { Length: > 0 } id &&
+        _whisperDevices.Devices.Any(device =>
+            string.Equals(device.Id, id, StringComparison.Ordinal));
+
+    private void RenderWhisperOwnerAcceptance(WhisperOwnerAcceptanceSnapshot snapshot)
+    {
+        WhisperReadinessInputs inputs = WhisperCaptureReadiness.Apply(
+            CreateWhisperReadinessInputs(),
+            _whisperCaptureFailure,
+            IsConfiguredWhisperDeviceAvailable());
+        WhisperPanel.SetOwnerAcceptance(
+            snapshot,
+            WhisperReadinessEvaluator.Evaluate(inputs).CanDictate);
+    }
+
+    private async void WhisperPanel_OwnerAcceptanceRequested(
+        object? sender,
+        WhisperOwnerAcceptanceRequestedEventArgs e)
+    {
+        if (_shutdownStarted)
+        {
+            return;
+        }
+
+        switch (e.Action)
+        {
+            case WhisperOwnerAcceptanceAction.BeginNext:
+                RenderWhisperOwnerAcceptance(_whisperOwnerAcceptance.BeginNext(
+                    IsConfiguredWhisperDeviceAvailable()));
+                break;
+            case WhisperOwnerAcceptanceAction.RefreshMicrophones:
+                await RefreshWhisperCaptureDevicesAsync();
+                break;
+            case WhisperOwnerAcceptanceAction.ConfirmAssistiveWalkthrough:
+                RenderWhisperOwnerAcceptance(
+                    _whisperOwnerAcceptance.ConfirmKeyboardAndScreenReader());
+                break;
+            case WhisperOwnerAcceptanceAction.Reset:
+                RenderWhisperOwnerAcceptance(_whisperOwnerAcceptance.Reset());
+                break;
+            case WhisperOwnerAcceptanceAction.None:
+            default:
+                break;
+        }
+    }
+
+    private void MainWindow_WhisperDpiChanged(object sender, DpiChangedEventArgs e) =>
+        RenderWhisperOwnerAcceptance(_whisperOwnerAcceptance.ObserveDpiTransition(
+            e.OldDpi.DpiScaleX,
+            e.NewDpi.DpiScaleX));
 
     private async Task DisposeWhisperCaptureAsync()
     {
@@ -1635,6 +1726,8 @@ public partial class MainWindow
 
     private async Task DisposeWhisperRuntimeAsync()
     {
+        DpiChanged -= MainWindow_WhisperDpiChanged;
+        WhisperPanel.OwnerAcceptanceRequested -= WhisperPanel_OwnerAcceptanceRequested;
         _whisperSessionCancellation?.Cancel();
         _whisperRuntimeCancellation.Cancel();
         await _whisperShortcutGate.WaitAsync().ConfigureAwait(false);

@@ -72,6 +72,7 @@ internal static class Program
             ("Whisper device selection persists and oversized state fails safe", WhisperSettingsRoundTripAndRecovery),
             ("Whisper capture controls expose only working capture actions", WhisperCaptureControlsAreHonest),
             ("Whisper runtime toggle is explicit and reversible", WhisperRuntimeToggleIsExplicit),
+            ("Whisper owner checks expose only observable session actions", WhisperOwnerAcceptanceControlsAreExplicit),
             ("Whisper local provider and model actions are explicit", WhisperLocalModelControlsAreExplicit),
             ("Whisper overlay evidence covers every visible presenter state", WhisperOverlayEvidenceStatesAreComplete),
             ("Whisper shortcut intents route through one shipped session path", WhisperSessionIntentRoutingIsDeterministic),
@@ -573,6 +574,15 @@ internal static class Program
             "The runtime-cost probe incorrectly forced software rendering.");
         True(RuntimeLaunchPolicy.UsesSoftwareRendering(["--render-smoke", "image.png"]),
             "Native render smoke did not retain deterministic software rendering.");
+        True(RuntimeLaunchPolicy.UsesIsolatedWhisperRenderWorkspace(
+                ["--render-smoke", "image.png", "--panel", "whisper-checks"]),
+            "Whisper render evidence did not isolate itself from unrelated live workspace integrations.");
+        True(!RuntimeLaunchPolicy.UsesIsolatedWhisperRenderWorkspace(
+                ["--render-smoke", "image.png", "--panel", "security"]),
+            "A non-Whisper render unexpectedly skipped its live workspace initialization contract.");
+        True(!RuntimeLaunchPolicy.UsesIsolatedWhisperRenderWorkspace(
+                ["--ordinary-option"]),
+            "An ordinary launch was mistaken for isolated Whisper render evidence.");
         True(RuntimeLaunchPolicy.UsesSoftwareRendering(
                 ["--whisper-overlay-smoke", "overlay.png", "--state", "listening"]),
             "Whisper overlay evidence did not retain deterministic software rendering.");
@@ -1353,6 +1363,72 @@ internal static class Program
         True(!view.WhisperFeatureToggleButton.IsEnabled &&
              (string)view.WhisperFeatureToggleButton.Content == "Applying",
             "The runtime control remained operable while a lifecycle change was in flight.");
+    }
+
+    private static void WhisperOwnerAcceptanceControlsAreExplicit()
+    {
+        WhisperView view = new();
+        WhisperOwnerAcceptanceAction? requested = null;
+        view.OwnerAcceptanceRequested += (_, args) => requested = args.Action;
+        WhisperOwnerAcceptanceTracker tracker = new();
+
+        view.SetOwnerAcceptance(tracker.CreateSnapshot(), canDictate: false);
+        view.ShowChecksForEvidence();
+        True(view.WhisperChecksPanel.Visibility == Visibility.Visible &&
+             view.WhisperOwnerCheckList.Items.Count == 6 &&
+             !view.WhisperOwnerCheckActionButton.IsEnabled,
+            "Owner checks looked operable before Whisper readiness was proven.");
+
+        view.SetOwnerAcceptance(tracker.CreateSnapshot(), canDictate: true);
+        True(view.WhisperOwnerCheckActionButton.IsEnabled &&
+             (string)view.WhisperOwnerCheckActionButton.Content == "Start next check",
+            "A ready owner-check surface did not expose its single next action.");
+        view.WhisperOwnerCheckActionButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested == WhisperOwnerAcceptanceAction.BeginNext,
+            "Starting owner proof did not emit one explicit begin request.");
+
+        WhisperOwnerAcceptanceSnapshot microphone = tracker.Begin(
+            WhisperOwnerCheckKind.MicrophoneReconnect,
+            microphoneAvailable: true);
+        requested = null;
+        view.SetOwnerAcceptance(microphone, canDictate: true);
+        True((string)view.WhisperOwnerCheckActionButton.Content == "Check devices" &&
+             view.WhisperOwnerCheckActionButton.IsEnabled,
+            "The reconnect check did not expose its bounded refresh action.");
+        view.WhisperOwnerCheckActionButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested == WhisperOwnerAcceptanceAction.RefreshMicrophones,
+            "The reconnect action did not request bounded device discovery.");
+
+        requested = null;
+        view.WhisperOwnerCheckResetButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested == WhisperOwnerAcceptanceAction.Reset,
+            "Reset did not emit one explicit session-only request.");
+
+        WhisperOwnerAcceptanceCheck[] completedChecks =
+            Enum.GetValues<WhisperOwnerCheckKind>()
+                .Select(kind => new WhisperOwnerAcceptanceCheck(
+                    kind,
+                    WhisperOwnerCheckState.Passed,
+                    kind.ToString(),
+                    "Content-free owner observation passed."))
+                .ToArray();
+        view.SetOwnerAcceptance(
+            new WhisperOwnerAcceptanceSnapshot(
+                Array.AsReadOnly(completedChecks),
+                ActiveCheck: null,
+                NextCheck: null),
+            canDictate: true);
+        True(view.WhisperScaffoldPill.Visibility == Visibility.Collapsed &&
+             !view.WhisperOwnerCheckActionButton.IsEnabled &&
+             (string)view.WhisperOwnerCheckActionButton.Content == "Complete",
+            "The Scaffold marker did not require all owner checks in the current session.");
+
+        byte[] pixels = Render(view, 980, 720);
+        True(CountVisiblePixels(pixels) > 5_000,
+            "The owner-check surface render was unexpectedly empty.");
     }
 
     private static void WhisperLocalModelControlsAreExplicit()
