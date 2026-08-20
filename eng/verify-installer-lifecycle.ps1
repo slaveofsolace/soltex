@@ -251,9 +251,16 @@ try {
             "/LOG=$innoUninstallLog")
     $installed = $false
 
+    $uninstallSettle = [System.Diagnostics.Stopwatch]::StartNew()
+    while ($uninstallSettle.Elapsed -lt [TimeSpan]::FromSeconds(10) -and
+           ((Test-Path -LiteralPath $installRoot) -or
+            (Test-Path -LiteralPath $uninstallRegistryPath))) {
+        Start-Sleep -Milliseconds 100
+    }
+    $uninstallSettle.Stop()
     if ((Test-Path -LiteralPath $installRoot) -or
         (Test-Path -LiteralPath $uninstallRegistryPath)) {
-        throw 'Clean uninstall left installed program or registration state behind.'
+        throw 'Clean uninstall did not remove its program or registration state within ten seconds.'
     }
     if ((Test-Path -LiteralPath $modelPath) -or
         (Test-Path -LiteralPath $settingsPath) -or
@@ -310,6 +317,9 @@ try {
             unrelated_model_file_preserved = $true
             shared_state_key_preserved = $true
             content_captured = $false
+            completion_wait_ms = [math]::Round(
+                $uninstallSettle.Elapsed.TotalMilliseconds,
+                1)
             process = $uninstallProcess
         }
         recorded_at_utc = (Get-Date).ToUniversalTime().ToString('o')
