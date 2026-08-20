@@ -254,6 +254,7 @@ public sealed class WhisperSessionRunner : IAsyncDisposable
                 capturedTarget?.Context.Kind ?? WhisperTargetKind.Unknown,
                 capturedTarget is null ? "target-unavailable" : "target-confirmed");
             Publish(mode, capturedTarget, presentationKind);
+            WhisperAppProfile? effectiveProfile = ResolveProfile(request, capturedTarget);
 
             string transcript;
             using (audio)
@@ -266,7 +267,7 @@ public sealed class WhisperSessionRunner : IAsyncDisposable
                 {
                     transcript = await _transcriber.TranscribeAsync(
                         audio,
-                        CreateTranscriptionContext(request, capturedTarget),
+                        CreateTranscriptionContext(request, capturedTarget, effectiveProfile),
                         ownedCancellation.Token).ConfigureAwait(false);
                     if (string.IsNullOrWhiteSpace(transcript))
                     {
@@ -303,7 +304,7 @@ public sealed class WhisperSessionRunner : IAsyncDisposable
                 new WhisperFinalizationRequest(
                     transcript,
                     capturedTarget?.Context ?? WhisperTargetContext.Unknown,
-                    request.Profile,
+                    effectiveProfile,
                     request.Snippets,
                     request.TextOptions ?? WhisperTextOptions.Default,
                     request.Settings.AutoSendEnabled,
@@ -420,12 +421,26 @@ public sealed class WhisperSessionRunner : IAsyncDisposable
 
     private static WhisperTranscriptionContext CreateTranscriptionContext(
         WhisperSessionRunRequest request,
-        WhisperTargetSnapshot? target) => new(
+        WhisperTargetSnapshot? target,
+        WhisperAppProfile? profile) => new(
         request.Mode,
         request.Settings.Language.LanguageTag,
         target?.Context.ProcessName ?? "unknown",
-        request.Profile?.StyleName ?? request.Settings.DefaultStyleName,
+        profile?.StyleName ?? request.Settings.DefaultStyleName,
         request.Settings.Vocabulary.Terms);
+
+    private static WhisperAppProfile? ResolveProfile(
+        WhisperSessionRunRequest request,
+        WhisperTargetSnapshot? target)
+    {
+        if (request.Profile is not null || target is null)
+        {
+            return request.Profile;
+        }
+
+        return request.Settings.ApplicationProfiles.FirstOrDefault(profile =>
+            profile.MatchesProcess(target.Context.ProcessName));
+    }
 
     private void MarkCancelled(
         WhisperCaptureMode mode,

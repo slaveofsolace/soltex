@@ -19,7 +19,7 @@ is reproduced, and no affiliation is implied.
 ## Implemented and verified
 
 The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
-114-test suite in `tests/Soltex.Whisper.Tests`.
+115-test suite in `tests/Soltex.Whisper.Tests`.
 
 | Area | State |
 |---|---|
@@ -59,39 +59,35 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Local model ownership | `IWhisperModelManager` exposes path-free state, progress, install, repair, verification, and exact deletion. The Windows adapter pins Turbo Q5 to upstream revision `98aa99a0a9db05ae2342309f5096248665f7cba3`, exact length 574,041,195 bytes, and LFS SHA-256 `394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2`; downloads happen only after an explicit install/repair call, stream to one private bounded temporary artifact, and promote atomically after verification |
 | Local provider settings | Settings version 4 carries provider, model, and runtime identity. `local-whisper` + `large-v3-turbo-q5_0` + `cpu` round-trips; the version-3 local-provider shape migrates to that tuple, while unsupported or incomplete identities repair to the disabled state |
 | Local transcription adapter | `WindowsWhisperLocalTranscriber` implements the unchanged provider-neutral interface over Whisper.net 1.9.1 and its CPU runtime. It holds a verified non-delete-sharing model lease through eager native load, projects owned 16 kHz mono PCM16 through a 44-byte no-copy WAVE header, passes validated language and bounded vocabulary hints, serializes one lazy native runtime, bounds output, supports cancellation/unload, clears owned capture buffers through the existing clip lifetime, and emits content-free failure categories only |
+| Shipped local setup | The WPF Setup surface exposes explicit local-provider selection, install, repair, cancellation, verified status, progress, and confirmed exact-owned deletion. No model download starts at launch or merely by opening Whisper; model repair/deletion first cancels and drains dictation and unloads the native runtime |
+| Shipped session composition | The app instantiates the production WASAPI capture, local transcriber, UI Automation inspector, insertion adapter, verified submitter, and provider-neutral session runner. Registered begin/release/toggle/cancel intents use this one owned path; saved exact-process profiles are resolved after target inspection; 19-minute warning/20-minute expiry, overlay state, optional bounded history, last-transcript actions, model mutation, and shutdown all share explicit owned task lifetimes |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, Personalize, Library, Scratchpad, History, and Privacy tabs, and the floating listening
 surface — render this core.
 They are honest about capability: the navigation entry remains marked `SCAFFOLD`
-while shipped capture-to-transcription-to-delivery session wiring and provider/model
-controls are unavailable. Validated shortcuts can now be enabled and removed from the shipped
-page; without shipped provider wiring they show one explicit setup message instead of recording or
-silently doing nothing. The remaining Windows adapters are not yet connected to a
-complete shipped session, so the page does not claim it is ready. Capture controls
-are enabled only when a selected device exists.
+because the production model has not been downloaded or exercised on the owner-controlled host and
+the complete application matrix is still pending. The shipped session and model controls are real,
+but readiness stays blocked until Whisper is enabled, one current input exists, shortcuts are
+registered, the exact local provider tuple is selected, and the pinned model verifies. Capture
+controls are enabled only when a selected device exists. Auto-send stays off by default, and no host
+code authorizes Enter outside the provider-neutral submit gate.
 
 ## Not implemented
 
 Nothing below exists yet. Any claim that it works is false until runtime evidence
 from an owner-controlled Windows host says otherwise.
 
-1. Shipped provider/model install, repair, delete, and status controls. The real local
-   transcriber and CPU adapter are implemented behind the unchanged core interface,
-   but the app does not yet instantiate them as a shipped session.
-2. Instantiation of the tested provider-neutral session runner with a real provider,
-   followed by dispatch from registered shortcut intents (startup registration,
-   cancellation, feedback, and shutdown unregistration are implemented).
-3. Shipped session wiring for the UI Automation inspector, plus the complete
-   owner-controlled target matrix (the adapter and one live focused-control proof
-   exist).
-4. Shipped session wiring and the complete application matrix for the insertion
-   adapter (one controlled WinForms target has live direct and clipboard proof).
-5. Shipped verified-submission wiring and the complete application/denial matrix
-   (the adapter and one controlled target proof exist).
-6. Full accessibility, scale, theme, performance, install, update, and uninstall
+1. Owner-controlled download and execution of the pinned 547 MiB production model, including
+   accuracy, latency, working-set, cancellation, unload, and restart evidence.
+2. The complete owner-controlled target/insertion/submission matrix for Win32, WPF, WinUI,
+   Chromium, Electron, Windows Terminal, read-only, elevated, unknown, and focus-changing targets.
+   The shipped adapters are wired, but the full matrix is not proven.
+3. Physical keyboard and mouse shortcut coverage plus callback and shortcut-to-listening latency
+   measurements in the packaged app.
+4. Full accessibility, scale, theme, performance, install, update, and uninstall
    evidence for the Whisper surfaces.
-7. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
+5. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
    deterministic tests currently prove the recovery policy and one owner-host device
    proves the normal live path.
 
@@ -195,8 +191,8 @@ failures, cancellation classification, short/empty/oversized rejection, explicit
 unload/reload, and owned PCM clearing. Together with the existing model-manager and
 Windows coverage, the suite reports 57/57. The production model was not downloaded
 or executed: there is no live accuracy, latency, working-set, readiness, or supported-
-hardware claim. Still required: wire model install/delete/status and this adapter
-into the shipped setup/session surfaces, then obtain owner-controlled live proof.
+hardware claim. The shipped Setup surface and session composition now use this adapter;
+owner-controlled live proof remains required.
 This local provider has no credential or cloud endpoint and uploads no audio or
 transcript.
 
@@ -230,10 +226,10 @@ does not prove a physical keyboard/mouse matrix or a provider-backed shipped ses
 The shipped WPF page now owns a persisted runtime toggle. Enabling it after
 `WhisperSettingsMigrator` validation registers the default set; disabling it or
 closing Soltex drains the owned lifecycle task and disposes the hook host. Readiness
-uses the observed registration state and sanitized failure. Until a provider exists,
-begin/toggle/paste/copy intents render the presenter's explicit setup error,
-Open Scratchpad navigates to Whisper, release transitions do nothing, and Cancel
-stops any owned microphone test. Render-evidence mode never installs global hooks.
+uses the observed registration state and sanitized failure. Begin/release, Command Mode,
+hands-free toggle/lock, Escape cancellation, Scratchpad, and paste/copy/submit-last intents
+now route through one deterministic host router into the shipped session or last-transcript path.
+Render-evidence mode never installs global hooks.
 
 `WhisperSessionRunner` now supplies the tested provider-neutral coordinator path. It
 starts target inspection alongside capture, passes vocabulary/language/style hints to
@@ -242,11 +238,12 @@ discarding cancellation, preserves the previous completed transcript after a fau
 and delegates all delivery/submission authorization to the existing core policies.
 Its structured lifecycle evidence contains only categories and fixed reasons.
 
-Still required: instantiate that runner with the selected real provider, route
-begin/release/toggle intents into it, prove physical push-to-talk release and mouse buttons in the shipped
-app, and record shortcut-to-listening latency. Current owner-host proof covers the
-adapter lifecycle; the new WPF lifecycle path has deterministic UI/build/render
-coverage but not a physical packaged-app run.
+The app now instantiates that runner with the selected local provider and all Windows adapters.
+It resolves an exact saved application profile only after inspection and keeps delivery and Enter
+authorization in the existing provider-neutral policies. Still required: prove physical
+push-to-talk release and mouse buttons in the shipped app and record shortcut-to-listening latency.
+Current owner-host proof covers the adapter lifecycle; the WPF lifecycle path has deterministic
+UI/build/render coverage but not a production-model packaged-app run.
 
 ### 4. Target inspection
 
@@ -269,13 +266,13 @@ terminal, plain-text, and rich-text categories remain content-free. Soltex stays
 `asInvoker` with `uiAccess=false`; high/system/protected targets are identified and
 the existing delivery policy falls back to copy.
 
-Target-specific deterministic coverage is included in the current 50-case Windows adapter suite.
+Target-specific deterministic coverage is included in the current 57-case Windows adapter suite.
 It covers all five target categories, pattern capability mapping,
 protected/read-only/unknown controls, provider timeout, provider failure, and
 cancellation. An opt-in owner-host run at commit `d11edec` also inspected a real
 focused rich-text control in 72.04 ms and reported zero content reads. This is
 adapter proof, not the full Win32/WPF/WinUI/Chromium/Electron/Terminal/elevated
-matrix and not shipped session wiring. An additional opt-in owner-host matrix creates
+matrix. The adapter is now part of the shipped session. An additional opt-in owner-host matrix creates
 controlled native WPF targets and drives the production inspector against WPF
 TextBox, RichTextBox, PasswordBox, read-only TextBox, and a focus-changing TextBox.
 The same run proves direct whole-value replacement for TextBox, clipboard paste with
@@ -288,8 +285,8 @@ contextual read.
 
 ### 5. Insertion
 
-Implemented in the provider-neutral core and `src/Soltex.Whisper.Windows`, but not
-yet wired into the shipped session. `WhisperInsertionPolicy` reauthorizes the core's
+Implemented in the provider-neutral core and `src/Soltex.Whisper.Windows` and now
+wired into the shipped session. `WhisperInsertionPolicy` reauthorizes the core's
 delivery decision against the captured and current target before Windows code may
 act. Unknown, read-only, protected, stale, focus-changing, and cross-integrity targets
 reduce to a clipboard copy with a fixed content-free reason; a prior copy decision
@@ -314,7 +311,7 @@ after staging or paste input is rejected, the transcript remains copied and the
 result names the fallback. Clipboard acquisition and restoration use bounded retries
 on one background STA thread.
 
-The core suite has 114 cases and the Windows suite has 50 deterministic cases. The
+The core suite has 115 cases and the Windows suite has 57 deterministic cases. The
 Windows cases cover direct-before-clipboard ordering, ownership restoration and loss,
 focus drift after staging, unknown targets, rejected paste, and cancellation cleanup.
 An opt-in owner-host test uses a controlled WinForms text target to prove clipboard
@@ -327,8 +324,8 @@ proof.
 
 ### 6. Verified submission
 
-Implemented in the provider-neutral core and `src/Soltex.Whisper.Windows`, but not
-yet wired into the shipped session. After a dispatched insertion,
+Implemented in the provider-neutral core and `src/Soltex.Whisper.Windows` and now
+wired into the shipped session. After a dispatched insertion,
 `WindowsWhisperVerifiedSubmitter` waits one bounded 75 ms verification window,
 re-inspects the target, and asks `WindowsWhisperTargetTextReader` for at most
 400,000 characters of the focused control's own Value or TextPattern state. The
@@ -356,9 +353,10 @@ requires a confirmed editable target.
 
 ### 7. Remaining UI
 
-Provider selection remains. Session history with per-entry deletion and clear, the
-first-use auto-send warning, snippet, vocabulary, custom-style, per-application,
-Scratchpad, language, privacy, and device controls are implemented. Every enabled control must execute. Unavailable
+Local-provider selection and model install/repair/cancel/delete/status are implemented. Session
+history with per-entry deletion and clear, the first-use auto-send warning, snippet, vocabulary,
+custom-style, per-application, Scratchpad, language, privacy, and device controls are implemented.
+Every enabled control must execute. Unavailable
 capability is an explicit state, not a disabled control that looks operable.
 
 At narrow window widths all core controls stay reachable without horizontal
@@ -393,7 +391,7 @@ global Activity feed or diagnostic events.
 
 The 18-case security-hardening suite covers authenticated round trip, absence of
 plaintext in either envelope, expiry, current/backup deletion, bounds, cancellation,
-and corruption failure. The 50-case Windows adapter suite covers the Whisper mapping
+and corruption failure. The 57-case Windows adapter suite covers the Whisper mapping
 and rewrite boundary. This is application-level encrypted retention, not forensic
 secure erasure: filesystem snapshots, SSD remapping, page files, crash dumps, and a
 same-user process able to invoke DPAPI remain outside its guarantee.

@@ -73,6 +73,7 @@ internal static class Program
             ("Whisper capture controls expose only working capture actions", WhisperCaptureControlsAreHonest),
             ("Whisper runtime toggle is explicit and reversible", WhisperRuntimeToggleIsExplicit),
             ("Whisper local provider and model actions are explicit", WhisperLocalModelControlsAreExplicit),
+            ("Whisper shortcut intents route through one shipped session path", WhisperSessionIntentRoutingIsDeterministic),
             ("Whisper personalization controls persist explicit choices", WhisperPersonalizationControlsAreWorking),
             ("Whisper library editors persist bounded rules", WhisperLibraryControlsAreWorking),
             ("Whisper history supports per-entry and clear deletion", WhisperHistoryControlsAreWorking),
@@ -1313,6 +1314,57 @@ internal static class Program
              view.WhisperModelProgress.Visibility == Visibility.Visible &&
              Math.Abs(view.WhisperModelProgress.Value - 50) < 0.01,
             "The in-flight model operation did not expose one bounded cancel/progress state.");
+    }
+
+    private static void WhisperSessionIntentRoutingIsDeterministic()
+    {
+        WhisperSessionHostCommand push = WhisperSessionIntentRouter.Route(
+            WhisperShortcutIntent.BeginPushToTalk,
+            hasActiveSession: false,
+            activeMode: null);
+        True(push.Action == WhisperSessionHostAction.StartSession &&
+             push.Mode == WhisperCaptureMode.PushToTalk,
+            "Push-to-talk did not route to the shipped session start.");
+
+        WhisperSessionHostCommand release = WhisperSessionIntentRouter.Route(
+            WhisperShortcutIntent.EndPushToTalk,
+            hasActiveSession: true,
+            WhisperCaptureMode.PushToTalk);
+        True(release.Action == WhisperSessionHostAction.CompleteCapture,
+            "Push-to-talk release did not complete the active capture.");
+
+        WhisperSessionHostCommand handsFreeStart = WhisperSessionIntentRouter.Route(
+            WhisperShortcutIntent.ToggleHandsFree,
+            hasActiveSession: false,
+            activeMode: null);
+        WhisperSessionHostCommand handsFreeStop = WhisperSessionIntentRouter.Route(
+            WhisperShortcutIntent.ToggleHandsFree,
+            hasActiveSession: true,
+            WhisperCaptureMode.HandsFree);
+        True(handsFreeStart.Action == WhisperSessionHostAction.StartSession &&
+             handsFreeStart.Mode == WhisperCaptureMode.HandsFree &&
+             handsFreeStop.Action == WhisperSessionHostAction.CompleteCapture,
+            "Hands-free toggle did not start and stop one session.");
+
+        WhisperSessionHostCommand handsFreeLock = WhisperSessionIntentRouter.Route(
+            WhisperShortcutIntent.LockHandsFree,
+            hasActiveSession: true,
+            WhisperCaptureMode.HandsFree);
+        True(handsFreeLock.Action == WhisperSessionHostAction.LockHandsFree &&
+             handsFreeLock.HandsFreeLocked,
+            "The hands-free double tap would have created a second session.");
+
+        True(WhisperSessionIntentRouter.Route(
+                WhisperShortcutIntent.Cancel,
+                hasActiveSession: true,
+                WhisperCaptureMode.Command).Action == WhisperSessionHostAction.Cancel,
+            "Escape did not route to the shared cancellation path.");
+        True(WhisperSessionIntentRouter.Route(
+                WhisperShortcutIntent.SubmitLastTranscript,
+                hasActiveSession: false,
+                activeMode: null).LastTranscriptIntent ==
+             WhisperShortcutIntent.SubmitLastTranscript,
+            "The dedicated submit shortcut did not stay distinguishable for policy evaluation.");
     }
 
     private static void WhisperPersonalizationControlsAreWorking()

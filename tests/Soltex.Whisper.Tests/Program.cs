@@ -1090,6 +1090,43 @@ var tests = new (string Name, Action Run)[]
             item.ToEvidenceLine().Contains("hello", StringComparison.OrdinalIgnoreCase)));
         WaitVoid(runner.DisposeAsync());
     }),
+    ("session runner resolves the exact saved application profile after inspection", () =>
+    {
+        WhisperDeterministicTranscriber transcriber = new("hello");
+        WhisperSessionRunner runner = new(
+            new WhisperDeterministicCaptureSource(),
+            transcriber,
+            new WhisperScriptedTargetInspector(Snap("chat", "el-1")),
+            new WhisperRecordingTextDelivery(),
+            new RecordingSubmitter());
+        WhisperAppProfileDocument[] profiles =
+        [
+            new WhisperAppProfileDocument
+            {
+                ProcessName = "mail",
+                AutoSendAllowed = false,
+                StyleName = WhisperStyleProfile.Email.Name
+            },
+            new WhisperAppProfileDocument
+            {
+                ProcessName = "chat.exe",
+                AutoSendAllowed = false,
+                StyleName = WhisperStyleProfile.Developer.Name
+            }
+        ];
+
+        _ = Wait(runner.RunAsync(
+            new WhisperSessionRunRequest(
+                WhisperCaptureMode.PushToTalk,
+                SessionSettings(applicationProfiles: profiles),
+                []),
+            CancellationToken.None));
+
+        Equal("chat", transcriber.ObservedContexts.Single().ProcessName);
+        Equal(WhisperStyleProfile.Developer.Name,
+            transcriber.ObservedContexts.Single().StyleName);
+        WaitVoid(runner.DisposeAsync());
+    }),
     ("session runner preserves the previous transcript after provider failure", () =>
     {
         OneSuccessThenFaultTranscriber transcriber = new(
@@ -1330,13 +1367,16 @@ static void WaitVoid(ValueTask pending) => pending.GetAwaiter().GetResult();
 
 static WhisperSettings SessionSettings(
     bool autoSend = false,
-    IReadOnlyList<string>? vocabulary = null) => WhisperSettingsMigrator.Load(new WhisperSettingsDocument
+    IReadOnlyList<string>? vocabulary = null,
+    IReadOnlyList<WhisperAppProfileDocument>? applicationProfiles = null) =>
+    WhisperSettingsMigrator.Load(new WhisperSettingsDocument
 {
     Version = WhisperSettings.CurrentVersion,
     Enabled = true,
     AutoSendEnabled = autoSend,
     AutoSendWarningAccepted = autoSend,
-    VocabularyTerms = vocabulary
+    VocabularyTerms = vocabulary,
+    ApplicationProfiles = applicationProfiles
 }).Settings;
 
 static WhisperTargetSnapshot Snap(

@@ -23,6 +23,18 @@ public partial class MainWindow
     private WhisperModelStatus? _whisperModelStatus;
     private CancellationTokenSource? _whisperModelCancellation;
     private Task _whisperModelDrained = Task.CompletedTask;
+    private WindowsWhisperLocalTranscriber? _whisperTranscriber;
+    private WindowsWhisperTargetInspector? _whisperTargetInspector;
+    private WindowsWhisperTextDelivery? _whisperTextDelivery;
+    private WindowsWhisperVerifiedSubmitter? _whisperVerifiedSubmitter;
+    private WhisperSessionRunner? _whisperSessionRunner;
+    private Task _whisperSessionDrained = Task.CompletedTask;
+    private CancellationTokenSource? _whisperSessionCancellation;
+    private WhisperCaptureMode? _whisperSessionMode;
+    private bool _whisperHandsFreeLocked;
+    private string? _whisperSessionTargetProcess;
+    private bool _whisperSessionTargetKnown;
+    private WhisperDeliveryKind _whisperSessionDeliveryKind;
     private readonly SemaphoreSlim _whisperShortcutGate = new(1, 1);
     private readonly WhisperShortcutGestureInterpreter _whisperShortcutGestures = new();
     private readonly CancellationTokenSource _whisperRuntimeCancellation = new();
@@ -44,6 +56,18 @@ public partial class MainWindow
             Path.Combine(_runtime.DataRoot, "state"));
         _whisperModelManager = new WindowsWhisperLocalModelManager(_runtime.DataRoot);
         _whisperCapture = new WhisperWasapiCaptureSource(_whisperSettings.InputDeviceId);
+        _whisperTranscriber = new WindowsWhisperLocalTranscriber(_whisperModelManager);
+        _whisperTargetInspector = new WindowsWhisperTargetInspector();
+        _whisperTextDelivery = new WindowsWhisperTextDelivery(_whisperTargetInspector);
+        _whisperVerifiedSubmitter = new WindowsWhisperVerifiedSubmitter(
+            _whisperTargetInspector);
+        _whisperSessionRunner = new WhisperSessionRunner(
+            _whisperCapture,
+            _whisperTranscriber,
+            _whisperTargetInspector,
+            _whisperTextDelivery,
+            _whisperVerifiedSubmitter);
+        _whisperSessionRunner.StateChanged += WhisperSessionRunner_StateChanged;
         _whisperCapture.InputLevelChanged += WhisperCapture_InputLevelChanged;
         _whisperCapture.DeviceSelectionChanged += WhisperCapture_DeviceSelectionChanged;
 
@@ -615,6 +639,12 @@ public partial class MainWindow
                 : "Downloading the pinned local model. Closing or cancelling removes its partial file.");
         try
         {
+            if (action == WhisperModelRequestedAction.Repair)
+            {
+                await PrepareWhisperModelMutationAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
             _whisperModelStatus = action == WhisperModelRequestedAction.Repair
                 ? await manager.RepairAsync(progress, cancellationToken).ConfigureAwait(false)
                 : await manager.InstallAsync(progress, cancellationToken).ConfigureAwait(false);
@@ -659,6 +689,8 @@ public partial class MainWindow
             "Removing only the exact-owned local model and recognized partial files.");
         try
         {
+            await PrepareWhisperModelMutationAsync(cancellationToken)
+                .ConfigureAwait(false);
             await manager.DeleteAsync(cancellationToken).ConfigureAwait(false);
             _whisperModelStatus = await manager
                 .GetStatusAsync(cancellationToken)
@@ -687,6 +719,19 @@ public partial class MainWindow
                         _whisperModelStatus ?? CreateUncheckedWhisperModelStatus()));
                 UpdateWhisperReadiness();
             });
+        }
+    }
+
+    private async Task PrepareWhisperModelMutationAsync(
+        CancellationToken cancellationToken)
+    {
+        _whisperSessionCancellation?.Cancel();
+        _ = _whisperSessionRunner?.CancelActive();
+        await _whisperSessionDrained.WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (_whisperTranscriber is not null)
+        {
+            await _whisperTranscriber.UnloadAsync(cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 
@@ -860,51 +905,424 @@ public partial class MainWindow
 
     private void HandleWhisperShortcutIntent(WhisperShortcutIntent intent)
     {
-        if (intent == WhisperShortcutIntent.Cancel)
+        WhisperSessionHostCommand command = WhisperSessionIntentRouter.Route(
+            intent,
+            _whisperSessionRunner?.HasActiveSession == true,
+            _whisperSessionMode);
+        switch (command.Action)
         {
-            _whisperCaptureCancellation?.Cancel();
-            _whisperCapture?.CompleteCurrentCapture();
-            _whisperOverlay?.Hide();
-            return;
-        }
+            case WhisperSessionHostAction.Cancel:
+                _whisperSessionCancellation?.Cancel();
+                _ = _whisperSessionRunner?.CancelActive();
+                _whisperCaptureCancellation?.Cancel();
+                return;
+            case WhisperSessionHostAction.CompleteCapture:
+                _ = _whisperSessionRunner?.CompleteCapture();
+                return;
+            case WhisperSessionHostAction.OpenScratchpad:
+                WhisperPanel.ShowScratchpad();
+                ShowPanel(WhisperPanel, WhisperNavButton);
+                return;
+            case WhisperSessionHostAction.StartSession when command.Mode is WhisperCaptureMode mode:
+                BeginWhisperSession(mode, command.HandsFreeLocked);
+                return;
+            case WhisperSessionHostAction.LockHandsFree:
+                _whisperHandsFreeLocked = true;
+                if (_whisperSessionRunner is not null)
+                {
+                    RenderWhisperSessionFrame(_whisperSessionRunner.CreateSnapshot());
+                }
 
-        if (intent is WhisperShortcutIntent.EndPushToTalk or
-            WhisperShortcutIntent.EndCommandMode)
-        {
-            return;
+                return;
+            case WhisperSessionHostAction.UseLastTranscript
+                when command.LastTranscriptIntent is WhisperShortcutIntent lastIntent:
+                BeginWhisperLastTranscriptAction(lastIntent);
+                return;
+            default:
+                ShowWhisperUnavailable("That Whisper shortcut is not available in this state.");
+                return;
         }
-
-        if (intent == WhisperShortcutIntent.OpenScratchpad)
-        {
-            WhisperPanel.ShowScratchpad();
-            ShowPanel(WhisperPanel, WhisperNavButton);
-            return;
-        }
-
-        ShowWhisperProviderUnavailable();
     }
 
-    private void ShowWhisperProviderUnavailable()
+    private void BeginWhisperSession(
+        WhisperCaptureMode mode,
+        bool handsFreeLocked)
     {
-        const string detail =
-            "Choose a transcription provider before starting dictation.";
-        if (_whisperOverlay is null)
+        if (_shutdownStarted || _whisperSessionRunner is null ||
+            !_whisperSessionDrained.IsCompleted)
         {
-            _whisperOverlay = new WhisperOverlayWindow { Owner = this };
-            _whisperOverlay.ActionRequested += (_, _) => _whisperOverlayAction?.Invoke();
-            _whisperOverlay.Closed += (_, _) =>
-            {
-                _whisperOverlay = null;
-                _whisperOverlayAction = null;
-            };
+            return;
         }
+
+        WhisperReadinessReport readiness = WhisperReadinessEvaluator.Evaluate(
+            CreateWhisperReadinessInputs());
+        if (!readiness.CanDictate)
+        {
+            ShowWhisperUnavailable(readiness.Summary);
+            return;
+        }
+
+        _whisperSessionMode = mode;
+        _whisperHandsFreeLocked = handsFreeLocked;
+        _whisperSessionTargetProcess = null;
+        _whisperSessionTargetKnown = false;
+        _whisperSessionDeliveryKind = WhisperDeliveryKind.None;
+        _whisperSessionCancellation?.Dispose();
+        _whisperSessionCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            _whisperRuntimeCancellation.Token);
+        _whisperSessionDrained = RunWhisperSessionAsync(
+            mode,
+            _whisperSessionCancellation.Token);
+    }
+
+    private async Task RunWhisperSessionAsync(
+        WhisperCaptureMode mode,
+        CancellationToken cancellationToken)
+    {
+        WhisperSessionRunner runner = _whisperSessionRunner ??
+            throw new InvalidOperationException("The Whisper session runner is unavailable.");
+        using CancellationTokenSource overlayTicks =
+            CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        Task tickTask = RunWhisperOverlayTickAsync(overlayTicks.Token);
+        try
+        {
+            WhisperSessionRunResult result = await runner.RunAsync(
+                new WhisperSessionRunRequest(
+                    mode,
+                    _whisperSettings,
+                    _whisperSettings.Snippets),
+                cancellationToken).ConfigureAwait(false);
+            await RetainCompletedWhisperSessionAsync(result, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested ||
+                                                 _shutdownStarted)
+        {
+            // The session runner publishes the content-free cancelled state.
+        }
+        catch (Exception exception) when (IsExpectedWhisperSessionFailure(exception))
+        {
+            if (exception is WhisperLocalTranscriptionException localFailure &&
+                localFailure.Kind is WhisperLocalTranscriptionFailureKind.ModelUnavailable or
+                    WhisperLocalTranscriptionFailureKind.ModelBusy)
+            {
+                await RefreshWhisperModelStatusAsync(CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            overlayTicks.Cancel();
+            try
+            {
+                await tickTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // The session lifetime owns this presentation timer.
+            }
+
+            _whisperHandsFreeLocked = false;
+            _whisperSessionMode = null;
+        }
+    }
+
+    private async Task RunWhisperOverlayTickAsync(CancellationToken cancellationToken)
+    {
+        bool expiryRequested = false;
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken)
+                .ConfigureAwait(false);
+            WhisperSessionRunner? runner = _whisperSessionRunner;
+            if (runner is null)
+            {
+                return;
+            }
+
+            WhisperSessionSnapshot snapshot = runner.CreateSnapshot();
+            await Dispatcher.InvokeAsync(() => RenderWhisperSessionFrame(snapshot));
+            if (!expiryRequested && _whisperSessionMode == WhisperCaptureMode.HandsFree &&
+                snapshot.StartedAtUtc is DateTimeOffset started &&
+                DateTimeOffset.UtcNow - started >= WhisperLimits.MaximumHandsFreeDuration)
+            {
+                expiryRequested = true;
+                _ = runner.CompleteCapture();
+            }
+        }
+    }
+
+    private void WhisperSessionRunner_StateChanged(
+        object? sender,
+        WhisperSessionStateChangedEventArgs e)
+    {
+        if (_shutdownStarted)
+        {
+            return;
+        }
+
+        _ = Dispatcher.BeginInvoke(() =>
+        {
+            if (_shutdownStarted)
+            {
+                return;
+            }
+
+            _whisperSessionMode = e.Mode;
+            _whisperSessionTargetProcess = e.TargetProcessName;
+            _whisperSessionTargetKnown = e.TargetKind != WhisperTargetKind.Unknown &&
+                !string.IsNullOrWhiteSpace(e.TargetProcessName);
+            _whisperSessionDeliveryKind = e.DeliveryKind;
+            RenderWhisperSessionFrame(e.Session);
+        });
+    }
+
+    private void RenderWhisperSessionFrame(WhisperSessionSnapshot snapshot)
+    {
+        if (_shutdownStarted)
+        {
+            return;
+        }
+
+        WhisperCaptureMode? mode = _whisperSessionMode ?? snapshot.Mode;
+        TimeSpan elapsed = snapshot.StartedAtUtc is DateTimeOffset started
+            ? DateTimeOffset.UtcNow - started
+            : TimeSpan.Zero;
+        WhisperDurationState durationState = mode == WhisperCaptureMode.HandsFree
+            ? elapsed >= WhisperLimits.MaximumHandsFreeDuration
+                ? WhisperDurationState.Expired
+                : elapsed >= WhisperLimits.HandsFreeWarningAt
+                    ? WhisperDurationState.Warning
+                    : WhisperDurationState.Current
+            : WhisperDurationState.Current;
+        WhisperOverlayView frame = WhisperOverlayPresenter.Project(new WhisperOverlayInputs(
+            snapshot,
+            mode,
+            _whisperSessionTargetProcess,
+            _whisperSessionTargetKnown,
+            _whisperHandsFreeLocked,
+            elapsed,
+            durationState,
+            _whisperSessionDeliveryKind,
+            snapshot.LastError));
+        WhisperOverlayWindow overlay = EnsureWhisperOverlay();
+        _whisperOverlayAction = frame.State switch
+        {
+            WhisperOverlayState.Listening or WhisperOverlayState.LockedHandsFree or
+                WhisperOverlayState.Transcribing or WhisperOverlayState.Cleaning =>
+                () => _whisperSessionRunner?.CancelActive(),
+            WhisperOverlayState.CopiedFallback =>
+                () => BeginWhisperLastTranscriptAction(
+                    WhisperShortcutIntent.PasteLastTranscript),
+            WhisperOverlayState.Error => () =>
+            {
+                overlay.Hide();
+                ShowPanel(WhisperPanel, WhisperNavButton);
+            },
+            _ => null
+        };
+        overlay.Render(frame);
+        overlay.Left = Left + ((Width - overlay.Width) / 2);
+        overlay.Top = Top + Height - 140;
+    }
+
+    private async Task RetainCompletedWhisperSessionAsync(
+        WhisperSessionRunResult result,
+        CancellationToken cancellationToken)
+    {
+        if (_whisperSettings.HistoryMode == WhisperHistoryMode.Off ||
+            result.Finalization.Pipeline.Text.Length == 0)
+        {
+            return;
+        }
+
+        WhisperHistoryEntry entry = new(
+            DateTimeOffset.UtcNow,
+            result.CapturedTarget?.Context.ProcessName ?? "unknown",
+            result.PresentationDeliveryKind,
+            result.Finalization.Pipeline.Text);
+        bool gateEntered = false;
+        try
+        {
+            await _whisperHistoryGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+            gateEntered = true;
+            WhisperHistoryEntry[] desired = _whisperHistory.CreateSnapshot()
+                .Append(entry)
+                .TakeLast(WhisperLimits.MaximumHistoryEntries)
+                .ToArray();
+            if (_whisperSettings.HistoryMode == WhisperHistoryMode.EncryptedDisk &&
+                _whisperHistoryStore is not null)
+            {
+                await _whisperHistoryStore.RewriteAsync(
+                    desired,
+                    _whisperSettings.HistoryRetentionDays,
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            _whisperHistory.Add(entry);
+            await Dispatcher.InvokeAsync(() => UpdateWhisperHistoryView(
+                _whisperSettings.HistoryMode == WhisperHistoryMode.EncryptedDisk
+                    ? "Completed dictation retained in encrypted local history."
+                    : "Completed dictation retained for this session only."));
+        }
+        catch (Exception exception) when (IsExpectedWhisperHistoryFailure(exception))
+        {
+            await Dispatcher.InvokeAsync(() => UpdateWhisperHistoryView(
+                "Dictation completed, but its optional history record was not retained."));
+        }
+        finally
+        {
+            if (gateEntered)
+            {
+                _whisperHistoryGate.Release();
+            }
+        }
+    }
+
+    private WhisperOverlayWindow EnsureWhisperOverlay()
+    {
+        if (_whisperOverlay is not null)
+        {
+            return _whisperOverlay;
+        }
+
+        WhisperOverlayWindow overlay = new() { Owner = this };
+        overlay.ActionRequested += (_, _) => _whisperOverlayAction?.Invoke();
+        overlay.Closed += (_, _) =>
+        {
+            _whisperOverlay = null;
+            _whisperOverlayAction = null;
+        };
+        _whisperOverlay = overlay;
+        return overlay;
+    }
+
+    private void BeginWhisperLastTranscriptAction(WhisperShortcutIntent intent)
+    {
+        if (_shutdownStarted || !_whisperSessionDrained.IsCompleted ||
+            _whisperSessionRunner?.LastCompletedTranscript is not { Length: > 0 } transcript ||
+            _whisperTargetInspector is null || _whisperTextDelivery is null ||
+            _whisperVerifiedSubmitter is null)
+        {
+            ShowWhisperUnavailable(
+                "No completed transcript is available for that shortcut yet.");
+            return;
+        }
+
+        _whisperSessionCancellation?.Dispose();
+        _whisperSessionCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            _whisperRuntimeCancellation.Token);
+        _whisperSessionDrained = RunWhisperLastTranscriptActionAsync(
+            intent,
+            transcript,
+            _whisperSessionCancellation.Token);
+    }
+
+    private async Task RunWhisperLastTranscriptActionAsync(
+        WhisperShortcutIntent intent,
+        string transcript,
+        CancellationToken cancellationToken)
+    {
+        WindowsWhisperTargetInspector inspector = _whisperTargetInspector ??
+            throw new InvalidOperationException("Whisper target inspection is unavailable.");
+        WindowsWhisperTextDelivery deliveryAdapter = _whisperTextDelivery ??
+            throw new InvalidOperationException("Whisper text delivery is unavailable.");
+        WindowsWhisperVerifiedSubmitter submitter = _whisperVerifiedSubmitter ??
+            throw new InvalidOperationException("Whisper verified submission is unavailable.");
+        try
+        {
+            WhisperTargetSnapshot? target = intent == WhisperShortcutIntent.CopyLastTranscript
+                ? null
+                : await inspector.InspectAsync(cancellationToken).ConfigureAwait(false);
+            WhisperPipelineResult pipeline = new WhisperTextPipeline().Process(
+                transcript,
+                snippets: null,
+                new WhisperTextOptions(
+                    SmartFormatting: false,
+                    Backtrack: false,
+                    ExpandSnippets: false,
+                    DetectTerminalSubmit: false));
+            WhisperAppProfile? profile = target is null
+                ? null
+                : _whisperSettings.ApplicationProfiles.FirstOrDefault(candidate =>
+                    candidate.MatchesProcess(target.Context.ProcessName));
+            WhisperDeliveryDecision decision = intent == WhisperShortcutIntent.CopyLastTranscript
+                ? new WhisperDeliveryPolicy().Evaluate(
+                    pipeline,
+                    WhisperTargetContext.Unknown,
+                    profile: null,
+                    autoSendEnabled: false)
+                : new WhisperDeliveryPolicy().Evaluate(
+                    pipeline,
+                    target?.Context ?? WhisperTargetContext.Unknown,
+                    profile,
+                    _whisperSettings.AutoSendEnabled,
+                    dedicatedSubmitShortcut:
+                        intent == WhisperShortcutIntent.SubmitLastTranscript);
+            WhisperTextDeliveryResult delivery = await deliveryAdapter.DeliverAsync(
+                new WhisperTextDeliveryRequest(decision, target),
+                cancellationToken).ConfigureAwait(false);
+            WhisperVerifiedSubmitResult? submission = null;
+            if (intent == WhisperShortcutIntent.SubmitLastTranscript && target is not null &&
+                decision.Kind is WhisperDeliveryKind.InsertAndSubmit or
+                    WhisperDeliveryKind.SubmitOnly)
+            {
+                submission = await submitter.SubmitAsync(
+                    new WhisperVerifiedSubmitRequest(
+                        decision,
+                        target,
+                        delivery,
+                        _whisperSettings.AutoSendWarningAccepted),
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            WhisperDeliveryKind presentation = delivery.Copied
+                ? WhisperDeliveryKind.CopyText
+                : submission?.EnterDispatched == true
+                    ? decision.Kind
+                    : delivery.MutationDispatched
+                        ? WhisperDeliveryKind.InsertText
+                        : WhisperDeliveryKind.None;
+            await Dispatcher.InvokeAsync(() =>
+            {
+                _whisperSessionMode = WhisperCaptureMode.PushToTalk;
+                _whisperSessionTargetProcess = target?.Context.ProcessName;
+                _whisperSessionTargetKnown = target?.Context.IsKnown == true;
+                _whisperSessionDeliveryKind = presentation;
+                RenderWhisperSessionFrame(new WhisperSessionSnapshot(
+                    WhisperSessionState.Completed,
+                    WhisperCaptureMode.PushToTalk,
+                    DateTimeOffset.UtcNow,
+                    LastError: null));
+            });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The cancel shortcut remains reversible before the irreversible submit.
+        }
+        catch (Exception exception) when (IsExpectedWhisperSessionFailure(exception))
+        {
+            await Dispatcher.InvokeAsync(() => ShowWhisperUnavailable(
+                "Whisper could not complete the requested transcript action."));
+        }
+    }
+
+    private void ShowWhisperUnavailable(string detail)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+        if (_shutdownStarted)
+        {
+            return;
+        }
+
+        WhisperOverlayWindow overlay = EnsureWhisperOverlay();
 
         _whisperOverlayAction = () =>
         {
-            _whisperOverlay?.Hide();
+            overlay.Hide();
             ShowPanel(WhisperPanel, WhisperNavButton);
         };
-        _whisperOverlay.Render(WhisperOverlayPresenter.Project(new WhisperOverlayInputs(
+        overlay.Render(WhisperOverlayPresenter.Project(new WhisperOverlayInputs(
             new WhisperSessionSnapshot(
                 WhisperSessionState.Faulted,
                 Mode: null,
@@ -918,8 +1336,8 @@ public partial class MainWindow
             WhisperDurationState.Current,
             WhisperDeliveryKind.None,
             ErrorDetail: detail)));
-        _whisperOverlay.Left = Left + ((Width - _whisperOverlay.Width) / 2);
-        _whisperOverlay.Top = Top + Height - 140;
+        overlay.Left = Left + ((Width - overlay.Width) / 2);
+        overlay.Top = Top + Height - 140;
     }
 
     private void WhisperShortcutHost_Faulted(
@@ -1132,7 +1550,7 @@ public partial class MainWindow
             $"The saved input is unavailable; using {selection.DeviceName} for this test."));
     }
 
-    private void UpdateWhisperReadiness()
+    private WhisperReadinessInputs CreateWhisperReadinessInputs()
     {
         bool selectedDeviceAvailable = _whisperSettings.InputDeviceId is { Length: > 0 } id &&
             _whisperDevices.Devices.Any(device =>
@@ -1154,7 +1572,7 @@ public partial class MainWindow
             ? _whisperModelStatus.FailureReason ??
               "The local model failed verification and must be repaired."
             : null;
-        WhisperReadinessInputs inputs = new(
+        return new WhisperReadinessInputs(
             FeatureEnabled: _whisperSettings.Enabled,
             MicrophoneSelected: selectedDeviceAvailable,
             MicrophonePermissionGranted: true,
@@ -1172,10 +1590,15 @@ public partial class MainWindow
             TranscriberRuntimeAvailable:
                 OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000),
             ModelInstallationError: modelError);
+    }
+
+    private void UpdateWhisperReadiness()
+    {
+        WhisperReadinessInputs inputs = CreateWhisperReadinessInputs();
         WhisperPanel.UpdateReadiness(WhisperCaptureReadiness.Apply(
             inputs,
             _whisperCaptureFailure,
-            selectedDeviceAvailable));
+            inputs.MicrophoneSelected));
     }
 
     private async Task DisposeWhisperCaptureAsync()
@@ -1210,6 +1633,7 @@ public partial class MainWindow
 
     private async Task DisposeWhisperRuntimeAsync()
     {
+        _whisperSessionCancellation?.Cancel();
         _whisperRuntimeCancellation.Cancel();
         await _whisperShortcutGate.WaitAsync().ConfigureAwait(false);
         try
@@ -1220,6 +1644,21 @@ public partial class MainWindow
         {
             _whisperShortcutGate.Release();
             _whisperShortcutGate.Dispose();
+            if (_whisperSessionRunner is not null)
+            {
+                _whisperSessionRunner.StateChanged -= WhisperSessionRunner_StateChanged;
+                await _whisperSessionRunner.DisposeAsync().ConfigureAwait(false);
+                _whisperSessionRunner = null;
+            }
+
+            if (_whisperTranscriber is not null)
+            {
+                await _whisperTranscriber.DisposeAsync().ConfigureAwait(false);
+                _whisperTranscriber = null;
+            }
+
+            _whisperSessionCancellation?.Dispose();
+            _whisperSessionCancellation = null;
             _whisperRuntimeCancellation.Dispose();
         }
     }
@@ -1256,5 +1695,11 @@ public partial class MainWindow
     private static bool IsExpectedWhisperHistoryFailure(Exception exception) =>
         exception is IOException or UnauthorizedAccessException or SecurityException or
             CryptographicException or Win32Exception or InvalidDataException or
+            InvalidOperationException or ArgumentException;
+
+    private static bool IsExpectedWhisperSessionFailure(Exception exception) =>
+        exception is WhisperCaptureException or WhisperLocalTranscriptionException or
+            WhisperClipboardUnavailableException or IOException or UnauthorizedAccessException or
+            SecurityException or Win32Exception or InvalidDataException or
             InvalidOperationException or ArgumentException;
 }

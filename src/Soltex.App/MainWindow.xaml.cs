@@ -272,6 +272,7 @@ public partial class MainWindow : Window
         _benchmarkCancellation?.Cancel();
         _whisperCaptureCancellation?.Cancel();
         _whisperModelCancellation?.Cancel();
+        _whisperSessionCancellation?.Cancel();
         _whisperRuntimeCancellation.Cancel();
         _whisperCapture?.CompleteCurrentCapture();
         await _telemetryLoop.StopAsync();
@@ -282,6 +283,7 @@ public partial class MainWindow : Window
             _benchmarkOperationDrained,
             _whisperCaptureDrained,
             _whisperModelDrained,
+            _whisperSessionDrained,
             _whisperShortcutDrained,
             _whisperHistoryDrained,
             _startupTask);
@@ -1388,16 +1390,7 @@ public partial class MainWindow : Window
     /// </summary>
     private void ShowWhisperOverlayPreview()
     {
-        if (_whisperOverlay is null)
-        {
-            _whisperOverlay = new WhisperOverlayWindow { Owner = this };
-            _whisperOverlay.ActionRequested += (_, _) => _whisperOverlayAction?.Invoke();
-            _whisperOverlay.Closed += (_, _) =>
-            {
-                _whisperOverlay = null;
-                _whisperOverlayAction = null;
-            };
-        }
+        WhisperOverlayWindow overlay = EnsureWhisperOverlay();
 
         _whisperOverlayAction = () =>
         {
@@ -1407,7 +1400,7 @@ public partial class MainWindow : Window
             }
             else
             {
-                _whisperOverlay?.Hide();
+                overlay.Hide();
             }
         };
 
@@ -1426,9 +1419,9 @@ public partial class MainWindow : Window
             WhisperDeliveryKind.None,
             ErrorDetail: null));
 
-        _whisperOverlay.Render(frame);
-        _whisperOverlay.Left = Left + ((Width - _whisperOverlay.Width) / 2);
-        _whisperOverlay.Top = Top + Height - 140;
+        overlay.Render(frame);
+        overlay.Left = Left + ((Width - overlay.Width) / 2);
+        overlay.Top = Top + Height - 140;
     }
 
     private void ActivityNav_Click(object sender, RoutedEventArgs e) =>
