@@ -9,6 +9,7 @@ content, target text, model bytes, local paths from application state, or creden
 - UI matrix source and tested commit: `e3dbbdbcc6d36f1d8a27a6302eccf1b72ce6cc49`
 - Runtime, capture, hook, and installer source: `9ab5543656b4eba455ecf47a1c25df053cc13d12`
 - Hosted installer lifecycle source and tested commit: `2215247e257a69e0c8c6317ffb347a1c244e69f2`
+- Extended target-matrix source and tested commit: `0c59d0fd186791c5bb591c7e1f5252af6dc7bf30`
 - SDK: .NET `10.0.302`
 - Configuration: `Release`
 
@@ -73,8 +74,31 @@ mutated field; the evidence log contains no target or transcript content.
 - Focus-changing field: `TargetChanged` fallback
 - Log SHA-256: `d91f142e719ae9f00d15f2f6c199ea8e7e29802a2254a5b29cfd547ed3273a02`
 
-These timings are one-host observations. They do not prove Electron, WinUI, Windows
-Terminal, elevated-editor, or production-model behavior.
+These timings are one-host observations. They do not prove WinUI or production-model behavior.
+
+## Extended owner target matrix
+
+The extended exact-head run adds three content-free owner-host rows:
+
+- Electron 42.7.1 executable: `232794112` bytes; SHA-256
+  `6482758560e64f4e99a62dd244223a238ff26a378bbe813790f1efbcec2bccc8`
+- Electron: `Browser`, `ClipboardPaste`, insertion `393.49 ms`, verified submit
+  `162.69 ms`, exactly one Enter; log SHA-256
+  `4abd0bdab12d1fe88c48484573520df625d327c66bf2f4971dbfc6f804d95dc9`
+- Windows Terminal: `Terminal`, `Medium`; submission-disabled policy `InsertText`,
+  separately opted-in policy `InsertAndSubmit`, zero dispatches; log SHA-256
+  `fc6ed42231391751efe231abac771d1ec82533916317ea742c253d2b676368ac`
+- Elevated child: exact process token `High`; standard-integrity inspection
+  `UnknownTarget`; decision `CopyText`; zero mutation and submit dispatches; log
+  SHA-256 `9788ceddbad22437fe484dc98fd7a5f8903c7318f064455e61552e6132bfa990`
+
+The Electron runtime was a pinned repo-external proof dependency and is not shipped or committed.
+The host policy rejected automatic recursive deletion of that temporary runtime root, so its local
+cache remains outside the repository. No Electron fixture process or profile remains active.
+
+A dedicated WinUI 3 sample built and opened, but its `TextBox` did not appear in UI Automation by
+exact HWND or desktop-root PID/automation-ID lookup. That experimental sample was removed rather
+than counted as proof. WinUI remains pending.
 
 ## Installer compile checkpoint
 
@@ -116,7 +140,7 @@ not publisher reputation, SmartScreen acceptance, or production release authoriz
 - Release-to-transcription and full capture-to-verified-submit latency remain pending.
 - Physical shortcuts, live per-monitor DPI transitions, keyboard-only navigation, and
   a screen-reader walkthrough remain owner-proof gates.
-- WinUI, Electron, Windows Terminal, and elevated-editor target proof remains pending.
+- WinUI editable-target proof remains pending.
 - The navigation `SCAFFOLD` marker remains until a real model-backed capture,
   transcription, insertion, verification, and safe cancellation complete on the owner
   host.

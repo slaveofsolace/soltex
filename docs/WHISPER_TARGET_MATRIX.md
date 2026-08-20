@@ -17,10 +17,10 @@ only categories, methods, decisions, timing, and counts.
 | WPF read-only TextBox | Implemented | Passed | Read-only metadata preserved; insertion policy returns `TargetNotEditable` copy fallback |
 | Focus-changing WPF target | Implemented | Passed | Runtime identity drift detected before mutation; insertion policy returns `TargetChanged` copy fallback |
 | Chromium input and contenteditable | Implemented | Passed | Framework/process classification returns `Browser`; clipboard paste; target-owned read-back; one authorized Enter per controlled target |
-| Electron Chromium control | Implemented classification | Owner proof pending | Bounded `Chrome`/`Chromium` framework metadata maps a non-browser process to `Browser`; known editor processes retain `Editor` precedence |
+| Electron Chromium control | Implemented | Passed | Electron 42.7.1 local fixture classified `Browser`; clipboard insertion; target-owned read-back; one authorized Enter; exact process tree and profile removed |
 | WinUI editable control | Core/adapter path implemented | Owner proof pending | No WinUI sample-provider result is claimed |
-| Windows Terminal | Core/adapter path implemented | Owner proof pending | Terminal process classification and the separate terminal-submit opt-in are deterministic; no Windows Terminal mutation is claimed |
-| Elevated editor | Fail-closed policy implemented | Owner proof pending | High, system, and protected integrity levels reduce to copy; no UAC/elevated live run is claimed |
+| Windows Terminal | Implemented | Passed | A uniquely titled owner window classified `Terminal`; normal auto-send remained `InsertText`; the separate terminal opt-in produced `InsertAndSubmit`; the harness emitted zero Enter events |
+| Elevated editor | Fail-closed policy implemented | Passed | Exact UAC-approved child had a `High` token; standard-integrity UI Automation returned `UnknownTarget`; delivery reduced to `CopyText` with zero mutation or submit dispatch |
 | Unknown or inaccessible provider | Fail-closed policy implemented | Deterministic coverage passed | Times out or returns unknown without guessing, inserting, or submitting |
 
 ## Verified-submission boundary
@@ -37,11 +37,8 @@ unavailable, Whisper may leave text inserted or copied but does not submit it.
 ## Remaining owner matrix
 
 - a controlled WinUI text target;
-- a controlled Electron application, distinct from Chromium framework-unit coverage;
-- Windows Terminal with submission disabled and with the separate terminal opt-in exercised safely;
-- a controlled elevated editor confirming the cross-integrity copy boundary;
 
-These rows remain incomplete until their owner-controlled runs produce content-free evidence from the
+This row remains incomplete until its owner-controlled run produces content-free evidence from the
 exact commit under review.
 
 The Chromium row is opt-in and never runs in hosted CI. Set
@@ -50,3 +47,13 @@ The Chromium row is opt-in and never runs in hosted CI. Set
 test executable on an interactive desktop. The harness creates one isolated local fixture and profile,
 records the exact browser PID, never opens remote content, stops only that owned process tree, and
 requires the exact temporary root to be removed before the test passes.
+
+The Electron row is also opt-in and requires an owner-selected `electron.exe` through
+`SOLTEX_WHISPER_ELECTRON_PATH`. Run the adapter executable with `--live-electron-target`. The harness
+creates a network-blocked local application and isolated profile, enables renderer accessibility for
+the fixture only, records the exact process, and removes its exact-owned application root.
+
+Run `--live-terminal-target` for the Windows Terminal policy row. The harness creates a uniquely
+titled window, closes only that exact HWND, and deliberately dispatches no command. Run
+`--live-elevated-target` with an owner-selected .NET host through `SOLTEX_WHISPER_DOTNET_PATH` for the
+cross-integrity row; the UAC-approved child is metadata-only and receives no insertion or submit.

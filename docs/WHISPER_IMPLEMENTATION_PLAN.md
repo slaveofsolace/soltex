@@ -292,8 +292,11 @@ contenteditable targets now prove browser classification, clipboard insertion, t
 read-back, and one authorized Enter per target; the isolated browser process tree and profile are
 exact-owned and removed after the run.
 Non-browser Chromium-framework providers can now classify as `Browser`, while known editor processes
-retain `Editor` precedence. WinUI, a distinct Electron application, Windows Terminal, and an elevated
-editor remain unproven. The exact support/proof split is maintained in
+retain `Editor` precedence. Exact-head owner evidence at `0c59d0f` adds a local Electron 42.7.1
+fixture with verified clipboard insertion and one authorized Enter, a uniquely titled Windows
+Terminal window that proves the separate terminal opt-in without dispatching a command, and a
+UAC-approved `High`-integrity child that resolves to `UnknownTarget` and `CopyText` with zero
+mutation. A dedicated WinUI editable sample remains unproven. The exact support/proof split is maintained in
 `docs/WHISPER_TARGET_MATRIX.md`. Context reads
 remain off; a future visible per-application permission must precede any bounded
 contextual read.
