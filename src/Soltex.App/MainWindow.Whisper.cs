@@ -4,6 +4,7 @@ using System.Security;
 using System.Security.Cryptography;
 using System.Windows;
 using Soltex.App.Views;
+using Soltex.Security;
 using Soltex.Whisper;
 using Soltex.Whisper.Windows;
 
@@ -54,7 +55,8 @@ public partial class MainWindow
         _whisperSettings = loaded.Settings;
         _whisperHistoryStore = new WindowsWhisperHistoryRetentionStore(
             Path.Combine(_runtime.DataRoot, "state"));
-        _whisperModelManager = new WindowsWhisperLocalModelManager(_runtime.DataRoot);
+        string productDataRoot = ProductDataRootResolver.ResolveDefault().ProductRoot;
+        _whisperModelManager = new WindowsWhisperLocalModelManager(productDataRoot);
         _whisperCapture = new WhisperWasapiCaptureSource(_whisperSettings.InputDeviceId);
         _whisperTranscriber = new WindowsWhisperLocalTranscriber(_whisperModelManager);
         _whisperTargetInspector = new WindowsWhisperTargetInspector();
@@ -874,7 +876,7 @@ public partial class MainWindow
                 : _renderSmokeMode
                     ? "Shortcuts are skipped during controlled render evidence."
                     : registered
-                        ? "Whisper is on and its validated shortcuts are registered. Choose a transcription provider to begin dictating."
+                        ? "Whisper is on and its validated shortcuts are registered."
                         : _whisperShortcutError ??
                           "Windows did not confirm shortcut registration.";
             WhisperPanel.SetFeatureState(
