@@ -73,6 +73,7 @@ internal static class Program
             ("Whisper capture controls expose only working capture actions", WhisperCaptureControlsAreHonest),
             ("Whisper runtime toggle is explicit and reversible", WhisperRuntimeToggleIsExplicit),
             ("Whisper local provider and model actions are explicit", WhisperLocalModelControlsAreExplicit),
+            ("Whisper overlay evidence covers every visible presenter state", WhisperOverlayEvidenceStatesAreComplete),
             ("Whisper shortcut intents route through one shipped session path", WhisperSessionIntentRoutingIsDeterministic),
             ("Whisper personalization controls persist explicit choices", WhisperPersonalizationControlsAreWorking),
             ("Whisper library editors persist bounded rules", WhisperLibraryControlsAreWorking),
@@ -525,6 +526,9 @@ internal static class Program
             "Duplicate runtime-probe options were accepted.");
         True(!RuntimeLaunchPolicy.IsRuntimeProbe(["--runtime-probe", "--render-smoke"]),
             "Conflicting deterministic runtime modes were accepted.");
+        True(!RuntimeLaunchPolicy.IsRuntimeProbe(
+                ["--runtime-probe", "--whisper-overlay-smoke", "overlay.png"]),
+            "Conflicting application and overlay probes were accepted.");
         True(RuntimeLaunchPolicy.IsWhisperRuntimeProbe(["--whisper-runtime-probe"]),
             "The packaged Whisper runtime-probe option was not recognized.");
         True(!RuntimeLaunchPolicy.IsWhisperRuntimeProbe(
@@ -542,16 +546,20 @@ internal static class Program
             "The runtime-cost probe incorrectly forced software rendering.");
         True(RuntimeLaunchPolicy.UsesSoftwareRendering(["--render-smoke", "image.png"]),
             "Native render smoke did not retain deterministic software rendering.");
+        True(RuntimeLaunchPolicy.UsesSoftwareRendering(
+                ["--whisper-overlay-smoke", "overlay.png", "--state", "listening"]),
+            "Whisper overlay evidence did not retain deterministic software rendering.");
         True(RuntimeLaunchPolicy.TryParseRenderSmoke(
-                ["--render-smoke", "image.png", "--panel", "whisper", "--theme", "light"],
+                ["--render-smoke", "image.png", "--panel", "whisper", "--theme", "light", "--profile", "compact-200"],
                 out RenderSmokeRequest? lightRequest) &&
              lightRequest is
              {
                  OutputPath: "image.png",
                  Panel: "whisper",
-                 Appearance: RenderSmokeAppearance.Light
+                 Appearance: RenderSmokeAppearance.Light,
+                 Profile: RenderSmokeProfile.Compact200
              },
-            "Render-smoke did not parse the explicit light appearance.");
+            "Render-smoke did not parse the explicit light compact-200 profile.");
         True(RuntimeLaunchPolicy.TryParseRenderSmoke(
                 ["Soltex.exe", "--render-smoke", "image.png", "--theme", "high-contrast"],
                 out RenderSmokeRequest? contrastRequest) &&
@@ -565,8 +573,74 @@ internal static class Program
                 ["--render-smoke", "image.png", "--theme", "system"],
                 out _),
             "Render-smoke accepted a nondeterministic System appearance.");
+        True(!RuntimeLaunchPolicy.TryParseRenderSmoke(
+                ["--render-smoke", "image.png", "--profile", "compact-125"],
+                out _),
+            "Render-smoke accepted an unsupported evidence density.");
+        True(RuntimeLaunchPolicy.TryParseWhisperOverlaySmoke(
+                ["--whisper-overlay-smoke", "overlay.png", "--state", "copied-fallback", "--theme", "high-contrast", "--density", "200"],
+                out WhisperOverlaySmokeRequest? overlayRequest) &&
+             overlayRequest is
+             {
+                 OutputPath: "overlay.png",
+                 State: "copied-fallback",
+                 Appearance: RenderSmokeAppearance.HighContrast,
+                 ScalePercent: 200
+             },
+            "Whisper overlay evidence did not parse its bounded state, theme, and density.");
+        True(!RuntimeLaunchPolicy.TryParseWhisperOverlaySmoke(
+                ["--whisper-overlay-smoke", "overlay.png", "--state", "listening", "--density", "125"],
+                out _),
+            "Whisper overlay evidence accepted an unsupported density.");
+        True(!RuntimeLaunchPolicy.TryParseWhisperOverlaySmoke(
+                ["--whisper-overlay-smoke", "overlay.png", "--state", "bad/state"],
+                out _),
+            "Whisper overlay evidence accepted an unsafe state identifier.");
+        RenderSmokeViewport compact200 = RuntimeLaunchPolicy.ResolveRenderViewport(
+            RenderSmokeProfile.Compact200);
+        True(compact200 is
+            {
+                LogicalWidth: 1100,
+                LogicalHeight: 720,
+                PixelWidth: 2200,
+                PixelHeight: 1440,
+                ScalePercent: 200,
+                IsSyntheticHighDensity: true
+            },
+            "The compact-200 render profile no longer records its logical and raster bounds.");
         True(RuntimeLaunchPolicy.RenderSmokeStartupTimeout == TimeSpan.FromSeconds(40),
             "Render-smoke startup no longer covers the composed bounded protection query while remaining finite.");
+    }
+
+    private static void WhisperOverlayEvidenceStatesAreComplete()
+    {
+        HashSet<WhisperOverlayState> observed = [];
+        foreach (string stateId in WhisperOverlayEvidenceCatalog.StateIds)
+        {
+            if (!WhisperOverlayEvidenceCatalog.TryProject(
+                    stateId,
+                    out WhisperOverlayView? view) ||
+                view is null ||
+                !view.IsVisible)
+            {
+                throw new InvalidOperationException(
+                    $"Whisper overlay evidence state '{stateId}' did not project a visible frame.");
+            }
+
+            observed.Add(view.State);
+            True(!string.IsNullOrWhiteSpace(view.Headline) &&
+                 !string.IsNullOrWhiteSpace(view.Announcement),
+                $"Whisper overlay evidence state '{stateId}' omitted visible or accessible status.");
+        }
+
+        WhisperOverlayState[] required = Enum
+            .GetValues<WhisperOverlayState>()
+            .Where(state => state != WhisperOverlayState.Hidden)
+            .ToArray();
+        True(required.All(observed.Contains),
+            "The evidence catalog omitted a visible presenter-defined overlay state.");
+        True(!WhisperOverlayEvidenceCatalog.TryProject("unknown-state", out _),
+            "The evidence catalog accepted an unowned overlay state.");
     }
 
     private static void ProcessActionsRejectProtectedTargets()

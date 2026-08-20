@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Microsoft.Win32;
+using Soltex.Whisper;
 using Soltex.Whisper.Windows;
 
 namespace Soltex.App;
@@ -58,12 +59,18 @@ public partial class App : Application
         bool renderRequestParsed = RuntimeLaunchPolicy.TryParseRenderSmoke(
             e.Args,
             out RenderSmokeRequest? renderRequest);
-        if (renderRequestParsed)
+        bool overlayRequestParsed = RuntimeLaunchPolicy.TryParseWhisperOverlaySmoke(
+            e.Args,
+            out WhisperOverlaySmokeRequest? overlayRequest);
+        if (renderRequestParsed || overlayRequestParsed)
         {
+            RenderSmokeAppearance appearance = renderRequestParsed
+                ? renderRequest!.Appearance
+                : overlayRequest!.Appearance;
             _appearancePreference = RuntimeLaunchPolicy.ResolveRenderPreference(
-                renderRequest!.Appearance);
+                appearance);
             _resolvedAppearance = RuntimeLaunchPolicy.ResolveRenderAppearance(
-                renderRequest.Appearance);
+                appearance);
             AppearanceThemeManager.ApplyResolved(Resources, _resolvedAppearance);
         }
         else
@@ -75,6 +82,13 @@ public partial class App : Application
             _resolvedAppearance = AppearanceThemeManager.ApplyPreference(
                 Resources,
                 _appearancePreference);
+        }
+
+        if (overlayRequestParsed)
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            RenderWhisperOverlaySnapshot(overlayRequest!);
+            return;
         }
 
         MainWindow window = new();
@@ -104,7 +118,7 @@ public partial class App : Application
                     "security, security-activity, remote, whisper, whisper-personalize, whisper-library, whisper-library-styles, whisper-library-apps, whisper-scratchpad, whisper-history, whisper-privacy, whisper-privacy-warning, activity, update, mixer, mixer-devices, mixer-more, command-palette, clips.");
             }
 
-            RenderSmokeSnapshot(window, renderRequest.OutputPath);
+            RenderSmokeSnapshot(window, renderRequest);
             return;
         }
 
@@ -339,19 +353,24 @@ public partial class App : Application
         _ownedMainWindow.SetNotificationAreaAvailability(_notificationArea.IsAvailable);
     }
 
-    private void RenderSmokeSnapshot(MainWindow window, string outputPath)
+    private void RenderSmokeSnapshot(MainWindow window, RenderSmokeRequest request)
     {
-        string fullOutputPath = Path.GetFullPath(outputPath);
+        ArgumentNullException.ThrowIfNull(request);
+        string fullOutputPath = Path.GetFullPath(request.OutputPath);
         string? outputDirectory = Path.GetDirectoryName(fullOutputPath);
         if (string.IsNullOrWhiteSpace(outputDirectory))
         {
-            throw new ArgumentException("The render-smoke output path must include a directory.", nameof(outputPath));
+            throw new ArgumentException(
+                "The render-smoke output path must include a directory.",
+                nameof(request));
         }
 
         Directory.CreateDirectory(outputDirectory);
+        RenderSmokeViewport viewport = RuntimeLaunchPolicy.ResolveRenderViewport(
+            request.Profile);
         window.ShowInTaskbar = false;
         window.WindowStartupLocation = WindowStartupLocation.Manual;
-        RenderSmokeCapture.ConfigureWindow(window);
+        RenderSmokeCapture.ConfigureWindow(window, viewport);
         window.Left = -32_000;
         window.Top = -32_000;
         TaskCompletionSource<bool> shutdownCompleted = new(
@@ -378,7 +397,7 @@ public partial class App : Application
                 window.UpdateLayout();
                 window.PrepareRenderSmokeCapture();
                 window.UpdateLayout();
-                RenderTargetBitmap bitmap = RenderSmokeCapture.Capture(window);
+                RenderTargetBitmap bitmap = RenderSmokeCapture.Capture(window, viewport);
                 PngBitmapEncoder encoder = new();
                 encoder.Frames.Add(BitmapFrame.Create(bitmap));
                 using FileStream stream = new(fullOutputPath, FileMode.Create, FileAccess.Write, FileShare.None);
@@ -422,6 +441,87 @@ public partial class App : Application
                     }
                 }
 
+                Shutdown(exitCode);
+            }
+        };
+        timer.Start();
+    }
+
+    private void RenderWhisperOverlaySnapshot(WhisperOverlaySmokeRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (!WhisperOverlayEvidenceCatalog.TryProject(
+                request.State,
+                out WhisperOverlayView? frame) ||
+            frame is null)
+        {
+            throw new ArgumentException(
+                "The Whisper overlay state is not part of the bounded evidence catalog.",
+                nameof(request));
+        }
+
+        string fullOutputPath = Path.GetFullPath(request.OutputPath);
+        string? outputDirectory = Path.GetDirectoryName(fullOutputPath);
+        if (string.IsNullOrWhiteSpace(outputDirectory))
+        {
+            throw new ArgumentException(
+                "The Whisper overlay output path must include a directory.",
+                nameof(request));
+        }
+
+        Directory.CreateDirectory(outputDirectory);
+        WhisperOverlayWindow window = new()
+        {
+            Left = -32_000,
+            Top = -32_000,
+            WindowStartupLocation = WindowStartupLocation.Manual
+        };
+        window.Render(frame);
+        if (frame.ShowLevelMeter)
+        {
+            window.SetInputLevel(0.62d);
+        }
+
+        DispatcherTimer timer = new(DispatcherPriority.ContextIdle, Dispatcher)
+        {
+            Interval = TimeSpan.FromMilliseconds(300)
+        };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            int exitCode = 0;
+            try
+            {
+                RenderSmokeViewport viewport = RenderSmokeCapture.CreateOverlayViewport(
+                    window,
+                    request.ScalePercent);
+                RenderTargetBitmap bitmap = RenderSmokeCapture.Capture(window, viewport);
+                PngBitmapEncoder encoder = new();
+                encoder.Frames.Add(BitmapFrame.Create(bitmap));
+                using FileStream stream = new(
+                    fullOutputPath,
+                    FileMode.Create,
+                    FileAccess.Write,
+                    FileShare.None);
+                encoder.Save(stream);
+            }
+            catch (Exception exception)
+            {
+                exitCode = 1;
+                try
+                {
+                    File.WriteAllText(fullOutputPath + ".error.txt", exception.ToString());
+                }
+                catch (Exception writeException) when (writeException is IOException or
+                                                       UnauthorizedAccessException)
+                {
+                    // The nonzero process exit still fails the evidence run.
+                }
+            }
+            finally
+            {
+                Environment.ExitCode = exitCode;
+                window.Close();
                 Shutdown(exitCode);
             }
         };

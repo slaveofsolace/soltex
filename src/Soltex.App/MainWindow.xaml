@@ -46,7 +46,11 @@
                     </StackPanel>
                 </Grid>
 
-                <StackPanel Grid.Row="2">
+                <ScrollViewer Grid.Row="2"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Focusable="False">
+                    <StackPanel>
                     <TextBlock Margin="10,0,0,6" Text="System" Foreground="{DynamicResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                     <Button x:Name="HomeNavButton" Tag="Selected" Style="{StaticResource NavButton}" AutomationProperties.Name="Overview" Click="HomeNav_Click">
                         <Grid>
@@ -130,7 +134,8 @@
                             <TextBlock Grid.Column="1" Text="Updates" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
-                </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
 
                 <StackPanel Grid.Row="3">
                     <Button x:Name="CommandPaletteButton"

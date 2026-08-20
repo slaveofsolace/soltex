@@ -62,6 +62,7 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Shipped local setup | The WPF Setup surface exposes explicit local-provider selection, install, repair, cancellation, verified status, progress, and confirmed exact-owned deletion. No model download starts at launch or merely by opening Whisper; model repair/deletion first cancels and drains dictation and unloads the native runtime |
 | Shipped session composition | The app instantiates the production WASAPI capture, local transcriber, UI Automation inspector, insertion adapter, verified submitter, and provider-neutral session runner. Registered begin/release/toggle/cancel intents use this one owned path; saved exact-process profiles are resolved after target inspection; 19-minute warning/20-minute expiry, overlay state, optional bounded history, last-transcript actions, model mutation, and shutdown all share explicit owned task lifetimes |
 | Packaged CPU runtime | The `win-x64` package ships exactly the four Whisper.net CPU native DLLs beside the single-file app in the runtime layout the loader probes. A content-free packaged-process gate loads that runtime while proving no model or microphone was opened; the package is bounded below 256 MiB and rejects the 547 MiB model filename. This proves runtime availability, not transcription accuracy or model performance |
+| Whisper UI evidence | The shipped manifest declares per-monitor-v2 awareness. A bounded direct-process renderer captures light, dark, high-contrast, minimum-width, and 100/150/200-percent raster profiles plus every presenter-owned overlay state; each artifact records the exact owned PID, dimensions, evidence class, commit identities, and SHA-256 without microphone, transcript, clipboard, target, or model content |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, Personalize, Library, Scratchpad, History, and Privacy tabs, and the floating listening
@@ -86,9 +87,12 @@ from an owner-controlled Windows host says otherwise.
    The shipped adapters are wired, but the full matrix is not proven.
 3. Physical keyboard and mouse shortcut coverage plus callback and shortcut-to-listening latency
    measurements in the packaged app.
-4. Full accessibility, scale, theme, performance, install, update, and uninstall
-   evidence for the Whisper surfaces. The self-contained package now proves its CPU
-   native runtime and model exclusion, but install/update/uninstall are still pending.
+4. Owner-controlled per-monitor DPI transitions, keyboard-only and screen-reader walkthroughs,
+   performance, install, update, and uninstall evidence for the Whisper surfaces. The
+   deterministic renderer now covers light/dark/high-contrast, minimum-width, synthetic
+   100/150/200-percent raster profiles, and every overlay state. Synthetic high-density
+   output is not a claim that live Windows DPI transitions passed. The self-contained package
+   proves its CPU native runtime and model exclusion, but install/update/uninstall remain pending.
 5. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
    deterministic tests currently prove the recovery policy and one owner-host device
    proves the normal live path.
@@ -149,7 +153,7 @@ removes the exact model and recognized owned partials, preserving unrelated stat
 
 The pinned digest is an integrity expectation derived from the upstream LFS object
 at that revision. It is not described as independent publisher authenticity proof.
-The 57-case Windows adapter suite covers normal install, declared and streamed
+The 58-case Windows adapter suite covers normal install, declared and streamed
 oversize, truncation, digest mismatch, cancellation cleanup, concurrent rejection,
 repair, exact deletion, interrupted partial cleanup, and post-install change
 detection with small benign fixtures. The 547 MiB production model was not
@@ -191,7 +195,7 @@ Seven new benign adapter tests prove the model lease, no-copy WAVE projection,
 language and vocabulary propagation, lazy reuse, runtime-fault recovery, content-free
 failures, cancellation classification, short/empty/oversized rejection, explicit
 unload/reload, and owned PCM clearing. Together with the existing model-manager and
-Windows coverage, the suite reports 57/57. The production model was not downloaded
+Windows coverage, the suite reports 58/58. The production model was not downloaded
 or executed: there is no live accuracy, latency, working-set, readiness, or supported-
 hardware claim. The shipped Setup surface and session composition now use this adapter;
 owner-controlled live proof remains required.
@@ -269,7 +273,7 @@ terminal, plain-text, and rich-text categories remain content-free. Soltex stays
 `asInvoker` with `uiAccess=false`; high/system/protected targets are identified and
 the existing delivery policy falls back to copy.
 
-Target-specific deterministic coverage is included in the current 57-case Windows adapter suite.
+Target-specific deterministic coverage is included in the current 58-case Windows adapter suite.
 It covers all five target categories, pattern capability mapping,
 protected/read-only/unknown controls, provider timeout, provider failure, and
 cancellation. An opt-in owner-host run at commit `d11edec` also inspected a real
@@ -320,7 +324,7 @@ after staging or paste input is rejected, the transcript remains copied and the
 result names the fallback. Clipboard acquisition and restoration use bounded retries
 on one background STA thread.
 
-The core suite has 115 cases and the Windows suite has 57 deterministic cases. The
+The core suite has 115 cases and the Windows suite has 58 deterministic cases. The
 Windows cases cover direct-before-clipboard ordering, ownership restoration and loss,
 focus drift after staging, unknown targets, rejected paste, and cancellation cleanup.
 An opt-in owner-host test uses a controlled WinForms text target to prove clipboard
@@ -369,8 +373,20 @@ Every enabled control must execute. Unavailable
 capability is an explicit state, not a disabled control that looks operable.
 
 At narrow window widths all core controls stay reachable without horizontal
-scrolling. Keyboard-only operation and screen-reader labelling are requirements, not
-follow-ups.
+scrolling. The fixed navigation rail scrolls vertically at the supported minimum
+height so lower routes are not silently clipped. The application manifest declares
+`PerMonitorV2,PerMonitor` with the legacy `true/pm` fallback.
+
+`eng/capture-whisper-ui-evidence.ps1` directly launches the built app without a shell,
+uses one bounded process per state, records the exact owned PID, rejects stale artifact
+reuse, and captures 22 content-free states: the Whisper Setup page in light, dark, and
+high contrast; standard and minimum-size 100-percent profiles; deterministic 150- and
+200-percent high-density profiles; all 13 visible presenter states; and representative
+overlay theme/density variants. The manifest records logical and pixel dimensions,
+evidence class, commit identities, and SHA-256. The 150/200-percent profiles prove
+high-density rasterization only; an owner-controlled live per-monitor transition remains
+required. Keyboard-only operation and screen-reader labelling remain owner-proof gates,
+not inferred completion from render output.
 
 ### 8. Retention
 
@@ -400,7 +416,7 @@ global Activity feed or diagnostic events.
 
 The 18-case security-hardening suite covers authenticated round trip, absence of
 plaintext in either envelope, expiry, current/backup deletion, bounds, cancellation,
-and corruption failure. The 57-case Windows adapter suite covers the Whisper mapping
+and corruption failure. The 58-case Windows adapter suite covers the Whisper mapping
 and rewrite boundary. This is application-level encrypted retention, not forensic
 secure erasure: filesystem snapshots, SSD remapping, page files, crash dumps, and a
 same-user process able to invoke DPAPI remain outside its guarantee.

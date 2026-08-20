@@ -7,10 +7,39 @@ internal enum RenderSmokeAppearance
     HighContrast
 }
 
+internal enum RenderSmokeProfile
+{
+    Standard100,
+    Compact100,
+    Compact150,
+    Compact200
+}
+
+internal sealed record RenderSmokeViewport(
+    int LogicalWidth,
+    int LogicalHeight,
+    int ScalePercent)
+{
+    internal int PixelWidth => checked(LogicalWidth * ScalePercent / 100);
+
+    internal int PixelHeight => checked(LogicalHeight * ScalePercent / 100);
+
+    internal double Dpi => 96d * ScalePercent / 100d;
+
+    internal bool IsSyntheticHighDensity => ScalePercent != 100;
+}
+
 internal sealed record RenderSmokeRequest(
     string OutputPath,
     string? Panel,
-    RenderSmokeAppearance Appearance);
+    RenderSmokeAppearance Appearance,
+    RenderSmokeProfile Profile);
+
+internal sealed record WhisperOverlaySmokeRequest(
+    string OutputPath,
+    string State,
+    RenderSmokeAppearance Appearance,
+    int ScalePercent);
 
 internal static class RuntimeLaunchPolicy
 {
@@ -19,28 +48,37 @@ internal static class RuntimeLaunchPolicy
     internal static bool IsRuntimeProbe(IReadOnlyList<string> arguments) =>
         CountOption(arguments, "--runtime-probe") == 1 &&
         CountOption(arguments, "--render-smoke") == 0 &&
-        CountOption(arguments, "--whisper-runtime-probe") == 0;
+        CountOption(arguments, "--whisper-runtime-probe") == 0 &&
+        CountOption(arguments, "--whisper-overlay-smoke") == 0;
 
     internal static bool IsWhisperRuntimeProbe(IReadOnlyList<string> arguments) =>
         CountOption(arguments, "--whisper-runtime-probe") == 1 &&
         CountOption(arguments, "--runtime-probe") == 0 &&
-        CountOption(arguments, "--render-smoke") == 0;
+        CountOption(arguments, "--render-smoke") == 0 &&
+        CountOption(arguments, "--whisper-overlay-smoke") == 0;
 
     internal static bool UsesControlledRuntime(IReadOnlyList<string> arguments) =>
         CountOption(arguments, "--runtime-probe") == 1 ||
         CountOption(arguments, "--render-smoke") == 1 ||
-        CountOption(arguments, "--whisper-runtime-probe") == 1;
+        CountOption(arguments, "--whisper-runtime-probe") == 1 ||
+        CountOption(arguments, "--whisper-overlay-smoke") == 1;
 
     internal static bool UsesSoftwareRendering(IReadOnlyList<string> arguments) =>
-        CountOption(arguments, "--render-smoke") == 1 &&
-        CountOption(arguments, "--runtime-probe") == 0;
+        (CountOption(arguments, "--render-smoke") == 1 ||
+         CountOption(arguments, "--whisper-overlay-smoke") == 1) &&
+        CountOption(arguments, "--runtime-probe") == 0 &&
+        CountOption(arguments, "--whisper-runtime-probe") == 0;
 
     internal static bool HasControlledRuntimeOption(IReadOnlyList<string> arguments) =>
         CountOption(arguments, "--runtime-probe") > 0 ||
         CountOption(arguments, "--whisper-runtime-probe") > 0 ||
+        CountOption(arguments, "--whisper-overlay-smoke") > 0 ||
         CountOption(arguments, "--render-smoke") > 0 ||
         CountOption(arguments, "--panel") > 0 ||
-        CountOption(arguments, "--theme") > 0;
+        CountOption(arguments, "--theme") > 0 ||
+        CountOption(arguments, "--profile") > 0 ||
+        CountOption(arguments, "--state") > 0 ||
+        CountOption(arguments, "--density") > 0;
 
     internal static bool TryParseRenderSmoke(
         IReadOnlyList<string> arguments,
@@ -49,7 +87,8 @@ internal static class RuntimeLaunchPolicy
         request = null;
         if (CountOption(arguments, "--render-smoke") != 1 ||
             CountOption(arguments, "--runtime-probe") != 0 ||
-            CountOption(arguments, "--whisper-runtime-probe") != 0)
+            CountOption(arguments, "--whisper-runtime-probe") != 0 ||
+            CountOption(arguments, "--whisper-overlay-smoke") != 0)
         {
             return false;
         }
@@ -64,7 +103,9 @@ internal static class RuntimeLaunchPolicy
         string outputPath = arguments[renderIndex + 1];
         string? panel = null;
         RenderSmokeAppearance appearance = RenderSmokeAppearance.Dark;
+        RenderSmokeProfile profile = RenderSmokeProfile.Standard100;
         bool appearanceSpecified = false;
+        bool profileSpecified = false;
         for (int index = renderIndex + 2; index < arguments.Count; index += 2)
         {
             if (index + 1 >= arguments.Count || IsOption(arguments[index + 1]))
@@ -95,12 +136,118 @@ internal static class RuntimeLaunchPolicy
                 continue;
             }
 
+            if (string.Equals(arguments[index], "--profile", StringComparison.OrdinalIgnoreCase))
+            {
+                if (profileSpecified ||
+                    !TryParseProfile(arguments[index + 1], out profile))
+                {
+                    return false;
+                }
+
+                profileSpecified = true;
+                continue;
+            }
+
             return false;
         }
 
-        request = new RenderSmokeRequest(outputPath, panel, appearance);
+        request = new RenderSmokeRequest(outputPath, panel, appearance, profile);
         return true;
     }
+
+    internal static bool TryParseWhisperOverlaySmoke(
+        IReadOnlyList<string> arguments,
+        out WhisperOverlaySmokeRequest? request)
+    {
+        request = null;
+        if (CountOption(arguments, "--whisper-overlay-smoke") != 1 ||
+            CountOption(arguments, "--runtime-probe") != 0 ||
+            CountOption(arguments, "--whisper-runtime-probe") != 0 ||
+            CountOption(arguments, "--render-smoke") != 0)
+        {
+            return false;
+        }
+
+        int overlayIndex = IndexOf(arguments, "--whisper-overlay-smoke");
+        if (overlayIndex < 0 || overlayIndex + 1 >= arguments.Count ||
+            IsOption(arguments[overlayIndex + 1]))
+        {
+            return false;
+        }
+
+        string outputPath = arguments[overlayIndex + 1];
+        string? state = null;
+        RenderSmokeAppearance appearance = RenderSmokeAppearance.Dark;
+        int scalePercent = 100;
+        bool appearanceSpecified = false;
+        bool densitySpecified = false;
+        for (int index = overlayIndex + 2; index < arguments.Count; index += 2)
+        {
+            if (index + 1 >= arguments.Count || IsOption(arguments[index + 1]))
+            {
+                return false;
+            }
+
+            if (string.Equals(arguments[index], "--state", StringComparison.OrdinalIgnoreCase))
+            {
+                if (state is not null || !IsStableStateId(arguments[index + 1]))
+                {
+                    return false;
+                }
+
+                state = arguments[index + 1].ToLowerInvariant();
+                continue;
+            }
+
+            if (string.Equals(arguments[index], "--theme", StringComparison.OrdinalIgnoreCase))
+            {
+                if (appearanceSpecified ||
+                    !TryParseAppearance(arguments[index + 1], out appearance))
+                {
+                    return false;
+                }
+
+                appearanceSpecified = true;
+                continue;
+            }
+
+            if (string.Equals(arguments[index], "--density", StringComparison.OrdinalIgnoreCase))
+            {
+                if (densitySpecified ||
+                    !TryParseDensity(arguments[index + 1], out scalePercent))
+                {
+                    return false;
+                }
+
+                densitySpecified = true;
+                continue;
+            }
+
+            return false;
+        }
+
+        if (state is null)
+        {
+            return false;
+        }
+
+        request = new WhisperOverlaySmokeRequest(
+            outputPath,
+            state,
+            appearance,
+            scalePercent);
+        return true;
+    }
+
+    internal static RenderSmokeViewport ResolveRenderViewport(
+        RenderSmokeProfile profile) =>
+        profile switch
+        {
+            RenderSmokeProfile.Compact100 => new RenderSmokeViewport(1100, 720, 100),
+            RenderSmokeProfile.Compact150 => new RenderSmokeViewport(1100, 720, 150),
+            RenderSmokeProfile.Compact200 => new RenderSmokeViewport(1100, 720, 200),
+            _ => new RenderSmokeViewport(1280, 820, 100)
+        };
 
     internal static ResolvedAppearance ResolveRenderAppearance(
         RenderSmokeAppearance appearance) =>
@@ -156,4 +303,35 @@ internal static class RuntimeLaunchPolicy
         };
         return Enum.IsDefined(appearance);
     }
+
+    private static bool TryParseProfile(
+        string value,
+        out RenderSmokeProfile profile)
+    {
+        profile = value.ToLowerInvariant() switch
+        {
+            "standard-100" => RenderSmokeProfile.Standard100,
+            "compact-100" => RenderSmokeProfile.Compact100,
+            "compact-150" => RenderSmokeProfile.Compact150,
+            "compact-200" => RenderSmokeProfile.Compact200,
+            _ => (RenderSmokeProfile)(-1)
+        };
+        return Enum.IsDefined(profile);
+    }
+
+    private static bool TryParseDensity(string value, out int scalePercent)
+    {
+        scalePercent = value switch
+        {
+            "100" => 100,
+            "150" => 150,
+            "200" => 200,
+            _ => 0
+        };
+        return scalePercent != 0;
+    }
+
+    private static bool IsStableStateId(string value) =>
+        value.Length is > 0 and <= 64 &&
+        value.All(character => char.IsAsciiLetterOrDigit(character) || character == '-');
 }
