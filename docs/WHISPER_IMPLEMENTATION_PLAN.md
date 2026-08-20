@@ -61,6 +61,7 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Local transcription adapter | `WindowsWhisperLocalTranscriber` implements the unchanged provider-neutral interface over Whisper.net 1.9.1 and its CPU runtime. It holds a verified non-delete-sharing model lease through eager native load, projects owned 16 kHz mono PCM16 through a 44-byte no-copy WAVE header, passes validated language and bounded vocabulary hints, serializes one lazy native runtime, bounds output, supports cancellation/unload, clears owned capture buffers through the existing clip lifetime, and emits content-free failure categories only |
 | Shipped local setup | The WPF Setup surface exposes explicit local-provider selection, install, repair, cancellation, verified status, progress, and confirmed exact-owned deletion. No model download starts at launch or merely by opening Whisper; model repair/deletion first cancels and drains dictation and unloads the native runtime |
 | Shipped session composition | The app instantiates the production WASAPI capture, local transcriber, UI Automation inspector, insertion adapter, verified submitter, and provider-neutral session runner. Registered begin/release/toggle/cancel intents use this one owned path; saved exact-process profiles are resolved after target inspection; 19-minute warning/20-minute expiry, overlay state, optional bounded history, last-transcript actions, model mutation, and shutdown all share explicit owned task lifetimes |
+| Packaged CPU runtime | The `win-x64` package ships exactly the four Whisper.net CPU native DLLs beside the single-file app in the runtime layout the loader probes. A content-free packaged-process gate loads that runtime while proving no model or microphone was opened; the package is bounded below 256 MiB and rejects the 547 MiB model filename. This proves runtime availability, not transcription accuracy or model performance |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, Personalize, Library, Scratchpad, History, and Privacy tabs, and the floating listening
@@ -86,7 +87,8 @@ from an owner-controlled Windows host says otherwise.
 3. Physical keyboard and mouse shortcut coverage plus callback and shortcut-to-listening latency
    measurements in the packaged app.
 4. Full accessibility, scale, theme, performance, install, update, and uninstall
-   evidence for the Whisper surfaces.
+   evidence for the Whisper surfaces. The self-contained package now proves its CPU
+   native runtime and model exclusion, but install/update/uninstall are still pending.
 5. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
    deterministic tests currently prove the recovery policy and one owner-host device
    proves the normal live path.
@@ -418,6 +420,23 @@ time-of-check/time-of-use changes, integrity-boundary and elevated applications,
 terminal command execution, accidental submission, retention on multi-user machines,
 malicious or inaccessible automation providers, and denial of service from long
 audio or oversized text.
+
+### 10. Packaging checkpoint
+
+`Soltex.Whisper.Windows` suppresses the dependency package's all-architecture build
+assets and explicitly publishes only `whisper.dll`, `ggml-whisper.dll`,
+`ggml-base-whisper.dll`, and `ggml-cpu-whisper.dll` under
+`runtimes\win-x64`. They remain loose beside the single-file executable because the
+Whisper.net loader probes that runtime-specific directory. The package gate requires
+that exact set, rejects the pinned model filename, bounds the complete package below
+256 MiB, and launches `Soltex.exe --whisper-runtime-probe` in a separate process.
+
+The probe records only fixed provider/runtime identity, commit identity, availability,
+and explicit `modelOpened=false` / `microphoneOpened=false` fields. It does not create a
+window, instantiate the normal app runtime, read the model store, enumerate capture
+devices, or report native feature strings. A passing probe proves that the shipped CPU
+dependency chain loads. It does not prove the production model, transcription,
+accuracy, latency, memory use, microphone permission, or insertion path.
 
 ## Evidence required before Whisper is called complete
 

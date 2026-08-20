@@ -525,6 +525,14 @@ internal static class Program
             "Duplicate runtime-probe options were accepted.");
         True(!RuntimeLaunchPolicy.IsRuntimeProbe(["--runtime-probe", "--render-smoke"]),
             "Conflicting deterministic runtime modes were accepted.");
+        True(RuntimeLaunchPolicy.IsWhisperRuntimeProbe(["--whisper-runtime-probe"]),
+            "The packaged Whisper runtime-probe option was not recognized.");
+        True(!RuntimeLaunchPolicy.IsWhisperRuntimeProbe(
+                ["--whisper-runtime-probe", "--runtime-probe"]),
+            "Conflicting Whisper and application runtime probes were accepted.");
+        True(!RuntimeLaunchPolicy.IsWhisperRuntimeProbe(
+                ["--whisper-runtime-probe", "--whisper-runtime-probe"]),
+            "Duplicate Whisper runtime-probe options were accepted.");
         True(RuntimeLaunchPolicy.HasControlledRuntimeOption(
                 ["--runtime-probe", "--render-smoke"]),
             "A conflicting controlled-runtime request could fall through to normal startup.");

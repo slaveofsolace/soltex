@@ -18,7 +18,42 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Whisper.net" Version="1.9.1" />
-    <PackageReference Include="Whisper.net.Runtime" Version="1.9.1" />
+    <PackageReference
+      Include="Whisper.net.Runtime"
+      Version="1.9.1"
+      ExcludeAssets="build"
+      GeneratePathProperty="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <!--
+      Whisper.net probes a runtime-specific directory at process startup. Keep
+      only the CPU win-x64 assets loose beside the single-file app so the loader
+      can resolve its native dependency chain without bundling other platforms.
+    -->
+    <Content
+      Include="$(PkgWhisper_net_Runtime)\build\win-x64\whisper.dll"
+      Link="runtimes\win-x64\whisper.dll"
+      CopyToOutputDirectory="PreserveNewest"
+      CopyToPublishDirectory="PreserveNewest"
+      ExcludeFromSingleFile="true" />
+    <Content
+      Include="$(PkgWhisper_net_Runtime)\build\win-x64\ggml-whisper.dll"
+      Link="runtimes\win-x64\ggml-whisper.dll"
+      CopyToOutputDirectory="PreserveNewest"
+      CopyToPublishDirectory="PreserveNewest"
+      ExcludeFromSingleFile="true" />
+    <Content
+      Include="$(PkgWhisper_net_Runtime)\build\win-x64\ggml-base-whisper.dll"
+      Link="runtimes\win-x64\ggml-base-whisper.dll"
+      CopyToOutputDirectory="PreserveNewest"
+      CopyToPublishDirectory="PreserveNewest"
+      ExcludeFromSingleFile="true" />
+    <Content
+      Include="$(PkgWhisper_net_Runtime)\build\win-x64\ggml-cpu-whisper.dll"
+      Link="runtimes\win-x64\ggml-cpu-whisper.dll"
+      CopyToOutputDirectory="PreserveNewest"
+      CopyToPublishDirectory="PreserveNewest"
+      ExcludeFromSingleFile="true" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Soltex.Whisper.Windows.Tests" />

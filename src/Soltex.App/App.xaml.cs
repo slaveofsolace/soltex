@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Microsoft.Win32;
+using Soltex.Whisper.Windows;
 
 namespace Soltex.App;
 
@@ -45,6 +46,15 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        if (RuntimeLaunchPolicy.IsWhisperRuntimeProbe(e.Args))
+        {
+            RunWhisperRuntimeProbe(
+                Environment.GetEnvironmentVariable("SOLTEX_WHISPER_RUNTIME_REPORT_PATH"),
+                Environment.GetEnvironmentVariable("SOLTEX_SOURCE_HEAD_SHA"),
+                Environment.GetEnvironmentVariable("SOLTEX_TESTED_COMMIT_SHA"));
+            return;
+        }
+
         bool renderRequestParsed = RuntimeLaunchPolicy.TryParseRenderSmoke(
             e.Args,
             out RenderSmokeRequest? renderRequest);
@@ -528,6 +538,81 @@ public partial class App : Application
                 }
             }
 
+            Shutdown(exitCode);
+        }
+    }
+
+    private void RunWhisperRuntimeProbe(
+        string? outputPath,
+        string? sourceHeadSha,
+        string? testedCommitSha)
+    {
+        int exitCode = 0;
+        string? fullOutputPath = null;
+        try
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourceHeadSha);
+            ArgumentException.ThrowIfNullOrWhiteSpace(testedCommitSha);
+            string source = RuntimeCostProbe.ValidateCommit(sourceHeadSha);
+            string tested = RuntimeCostProbe.ValidateCommit(testedCommitSha);
+            fullOutputPath = Path.GetFullPath(outputPath);
+            string? outputDirectory = Path.GetDirectoryName(fullOutputPath);
+            if (string.IsNullOrWhiteSpace(outputDirectory))
+            {
+                throw new ArgumentException(
+                    "The Whisper runtime-probe output path must include a directory.",
+                    nameof(outputPath));
+            }
+
+            Directory.CreateDirectory(outputDirectory);
+            WhisperLocalRuntimeProbeResult result = WhisperLocalRuntimeProbe.Run();
+            using FileStream stream = new(
+                fullOutputPath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None);
+            JsonSerializer.Serialize(
+                stream,
+                new
+                {
+                    schemaVersion = 1,
+                    sourceHeadSha = source,
+                    testedCommitSha = tested,
+                    providerId = result.ProviderId,
+                    runtimeId = result.RuntimeId,
+                    available = result.Available,
+                    modelOpened = false,
+                    microphoneOpened = false
+                },
+                RuntimeReportJsonOptions);
+            stream.Flush(flushToDisk: true);
+        }
+        catch (Exception exception) when (exception is IOException or
+                                           UnauthorizedAccessException or
+                                           InvalidOperationException or
+                                           ArgumentException or
+                                           NotSupportedException)
+        {
+            exitCode = 1;
+            if (!string.IsNullOrWhiteSpace(fullOutputPath))
+            {
+                try
+                {
+                    File.WriteAllText(
+                        fullOutputPath + ".error.txt",
+                        "The packaged local CPU transcription runtime probe failed.");
+                }
+                catch (Exception writeException) when (writeException is IOException or
+                                                       UnauthorizedAccessException)
+                {
+                    // The nonzero process exit remains the authoritative failure signal.
+                }
+            }
+        }
+        finally
+        {
+            Environment.ExitCode = exitCode;
             Shutdown(exitCode);
         }
     }

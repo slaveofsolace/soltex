@@ -66,6 +66,7 @@ List<(string Name, Func<Task> Run)> tests =
     ("local model deletion preserves unrelated state", LocalModelOwnedDeletion),
     ("local model installation cleans recognized interrupted downloads", LocalModelInterruptedCleanup),
     ("a verified model lease blocks replacement while native loading begins", LocalModelVerifiedLease),
+    ("the packaged CPU runtime loads without opening a model", LocalRuntimePackageProbe),
     ("PCM audio is projected as bounded WAVE without a second audio buffer", PcmWaveProjection),
     ("the local transcriber reuses one runtime and passes language and vocabulary hints", LocalTranscriberSuccess),
     ("local runtime faults are sanitized, content-free, and recoverable", LocalTranscriberFailureRecovery),
@@ -1912,6 +1913,15 @@ static async Task LocalTranscriberSuccess()
     True(transcriber.CreateDiagnosticSnapshot().All(item =>
         item.Result == WhisperLocalTranscriptionResultCategory.Succeeded &&
         item.Failure == WhisperLocalTranscriptionFailureKind.None));
+}
+
+static Task LocalRuntimePackageProbe()
+{
+    WhisperLocalRuntimeProbeResult result = WhisperLocalRuntimeProbe.Run();
+    Equal(WhisperLocalModelDefaults.ProviderId, result.ProviderId);
+    Equal(WhisperLocalModelDefaults.RuntimeId, result.RuntimeId);
+    True(result.Available);
+    return Task.CompletedTask;
 }
 
 static async Task LocalTranscriberFailureRecovery()

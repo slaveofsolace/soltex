@@ -91,6 +91,70 @@ jobs:
             throw 'The published package produced a render-smoke error file.'
           }
 
+      - name: Verify packaged Whisper CPU runtime and model exclusion
+        shell: pwsh
+        env:
+          SOLTEX_SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          SOLTEX_TESTED_COMMIT_SHA: ${{ github.sha }}
+          SOLTEX_WHISPER_RUNTIME_REPORT_PATH: ${{ github.workspace }}\artifacts\validation\package-whisper-runtime.json
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = Resolve-Path .\artifacts\publish\win-x64\Soltex.exe
+          $packageBytes = (Get-ChildItem .\artifacts\publish\win-x64 -Recurse -File |
+            Measure-Object Length -Sum).Sum
+          if ($packageBytes -ge 268435456) {
+            throw 'The package exceeded the 256 MiB no-model bound.'
+          }
+          $modelName = 'ggml-large-v3-turbo-q5_0.bin'
+          if (Get-ChildItem .\artifacts\publish\win-x64 -Recurse -File |
+              Where-Object Name -EQ $modelName) {
+            throw 'The explicit-download Whisper model was included in the package.'
+          }
+          $runtimeRoot = Resolve-Path .\artifacts\publish\win-x64\runtimes\win-x64
+          $expectedRuntimeFiles = @(
+            'ggml-base-whisper.dll',
+            'ggml-cpu-whisper.dll',
+            'ggml-whisper.dll',
+            'whisper.dll'
+          )
+          $actualRuntimeFiles = @(Get-ChildItem -LiteralPath $runtimeRoot -File |
+            Select-Object -ExpandProperty Name |
+            Sort-Object)
+          if ((Compare-Object $expectedRuntimeFiles $actualRuntimeFiles).Count -ne 0) {
+            throw 'The package did not contain exactly the required Whisper CPU runtime assets.'
+          }
+
+          $process = Start-Process `
+            -FilePath $exe `
+            -ArgumentList '--whisper-runtime-probe' `
+            -WindowStyle Hidden `
+            -PassThru
+          try {
+            $processHandle = $process.Handle
+            if (-not $process.WaitForExit(30000)) {
+              Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+              throw 'The packaged Whisper runtime probe exceeded its 30-second bound.'
+            }
+            $process.Refresh()
+            $exitCode = $process.ExitCode
+          }
+          finally {
+            $process.Dispose()
+          }
+          if ($exitCode -ne 0) {
+            throw "The packaged Whisper runtime probe failed with exit code $exitCode."
+          }
+          $report = Get-Content -Raw -LiteralPath $env:SOLTEX_WHISPER_RUNTIME_REPORT_PATH |
+            ConvertFrom-Json
+          if ($report.schemaVersion -ne 1 -or
+              $report.providerId -ne 'local-whisper' -or
+              $report.runtimeId -ne 'cpu' -or
+              $report.available -ne $true -or
+              $report.modelOpened -ne $false -or
+              $report.microphoneOpened -ne $false) {
+            throw 'The packaged Whisper runtime report failed its content-free contract.'
+          }
+
       - name: Record package identity
         shell: pwsh
         env:
@@ -114,10 +178,13 @@ jobs:
           name: soltex-package-smoke-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             artifacts/publish/win-x64/Soltex.exe
+            artifacts/publish/win-x64/runtimes/win-x64/*.dll
             artifacts/validation/package-publish.log
             artifacts/validation/package-launch.log
             artifacts/validation/package-whisper.png
             artifacts/validation/package-whisper.png.error.txt
+            artifacts/validation/package-whisper-runtime.json
+            artifacts/validation/package-whisper-runtime.json.error.txt
             artifacts/validation/package-smoke.json
           if-no-files-found: warn
           retention-days: 30

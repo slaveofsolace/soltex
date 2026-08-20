@@ -18,11 +18,18 @@ internal static class RuntimeLaunchPolicy
 
     internal static bool IsRuntimeProbe(IReadOnlyList<string> arguments) =>
         CountOption(arguments, "--runtime-probe") == 1 &&
+        CountOption(arguments, "--render-smoke") == 0 &&
+        CountOption(arguments, "--whisper-runtime-probe") == 0;
+
+    internal static bool IsWhisperRuntimeProbe(IReadOnlyList<string> arguments) =>
+        CountOption(arguments, "--whisper-runtime-probe") == 1 &&
+        CountOption(arguments, "--runtime-probe") == 0 &&
         CountOption(arguments, "--render-smoke") == 0;
 
     internal static bool UsesControlledRuntime(IReadOnlyList<string> arguments) =>
         CountOption(arguments, "--runtime-probe") == 1 ||
-        CountOption(arguments, "--render-smoke") == 1;
+        CountOption(arguments, "--render-smoke") == 1 ||
+        CountOption(arguments, "--whisper-runtime-probe") == 1;
 
     internal static bool UsesSoftwareRendering(IReadOnlyList<string> arguments) =>
         CountOption(arguments, "--render-smoke") == 1 &&
@@ -30,6 +37,7 @@ internal static class RuntimeLaunchPolicy
 
     internal static bool HasControlledRuntimeOption(IReadOnlyList<string> arguments) =>
         CountOption(arguments, "--runtime-probe") > 0 ||
+        CountOption(arguments, "--whisper-runtime-probe") > 0 ||
         CountOption(arguments, "--render-smoke") > 0 ||
         CountOption(arguments, "--panel") > 0 ||
         CountOption(arguments, "--theme") > 0;
@@ -40,7 +48,8 @@ internal static class RuntimeLaunchPolicy
     {
         request = null;
         if (CountOption(arguments, "--render-smoke") != 1 ||
-            CountOption(arguments, "--runtime-probe") != 0)
+            CountOption(arguments, "--runtime-probe") != 0 ||
+            CountOption(arguments, "--whisper-runtime-probe") != 0)
         {
             return false;
         }
