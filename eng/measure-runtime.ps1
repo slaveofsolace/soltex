@@ -156,7 +156,8 @@ foreach ($suspendedState in @(
         throw "Runtime sample '$suspendedState' retained the Performance sampler."
     }
 }
-if ($report.navigation.transitionCount -ne 18 -or
+if ($report.navigation.expectedTransitionCount -le 0 -or
+    $report.navigation.transitionCount -ne $report.navigation.expectedTransitionCount -or
     $report.navigation.totalMilliseconds -lt 0 -or
     $report.navigation.maximumMilliseconds -lt 0) {
     throw 'Runtime navigation evidence is incomplete or invalid.'

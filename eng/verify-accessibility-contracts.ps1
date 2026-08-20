@@ -104,9 +104,21 @@ if ($windowCode.IndexOf('SystemParameters.ClientAreaAnimation', [StringCompariso
     $failures.Add('MainWindow.xaml.cs: workspace motion must honor the Windows client-area animation preference.')
 }
 
+[xml]$manifest = Get-Content -LiteralPath (Join-Path $appRoot 'app.manifest') -Raw
+$dpiAwareness = $manifest.SelectSingleNode('//*[local-name()="dpiAwareness"]')
+$legacyDpiAware = $manifest.SelectSingleNode('//*[local-name()="dpiAware"]')
+if ($null -eq $dpiAwareness -or
+    $dpiAwareness.InnerText -notmatch '(^|,)PerMonitorV2(,|$)') {
+    $failures.Add('app.manifest: the shipped app must declare PerMonitorV2 DPI awareness.')
+}
+if ($null -eq $legacyDpiAware -or
+    $legacyDpiAware.InnerText -ne 'true/pm') {
+    $failures.Add('app.manifest: the compatibility DPI declaration must remain per-monitor aware.')
+}
+
 if ($failures.Count -gt 0) {
     $failures | ForEach-Object { Write-Error $_ }
     throw "Accessibility contract failed with $($failures.Count) issue(s)."
 }
 
-Write-Host "Accessibility contract passed: $interactiveCount interactive controls across $($xamlFiles.Count) XAML file(s); command focus cycles, empty results announce politely, and reduced motion follows Windows."
+Write-Host "Accessibility contract passed: $interactiveCount interactive controls across $($xamlFiles.Count) XAML file(s); command focus cycles, empty results announce politely, reduced motion follows Windows, and the app declares PerMonitorV2 DPI awareness."

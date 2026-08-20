@@ -74,7 +74,7 @@ The transition and steady numbers are deliberately separate. The one-time minimi
 Exact evidence:
 
 ```text
-C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\lifecycle-tray-exact-4207ecb-20260812-0055
+<local-evidence-root>\2026\08\12\soltex-product-rebuild\lifecycle-tray-exact-4207ecb-20260812-0055
 ```
 
 The user-reported `QuarantineStore` disposed-object dialog was a real shutdown race. It is fixed at `4207ecb`: accepted shutdown drains owned work before disposal; a drain miss skips disposal and reports failure; controlled evidence waits for initialized state and confirmed cleanup. A complete diff-focused security scan has zero surviving findings. The false-success cleanup candidate found during review was corrected and retained as rejected audit row `SOLTEX-SHUTDOWN-001`.

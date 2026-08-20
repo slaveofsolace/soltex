@@ -1,6 +1,6 @@
 Identity policy passed: scanned 220 tracked text files with 9 reasoned allowlist entries.
 Design-token policy passed: scanned 10 XAML file(s); colour lives only in src/Soltex.App/Themes/Tokens.xaml.
-Using dotnet: C:\Users\suhai\.codex\tools\dotnet-sdk-10\dotnet.exe
+Using dotnet: <local-sdk-root>\dotnet-sdk-10\dotnet.exe
 10.0.302
   Determining projects to restore...
   All projects are up-to-date for restore.

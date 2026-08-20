@@ -83,6 +83,33 @@ internal sealed class AuthenticatedJsonStore : IDisposable
         }
     }
 
+    internal async Task DeleteStateAsync(CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            foreach (string path in new[] { _statePath, _backupPath, _legacyMacPath })
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                AuthenticatedStateFileIO.RejectReparsePoint(path);
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+
+                if (File.Exists(path))
+                {
+                    throw new IOException("Authenticated state deletion could not be verified.");
+                }
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     internal async Task<byte[]> GetKeyCopyAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

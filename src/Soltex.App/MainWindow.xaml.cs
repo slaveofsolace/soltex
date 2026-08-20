@@ -17,6 +17,7 @@ using Soltex.Monitoring;
 using Soltex.RemoteAssist;
 using Soltex.Security;
 using Soltex.Update;
+using Soltex.Whisper;
 
 namespace Soltex.App;
 
@@ -41,6 +42,8 @@ public partial class MainWindow : Window
     private ImportFolderMonitor? _importMonitor;
     private ProtectionMonitor? _protectionMonitor;
     private ProtectionMonitorState? _lastMonitorState;
+    private WhisperOverlayWindow? _whisperOverlay;
+    private Action? _whisperOverlayAction;
     private RemoteAssistExecutable? _remoteAssistExecutable;
     private AuthenticodeVerificationResult? _remoteAssistTrust;
     private bool _securityActivityVisible;
@@ -57,6 +60,9 @@ public partial class MainWindow : Window
     private bool _shutdownStarted;
     private readonly bool _renderSmokeMode = RuntimeLaunchPolicy.UsesControlledRuntime(
         Environment.GetCommandLineArgs());
+    private readonly bool _isolatedWhisperRenderWorkspace =
+        RuntimeLaunchPolicy.UsesIsolatedWhisperRenderWorkspace(
+            Environment.GetCommandLineArgs());
 
     internal bool NotificationAreaAvailable { get; private set; }
 
@@ -69,6 +75,11 @@ public partial class MainWindow : Window
 
     internal Task StartupCompleted => _startupCompleted.Task;
 
+    internal void UpdateAppearanceResolution(
+        ResolvedAppearance appearance,
+        bool highContrastOverride) =>
+        SettingsPanel.UpdateAppearanceStatus(appearance, highContrastOverride);
+
     public MainWindow()
     {
         InitializeComponent();
@@ -78,13 +89,20 @@ public partial class MainWindow : Window
         _preferences = preferencesLoad.Preferences;
         if (_renderSmokeMode)
         {
+            AppearancePreference renderAppearance =
+                RuntimeLaunchPolicy.TryParseRenderSmoke(
+                    Environment.GetCommandLineArgs(),
+                    out RenderSmokeRequest? renderRequest)
+                    ? RuntimeLaunchPolicy.ResolveRenderPreference(renderRequest!.Appearance)
+                    : AppearancePreference.Dark;
             _preferences = _preferences with
             {
                 RestoreLastWorkspace = false,
                 ActivityRetention = ActivityRetention.SessionOnly,
                 CloseBehavior = CloseBehavior.Exit,
                 PreferredPlaybackEndpointKey = string.Empty,
-                PreferredRecordingEndpointKey = string.Empty
+                PreferredRecordingEndpointKey = string.Empty,
+                AppearancePreference = renderAppearance
             };
         }
         Volatile.Write(
@@ -115,6 +133,7 @@ public partial class MainWindow : Window
             Path.Combine(_runtime.DataRoot, "benchmark-result.json"));
         MonitoringPanel.UpdateBenchmarkLoad(_benchmarkResultStore.Load());
         MonitoringPanel.SetDetailsVisible(_preferences.OpenPerformanceDetails);
+        InitializeWhisperCapture();
         _updateStagingRoot = Path.Combine(_runtime.DataRoot, "update", "staging");
         _updateJournal = new UpdatePlanningJournal(Path.Combine(_runtime.DataRoot, "update", "journal"));
         QuarantineGrid.ItemsSource = _quarantineRows;
@@ -126,6 +145,7 @@ public partial class MainWindow : Window
         SetRemoteAssistExecutable(RemoteAssistExecutableLocator.FindInstalled());
         DevicesPanel.UpdateObservation(_localDevice);
         DevicesPanel.RemoteAssistRequested += (_, _) => ShowPanel(RemotePanel, RemoteNavButton);
+        WhisperPanel.PreviewOverlayRequested += (_, _) => ShowWhisperOverlayPreview();
         MonitoringPanel.ProcessActionCompleted += (_, args) =>
             AddActivity(args.Result.Message, "Performance");
         MonitoringPanel.BenchmarkRunRequested += MonitoringPanel_BenchmarkRunRequested;
@@ -153,6 +173,12 @@ public partial class MainWindow : Window
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        if (_isolatedWhisperRenderWorkspace)
+        {
+            _startupCompleted.TrySetResult(true);
+            return;
+        }
+
         _startupTask ??= InitializeWorkspaceAsync();
         try
         {
@@ -187,6 +213,16 @@ public partial class MainWindow : Window
 
         Task audioRefresh = RefreshAudioAsync();
         Task applicationRefresh = RefreshApplicationsAsync();
+        Task whisperCaptureRefresh = CoreAudioStartupCoordinator.RunWhisperAfterAudioAsync(
+            audioRefresh,
+            RefreshWhisperCaptureDevicesAsync);
+        _whisperShortcutDrained = ReconcileWhisperShortcutsAsync(
+            _whisperRuntimeCancellation.Token);
+        _whisperHistoryDrained = LoadWhisperHistoryAsync(
+            _whisperRuntimeCancellation.Token);
+        _whisperModelDrained = _renderSmokeMode
+            ? Task.CompletedTask
+            : RefreshWhisperModelStatusAsync(_whisperRuntimeCancellation.Token);
 
         _importMonitor = new ImportFolderMonitor(
             _runtime.ImportsPath,
@@ -200,7 +236,11 @@ public partial class MainWindow : Window
             RefreshAllAsync(),
             RefreshUpdateJournalAsync(),
             audioRefresh,
-            applicationRefresh);
+            applicationRefresh,
+            whisperCaptureRefresh,
+            _whisperShortcutDrained,
+            _whisperHistoryDrained,
+            _whisperModelDrained);
         if (_shutdownStarted)
         {
             _startupCompleted.TrySetCanceled();
@@ -232,15 +272,30 @@ public partial class MainWindow : Window
             SavePreferencesForClose();
         }
 
+        // The overlay is a separate top-level window, so it has to be closed
+        // explicitly or it keeps the process alive after the shell is gone.
+        _whisperOverlay?.Close();
+        _whisperOverlay = null;
+
         _operationCancellation?.Cancel();
         _audioMixCancellation?.Cancel();
         _benchmarkCancellation?.Cancel();
+        _whisperCaptureCancellation?.Cancel();
+        _whisperModelCancellation?.Cancel();
+        _whisperSessionCancellation?.Cancel();
+        _whisperRuntimeCancellation.Cancel();
+        _whisperCapture?.CompleteCurrentCapture();
         await _telemetryLoop.StopAsync();
         bool ownedWorkDrained = await OwnedTaskDrain.WaitAsync(
             TimeSpan.FromSeconds(20),
             _activeOperationDrained,
             _audioMixOperationDrained,
             _benchmarkOperationDrained,
+            _whisperCaptureDrained,
+            _whisperModelDrained,
+            _whisperSessionDrained,
+            _whisperShortcutDrained,
+            _whisperHistoryDrained,
             _startupTask);
         if (!ownedWorkDrained)
         {
@@ -263,6 +318,11 @@ public partial class MainWindow : Window
             _protectionMonitor.Updated -= OnProtectionMonitorUpdated;
             await _protectionMonitor.DisposeAsync();
         }
+
+        await DisposeWhisperRuntimeAsync();
+        await DisposeWhisperCaptureAsync();
+        await DisposeWhisperModelAsync();
+        await DisposeWhisperHistoryAsync();
 
         _updateJournal.Dispose();
         _runtime.Dispose();
@@ -1331,6 +1391,49 @@ public partial class MainWindow : Window
 
     private void RemoteNav_Click(object sender, RoutedEventArgs e) => ShowPanel(RemotePanel, RemoteNavButton);
 
+    private void WhisperNav_Click(object sender, RoutedEventArgs e) => ShowPanel(WhisperPanel, WhisperNavButton);
+
+    /// <summary>
+    /// Shows the listening surface in its idle-listening state so the user can see and
+    /// place it before any capture exists. It renders a presenter frame like the real
+    /// session would; it does not open a microphone.
+    /// </summary>
+    private void ShowWhisperOverlayPreview()
+    {
+        WhisperOverlayWindow overlay = EnsureWhisperOverlay();
+
+        _whisperOverlayAction = () =>
+        {
+            if (!_whisperCaptureDrained.IsCompleted)
+            {
+                _whisperCapture?.CompleteCurrentCapture();
+            }
+            else
+            {
+                overlay.Hide();
+            }
+        };
+
+        WhisperOverlayView frame = WhisperOverlayPresenter.Project(new WhisperOverlayInputs(
+            new WhisperSessionSnapshot(
+                WhisperSessionState.Listening,
+                WhisperCaptureMode.PushToTalk,
+                DateTimeOffset.UtcNow,
+                null),
+            WhisperCaptureMode.PushToTalk,
+            TargetProcessName: null,
+            TargetIsKnown: false,
+            HandsFreeLocked: false,
+            TimeSpan.Zero,
+            WhisperDurationState.Current,
+            WhisperDeliveryKind.None,
+            ErrorDetail: null));
+
+        overlay.Render(frame);
+        overlay.Left = Left + ((Width - overlay.Width) / 2);
+        overlay.Top = Top + Height - 140;
+    }
+
     private void ActivityNav_Click(object sender, RoutedEventArgs e) =>
         ShowPanel(ActivityPanel, ActivityNavButton);
 
@@ -1374,6 +1477,8 @@ public partial class MainWindow : Window
 
         bool closeBehaviorChanged =
             requested.CloseBehavior != _preferences.CloseBehavior;
+        bool appearanceChanged =
+            requested.AppearancePreference != _preferences.AppearancePreference;
         _preferences = requested;
         Volatile.Write(
             ref _telemetryIntervalMilliseconds,
@@ -1389,6 +1494,10 @@ public partial class MainWindow : Window
             _preferences.ActivityRetention,
             retentionResult.Detail,
             retentionResult.StorageHealthy);
+        if (appearanceChanged && Application.Current is App application)
+        {
+            application.SetAppearancePreference(_preferences.AppearancePreference);
+        }
         try
         {
             _preferencesStore.Save(_preferences);
@@ -1473,6 +1582,9 @@ public partial class MainWindow : Window
                 break;
             case "remote":
                 ShowPanel(RemotePanel, RemoteNavButton);
+                break;
+            case "whisper":
+                ShowPanel(WhisperPanel, WhisperNavButton);
                 break;
             case "activity":
                 ShowPanel(ActivityPanel, ActivityNavButton);
@@ -1570,6 +1682,124 @@ public partial class MainWindow : Window
         if (string.Equals(normalized, "remote", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(RemotePanel, RemoteNavButton);
+            return true;
+        }
+
+        if (string.Equals(normalized, "whisper", StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            _renderSmokeFocusTarget = WhisperPanel.WhisperInputDevicePicker;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-checks",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowChecksForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperOwnerCheckActionButton;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-personalize",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowPersonalizationForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-scratchpad",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowScratchpad();
+            _ = WhisperNavButton.Focus();
+            _renderSmokeFocusTarget = WhisperNavButton;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-library",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowLibraryForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperSnippetCueInput;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-library-styles",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowLibraryStylesForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperCustomStyleNameInput;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-library-apps",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowLibraryApplicationsForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperApplicationProcessInput;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-history",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowHistoryForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperHistoryClearButton;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-privacy",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowPrivacyForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperAutoSendButton;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-privacy-warning",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowPrivacyWarningForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperAutoSendKeepOffButton;
+            return true;
+        }
+
+        if (string.Equals(
+                normalized,
+                "whisper-privacy-encrypted",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ShowPanel(WhisperPanel, WhisperNavButton);
+            WhisperPanel.ShowEncryptedPrivacyForEvidence();
+            _renderSmokeFocusTarget = WhisperPanel.WhisperHistoryRetentionPicker;
             return true;
         }
 
@@ -1676,6 +1906,7 @@ public partial class MainWindow : Window
         ClipsPanel.Visibility = panel == ClipsPanel ? Visibility.Visible : Visibility.Collapsed;
         SecurityPanel.Visibility = panel == SecurityPanel ? Visibility.Visible : Visibility.Collapsed;
         RemotePanel.Visibility = panel == RemotePanel ? Visibility.Visible : Visibility.Collapsed;
+        WhisperPanel.Visibility = panel == WhisperPanel ? Visibility.Visible : Visibility.Collapsed;
         UpdatePanel.Visibility = panel == UpdatePanel ? Visibility.Visible : Visibility.Collapsed;
         CancelBenchmarkIfInactive();
         foreach (System.Windows.Controls.Button button in new[]
@@ -1688,14 +1919,19 @@ public partial class MainWindow : Window
                      ClipsNavButton,
                      SecurityNavButton,
                      RemoteNavButton,
+                     WhisperNavButton,
                      ActivityNavButton,
                      UpdateNavButton,
                      SettingsNavButton
                  })
         {
             button.Tag = button == selectedButton ? "Selected" : null;
-            button.Background = (Brush)FindResource("NavRestBrush");
-            button.Foreground = (Brush)FindResource("MutedBrush");
+            button.SetResourceReference(
+                System.Windows.Controls.Control.BackgroundProperty,
+                "NavRestBrush");
+            button.SetResourceReference(
+                System.Windows.Controls.Control.ForegroundProperty,
+                "MutedBrush");
         }
 
         _activeWorkspace =
@@ -1704,6 +1940,7 @@ public partial class MainWindow : Window
             panel == MixerPanel ? "mixer" :
             panel == SecurityPanel ? "security" :
             panel == RemotePanel ? "remote" :
+            panel == WhisperPanel ? "whisper" :
             panel == ActivityPanel ? "activity" :
             panel == UpdatePanel ? "updates" :
             panel == SettingsPanel ? "settings" :
@@ -1735,6 +1972,7 @@ public partial class MainWindow : Window
                      ClipsPanel,
                      SecurityPanel,
                      RemotePanel,
+                     WhisperPanel,
                      ActivityPanel,
                      UpdatePanel,
                      SettingsPanel

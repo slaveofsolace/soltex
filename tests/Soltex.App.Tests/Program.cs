@@ -14,6 +14,8 @@ using Soltex.Audio;
 using Soltex.Benchmarks;
 using Soltex.DeviceFabric;
 using Soltex.Monitoring;
+using Soltex.Whisper;
+using Soltex.Whisper.Windows;
 
 namespace Soltex.App.Tests;
 
@@ -38,7 +40,10 @@ internal static class Program
         List<(string Name, Action Test)> tests =
         [
             ("Shared theme exposes required control resources", ThemeResourcesAreAvailable),
+            ("Appearance themes resolve and update shared brushes", AppearanceThemesAreDeterministic),
             ("Workspace command catalog is bounded and searchable", WorkspaceCommandsAreBounded),
+            ("Every command palette workspace resolves to its intended target", WorkspaceCommandRoutesResolve),
+            ("Whisper Core Audio startup waits for the shared audio refresh", WhisperAudioStartupIsSerialized),
             ("Telemetry runs only in visible live workspaces", TelemetryRunsOnlyInLiveWorkspaces),
             ("Telemetry loop ownership serializes duplicate stop and queued restart", TelemetryLoopOwnershipIsSerialized),
             ("Background runtime remains explicit and fail-closed", BackgroundRuntimeIsExplicit),
@@ -47,6 +52,7 @@ internal static class Program
             ("Shutdown evidence requires confirmed resource disposal", ShutdownEvidenceRequiresDisposal),
             ("Runtime CPU cost math is processor-normalized and bounded", RuntimeCostMathIsBounded),
             ("Runtime probe launch parsing is bounded and conflict-aware", RuntimeLaunchParsingIsBounded),
+            ("Runtime navigation contract includes every shipped workspace", RuntimeNavigationContractIsCurrent),
             ("Process actions reject Windows and Soltex targets", ProcessActionsRejectProtectedTargets),
             ("Process actions reject identity drift", ProcessActionsRejectIdentityDrift),
             ("Process actions admit only the selected user-session process", ProcessActionsAdmitBoundedTarget),
@@ -63,6 +69,18 @@ internal static class Program
             ("Applications view progressively discloses startup and services", () =>
                 ApplicationsViewRenders(applicationSnapshot, serviceSnapshot)),
             ("Preference store recovers and round-trips bounded local state", PreferencesRoundTripAndRecovery),
+            ("Whisper device selection persists and oversized state fails safe", WhisperSettingsRoundTripAndRecovery),
+            ("Whisper capture controls expose only working capture actions", WhisperCaptureControlsAreHonest),
+            ("Whisper runtime toggle is explicit and reversible", WhisperRuntimeToggleIsExplicit),
+            ("Whisper owner checks expose only observable session actions", WhisperOwnerAcceptanceControlsAreExplicit),
+            ("Whisper local provider and model actions are explicit", WhisperLocalModelControlsAreExplicit),
+            ("Whisper overlay evidence covers every visible presenter state", WhisperOverlayEvidenceStatesAreComplete),
+            ("Whisper shortcut intents route through one shipped session path", WhisperSessionIntentRoutingIsDeterministic),
+            ("Whisper personalization controls persist explicit choices", WhisperPersonalizationControlsAreWorking),
+            ("Whisper library editors persist bounded rules", WhisperLibraryControlsAreWorking),
+            ("Whisper history supports per-entry and clear deletion", WhisperHistoryControlsAreWorking),
+            ("Whisper privacy controls require explicit auto-send consent", WhisperPrivacyControlsAreWorking),
+            ("Whisper Scratchpad controls are bounded and reversible", WhisperScratchpadControlsAreWorking),
             ("Activity store bounds, sanitizes, persists, and recovers", ActivityStoreBoundsAndRecovers),
             ("Activity view renders and filters meaningful events", ActivityViewRenders),
             ("Settings view renders working local preferences", SettingsViewRenders),
@@ -108,6 +126,90 @@ internal static class Program
         True(resources.Contains("AccentBrush"), "The shared accent brush is missing.");
         True(resources.Contains("HeroCardStyle"), "The shared hero-card style is missing.");
         True(resources.Contains("SoltexSliderStyle"), "The shared slider style is missing.");
+    }
+
+    private static void AppearanceThemesAreDeterministic()
+    {
+        True(
+            AppearanceThemeManager.Resolve(
+                AppearancePreference.System,
+                highContrast: false,
+                appsUseLightTheme: true) == ResolvedAppearance.Light,
+            "System appearance did not follow a light Windows app theme.");
+        True(
+            AppearanceThemeManager.Resolve(
+                AppearancePreference.System,
+                highContrast: false,
+                appsUseLightTheme: false) == ResolvedAppearance.Dark,
+            "System appearance did not follow a dark Windows app theme.");
+        True(
+            AppearanceThemeManager.Resolve(
+                AppearancePreference.Dark,
+                highContrast: true,
+                appsUseLightTheme: false) == ResolvedAppearance.HighContrast,
+            "Windows High Contrast did not override an explicit Soltex theme.");
+
+        ResourceDictionary resources = Application.Current.Resources;
+        AppearanceThemeManager.ApplyResolved(resources, ResolvedAppearance.Dark);
+        SolidColorBrush canvas = (SolidColorBrush)Application.Current.FindResource("CanvasBrush");
+        SolidColorBrush accent = (SolidColorBrush)Application.Current.FindResource("AccentBrush");
+        Color lightCanvas = (Color)Application.Current.FindResource("LightCanvasColor");
+        Color lightAccent = (Color)Application.Current.FindResource("LightAccentColor");
+        SettingsView view = new();
+        Window host = new()
+        {
+            Content = view,
+            Width = 900,
+            Height = 700,
+            Left = -32_000,
+            Top = -32_000,
+            Opacity = 0,
+            ShowActivated = false,
+            ShowInTaskbar = false,
+            WindowStyle = WindowStyle.None
+        };
+        Window? previousMainWindow = Application.Current.MainWindow;
+        ShutdownMode previousShutdownMode = Application.Current.ShutdownMode;
+        Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        host.Show();
+        host.UpdateLayout();
+        try
+        {
+            AppearanceThemeManager.ApplyResolved(resources, ResolvedAppearance.Light);
+            host.UpdateLayout();
+            SolidColorBrush activeCanvas =
+                (SolidColorBrush)Application.Current.FindResource("CanvasBrush");
+            SolidColorBrush activeAccent =
+                (SolidColorBrush)Application.Current.FindResource("AccentBrush");
+            True(!ReferenceEquals(canvas, activeCanvas) && activeCanvas.Color == lightCanvas,
+                "Live appearance switching did not replace the frozen canvas resource.");
+            True(!ReferenceEquals(accent, activeAccent) &&
+                 activeAccent.Color == lightAccent &&
+                 view.SystemAppearanceButton.Foreground is SolidColorBrush selectedAccent &&
+                 selectedAccent.Color == lightAccent,
+                "A stateful control did not resolve the live-updated semantic accent resource.");
+
+            AppearanceThemeManager.ApplyResolved(resources, ResolvedAppearance.HighContrast);
+            True(((SolidColorBrush)Application.Current.FindResource("CanvasBrush")).Color ==
+                 SystemColors.WindowColor,
+                "High Contrast did not map the canvas to the Windows system colour.");
+            True(((SolidColorBrush)Application.Current.FindResource("TextBrush")).Color ==
+                 SystemColors.WindowTextColor,
+                "High Contrast did not map primary text to the Windows system colour.");
+        }
+        finally
+        {
+            try
+            {
+                AppearanceThemeManager.ApplyResolved(resources, ResolvedAppearance.Dark);
+            }
+            finally
+            {
+                host.Close();
+                Application.Current.MainWindow = previousMainWindow;
+                Application.Current.ShutdownMode = previousShutdownMode;
+            }
+        }
     }
 
     private static void TelemetryRunsOnlyInLiveWorkspaces()
@@ -174,7 +276,7 @@ internal static class Program
     private static void WorkspaceCommandsAreBounded()
     {
         IReadOnlyList<WorkspaceCommand> all = WorkspaceCommandCatalog.Query(null);
-        True(all.Count == 9, "The command surface must expose the nine supported workspaces exactly once.");
+        True(all.Count == 10, "The command surface must expose the ten supported workspaces exactly once.");
         True(all.Select(command => command.Workspace).Distinct(StringComparer.Ordinal).Count() == all.Count,
             "Workspace commands contained duplicate routes.");
         True(all.Select(command => command.Shortcut).Distinct(StringComparer.Ordinal).Count() == all.Count,
@@ -186,6 +288,9 @@ internal static class Program
         IReadOnlyList<WorkspaceCommand> remote = WorkspaceCommandCatalog.Query("screen peer");
         True(remote.Count == 1 && remote[0].Workspace == "remote",
             "The command query did not route Remote Assist synonyms.");
+        IReadOnlyList<WorkspaceCommand> whisper = WorkspaceCommandCatalog.Query("dictation speech");
+        True(whisper.Count == 1 && whisper[0].Workspace == "whisper",
+            "The command query did not route Whisper synonyms.");
         True(WorkspaceCommandCatalog.Query("not-a-soltex-tool").Count == 0,
             "An unknown command query produced a fabricated result.");
     }
@@ -422,17 +527,160 @@ internal static class Program
             "Duplicate runtime-probe options were accepted.");
         True(!RuntimeLaunchPolicy.IsRuntimeProbe(["--runtime-probe", "--render-smoke"]),
             "Conflicting deterministic runtime modes were accepted.");
+        True(!RuntimeLaunchPolicy.IsRuntimeProbe(
+                ["--runtime-probe", "--whisper-overlay-smoke", "overlay.png"]),
+            "Conflicting application and overlay probes were accepted.");
+        True(RuntimeLaunchPolicy.IsWhisperRuntimeProbe(["--whisper-runtime-probe"]),
+            "The packaged Whisper runtime-probe option was not recognized.");
+        True(!RuntimeLaunchPolicy.IsWhisperRuntimeProbe(
+                ["--whisper-runtime-probe", "--runtime-probe"]),
+            "Conflicting Whisper and application runtime probes were accepted.");
+        True(!RuntimeLaunchPolicy.IsWhisperRuntimeProbe(
+                ["--whisper-runtime-probe", "--whisper-runtime-probe"]),
+            "Duplicate Whisper runtime-probe options were accepted.");
+        True(RuntimeLaunchPolicy.IsWhisperModelProbe(["--whisper-model-probe"]),
+            "The packaged Whisper model-probe option was not recognized.");
+        True(!RuntimeLaunchPolicy.IsWhisperModelProbe(
+                ["--whisper-model-probe", "--whisper-runtime-probe"]),
+            "Conflicting Whisper model and runtime probes were accepted.");
+        True(!RuntimeLaunchPolicy.IsWhisperModelProbe(
+                ["--whisper-model-probe", "--whisper-model-probe"]),
+            "Duplicate Whisper model-probe options were accepted.");
+        True(RuntimeLaunchPolicy.IsWhisperUninstallCleanup(
+                ["--whisper-uninstall-cleanup"]),
+            "The exact Whisper uninstall cleanup option was not recognized.");
+        True(!RuntimeLaunchPolicy.IsWhisperUninstallCleanup(
+                ["--whisper-uninstall-cleanup", "--ordinary-option"]),
+            "Whisper uninstall cleanup accepted an unrelated argument.");
+        True(!RuntimeLaunchPolicy.IsWhisperUninstallCleanup(
+                ["--whisper-uninstall-cleanup", "--whisper-uninstall-cleanup"]),
+            "Whisper uninstall cleanup accepted a duplicate request.");
+        True(!RuntimeLaunchPolicy.IsRuntimeProbe(
+                ["--runtime-probe", "--whisper-uninstall-cleanup"]),
+            "Runtime probing accepted a conflicting uninstall cleanup request.");
+        True(!RuntimeLaunchPolicy.IsRuntimeProbe(
+                ["--runtime-probe", "--whisper-model-probe"]),
+            "Runtime probing accepted a conflicting Whisper model request.");
         True(RuntimeLaunchPolicy.HasControlledRuntimeOption(
                 ["--runtime-probe", "--render-smoke"]),
             "A conflicting controlled-runtime request could fall through to normal startup.");
+        True(RuntimeLaunchPolicy.UsesControlledRuntime(["--whisper-model-probe"]),
+            "The packaged Whisper model probe was not classified as a controlled runtime.");
+        True(RuntimeLaunchPolicy.HasControlledRuntimeOption(["--whisper-model-probe"]),
+            "An incomplete packaged Whisper model probe could fall through to normal startup.");
         True(!RuntimeLaunchPolicy.HasControlledRuntimeOption(["--ordinary-option"]),
             "An ordinary option was mistaken for a controlled runtime request.");
         True(!RuntimeLaunchPolicy.UsesSoftwareRendering(["--runtime-probe"]),
             "The runtime-cost probe incorrectly forced software rendering.");
         True(RuntimeLaunchPolicy.UsesSoftwareRendering(["--render-smoke", "image.png"]),
             "Native render smoke did not retain deterministic software rendering.");
+        True(RuntimeLaunchPolicy.UsesIsolatedWhisperRenderWorkspace(
+                ["--render-smoke", "image.png", "--panel", "whisper-checks"]),
+            "Whisper render evidence did not isolate itself from unrelated live workspace integrations.");
+        True(!RuntimeLaunchPolicy.UsesIsolatedWhisperRenderWorkspace(
+                ["--render-smoke", "image.png", "--panel", "security"]),
+            "A non-Whisper render unexpectedly skipped its live workspace initialization contract.");
+        True(!RuntimeLaunchPolicy.UsesIsolatedWhisperRenderWorkspace(
+                ["--ordinary-option"]),
+            "An ordinary launch was mistaken for isolated Whisper render evidence.");
+        True(RuntimeLaunchPolicy.UsesSoftwareRendering(
+                ["--whisper-overlay-smoke", "overlay.png", "--state", "listening"]),
+            "Whisper overlay evidence did not retain deterministic software rendering.");
+        True(!RuntimeLaunchPolicy.UsesSoftwareRendering(
+                ["--whisper-uninstall-cleanup"]),
+            "Whisper uninstall cleanup incorrectly enabled WPF software rendering.");
+        True(RuntimeLaunchPolicy.TryParseRenderSmoke(
+                ["--render-smoke", "image.png", "--panel", "whisper", "--theme", "light", "--profile", "compact-200"],
+                out RenderSmokeRequest? lightRequest) &&
+             lightRequest is
+             {
+                 OutputPath: "image.png",
+                 Panel: "whisper",
+                 Appearance: RenderSmokeAppearance.Light,
+                 Profile: RenderSmokeProfile.Compact200
+             },
+            "Render-smoke did not parse the explicit light compact-200 profile.");
+        True(RuntimeLaunchPolicy.TryParseRenderSmoke(
+                ["Soltex.exe", "--render-smoke", "image.png", "--theme", "high-contrast"],
+                out RenderSmokeRequest? contrastRequest) &&
+             contrastRequest?.Appearance == RenderSmokeAppearance.HighContrast,
+            "Render-smoke did not tolerate the executable prefix or parse High Contrast.");
+        True(!RuntimeLaunchPolicy.TryParseRenderSmoke(
+                ["--render-smoke", "image.png", "--theme", "light", "--theme", "dark"],
+                out _),
+            "Render-smoke accepted duplicate appearance options.");
+        True(!RuntimeLaunchPolicy.TryParseRenderSmoke(
+                ["--render-smoke", "image.png", "--theme", "system"],
+                out _),
+            "Render-smoke accepted a nondeterministic System appearance.");
+        True(!RuntimeLaunchPolicy.TryParseRenderSmoke(
+                ["--render-smoke", "image.png", "--profile", "compact-125"],
+                out _),
+            "Render-smoke accepted an unsupported evidence density.");
+        True(RuntimeLaunchPolicy.TryParseWhisperOverlaySmoke(
+                ["--whisper-overlay-smoke", "overlay.png", "--state", "copied-fallback", "--theme", "high-contrast", "--density", "200"],
+                out WhisperOverlaySmokeRequest? overlayRequest) &&
+             overlayRequest is
+             {
+                 OutputPath: "overlay.png",
+                 State: "copied-fallback",
+                 Appearance: RenderSmokeAppearance.HighContrast,
+                 ScalePercent: 200
+             },
+            "Whisper overlay evidence did not parse its bounded state, theme, and density.");
+        True(!RuntimeLaunchPolicy.TryParseWhisperOverlaySmoke(
+                ["--whisper-overlay-smoke", "overlay.png", "--state", "listening", "--density", "125"],
+                out _),
+            "Whisper overlay evidence accepted an unsupported density.");
+        True(!RuntimeLaunchPolicy.TryParseWhisperOverlaySmoke(
+                ["--whisper-overlay-smoke", "overlay.png", "--state", "bad/state"],
+                out _),
+            "Whisper overlay evidence accepted an unsafe state identifier.");
+        RenderSmokeViewport compact200 = RuntimeLaunchPolicy.ResolveRenderViewport(
+            RenderSmokeProfile.Compact200);
+        True(compact200 is
+            {
+                LogicalWidth: 1100,
+                LogicalHeight: 720,
+                PixelWidth: 2200,
+                PixelHeight: 1440,
+                ScalePercent: 200,
+                IsSyntheticHighDensity: true
+            },
+            "The compact-200 render profile no longer records its logical and raster bounds.");
         True(RuntimeLaunchPolicy.RenderSmokeStartupTimeout == TimeSpan.FromSeconds(40),
             "Render-smoke startup no longer covers the composed bounded protection query while remaining finite.");
+    }
+
+    private static void WhisperOverlayEvidenceStatesAreComplete()
+    {
+        HashSet<WhisperOverlayState> observed = [];
+        foreach (string stateId in WhisperOverlayEvidenceCatalog.StateIds)
+        {
+            if (!WhisperOverlayEvidenceCatalog.TryProject(
+                    stateId,
+                    out WhisperOverlayView? view) ||
+                view is null ||
+                !view.IsVisible)
+            {
+                throw new InvalidOperationException(
+                    $"Whisper overlay evidence state '{stateId}' did not project a visible frame.");
+            }
+
+            observed.Add(view.State);
+            True(!string.IsNullOrWhiteSpace(view.Headline) &&
+                 !string.IsNullOrWhiteSpace(view.Announcement),
+                $"Whisper overlay evidence state '{stateId}' omitted visible or accessible status.");
+        }
+
+        WhisperOverlayState[] required = Enum
+            .GetValues<WhisperOverlayState>()
+            .Where(state => state != WhisperOverlayState.Hidden)
+            .ToArray();
+        True(required.All(observed.Contains),
+            "The evidence catalog omitted a visible presenter-defined overlay state.");
+        True(!WhisperOverlayEvidenceCatalog.TryProject("unknown-state", out _),
+            "The evidence catalog accepted an unowned overlay state.");
     }
 
     private static void ProcessActionsRejectProtectedTargets()
@@ -836,7 +1084,8 @@ internal static class Program
                 CloseBehavior: CloseBehavior.NotificationArea,
                 PreferredPlaybackEndpointKey: new string('a', 64),
                 PreferredRecordingEndpointKey: new string('b', 64),
-                LastWorkspace: "security");
+                LastWorkspace: "security",
+                AppearancePreference: AppearancePreference.Light);
             store.Save(expected);
             PreferencesLoadResult loaded = store.Load();
             True(!loaded.RecoveredFromInvalid,
@@ -857,6 +1106,8 @@ internal static class Program
                 migrated.Preferences.PreferredPlaybackEndpointKey.Length == 0 &&
                 migrated.Preferences.PreferredRecordingEndpointKey.Length == 0,
                 "Legacy preferences did not migrate to empty audio fallback reminders.");
+            True(migrated.Preferences.AppearancePreference == AppearancePreference.System,
+                "Legacy preferences did not migrate to the safe System appearance default.");
 
             File.WriteAllText(
                 filePath,
@@ -872,6 +1123,19 @@ internal static class Program
                 invalidEndpointKey.Preferences.PreferredPlaybackEndpointKey.Length == 0 &&
                 invalidEndpointKey.Preferences.LastWorkspace == "mixer",
                 "Malformed audio fallback state did not recover only the unsupported value.");
+
+            File.WriteAllText(
+                filePath,
+                "{\"schemaVersion\":4,\"telemetryCadence\":\"Balanced\",\"restoreLastWorkspace\":true," +
+                "\"openPerformanceDetails\":false,\"activityRetention\":\"SessionOnly\"," +
+                "\"closeBehavior\":\"Exit\",\"preferredPlaybackEndpointKey\":\"\"," +
+                "\"preferredRecordingEndpointKey\":\"\",\"lastWorkspace\":\"home\"," +
+                "\"appearancePreference\":\"transparent\"}",
+                Encoding.UTF8);
+            PreferencesLoadResult invalidAppearance = store.Load();
+            True(invalidAppearance.RecoveredFromInvalid &&
+                 invalidAppearance.Preferences.AppearancePreference == AppearancePreference.System,
+                "An unsupported appearance did not repair to the safe System preference.");
 
             File.WriteAllText(filePath, "{ invalid", Encoding.UTF8);
             PreferencesLoadResult invalid = store.Load();
@@ -898,6 +1162,671 @@ internal static class Program
                 Directory.Delete(directory);
             }
         }
+    }
+
+    private static void WorkspaceCommandRoutesResolve()
+    {
+        foreach (WorkspaceCommand command in WorkspaceCommandCatalog.Query(null))
+        {
+            True(
+                WorkspaceNavigationPolicy.TryResolve(command.Workspace, out WorkspaceNavigationTarget target),
+                $"The command palette route '{command.Workspace}' is listed but cannot be opened.");
+            True(
+                string.Equals(command.Workspace, target.ToString(), StringComparison.OrdinalIgnoreCase),
+                $"The command palette route '{command.Workspace}' resolved to '{target}'.");
+        }
+
+        True(
+            WorkspaceNavigationPolicy.TryResolve("whisper", out WorkspaceNavigationTarget whisper) &&
+            whisper == WorkspaceNavigationTarget.Whisper,
+            "The Whisper command did not resolve to the Whisper workspace.");
+        True(
+            !WorkspaceNavigationPolicy.TryResolve("not-a-soltex-workspace", out WorkspaceNavigationTarget unknown) &&
+            unknown == WorkspaceNavigationTarget.Home,
+            "An unknown command route did not fail closed to Overview.");
+    }
+
+    private static void WhisperAudioStartupIsSerialized()
+    {
+        TaskCompletionSource<bool> audioCompleted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        bool whisperStarted = false;
+        Task coordinated = CoreAudioStartupCoordinator.RunWhisperAfterAudioAsync(
+            audioCompleted.Task,
+            () =>
+            {
+                whisperStarted = true;
+                return Task.CompletedTask;
+            });
+
+        True(!whisperStarted && !coordinated.IsCompleted,
+            "Whisper microphone discovery overlapped the initial Core Audio refresh.");
+        audioCompleted.TrySetResult(true);
+        coordinated.GetAwaiter().GetResult();
+        True(whisperStarted,
+            "Whisper microphone discovery did not begin after Core Audio completed.");
+    }
+
+    private static void RuntimeNavigationContractIsCurrent()
+    {
+        IReadOnlyList<string> routes = RuntimeCostProbe.NavigationRoutesForTest;
+        True(routes.Count == routes.Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+            "Runtime navigation contains duplicate workspace routes.");
+        True(routes.Contains("whisper", StringComparer.OrdinalIgnoreCase),
+            "Runtime navigation omitted the shipped Whisper workspace.");
+        True(RuntimeCostProbe.ExpectedNavigationTransitionCount == routes.Count * 2,
+            "Runtime navigation evidence no longer derives its expected count from the exercised route set.");
+    }
+
+    private static void WhisperSettingsRoundTripAndRecovery()
+    {
+        string directory = Path.Combine(
+            Path.GetTempPath(),
+            "soltex-whisper-settings-tests-" + Guid.NewGuid().ToString("N"));
+        string filePath = Path.Combine(directory, "whisper-settings.json");
+        Directory.CreateDirectory(directory);
+        try
+        {
+            WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
+            document.InputDeviceId = "microphone-id-1";
+            document.PreferredLanguageTag = "fr";
+            document.DefaultStyleName = WhisperStyleProfile.Developer.Name;
+            document.VocabularyTerms = ["Soltex", "Aether Foundry"];
+            document.Snippets =
+            [
+                new WhisperSnippetDocument { Cue = "insert greeting", Content = "Hello." }
+            ];
+            document.CustomStyles =
+            [
+                new WhisperStyleProfileDocument
+                {
+                    Name = "Compact",
+                    Kind = nameof(WhisperStyleKind.Message),
+                    ProseCleanup = true,
+                    SpokenPunctuation = true,
+                    PreserveLiteralTokens = false,
+                    CapitalizeSentences = true
+                }
+            ];
+            document.ApplicationProfiles =
+            [
+                new WhisperAppProfileDocument
+                {
+                    ProcessName = "chat",
+                    ClipboardFallbackAllowed = true,
+                    ContextFormattingAllowed = false,
+                    AutoSendAllowed = false,
+                    TerminalAutoSendAllowed = false,
+                    StyleName = "Compact"
+                }
+            ];
+            WhisperSettings expected = WhisperSettingsMigrator.Load(document).Settings;
+            WhisperSettingsStore store = new(filePath);
+            store.Save(expected);
+
+            WhisperSettingsLoadResult loaded = store.Load();
+            True(loaded.Settings.InputDeviceId == "microphone-id-1",
+                "The selected Whisper input device did not round-trip.");
+            True(loaded.Settings.Language.LanguageTag == "fr" &&
+                 loaded.Settings.DefaultStyleName == WhisperStyleProfile.Developer.Name &&
+                 loaded.Settings.Vocabulary.Contains("Aether Foundry") &&
+                 loaded.Settings.Snippets.Single().Cue == "insert greeting" &&
+                 loaded.Settings.CustomStyles.Single().Name == "Compact" &&
+                 loaded.Settings.ApplicationProfiles.Single().ProcessName == "chat",
+                "Whisper personalization did not round-trip through the bounded store.");
+
+            File.WriteAllText(filePath, "{ invalid", Encoding.UTF8);
+            WhisperSettingsLoadResult invalid = store.Load();
+            True(invalid.Settings.InputDeviceId is null,
+                "Invalid Whisper settings did not recover to a safe device selection.");
+
+            File.WriteAllBytes(
+                filePath,
+                new byte[WhisperSettingsStore.MaximumDocumentBytes + 1]);
+            WhisperSettingsLoadResult oversized = store.Load();
+            True(oversized.Settings.InputDeviceId is null,
+                "Oversized Whisper settings did not fail closed.");
+        }
+        finally
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    private static void WhisperCaptureControlsAreHonest()
+    {
+        WhisperView view = new();
+        WhisperCaptureDeviceSnapshot devices = new(
+        [
+            new WhisperCaptureDevice("device-a", "Desk microphone", IsDefault: true),
+            new WhisperCaptureDevice("device-b", "Headset microphone", IsDefault: false)
+        ]);
+        view.UpdateCaptureDevices(devices, configuredDeviceId: null, "2 input devices available.");
+        True(view.WhisperInputDevicePicker.Items.Count == 3,
+            "The device picker did not include the explicit choose state.");
+        True(!view.WhisperMicrophoneTestButton.IsEnabled,
+            "Microphone testing looked operable before a device was selected.");
+
+        view.UpdateCaptureDevices(devices, "device-a", "Selection loaded.");
+        True(view.WhisperMicrophoneTestButton.IsEnabled,
+            "Microphone testing did not become available for a selected device.");
+        view.SetMicrophoneTestState(true, "Listening.");
+        True((string)view.WhisperMicrophoneTestButton.Content == "Stop test" &&
+             !view.WhisperInputDevicePicker.IsEnabled,
+            "The live capture surface did not expose one stop action and lock selection.");
+
+        byte[] pixels = Render(view, 980, 720);
+        True(CountVisiblePixels(pixels) > 5_000,
+            "The Whisper capture surface render was unexpectedly empty.");
+    }
+
+    private static void WhisperRuntimeToggleIsExplicit()
+    {
+        WhisperView view = new();
+        bool? requested = null;
+        view.FeatureEnabledRequested += (_, args) => requested = args.Enabled;
+
+        view.SetFeatureState(
+            enabled: false,
+            updating: false,
+            shortcutsRegistered: false,
+            "Whisper is off.");
+        view.WhisperFeatureToggleButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested == true,
+            "The runtime control did not explicitly request enablement.");
+
+        requested = null;
+        view.SetFeatureState(
+            enabled: true,
+            updating: false,
+            shortcutsRegistered: true,
+            "Whisper shortcuts are active.");
+        True((string)view.WhisperFeatureToggleButton.Content == "Turn off" &&
+             view.WhisperShortcutStatus.Text.Contains(
+                 "registered",
+                 StringComparison.OrdinalIgnoreCase),
+            "The enabled runtime state did not disclose active shortcut registration.");
+        view.WhisperFeatureToggleButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested == false,
+            "The runtime control did not explicitly request disablement.");
+
+        view.SetFeatureState(
+            enabled: true,
+            updating: true,
+            shortcutsRegistered: true,
+            "Applying.");
+        True(!view.WhisperFeatureToggleButton.IsEnabled &&
+             (string)view.WhisperFeatureToggleButton.Content == "Applying",
+            "The runtime control remained operable while a lifecycle change was in flight.");
+    }
+
+    private static void WhisperOwnerAcceptanceControlsAreExplicit()
+    {
+        WhisperView view = new();
+        WhisperOwnerAcceptanceAction? requested = null;
+        view.OwnerAcceptanceRequested += (_, args) => requested = args.Action;
+        WhisperOwnerAcceptanceTracker tracker = new();
+
+        view.SetOwnerAcceptance(tracker.CreateSnapshot(), canDictate: false);
+        view.ShowChecksForEvidence();
+        True(view.WhisperChecksPanel.Visibility == Visibility.Visible &&
+             view.WhisperOwnerCheckList.Items.Count == 6 &&
+             !view.WhisperOwnerCheckActionButton.IsEnabled,
+            "Owner checks looked operable before Whisper readiness was proven.");
+
+        view.SetOwnerAcceptance(tracker.CreateSnapshot(), canDictate: true);
+        True(view.WhisperOwnerCheckActionButton.IsEnabled &&
+             (string)view.WhisperOwnerCheckActionButton.Content == "Start next check",
+            "A ready owner-check surface did not expose its single next action.");
+        view.WhisperOwnerCheckActionButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested == WhisperOwnerAcceptanceAction.BeginNext,
+            "Starting owner proof did not emit one explicit begin request.");
+
+        WhisperOwnerAcceptanceSnapshot microphone = tracker.Begin(
+            WhisperOwnerCheckKind.MicrophoneReconnect,
+            microphoneAvailable: true);
+        requested = null;
+        view.SetOwnerAcceptance(microphone, canDictate: true);
+        True((string)view.WhisperOwnerCheckActionButton.Content == "Check devices" &&
+             view.WhisperOwnerCheckActionButton.IsEnabled,
+            "The reconnect check did not expose its bounded refresh action.");
+        view.WhisperOwnerCheckActionButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested == WhisperOwnerAcceptanceAction.RefreshMicrophones,
+            "The reconnect action did not request bounded device discovery.");
+
+        requested = null;
+        view.WhisperOwnerCheckResetButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested == WhisperOwnerAcceptanceAction.Reset,
+            "Reset did not emit one explicit session-only request.");
+
+        WhisperOwnerAcceptanceCheck[] completedChecks =
+            Enum.GetValues<WhisperOwnerCheckKind>()
+                .Select(kind => new WhisperOwnerAcceptanceCheck(
+                    kind,
+                    WhisperOwnerCheckState.Passed,
+                    kind.ToString(),
+                    "Content-free owner observation passed."))
+                .ToArray();
+        view.SetOwnerAcceptance(
+            new WhisperOwnerAcceptanceSnapshot(
+                Array.AsReadOnly(completedChecks),
+                ActiveCheck: null,
+                NextCheck: null),
+            canDictate: true);
+        True(view.WhisperScaffoldPill.Visibility == Visibility.Collapsed &&
+             !view.WhisperOwnerCheckActionButton.IsEnabled &&
+             (string)view.WhisperOwnerCheckActionButton.Content == "Complete",
+            "The Scaffold marker did not require all owner checks in the current session.");
+
+        byte[] pixels = Render(view, 980, 720);
+        True(CountVisiblePixels(pixels) > 5_000,
+            "The owner-check surface render was unexpectedly empty.");
+    }
+
+    private static void WhisperLocalModelControlsAreExplicit()
+    {
+        WhisperView view = new();
+        bool providerSelected = false;
+        bool deleteRequested = false;
+        WhisperModelRequestedAction? requestedAction = null;
+        view.LocalProviderSelectRequested += (_, _) => providerSelected = true;
+        view.ModelActionRequested += (_, args) => requestedAction = args.Action;
+        view.ModelDeleteRequested += (_, _) => deleteRequested = true;
+
+        WhisperModelStatus missing = new(
+            WhisperLocalModelDefaults.ProviderId,
+            WhisperLocalModelDefaults.ModelId,
+            WhisperLocalModelDefaults.RuntimeId,
+            WhisperModelInstallState.NotInstalled,
+            ExpectedBytes: 574_041_195,
+            InstalledBytes: 0,
+            WhisperModelFailureKind.None,
+            FailureReason: null);
+        view.SetLocalModelStatus(
+            WhisperSettings.CreateDefault(),
+            missing,
+            operationRunning: false,
+            progress: 0,
+            "No download starts automatically.");
+        True((string)view.WhisperProviderSelectButton.Content == "Use local" &&
+             (string)view.WhisperModelActionButton.Content == "Install" &&
+             view.WhisperModelDeleteButton.Visibility == Visibility.Collapsed,
+            "The missing-model state did not expose only explicit select/install actions.");
+        view.WhisperProviderSelectButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        view.WhisperModelActionButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(providerSelected && requestedAction == WhisperModelRequestedAction.Install,
+            "The local provider or explicit install action was not raised.");
+
+        WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
+        document.TranscriberId = WhisperLocalModelDefaults.ProviderId;
+        document.TranscriptionModelId = WhisperLocalModelDefaults.ModelId;
+        document.TranscriptionRuntimeId = WhisperLocalModelDefaults.RuntimeId;
+        WhisperSettings local = WhisperSettingsMigrator.Load(document).Settings;
+        WhisperModelStatus ready = missing with
+        {
+            State = WhisperModelInstallState.Ready,
+            InstalledBytes = missing.ExpectedBytes
+        };
+        requestedAction = null;
+        view.SetLocalModelStatus(
+            local,
+            ready,
+            operationRunning: false,
+            progress: 1,
+            "Verified local model ready.");
+        True(!view.WhisperProviderSelectButton.IsEnabled &&
+             (string)view.WhisperProviderSelectButton.Content == "Selected" &&
+             view.WhisperModelStatePill.Text == "VERIFIED" &&
+             view.WhisperModelDeleteButton.Visibility == Visibility.Visible &&
+             (string)view.WhisperModelActionButton.Content == "Repair",
+            "The verified local state did not expose repair and exact-owned deletion.");
+        view.WhisperModelDeleteButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(deleteRequested, "The exact-owned model deletion request was not raised.");
+
+        view.SetLocalModelStatus(
+            local,
+            ready,
+            operationRunning: true,
+            progress: 0.5,
+            "Downloading and verifying locally.");
+        view.WhisperModelActionButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requestedAction == WhisperModelRequestedAction.Cancel &&
+             view.WhisperModelProgress.Visibility == Visibility.Visible &&
+             Math.Abs(view.WhisperModelProgress.Value - 50) < 0.01,
+            "The in-flight model operation did not expose one bounded cancel/progress state.");
+    }
+
+    private static void WhisperSessionIntentRoutingIsDeterministic()
+    {
+        WhisperSessionHostCommand push = WhisperSessionIntentRouter.Route(
+            WhisperShortcutIntent.BeginPushToTalk,
+            hasActiveSession: false,
+            activeMode: null);
+        True(push.Action == WhisperSessionHostAction.StartSession &&
+             push.Mode == WhisperCaptureMode.PushToTalk,
+            "Push-to-talk did not route to the shipped session start.");
+
+        WhisperSessionHostCommand release = WhisperSessionIntentRouter.Route(
+            WhisperShortcutIntent.EndPushToTalk,
+            hasActiveSession: true,
+            WhisperCaptureMode.PushToTalk);
+        True(release.Action == WhisperSessionHostAction.CompleteCapture,
+            "Push-to-talk release did not complete the active capture.");
+
+        WhisperSessionHostCommand handsFreeStart = WhisperSessionIntentRouter.Route(
+            WhisperShortcutIntent.ToggleHandsFree,
+            hasActiveSession: false,
+            activeMode: null);
+        WhisperSessionHostCommand handsFreeStop = WhisperSessionIntentRouter.Route(
+            WhisperShortcutIntent.ToggleHandsFree,
+            hasActiveSession: true,
+            WhisperCaptureMode.HandsFree);
+        True(handsFreeStart.Action == WhisperSessionHostAction.StartSession &&
+             handsFreeStart.Mode == WhisperCaptureMode.HandsFree &&
+             handsFreeStop.Action == WhisperSessionHostAction.CompleteCapture,
+            "Hands-free toggle did not start and stop one session.");
+
+        WhisperSessionHostCommand handsFreeLock = WhisperSessionIntentRouter.Route(
+            WhisperShortcutIntent.LockHandsFree,
+            hasActiveSession: true,
+            WhisperCaptureMode.HandsFree);
+        True(handsFreeLock.Action == WhisperSessionHostAction.LockHandsFree &&
+             handsFreeLock.HandsFreeLocked,
+            "The hands-free double tap would have created a second session.");
+
+        True(WhisperSessionIntentRouter.Route(
+                WhisperShortcutIntent.Cancel,
+                hasActiveSession: true,
+                WhisperCaptureMode.Command).Action == WhisperSessionHostAction.Cancel,
+            "Escape did not route to the shared cancellation path.");
+        True(WhisperSessionIntentRouter.Route(
+                WhisperShortcutIntent.SubmitLastTranscript,
+                hasActiveSession: false,
+                activeMode: null).LastTranscriptIntent ==
+             WhisperShortcutIntent.SubmitLastTranscript,
+            "The dedicated submit shortcut did not stay distinguishable for policy evaluation.");
+    }
+
+    private static void WhisperPersonalizationControlsAreWorking()
+    {
+        WhisperView view = new();
+        WhisperPersonalizationRequestedEventArgs? requested = null;
+        view.PersonalizationRequested += (_, args) => requested = args;
+
+        WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
+        document.PreferredLanguageTag = "fr";
+        document.DefaultStyleName = WhisperStyleProfile.Developer.Name;
+        document.VocabularyTerms = ["Soltex"];
+        view.SetPersonalization(
+            WhisperSettingsMigrator.Load(document).Settings,
+            "Loaded.");
+
+        True(view.WhisperVocabularyList.Items.Count == 1 &&
+             view.WhisperVocabularyCount.Text.StartsWith("1 of", StringComparison.Ordinal),
+            "The saved personal vocabulary was not rendered.");
+        True(view.WhisperLanguagePicker.SelectedItem is
+                WhisperView.LanguageOption { Tag: "fr" } &&
+             view.WhisperStylePicker.SelectedItem is
+                WhisperView.StyleOption { Name: "Developer" },
+            "The saved language and style were not selected.");
+
+        view.WhisperVocabularyInput.Text = "Aether Foundry";
+        view.WhisperVocabularyAddButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested?.VocabularyTerms.Count == 2 &&
+             requested.VocabularyTerms[0] == "Soltex" &&
+             requested.VocabularyTerms[1] == "Aether Foundry",
+            "Adding a vocabulary term did not request one explicit persisted update.");
+
+        requested = null;
+        view.WhisperStylePicker.SelectedItem = view.WhisperStylePicker.Items
+            .Cast<WhisperView.StyleOption>()
+            .Single(option => option.Name == WhisperStyleProfile.Email.Name);
+        True(requested?.StyleName == WhisperStyleProfile.Email.Name &&
+             requested.LanguageTag == "fr",
+            "Changing the default style did not preserve the selected language.");
+    }
+
+    private static void WhisperLibraryControlsAreWorking()
+    {
+        WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
+        document.Snippets =
+        [
+            new WhisperSnippetDocument { Cue = "insert greeting", Content = "Hello there." }
+        ];
+        document.CustomStyles =
+        [
+            new WhisperStyleProfileDocument
+            {
+                Name = "Compact",
+                Kind = nameof(WhisperStyleKind.Message),
+                ProseCleanup = true,
+                SpokenPunctuation = true,
+                PreserveLiteralTokens = false,
+                CapitalizeSentences = true
+            }
+        ];
+        document.ApplicationProfiles =
+        [
+            new WhisperAppProfileDocument
+            {
+                ProcessName = "chat.exe",
+                AutoSendAllowed = false,
+                TerminalAutoSendAllowed = false,
+                ClipboardFallbackAllowed = true,
+                ContextFormattingAllowed = false,
+                StyleName = "Compact"
+            }
+        ];
+        WhisperSettings settings = WhisperSettingsMigrator.Load(document).Settings;
+
+        WhisperView view = new();
+        WhisperLibraryRequestedEventArgs? requested = null;
+        view.LibraryRequested += (_, args) => requested = args;
+        view.SetLibrary(settings, "Loaded.");
+        view.ShowLibraryForEvidence();
+
+        True(view.WhisperLibraryPanel.Visibility == Visibility.Visible &&
+             view.WhisperSnippetList.Items.Count == 1 &&
+             view.WhisperCustomStyleList.Items.Count == 1 &&
+             view.WhisperApplicationProfileList.Items.Count == 1,
+            "The persisted Whisper library did not render all three bounded rule types.");
+
+        view.WhisperSnippetCueInput.Text = "insert closing";
+        view.WhisperSnippetContentInput.Text = "Regards,";
+        view.WhisperSnippetAddButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requested?.Snippets.Count == 2 &&
+             requested.Snippets[^1].Cue == "insert closing",
+            "Saving a snippet did not request one explicit library update.");
+
+        requested = null;
+        view.WhisperStylesSectionTab.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        view.WhisperCustomStyleNameInput.Text = "Literal";
+        view.WhisperCustomStyleBasePicker.SelectedItem = view.WhisperCustomStyleBasePicker.Items
+            .Cast<WhisperView.StyleBaseOption>()
+            .Single(option => option.Profile.Kind == WhisperStyleKind.Terminal);
+        view.WhisperCustomStyleAddButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requested?.CustomStyles.Count == 2 &&
+             requested.CustomStyles[^1].PreserveLiteralTokens,
+            "Saving a custom style did not preserve its visible deterministic rules.");
+
+        requested = null;
+        view.WhisperApplicationsSectionTab.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        view.WhisperApplicationProcessInput.Text = "editor.exe";
+        view.WhisperApplicationStylePicker.SelectedItem = view.WhisperApplicationStylePicker.Items
+            .Cast<WhisperView.StyleOption>()
+            .Single(option => option.Name == "Compact");
+        view.WhisperApplicationContextPicker.SelectedItem =
+            view.WhisperApplicationContextPicker.Items
+                .Cast<WhisperView.PermissionOption>()
+                .Single(option => option.IsAllowed);
+        view.WhisperApplicationProfileAddButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(requested?.ApplicationProfiles.Count == 2 &&
+             requested.ApplicationProfiles[^1].ProcessName == "editor" &&
+             requested.ApplicationProfiles[^1].ContextFormattingAllowed,
+            "Saving an app rule did not normalize the process or retain explicit permission choices.");
+    }
+
+    private static void WhisperHistoryControlsAreWorking()
+    {
+        WhisperHistoryEntry first = new(
+            new DateTimeOffset(2026, 8, 15, 18, 0, 0, TimeSpan.Zero),
+            "chat",
+            WhisperDeliveryKind.InsertText,
+            "first transcript");
+        WhisperHistoryEntry second = new(
+            new DateTimeOffset(2026, 8, 15, 18, 1, 0, TimeSpan.Zero),
+            "editor",
+            WhisperDeliveryKind.CopyText,
+            "second transcript");
+        WhisperView view = new();
+        WhisperHistoryEntry? requestedDelete = null;
+        bool clearRequested = false;
+        view.HistoryEntryDeleteRequested += (_, args) => requestedDelete = args.Entry;
+        view.HistoryClearRequested += (_, _) => clearRequested = true;
+        view.SetHistory(
+            [first, second],
+            WhisperHistoryMode.SessionMemory,
+            "Session memory only.");
+        view.ShowHistoryForEvidence();
+
+        True(view.WhisperHistoryPanel.Visibility == Visibility.Visible &&
+             view.WhisperHistoryList.Items.Count == 2 &&
+             view.WhisperHistoryEmptyState.Visibility == Visibility.Collapsed &&
+             view.WhisperHistoryClearButton.IsEnabled,
+            "Session history did not render its bounded controls.");
+
+        view.RequestHistoryEntryDelete(first);
+        True(requestedDelete == first,
+            "Per-entry history deletion did not retain exact entry identity.");
+        view.WhisperHistoryClearButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(clearRequested, "Clear history did not emit one explicit request.");
+
+        view.SetHistory([], WhisperHistoryMode.Off, "Ignored.");
+        True(view.WhisperHistoryEmptyState.Visibility == Visibility.Visible &&
+             !view.WhisperHistoryClearButton.IsEnabled &&
+             view.WhisperHistoryStatus.Text.Contains("off", StringComparison.OrdinalIgnoreCase),
+            "History-off state did not clear and explain the session surface.");
+    }
+
+    private static void WhisperPrivacyControlsAreWorking()
+    {
+        WhisperView view = new();
+        WhisperPrivacyRequestedEventArgs? requested = null;
+        view.PrivacyRequested += (_, args) => requested = args;
+        view.SetPrivacy(WhisperSettings.CreateDefault(), "Safe defaults are active.");
+        view.ShowPrivacyForEvidence();
+
+        view.WhisperAutoSendButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requested is null &&
+             view.WhisperAutoSendWarningPanel.Visibility == Visibility.Visible,
+            "First-use auto-send bypassed its inline warning.");
+        view.WhisperAutoSendConfirmButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requested is { AutoSendEnabled: true, AutoSendWarningAccepted: true },
+            "Accepting the warning did not request both consent fields atomically.");
+
+        WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
+        document.AutoSendEnabled = true;
+        document.AutoSendWarningAccepted = true;
+        WhisperSettings enabled = WhisperSettingsMigrator.Load(document).Settings;
+        view.SetPrivacy(enabled, "Saved.");
+        True((string)view.WhisperAutoSendButton.Content == "Turn off" &&
+             view.WhisperAutoSendWarningPanel.Visibility == Visibility.Collapsed,
+            "Saved auto-send consent did not render its explicit on state.");
+
+        requested = null;
+        view.WhisperContextReadsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requested is { AutoSendEnabled: true, ContextReadsAllowed: true },
+            "Context-read opt-in did not preserve the other validated privacy settings.");
+
+        requested = null;
+        view.WhisperHistoryModePicker.SelectedItem = view.WhisperHistoryModePicker.Items
+            .Cast<WhisperView.HistoryModeOption>()
+            .Single(option => option.Mode == WhisperHistoryMode.Off);
+        True(requested?.HistoryMode == WhisperHistoryMode.Off,
+            "History-off selection did not emit one supported privacy update.");
+
+        WhisperSettingsDocument encryptedDocument = enabled.ToDocument();
+        encryptedDocument.HistoryMode = WhisperHistoryMode.EncryptedDisk.ToString();
+        encryptedDocument.HistoryRetentionDays = 30;
+        WhisperSettings encrypted = WhisperSettingsMigrator.Load(encryptedDocument).Settings;
+        view.SetPrivacy(encrypted, "Saved.");
+        True(
+            view.WhisperHistoryRetentionPanel.Visibility == Visibility.Visible &&
+            view.WhisperHistoryStorageDetail.Text.Contains(
+                "DPAPI",
+                StringComparison.Ordinal),
+            "Encrypted history did not render its protection and retention controls.");
+
+        requested = null;
+        view.WhisperHistoryRetentionPicker.SelectedItem =
+            view.WhisperHistoryRetentionPicker.Items
+                .Cast<WhisperView.HistoryRetentionOption>()
+                .Single(option => option.Days == 7);
+        True(
+            requested is
+            {
+                HistoryMode: WhisperHistoryMode.EncryptedDisk,
+                HistoryRetentionDays: 7
+            },
+            "Encrypted history retention did not emit one bounded privacy update.");
+    }
+
+    private static void WhisperScratchpadControlsAreWorking()
+    {
+        WhisperView view = new();
+        view.ShowScratchpad();
+        True(view.WhisperScratchpadPanel.Visibility == Visibility.Visible &&
+             view.WhisperScratchpadTabs.Items.Count == 1,
+            "The Scratchpad did not open with one session-only note.");
+
+        view.WhisperScratchpadTextBox.Text = "first note";
+        True(view.WhisperScratchpadUndoButton.IsEnabled &&
+             view.WhisperScratchpadClearButton.IsEnabled,
+            "Editing did not enable reversible Scratchpad actions.");
+        view.WhisperScratchpadUndoButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(view.WhisperScratchpadTextBox.Text.Length == 0 &&
+             view.WhisperScratchpadRedoButton.IsEnabled,
+            "Scratchpad undo did not restore the previous bounded state.");
+        view.WhisperScratchpadRedoButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(view.WhisperScratchpadTextBox.Text == "first note",
+            "Scratchpad redo did not restore the edited state.");
+
+        view.WhisperScratchpadClearButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(view.WhisperScratchpadTextBox.Text.Length == 0 &&
+             view.WhisperScratchpadUndoButton.IsEnabled,
+            "Clearing a note was not reversible.");
+        view.WhisperScratchpadUndoButton.RaiseEvent(
+            new RoutedEventArgs(Button.ClickEvent));
+        True(view.WhisperScratchpadTextBox.Text == "first note",
+            "Undo did not recover the cleared note.");
+
+        for (int index = 1; index < WhisperScratchpad.MaximumTabs; index++)
+        {
+            view.WhisperScratchpadAddTabButton.RaiseEvent(
+                new RoutedEventArgs(Button.ClickEvent));
+        }
+
+        True(view.WhisperScratchpadTabs.Items.Count == WhisperScratchpad.MaximumTabs &&
+             !view.WhisperScratchpadAddTabButton.IsEnabled,
+            "The Scratchpad did not enforce its five-tab UI bound.");
+
+        WhisperView fresh = new();
+        fresh.ShowScratchpad();
+        True(fresh.WhisperScratchpadTextBox.Text.Length == 0,
+            "Scratchpad text escaped its session-only lifetime.");
     }
 
     private static void ActivityStoreBoundsAndRecovers()
@@ -1041,7 +1970,9 @@ internal static class Program
             CloseBehavior: CloseBehavior.Exit,
             PreferredPlaybackEndpointKey: string.Empty,
             PreferredRecordingEndpointKey: string.Empty,
-            LastWorkspace: "monitoring");
+            LastWorkspace: "monitoring",
+            AppearancePreference: AppearancePreference.Dark);
+        view.UpdateAppearanceStatus(ResolvedAppearance.Dark, highContrastOverride: false);
         view.UpdateNotificationAreaAvailability(available: true);
         view.UpdatePreferences(
             preferences,
@@ -1077,6 +2008,12 @@ internal static class Program
         view.NotificationAreaButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         True(changed?.CloseBehavior == CloseBehavior.NotificationArea,
             "Settings did not emit the explicit notification-area behavior.");
+        view.LightAppearanceButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(changed?.AppearancePreference == AppearancePreference.Light,
+            "Settings did not emit the explicit light appearance.");
+        view.UpdateAppearanceStatus(ResolvedAppearance.HighContrast, highContrastOverride: true);
+        True(view.AppearanceResolvedText.Text.Contains("overrides", StringComparison.Ordinal),
+            "Settings did not explain the active Windows High Contrast override.");
         byte[] pixels = Render(view, 980, 720);
         True(CountVisiblePixels(pixels) > 5_000,
             "The Settings view render was unexpectedly empty.");

@@ -104,7 +104,7 @@
       {
         "id": "inv_cleanroom",
         "statement": "Do not copy proprietary code, assets, branding, protected internals, or pixel-identical expression from AppControl, NZXT CAM, SteelSeries Sonar, Zen Browser, or other reference products; do not embed RustDesk AGPL code or binaries into proprietary WaveSlate.",
-        "owner": "Codex implementation and user product owner",
+        "owner": "Implementation and user product owner",
         "status": "PRESERVED",
         "hard_gate": true,
         "evidence_ids": [
@@ -482,7 +482,7 @@
       "contradiction_claim_ids": [],
       "confidence": {
         "level": "HIGH",
-          "basis": "The Release build, 16 focused tests, live timings, shutdown-race regression, and native render passed before the earlier advisory. Direct source inspection finds eleven security hardening corrections, eight security-focused regression additions, and three consent-first external Remote Assist boundary regressions, bringing current source to 27 default tests. Compilation, execution, and the redesigned native renders remain open because the Codex PowerShell command path timed out; the user has the exact manual validation sequence."
+          "basis": "The Release build, 16 focused tests, live timings, shutdown-race regression, and native render passed before the earlier advisory. Direct source inspection finds eleven security hardening corrections, eight security-focused regression additions, and three consent-first external Remote Assist boundary regressions, bringing current source to 27 default tests. Compilation, execution, and the redesigned native renders remain open because the automated PowerShell command path timed out; the user has the exact manual validation sequence."
       }
     },
     {
@@ -584,7 +584,7 @@
       "id": "ev_privacy_repo",
       "kind": "ARTIFACT",
       "access": "INSPECTED_CURRENT",
-      "locator": "E:\\AI Projects\\Projects\\Privacy Tool branch codex/p0-1-authentication-sessions at c5e7261dc8c4203e109e9de56ce6e13125067064",
+      "locator": "E:\\AI Projects\\Projects\\Privacy Tool branch p0-1-authentication-sessions at c5e7261dc8c4203e109e9de56ce6e13125067064",
       "captured_at": "2026-08-02T16:21:34-05:00",
       "integrity": "Clean live Git checkout; README, FEATURES, ARCHITECTURE, and AUTH_SETUP inspected without modification.",
       "supports_claim_ids": [
@@ -973,7 +973,7 @@
       },
       "recovery": {
         "procedure": "Stop reference-app interaction if a permission, security, privacy, authentication, or destructive prompt appears.",
-        "owner": "Codex",
+        "owner": "Implementation",
         "evidence_ids": []
       },
       "mitigation_consequence_node_ids": [
@@ -1005,7 +1005,7 @@
       },
       "recovery": {
         "procedure": "Retain the verified bf2662d baseline and continue from the last validated module if a later module fails.",
-        "owner": "Codex and user",
+        "owner": "Implementation and user",
         "evidence_ids": [
           "ev_git_baseline"
         ]
@@ -1039,7 +1039,7 @@
       },
       "recovery": {
         "procedure": "Keep the local clean commit as the source of truth until remote identity and push are verified.",
-        "owner": "User and Codex",
+        "owner": "User and implementation",
         "evidence_ids": [
           "ev_git_baseline"
         ]

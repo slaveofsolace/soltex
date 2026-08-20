@@ -49,6 +49,8 @@ try {
         'tests\Soltex.Monitoring.Tests\Soltex.Monitoring.Tests.csproj',
         'tests\Soltex.Audio.Tests\Soltex.Audio.Tests.csproj',
         'tests\Soltex.Benchmarks.Tests\Soltex.Benchmarks.Tests.csproj',
+        'tests\Soltex.Whisper.Tests\Soltex.Whisper.Tests.csproj',
+        'tests\Soltex.Whisper.Windows.Tests\Soltex.Whisper.Windows.Tests.csproj',
         'tests\Soltex.App.Tests\Soltex.App.Tests.csproj'
     )
 

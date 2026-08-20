@@ -34,6 +34,20 @@ function Resolve-Tool {
     return $null
 }
 
+function Get-Sha256Hex {
+    param([Parameter(Mandatory = $true)][string] $Path)
+
+    $stream = [System.IO.File]::OpenRead($Path)
+    $algorithm = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return [BitConverter]::ToString($algorithm.ComputeHash($stream)).Replace('-', '')
+    }
+    finally {
+        $algorithm.Dispose()
+        $stream.Dispose()
+    }
+}
+
 # A repo-local SDK, then DOTNET_ROOT, take precedence so the build does not
 # depend on whichever runtime happens to be first on PATH. global.json pins the
 # feature band, so an older host on PATH fails the restore rather than silently
@@ -73,7 +87,7 @@ if (-not (Test-Path -LiteralPath $publishedExe)) {
     throw "Expected published executable was not produced: $publishedExe"
 }
 
-$publishedHash = (Get-FileHash -LiteralPath $publishedExe -Algorithm SHA256).Hash
+$publishedHash = Get-Sha256Hex -Path $publishedExe
 Write-Host "Published: $publishedExe"
 Write-Host "  bytes : $((Get-Item -LiteralPath $publishedExe).Length)"
 Write-Host "  sha256: $publishedHash"
@@ -95,6 +109,7 @@ Write-Host "Using Inno Setup: $iscc"
 
 & $iscc `
     "/DSourceExe=$publishedExe" `
+    "/DRuntimeDir=$(Join-Path $publishDir 'runtimes\win-x64')" `
     "/DAppVersion=$Version" `
     (Join-Path $PSScriptRoot 'soltex.iss')
 if ($LASTEXITCODE -ne 0) {
@@ -107,7 +122,7 @@ if (-not (Test-Path -LiteralPath $setup)) {
 }
 
 $setupItem = Get-Item -LiteralPath $setup
-$setupHash = (Get-FileHash -LiteralPath $setup -Algorithm SHA256).Hash
+$setupHash = Get-Sha256Hex -Path $setup
 
 $checksumPath = "$setup.sha256"
 "$setupHash *$($setupItem.Name)" | Set-Content -LiteralPath $checksumPath -Encoding ascii

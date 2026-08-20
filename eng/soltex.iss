@@ -12,6 +12,9 @@
 #ifndef AppVersion
   #define AppVersion "1.0.0"
 #endif
+#ifndef RuntimeDir
+  #define RuntimeDir "..\artifacts\publish\win-x64\runtimes\win-x64"
+#endif
 #ifndef OutputDir
   #define OutputDir "..\artifacts\installer"
 #endif
@@ -69,6 +72,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 Source: "{#SourceExe}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#RuntimeDir}\whisper.dll"; DestDir: "{app}\runtimes\win-x64"; Flags: ignoreversion
+Source: "{#RuntimeDir}\ggml-whisper.dll"; DestDir: "{app}\runtimes\win-x64"; Flags: ignoreversion
+Source: "{#RuntimeDir}\ggml-base-whisper.dll"; DestDir: "{app}\runtimes\win-x64"; Flags: ignoreversion
+Source: "{#RuntimeDir}\ggml-cpu-whisper.dll"; DestDir: "{app}\runtimes\win-x64"; Flags: ignoreversion
 Source: "..\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -80,7 +87,8 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; Tasks: deskto
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
 
-; Uninstall deliberately removes only installed program files. Local Soltex
-; state (quarantine, audit chain, release-sequence and planning journals) lives
-; under the user profile and is left in place so an accidental uninstall cannot
-; destroy authenticated history. Remove it manually if that is intended.
+[UninstallRun]
+; The shipped app removes only its exact-owned Whisper model, settings,
+; encrypted history, provider credential generations, and recognized temporary
+; artifacts. Shared Soltex state and unrelated files remain.
+Filename: "{app}\{#AppExeName}"; Parameters: "--whisper-uninstall-cleanup"; Flags: runhidden waituntilterminated; RunOnceId: "WhisperOwnedCleanup"

@@ -78,7 +78,7 @@ Generated visual evidence exists at `artifacts/visual/security-monitoring-v1.png
 ## Running-process ownership
 
 - Two project-local `.dotnet\dotnet.exe` processes remain from the bounded build/test toolchain; they were not stopped under the stability advisory.
-- Two Codex computer-use `node.exe` processes are tool-owned and were not stopped.
+- Two tool-owned `node.exe` processes are tool-owned and were not stopped.
 - SteelSeries GG/Sonar processes predate this checkpoint and are user/vendor-owned; they were not stopped or changed.
 - No WaveSlate UI/server process or owned listening port remains.
 
@@ -112,7 +112,7 @@ The expanded verifier must report 28/28 checks: 27 current default tests plus th
 - The user explicitly revoked the temporary PC-manager hold and directed the recorded validation sequence to resume.
 - One bounded `Write-Output 'shell-ok'` command was attempted with a 15-second ceiling. It produced no output and timed out, so command retries stopped as directed.
 - Direct-filesystem work continued: the reasoning ledger safety gate is now `CLEAR`, stale active-hold language was removed, the native System32 import policy and its twentieth default regression remain durable, the PowerShell system-module provenance policy and its twenty-first default regression were added, and AppControl/Privacy residual-risk wording matches inspected evidence.
-- The current blocker is specifically PowerShell command startup in the Codex command runner. It is not the revoked PC-manager hold, missing security authority, Git ownership ambiguity, or an application test failure.
+- The current blocker is specifically PowerShell command startup in the automated command runner. It is not the revoked PC-manager hold, missing security authority, Git ownership ambiguity, or an application test failure.
 
 ## Remote Assist continuation update — 2026-08-03
 

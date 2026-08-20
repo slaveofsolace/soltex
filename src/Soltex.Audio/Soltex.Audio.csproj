@@ -10,5 +10,6 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Soltex.Audio.Tests" />
     <InternalsVisibleTo Include="Soltex.App.Tests" />
+    <InternalsVisibleTo Include="Soltex.Whisper.Windows" />
   </ItemGroup>
 </Project>

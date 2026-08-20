@@ -38,7 +38,7 @@ Canonical public references:
 - The existing AppControl candidate registry was reused and revalidated; the
   installer remained unacquired.
 - Baseline Soltex captures were inspected from
-  `C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\hosted-1facf37\windows\visual`.
+  `<local-evidence-root>\2026\08\12\soltex-product-rebuild\hosted-1facf37\windows\visual`.
 
 ## Clean-room boundary
 

@@ -9,6 +9,8 @@ on:
       - 'eng/make-icon.ps1'
       - 'eng/publish-release.ps1'
       - 'eng/record-package-identity.ps1'
+      - 'eng/soltex.iss'
+      - 'eng/verify-installer-lifecycle.ps1'
       - 'src/**'
   pull_request:
     paths:
@@ -18,6 +20,8 @@ on:
       - 'eng/make-icon.ps1'
       - 'eng/publish-release.ps1'
       - 'eng/record-package-identity.ps1'
+      - 'eng/soltex.iss'
+      - 'eng/verify-installer-lifecycle.ps1'
       - 'src/**'
   workflow_dispatch:
 
@@ -45,22 +49,46 @@ jobs:
         shell: pwsh
         run: New-Item -ItemType Directory -Force .\artifacts\validation | Out-Null
 
-      - name: Publish self-contained desktop package
+      - name: Publish initial self-contained desktop installer
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          & .\eng\publish-release.ps1 -Version '0.0.0-ci' -Runtime 'win-x64' -SkipInstaller 2>&1 |
+          & .\eng\publish-release.ps1 -Version '0.0.1' -Runtime 'win-x64' 2>&1 |
             Tee-Object -FilePath .\artifacts\validation\package-publish.log
+
+      - name: Publish upgrade desktop installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & .\eng\publish-release.ps1 -Version '0.0.2' -Runtime 'win-x64' 2>&1 |
+            Tee-Object -FilePath .\artifacts\validation\package-upgrade-publish.log
+
+      - name: Verify install, update, runtime payload, and clean uninstall
+        shell: pwsh
+        env:
+          SOLTEX_SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          .\eng\verify-installer-lifecycle.ps1 `
+            -InitialInstallerPath .\artifacts\installer\Soltex-0.0.1-win-x64-setup.exe `
+            -UpgradeInstallerPath .\artifacts\installer\Soltex-0.0.2-win-x64-setup.exe `
+            -OutputDirectory .\artifacts\validation\installer `
+            -SourceHeadSha $env:SOLTEX_SOURCE_HEAD_SHA `
+            -TestedCommitSha $env:GITHUB_SHA `
+            -EphemeralHostConfirmed
 
       - name: Launch published package render smoke
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $exe = Resolve-Path .\artifacts\publish\win-x64\Soltex.exe
-          $output = [System.IO.Path]::GetFullPath('.\artifacts\validation\package-home.png')
+          # The release is intentionally a single-file bundle, so managed assemblies
+          # are not expected as loose DLLs. Rendering Whisper initializes both the
+          # provider-neutral core and Windows adapter from the published executable.
+          $output = [System.IO.Path]::GetFullPath('.\artifacts\validation\package-whisper.png')
           $process = Start-Process `
             -FilePath $exe `
-            -ArgumentList @('--render-smoke', $output, '--panel', 'home') `
+            -ArgumentList @('--render-smoke', $output, '--panel', 'whisper') `
             -WindowStyle Hidden `
             -PassThru
           try {
@@ -80,12 +108,76 @@ jobs:
           if ($exitCode -ne 0) {
             throw "Published package render failed with exit code $exitCode."
           }
-          if (-not (Test-Path -LiteralPath .\artifacts\validation\package-home.png -PathType Leaf)) {
-            throw 'The published package did not create its Home render evidence.'
+          if (-not (Test-Path -LiteralPath .\artifacts\validation\package-whisper.png -PathType Leaf)) {
+            throw 'The published package did not create its Whisper render evidence.'
           }
-          if (Test-Path -LiteralPath .\artifacts\validation\package-home.png.error.txt -PathType Leaf) {
-            Get-Content -LiteralPath .\artifacts\validation\package-home.png.error.txt
+          if (Test-Path -LiteralPath .\artifacts\validation\package-whisper.png.error.txt -PathType Leaf) {
+            Get-Content -LiteralPath .\artifacts\validation\package-whisper.png.error.txt
             throw 'The published package produced a render-smoke error file.'
+          }
+
+      - name: Verify packaged Whisper CPU runtime and model exclusion
+        shell: pwsh
+        env:
+          SOLTEX_SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          SOLTEX_TESTED_COMMIT_SHA: ${{ github.sha }}
+          SOLTEX_WHISPER_RUNTIME_REPORT_PATH: ${{ github.workspace }}\artifacts\validation\package-whisper-runtime.json
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = Resolve-Path .\artifacts\publish\win-x64\Soltex.exe
+          $packageBytes = (Get-ChildItem .\artifacts\publish\win-x64 -Recurse -File |
+            Measure-Object Length -Sum).Sum
+          if ($packageBytes -ge 268435456) {
+            throw 'The package exceeded the 256 MiB no-model bound.'
+          }
+          $modelName = 'ggml-large-v3-turbo-q5_0.bin'
+          if (Get-ChildItem .\artifacts\publish\win-x64 -Recurse -File |
+              Where-Object Name -EQ $modelName) {
+            throw 'The explicit-download Whisper model was included in the package.'
+          }
+          $runtimeRoot = Resolve-Path .\artifacts\publish\win-x64\runtimes\win-x64
+          $expectedRuntimeFiles = @(
+            'ggml-base-whisper.dll',
+            'ggml-cpu-whisper.dll',
+            'ggml-whisper.dll',
+            'whisper.dll'
+          )
+          $actualRuntimeFiles = @(Get-ChildItem -LiteralPath $runtimeRoot -File |
+            Select-Object -ExpandProperty Name |
+            Sort-Object)
+          if ((Compare-Object $expectedRuntimeFiles $actualRuntimeFiles).Count -ne 0) {
+            throw 'The package did not contain exactly the required Whisper CPU runtime assets.'
+          }
+
+          $process = Start-Process `
+            -FilePath $exe `
+            -ArgumentList '--whisper-runtime-probe' `
+            -WindowStyle Hidden `
+            -PassThru
+          try {
+            $processHandle = $process.Handle
+            if (-not $process.WaitForExit(30000)) {
+              Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+              throw 'The packaged Whisper runtime probe exceeded its 30-second bound.'
+            }
+            $process.Refresh()
+            $exitCode = $process.ExitCode
+          }
+          finally {
+            $process.Dispose()
+          }
+          if ($exitCode -ne 0) {
+            throw "The packaged Whisper runtime probe failed with exit code $exitCode."
+          }
+          $report = Get-Content -Raw -LiteralPath $env:SOLTEX_WHISPER_RUNTIME_REPORT_PATH |
+            ConvertFrom-Json
+          if ($report.schemaVersion -ne 1 -or
+              $report.providerId -ne 'local-whisper' -or
+              $report.runtimeId -ne 'cpu' -or
+              $report.available -ne $true -or
+              $report.modelOpened -ne $false -or
+              $report.microphoneOpened -ne $false) {
+            throw 'The packaged Whisper runtime report failed its content-free contract.'
           }
 
       - name: Record package identity
@@ -96,7 +188,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           .\eng\record-package-identity.ps1 `
             -ExecutablePath .\artifacts\publish\win-x64\Soltex.exe `
-            -RenderPath .\artifacts\validation\package-home.png `
+            -RenderPath .\artifacts\validation\package-whisper.png `
             -OutputPath .\artifacts\validation\package-smoke.json `
             -Runtime win-x64 `
             -SourceHeadSha $env:SOLTEX_SOURCE_HEAD_SHA `
@@ -111,10 +203,16 @@ jobs:
           name: soltex-package-smoke-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             artifacts/publish/win-x64/Soltex.exe
+            artifacts/publish/win-x64/runtimes/win-x64/*.dll
             artifacts/validation/package-publish.log
+            artifacts/validation/package-upgrade-publish.log
             artifacts/validation/package-launch.log
-            artifacts/validation/package-home.png
-            artifacts/validation/package-home.png.error.txt
+            artifacts/validation/package-whisper.png
+            artifacts/validation/package-whisper.png.error.txt
+            artifacts/validation/package-whisper-runtime.json
+            artifacts/validation/package-whisper-runtime.json.error.txt
             artifacts/validation/package-smoke.json
+            artifacts/validation/installer/**
+            artifacts/installer/*.sha256
           if-no-files-found: warn
           retention-days: 30

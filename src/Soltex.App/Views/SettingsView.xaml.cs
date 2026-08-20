@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
 
 namespace Soltex.App.Views;
 
@@ -13,6 +12,8 @@ public partial class SettingsView : UserControl
 {
     private SoltexPreferences _preferences = SoltexPreferences.Default;
     private bool _notificationAreaAvailable;
+    private ResolvedAppearance _resolvedAppearance = ResolvedAppearance.Dark;
+    private bool _highContrastOverride;
 
     public SettingsView()
     {
@@ -60,6 +61,15 @@ public partial class SettingsView : UserControl
         SetState("NOT SAVED", "DangerBrush");
     }
 
+    internal void UpdateAppearanceStatus(
+        ResolvedAppearance appearance,
+        bool highContrastOverride)
+    {
+        _resolvedAppearance = appearance;
+        _highContrastOverride = highContrastOverride;
+        RenderAppearanceStatus();
+    }
+
     private void LiveCadence_Click(object sender, RoutedEventArgs e) =>
         Commit(_preferences with { TelemetryCadence = TelemetryCadence.Live });
 
@@ -79,6 +89,24 @@ public partial class SettingsView : UserControl
         Commit(_preferences with
         {
             RestoreLastWorkspace = !_preferences.RestoreLastWorkspace
+        });
+
+    private void SystemAppearance_Click(object sender, RoutedEventArgs e) =>
+        Commit(_preferences with
+        {
+            AppearancePreference = AppearancePreference.System
+        });
+
+    private void DarkAppearance_Click(object sender, RoutedEventArgs e) =>
+        Commit(_preferences with
+        {
+            AppearancePreference = AppearancePreference.Dark
+        });
+
+    private void LightAppearance_Click(object sender, RoutedEventArgs e) =>
+        Commit(_preferences with
+        {
+            AppearancePreference = AppearancePreference.Light
         });
 
     private void ExitOnClose_Click(object sender, RoutedEventArgs e) =>
@@ -155,6 +183,16 @@ public partial class SettingsView : UserControl
         SetToggle(PerformanceDetailsButton, _preferences.OpenPerformanceDetails);
         SetToggle(RestoreWorkspaceButton, _preferences.RestoreLastWorkspace);
         SetSelected(
+            SystemAppearanceButton,
+            _preferences.AppearancePreference == AppearancePreference.System);
+        SetSelected(
+            DarkAppearanceButton,
+            _preferences.AppearancePreference == AppearancePreference.Dark);
+        SetSelected(
+            LightAppearanceButton,
+            _preferences.AppearancePreference == AppearancePreference.Light);
+        RenderAppearanceStatus();
+        SetSelected(
             ExitOnCloseButton,
             _preferences.CloseBehavior == CloseBehavior.Exit ||
             !_notificationAreaAvailable);
@@ -185,11 +223,23 @@ public partial class SettingsView : UserControl
         BackgroundRuntimeStateText.Text = background ? "OPT-IN" : "EXIT";
     }
 
-    private void SetSelected(Button button, bool selected)
+    private void RenderAppearanceStatus()
     {
-        button.Background = (Brush)FindResource(
+        AppearanceResolvedText.Text = _highContrastOverride ||
+                                      _resolvedAppearance == ResolvedAppearance.HighContrast
+            ? "Windows High Contrast is active and overrides the saved app theme."
+            : _preferences.AppearancePreference == AppearancePreference.System
+                ? $"Following Windows; currently {_resolvedAppearance.ToString().ToLowerInvariant()}."
+                : $"Using the {_resolvedAppearance.ToString().ToLowerInvariant()} Soltex theme.";
+    }
+
+    private static void SetSelected(Button button, bool selected)
+    {
+        button.SetResourceReference(
+            Control.BackgroundProperty,
             selected ? "SelectedNavBrush" : "NavRestBrush");
-        button.Foreground = (Brush)FindResource(
+        button.SetResourceReference(
+            Control.ForegroundProperty,
             selected ? "AccentBrush" : "MutedBrush");
     }
 
@@ -220,7 +270,7 @@ public partial class SettingsView : UserControl
         }
     }
 
-    private void SetToggle(Button button, bool enabled)
+    private static void SetToggle(Button button, bool enabled)
     {
         button.Content = enabled ? "On" : "Off";
         SetSelected(button, enabled);
@@ -231,9 +281,12 @@ public partial class SettingsView : UserControl
 
     private void SetState(string label, string brushResource)
     {
-        Brush brush = (Brush)FindResource(brushResource);
-        SettingsStateDot.Fill = brush;
-        SettingsStateText.Foreground = brush;
+        SettingsStateDot.SetResourceReference(
+            System.Windows.Shapes.Shape.FillProperty,
+            brushResource);
+        SettingsStateText.SetResourceReference(
+            TextBlock.ForegroundProperty,
+            brushResource);
         SettingsStateText.Text = label;
     }
 }

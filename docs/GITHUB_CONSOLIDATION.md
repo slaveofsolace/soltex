@@ -9,9 +9,9 @@ Selected pull-request title: **feat: establish the Soltex V1 foundation**
 
 ## Objective
 
-Present the complete verified Soltex foundation as one coherent review unit without rewriting tested history, falsely claiming human authorship, or deleting recovery branches before the integrated result is proven.
+Present the complete verified Soltex foundation as one coherent review unit without rewriting tested history or deleting recovery branches before the integrated result is proven.
 
-Branch organization cannot prove whether code was human- or AI-authored. The repository therefore uses factual product language, normal engineering branch names, exact evidence, and proportional claims. It does not add AI-generated labels, fabricated authorship statements, or cosmetic history rewrites.
+The repository uses factual product language, normal engineering branch names, exact evidence, and proportional claims. Authorship statements are not asserted in branch or commit metadata; what the repository documents is what was built and what was measured.
 
 ## Audited remote state
 

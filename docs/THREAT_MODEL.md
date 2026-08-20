@@ -6,7 +6,7 @@ Soltex is a proprietary Windows desktop application intended to combine audio co
 
 The Security companion runs unelevated. It reads antivirus health, invokes supported Microsoft Defender operations, assesses Soltex-bound content, and manages a per-user quarantine. It does not provide system-wide enforcement and must coexist with the antivirus product registered with Windows.
 
-Security-sensitive assets are user files, quarantined payloads, original restore paths, exact-hash allow decisions, metadata/release signing keys, TLS and publisher policy, signed acquisition descriptors and manifests, update monotonicity/planning state, private staged artifacts, local audit integrity, the truthfulness of displayed Windows protection health, the approved external-client fingerprint, peer IDs, and remote-session authorization intent.
+Security-sensitive assets are user files, quarantined payloads, original restore paths, exact-hash allow decisions, metadata/release signing keys, TLS and publisher policy, signed acquisition descriptors and manifests, update monotonicity/planning state, private staged artifacts, local audit integrity, the truthfulness of displayed Windows protection health, the approved external-client fingerprint, peer IDs, remote-session authorization intent, microphone audio, provider credentials, transcript text, focused-control identity, shortcut intent, and submission consent.
 
 ## Threat Model, Trust Boundaries, and Assumptions
 
@@ -29,6 +29,11 @@ Security-sensitive assets are user files, quarantined payloads, original restore
 8. **Soltex to external remote client.** `RemoteAssistExecutable`, `RemotePeerId`, and `RustDeskExternalClient` mediate a one-way launch request. RustDesk and its infrastructure remain a separately licensed, separately updated, network-facing trust domain.
 9. **Preview to future installer.** No implementation crosses this boundary. A future privileged component must accept only the exact confirmed plan and immutable verified handles, never a URL, archive path, or generic command.
 10. **Future personal device fabric.** Device agents, Tailscale reachability, NAS storage, Google Drive, Box, and AI intent translation are designed but not implemented. Before code enters this boundary, jobs must be typed, target-bound, short-lived, replay-resistant, locally authorized, and free of generic shell semantics. The NAS must have no authorization role, and personal/work cloud identities must remain isolated by default.
+11. **Whisper to global input.** The shortcut adapter observes system-wide key and mouse transitions because Windows low-level hooks are global. Registration policy, configured-key filtering, transition-only dispatch, injected-input rejection, and clean unregistration constrain that boundary. The adapter never records text, key sequences, active-window content, or unrelated key identities and never suppresses input from reaching Windows.
+12. **Whisper to focused application metadata.** UI Automation crosses into an untrusted provider process. Inspection is metadata-only, single-flight, deadline-bounded, and produces one identity-and-capability snapshot or unknown. Soltex does not request UIAccess, cross an integrity boundary, or read field, selection, caption, password, or surrounding text at this boundary.
+13. **Whisper to target and clipboard mutation.** The core reauthorizes the captured target before Windows code acts and again after clipboard staging. Direct UIA replacement is whole-value-only; other insertion uses one paste chord. Clipboard restore requires a matching sequence number and unique operation token and never inspects prior formats.
+14. **Whisper settings to global shortcut lifecycle.** The shipped host installs hooks only after versioned settings migration/validation and an explicit persisted enable action. Disable, shutdown, render evidence, registration failure, and runtime hook fault all fail closed to no active action path.
+15. **Whisper to retained transcript state.** Disk history is opt-in. Transcript text crosses into current-user DPAPI only through the provider-neutral retention boundary, then its ciphertext and bounded metadata enter the existing authenticated-state envelope. The global Activity and diagnostic paths never receive that text.
 
 ### Invariants
 
@@ -46,6 +51,11 @@ Security-sensitive assets are user files, quarantined payloads, original restore
 - Never treat downloaded/staged bytes as executable authority, cross an installer boundary from an unconfirmed plan, or expose arbitrary download-and-execute behavior.
 - Never treat private-network membership, NAS possession, AI output, or a cloud login as authority to execute a device capability.
 - Never expose a generic remote shell or silently move work Box data into personal Drive, the NAS, an AI prompt, or another trust domain.
+- Never turn the Whisper shortcut hook into a keylogger: only configured-key state and content-free action transitions may leave the callback.
+- Never accept an injected shortcut as dictation authority or retain raw keyboard/mouse events in logs, Activity, crash text, or evidence.
+- Never read a password value, field value, selected text, caption, or surrounding text while inspecting a Whisper target.
+- Never treat a timed-out, inaccessible, focus-changing, identity-less, or cross-integrity UI Automation provider as an editable target.
+- Never upgrade a core copy decision to insertion, restore a clipboard after ownership changes, or treat an accepted `SendInput` sequence as proof that text arrived.
 
 ## Attack Surface, Mitigations, and Attacker Stories
 
@@ -86,6 +96,194 @@ An attacker may flood the import folder. The channel holds at most 128 paths, dr
 ### WPF and user actions
 
 Restore and permanent delete are user-driven high-impact actions with confirmation UI. The WPF process is unelevated and does not automate Windows Security settings. UI health labels must preserve unknown/provider-managed states and never turn missing telemetry into a green claim.
+
+### Whisper global shortcut boundary
+
+A malicious or buggy configuration could choose an operating-system chord, a broad
+modifier-only binding, or one chord that is a prefix of another and thereby trigger
+the wrong action while the user is still pressing keys. The core rejects Windows-key,
+reserved, modifier-only, unsupported, duplicate, conflicting, and prefix-overlapping
+bindings before any native registration begins. Default chords avoid those classes.
+
+The native callback maps only supported virtual keys and Mouse 4/5, then immediately
+forwards all input to the next hook. It retains physical-down and reference-counted
+logical state only for keys used by the active set. Auto-repeat is ignored. Action
+transitions enter a bounded channel; overflow disables the registration and surfaces
+a content-free fault instead of leaving capture active. Candidate keyboard and mouse
+hooks remain disabled until both install, so a partial replacement cannot destroy the
+previous valid set. Injected events are measured but never dispatched as actions.
+
+Low-level hooks remain an attractive same-user abuse surface. Same-user malware can
+install its own hook, inject into this process, or manipulate the application, and an
+administrator can bypass these controls. Future shipped integration must register
+only after validated settings, cancel active work on hook faults, unregister during
+the owned shutdown drain, and prove physical-key behavior without collecting user
+content. Hook timing evidence contains only sample counts and percentile durations.
+
+### Whisper provider credential boundary
+
+Provider credentials are sensitive even when transcript and audio logging is off.
+The provider-neutral model exposes only bounded content-free status: provider id,
+display name, HTTPS endpoint, model identity, language and streaming capabilities,
+privacy statement, and whether a credential is available. It never carries the
+credential itself. Provider ids are restricted to a short ASCII identifier before
+they can select a provider-scoped store name; endpoint metadata rejects non-HTTPS
+addresses, embedded user information, and fragments.
+
+The Windows credential adapter accepts bounded bytes directly and does not obtain
+them from source, settings JSON, process arguments, or environment variables. It
+protects one provider-scoped value with current-user DPAPI inside Soltex's
+HMAC-authenticated state envelope. Clear managed and unmanaged working buffers are
+zeroed at the end of their owned lifetime. A provider can acquire clear bytes only
+through an owned lease; disposing that lease clears the same backing array observed
+by callers. Rotation deletes the old current and backup generations before writing
+the replacement, so a failed rotation prefers loss of availability over retaining an
+old credential in Soltex's backup. Corrupted state fails closed but remains removable
+through exact owned-artifact deletion.
+
+This boundary does not protect a credential from malware already running as the same
+user, an administrator, process injection, crash dumps, page files, storage snapshots,
+or a compromised Windows cryptographic service. It does not prove any provider's
+privacy properties and it does not configure, transmit, validate, or rotate an owner
+credential at the remote provider. The future HTTP adapter must keep request bodies,
+headers, response text, and exception details out of diagnostics and apply
+`WhisperRedaction.Sanitize` before any provider failure crosses into content-free
+evidence.
+
+### Whisper local model and native runtime boundary
+
+The local provider accepts audio and text-bearing output inside the process, so a
+native-runtime fault must not turn those values, vocabulary hints, or the private
+model path into diagnostic evidence. The Windows adapter validates exact 16 kHz mono
+PCM16 bounds and rejects very short clips before calling native code. It projects the
+existing owned PCM memory through a read-only WAVE stream rather than retaining a
+second full audio copy. The existing `WhisperAudioClip` remains the sole managed
+owner and clears that buffer on success, failure, or cancellation. Vocabulary terms
+are bounded recognition hints only and never post-transcription substitutions.
+
+The model manager pins expected length and digest, while native initialization holds
+a verified, non-delete-sharing read handle across the eager path-based model load.
+All native use is serialized. One lazy runtime is reused, reset after faults, and can
+be explicitly unloaded before model repair or deletion. The optional Whisper.net
+managed string pool is disabled, and fewer than 201 PCM samples are rejected before
+native entry. Transcript accumulation stops at the core transcript bound. Exceptions
+crossing the adapter are replaced with fixed failure categories; content-free
+evidence contains only coarse duration, fixed provider/model/runtime identities, and
+result/failure categories.
+
+These controls reduce ordinary replacement races, duplicate sensitive buffers,
+known unsafe optional-runtime paths, and accidental disclosure. They do not make a
+third-party native runtime memory-safe, prove model publisher authenticity beyond the
+pinned upstream identity/digest expectation, defend against same-user process
+injection or an administrator, or prove live accuracy/performance. The production
+model has not been downloaded or run as part of deterministic verification.
+
+### Whisper focused-target boundary
+
+A hostile, inaccessible, or hung UI Automation provider could block its caller,
+change the focused element between reads, expose misleading editability metadata, or
+attempt to make Soltex ingest private target content. The Windows adapter runs
+provider calls off the UI thread under one total deadline and permits at most one
+native inspection at a time. A timed-out worker is allowed to finish in the
+background, but no second worker starts until it does; callers receive unknown rather
+than hanging or accumulating threads. Focused process ID and opaque runtime ID are
+re-read before acceptance, and a change invalidates the observation.
+
+Inspection requests only content-free properties and pattern availability. Password
+providers are not opened, and no code in this path asks UI Automation for Name,
+Value, text, a selection, or surrounding context. Value/Text read-only and selection
+support are queried only on non-password controls. Contextual formatting reads remain
+disabled and require a future visible, per-application permission. The executable
+remains `asInvoker` with `uiAccess=false`; elevated or protected UI is not automated,
+and high/system/protected integrity resolves to the existing copy-only policy.
+
+This boundary cannot defend against a malicious same-user process that lies through
+its own accessibility provider, process injection, an administrator, or a compromised
+Windows UI Automation subsystem. Identity checks and later insertion verification
+must therefore be repeated immediately before insertion and submission. Current live
+evidence covers controlled Win32 Edit plus WPF TextBox, RichTextBox, PasswordBox,
+read-only, and focus-changing targets. WinUI, Chromium, Electron, Windows Terminal,
+elevated applications, hostile third-party providers, and the rest of the application
+matrix remain required before a shipped-support claim.
+
+### Whisper insertion and clipboard boundary
+
+Focus can move between target inspection, clipboard staging, paste dispatch, and
+later submission. `WhisperInsertionPolicy` compares the captured and current atomic
+snapshots before any action, and the Windows adapter repeats that comparison after
+staging. A mismatch leaves the transcript copied and emits no paste input. Direct UI
+Automation replacement is limited to an enabled, focusable, non-password, writable
+ValuePattern control whose one TextPattern selection spans the whole document; no
+target value or text is read to make that decision.
+
+Clipboard contents are attacker-controlled and can change concurrently. Soltex
+retains the prior OLE data object without enumerating or deserializing its formats,
+sets only bounded Unicode text plus a random operation token, and records the
+sequence number after rendering. Restore is optional and proceeds only when both the
+sequence and token still match. A different sequence or token is ownership loss and
+restore is skipped. Clipboard-open failures use bounded retries; cancellation before
+paste attempts owned restoration, while a failed paste deliberately leaves the
+transcript copied for recovery.
+
+The paste path emits only Ctrl-down, V-down, V-up, Ctrl-up after confirming no Ctrl,
+Shift, Alt, or Windows modifier is already down. It never emits transcript characters.
+Injected shortcut events remain rejected by the shortcut adapter. `SendInput` is
+subject to UIPI and may report only dispatch, not target receipt; therefore the
+delivery result records `MutationDispatched`. The verified-submit adapter then
+performs a bounded target-owned read-back and one final identity comparison before
+asking the core gate for authorization. Same-user clipboard readers,
+clipboard managers, malicious accessibility providers, and races inside Windows
+between the final ownership check and OLE restoration remain outside complete
+prevention and are addressed by fail-closed outcomes and later verification.
+
+### Whisper verified-submission boundary
+
+Enter is irreversible and can send a message, choose an application action, or
+execute a terminal command. Submission therefore requires the original delivery
+policy origin, recorded first-use consent, no cancellation, a matching final target,
+and verified insertion. `WhisperSubmitGate` is the only component that grants the
+authorization, and its permit can be consumed once. The Windows adapter emits only
+Enter-down and Enter-up after consuming that permit. Modifier state, unavailable or
+oversized read-back, read mismatch, inaccessible automation, provider timeout,
+focus/category/editability/protection/integrity drift, and cancellation all produce
+no Enter.
+
+Read-back is sensitive even though it is not retained. It is deadline-bounded,
+single-flight, limited to the focused control and 400,000 characters, rejected for
+password targets, and passed directly to the verifier without diagnostics,
+serialization, Activity, or evidence output. UI Automation may still allocate a
+provider-returned Value string before Soltex can enforce its post-return length
+limit; TextPattern reads use an explicit maximum. A same-user injector, malicious
+provider, or focus change in the final gap between the last UIA comparison and
+`SendInput` remains outside complete prevention. Soltex reduces that window, never
+selects a recipient/channel/address/terminal, and keeps auto-send unavailable in the
+shipped UI until the application matrix and coordinator lifecycle are proven.
+
+### Whisper retained-history boundary
+
+Transcript history is sensitive content. The default is bounded session memory;
+disk retention requires an explicit Encrypted on this PC choice and a 1–90 day
+period. At most 24 entries and 16,000 characters per entry cross the storage
+boundary. Process names and fixed delivery categories remain bounded metadata;
+transcript text is protected per record with current-user DPAPI before the document
+enters Soltex's HMAC-authenticated, generation-numbered state envelope. Cleartext and
+DPAPI working buffers are explicitly zeroed when their owned lifetime ends.
+
+Load authenticates the document before parsing it, rejects excessive or malformed
+records, decrypts only unexpired entries, and fails closed on authentication, DPAPI,
+UTF-8, or schema failure. Expiry and per-entry deletion remove both the current and
+last-known-good Whisper envelopes before committing surviving entries, so Soltex's
+own backup does not preserve deliberately deleted text. Clear removes those two
+exact Whisper artifacts and leaves the shared authenticated-state key intact for
+other stores. A cancelled or failed transition cannot be reported as successful.
+
+These controls do not provide forensic erasure. NTFS snapshots, backup software,
+SSD wear levelling, page files, hibernation, crash dumps, and storage captured before
+deletion may retain bytes outside Soltex's ownership. DPAPI and envelope
+authentication also do not defend against malware already running as the same user,
+an administrator, process injection, or a compromised Windows cryptographic service.
+The UI therefore says encrypted retention and exact Soltex-owned deletion, never
+secure erase or protection from a compromised account.
 
 ### External Remote Assist boundary
 

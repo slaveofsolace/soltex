@@ -72,8 +72,8 @@ left no Soltex process:
 External evidence roots:
 
 ```text
-C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\package-d342977-20260812-0320
-C:\Users\suhai\.codex\visualizations\2026\08\12\soltex-product-rebuild\installed-recovery-d342977-20260812-0324
+<local-evidence-root>\2026\08\12\soltex-product-rebuild\package-d342977-20260812-0320
+<local-evidence-root>\2026\08\12\soltex-product-rebuild\installed-recovery-d342977-20260812-0324
 ```
 
 ## Nonclaims

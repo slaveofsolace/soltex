@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:Soltex.App.Controls"
              Background="Transparent"
-             Foreground="{StaticResource TextBrush}"
+             Foreground="{DynamicResource TextBrush}"
              FontFamily="{StaticResource UiFont}">
     <Grid>
         <Grid.RowDefinitions>
@@ -43,12 +43,12 @@
                             <Ellipse x:Name="MonitorStateDot"
                                      Width="7"
                                      Height="7"
-                                     Fill="{StaticResource WarningBrush}"
+                                     Fill="{DynamicResource WarningBrush}"
                                      VerticalAlignment="Center" />
                             <TextBlock x:Name="MonitorStateText"
                                        Margin="8,0,0,0"
                                        Text="WAITING"
-                                       Foreground="{StaticResource WarningBrush}"
+                                       Foreground="{DynamicResource WarningBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMono}"
                                        FontWeight="SemiBold" />
@@ -87,11 +87,11 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Processor" Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
+                            <TextBlock Text="Processor" Foreground="{DynamicResource MutedBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                             <TextBlock x:Name="CpuDetailText"
                                        Grid.Column="1"
                                        Text="GetSystemTimes"
-                                       Foreground="{StaticResource QuietTextBrush}"
+                                       Foreground="{DynamicResource QuietTextBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Grid>
@@ -104,21 +104,21 @@
                                        Text="—"
                                        Style="{StaticResource MetricValueStyle}"
                                        FontSize="50" />
-                            <TextBlock Margin="10,0,0,8" Text="total CPU" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock Margin="10,0,0,8" Text="total CPU" Foreground="{DynamicResource MutedBrush}" />
                         </StackPanel>
 
                         <controls:Sparkline x:Name="CpuHistoryChart"
                                             Grid.Row="2"
                                             Margin="0,8,0,6"
                                             MinHeight="76"
-                                            Stroke="{StaticResource AccentBrush}"
-                                            Fill="{StaticResource AccentAreaBrush}"
-                                            GridBrush="{StaticResource BorderBrush}"
+                                            Stroke="{DynamicResource AccentBrush}"
+                                            Fill="{DynamicResource AccentAreaBrush}"
+                                            GridBrush="{DynamicResource BorderBrush}"
                                             GridLineCount="3"
                                             ShowLastPoint="True"
                                             StrokeThickness="2.2"
                                             ShowScaleLabels="True"
-                                            ScaleLabelBrush="{StaticResource QuietTextBrush}"
+                                            ScaleLabelBrush="{DynamicResource QuietTextBrush}"
                                             AutomationProperties.Name="Recent CPU utilization" />
 
                         <Grid Grid.Row="3" Margin="0,0,0,6">
@@ -129,7 +129,7 @@
                             <TextBlock x:Name="CpuStatsText"
                                        Grid.Column="1"
                                        Text="awaiting samples"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Grid>
@@ -137,7 +137,7 @@
                         <TextBlock x:Name="CpuWindowText"
                                    Grid.Row="4"
                                    Text="up to 72 samples"
-                                   Foreground="{StaticResource QuietTextBrush}"
+                                   Foreground="{DynamicResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="{StaticResource FontMicro}" />
                     </Grid>
@@ -159,13 +159,13 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Physical memory"
-                                       Foreground="{StaticResource SignalBrush}"
+                                       Foreground="{DynamicResource SignalBrush}"
                                        FontSize="{StaticResource FontCaption}"
                                        FontWeight="SemiBold" />
                             <TextBlock x:Name="MemoryDetailText"
                                        Grid.Column="1"
                                        Text="GlobalMemoryStatusEx"
-                                       Foreground="{StaticResource QuietTextBrush}"
+                                       Foreground="{DynamicResource QuietTextBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Grid>
@@ -178,21 +178,21 @@
                                        Text="—"
                                        Style="{StaticResource MetricValueStyle}"
                                        FontSize="50" />
-                            <TextBlock Margin="10,0,0,8" Text="in use" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock Margin="10,0,0,8" Text="in use" Foreground="{DynamicResource MutedBrush}" />
                         </StackPanel>
 
                         <controls:Sparkline x:Name="MemoryHistoryChart"
                                             Grid.Row="2"
                                             Margin="0,8,0,6"
                                             MinHeight="76"
-                                            Stroke="{StaticResource SignalBrush}"
-                                            Fill="{StaticResource SignalAreaBrush}"
-                                            GridBrush="{StaticResource BorderBrush}"
+                                            Stroke="{DynamicResource SignalBrush}"
+                                            Fill="{DynamicResource SignalAreaBrush}"
+                                            GridBrush="{DynamicResource BorderBrush}"
                                             GridLineCount="3"
                                             ShowLastPoint="True"
                                             StrokeThickness="2.2"
                                             ShowScaleLabels="True"
-                                            ScaleLabelBrush="{StaticResource QuietTextBrush}"
+                                            ScaleLabelBrush="{DynamicResource QuietTextBrush}"
                                             AutomationProperties.Name="Recent physical memory utilization" />
 
                         <Grid Grid.Row="3" Margin="0,0,0,6">
@@ -202,13 +202,13 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock x:Name="MemoryCapacityText"
                                        Text="Capacity unavailable"
-                                       Foreground="{StaticResource QuietTextBrush}"
+                                       Foreground="{DynamicResource QuietTextBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                             <TextBlock x:Name="MemoryStatsText"
                                        Grid.Column="1"
                                        Text="awaiting samples"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Grid>
@@ -221,7 +221,7 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Commit"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontSize="{StaticResource FontCaption}"
                                        VerticalAlignment="Center" />
                             <ProgressBar x:Name="CommitProgress"
@@ -273,7 +273,7 @@
                             <TextBlock x:Name="NetworkCoverageText"
                                        Grid.Column="1"
                                        Text="WAITING"
-                                       Foreground="{StaticResource WarningBrush}"
+                                       Foreground="{DynamicResource WarningBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}"
                                        VerticalAlignment="Center" />
@@ -292,18 +292,18 @@
                                 <TextBlock x:Name="NetworkInterfaceCountText"
                                            Margin="12,0,0,6"
                                            Text="0 stable interfaces"
-                                           Foreground="{StaticResource MutedBrush}" />
+                                           Foreground="{DynamicResource MutedBrush}" />
                             </StackPanel>
                             <StackPanel Grid.Column="1" HorizontalAlignment="Right">
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                     <Border Width="10"
                                             Height="2"
                                             Margin="0,0,6,0"
-                                            Background="{StaticResource SignalBrush}"
+                                            Background="{DynamicResource SignalBrush}"
                                             VerticalAlignment="Center" />
                                     <TextBlock x:Name="NetworkReceiveText"
                                                Text="Receive unavailable"
-                                               Foreground="{StaticResource SignalBrush}"
+                                               Foreground="{DynamicResource SignalBrush}"
                                                FontFamily="{StaticResource MonoFont}"
                                                FontSize="{StaticResource FontMono}" />
                                 </StackPanel>
@@ -311,11 +311,11 @@
                                     <Border Width="10"
                                             Height="2"
                                             Margin="0,0,6,0"
-                                            Background="{StaticResource AccentBrush}"
+                                            Background="{DynamicResource AccentBrush}"
                                             VerticalAlignment="Center" />
                                     <TextBlock x:Name="NetworkSendText"
                                                Text="Send unavailable"
-                                               Foreground="{StaticResource AccentBrush}"
+                                               Foreground="{DynamicResource AccentBrush}"
                                                FontFamily="{StaticResource MonoFont}"
                                                FontSize="{StaticResource FontMono}" />
                                 </StackPanel>
@@ -327,22 +327,22 @@
                                             Margin="0,12,0,0"
                                             Height="86"
                                             AutoScale="True"
-                                            Stroke="{StaticResource SignalBrush}"
-                                            Fill="{StaticResource SignalAreaBrush}"
-                                            ComparisonStroke="{StaticResource AccentBrush}"
-                                            GridBrush="{StaticResource BorderBrush}"
+                                            Stroke="{DynamicResource SignalBrush}"
+                                            Fill="{DynamicResource SignalAreaBrush}"
+                                            ComparisonStroke="{DynamicResource AccentBrush}"
+                                            GridBrush="{DynamicResource BorderBrush}"
                                             GridLineCount="3"
                                             ShowLastPoint="True"
                                             StrokeThickness="2.2"
                                             ShowScaleLabels="True"
-                                            ScaleLabelBrush="{StaticResource QuietTextBrush}"
+                                            ScaleLabelBrush="{DynamicResource QuietTextBrush}"
                                             AutomationProperties.Name="Recent network receive and send throughput" />
 
                         <TextBlock x:Name="NetworkScaleText"
                                    Grid.Row="3"
                                    Margin="0,6,0,0"
                                    Text="Autoscaled to the observed peak"
-                                   Foreground="{StaticResource QuietTextBrush}"
+                                   Foreground="{DynamicResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="{StaticResource FontMicro}" />
                     </Grid>
@@ -363,7 +363,7 @@
                                                            FontWeight="SemiBold"
                                                            TextTrimming="CharacterEllipsis" />
                                                 <TextBlock Text="{Binding Type}"
-                                                           Foreground="{StaticResource QuietTextBrush}"
+                                                           Foreground="{DynamicResource QuietTextBrush}"
                                                            FontFamily="{StaticResource MonoFont}"
                                                            FontSize="{StaticResource FontMicro}" />
                                             </StackPanel>
@@ -373,7 +373,7 @@
                                                            FontSize="{StaticResource FontMono}"
                                                            HorizontalAlignment="Right" />
                                                 <TextBlock Text="{Binding Split}"
-                                                           Foreground="{StaticResource QuietTextBrush}"
+                                                           Foreground="{DynamicResource QuietTextBrush}"
                                                            FontFamily="{StaticResource MonoFont}"
                                                            FontSize="{StaticResource FontMicro}"
                                                            HorizontalAlignment="Right" />
@@ -383,7 +383,7 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                             <TextBlock x:Name="NoInterfacesText"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontSize="{StaticResource FontCaption}"
                                        TextWrapping="Wrap"
                                        Text="No stable active interface was observed." />
@@ -418,7 +418,7 @@
                             <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Fixed volumes" />
                             <TextBlock x:Name="VolumeCountText"
                                        Grid.Column="1"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        Text="0 observed" />
                         </Grid>
                         <ItemsControl x:Name="VolumeItems" Margin="0,14,0,0">
@@ -430,13 +430,13 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="146" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding Name}" Foreground="{StaticResource MutedBrush}" />
+                                        <TextBlock Text="{Binding Name}" Foreground="{DynamicResource MutedBrush}" />
                                         <ProgressBar Grid.Column="1"
                                                      Margin="10,0"
                                                      Maximum="100"
                                                      Value="{Binding UsedPercent, Mode=OneWay}"
                                                      Style="{StaticResource MetricProgressStyle}"
-                                                     Foreground="{StaticResource SignalBrush}"
+                                                     Foreground="{DynamicResource SignalBrush}"
                                                      VerticalAlignment="Center" />
                                         <TextBlock Grid.Column="2"
                                                    Text="{Binding Detail}"
@@ -448,7 +448,7 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                         <TextBlock x:Name="NoVolumesText"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    Text="No ready fixed volume was observed." />
                     </StackPanel>
                 </Border>
@@ -467,7 +467,7 @@
                             <TextBlock Text="CPU · memory · commit" />
                             <TextBlock Grid.Column="1"
                                        Text="SUPPORTED"
-                                       Foreground="{StaticResource SignalBrush}"
+                                       Foreground="{DynamicResource SignalBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Grid>
@@ -479,7 +479,7 @@
                             <TextBlock Text="Processes · volumes" />
                             <TextBlock Grid.Column="1"
                                        Text="BOUNDED"
-                                       Foreground="{StaticResource SignalBrush}"
+                                       Foreground="{DynamicResource SignalBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Grid>
@@ -491,7 +491,7 @@
                             <TextBlock Text="Network throughput" />
                             <TextBlock Grid.Column="1"
                                        Text="CONDITIONAL"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Grid>
@@ -503,7 +503,7 @@
                             <TextBlock Text="Per-core CPU" />
                             <TextBlock Grid.Column="1"
                                        Text="NOT SAMPLED"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Grid>
@@ -515,7 +515,7 @@
                             <TextBlock Text="GPU · disk I/O" />
                             <TextBlock Grid.Column="1"
                                        Text="UNAVAILABLE"
-                                       Foreground="{StaticResource WarningBrush}"
+                                       Foreground="{DynamicResource WarningBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Grid>
@@ -550,7 +550,7 @@
                                     VerticalAlignment="Center">
                             <TextBlock x:Name="ProcessCountText"
                                        Margin="0,0,12,0"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        VerticalAlignment="Center"
                                        Text="0 rows" />
                             <Button x:Name="EndTaskButton"
@@ -602,8 +602,8 @@
                                     Grid.Column="1"
                                     Margin="0,0,8,0"
                                     Style="{StaticResource SecondaryButton}"
-                                    Foreground="{StaticResource DangerBrush}"
-                                    BorderBrush="{StaticResource DangerBrush}"
+                                    Foreground="{DynamicResource DangerBrush}"
+                                    BorderBrush="{DynamicResource DangerBrush}"
                                     Content="Force stop"
                                     AutomationProperties.Name="Confirm force stop selected task"
                                     Visibility="Collapsed"
@@ -620,7 +620,7 @@
                     <TextBlock x:Name="MonitoringProvenanceText"
                                Grid.Row="4"
                                Margin="0,12,0,0"
-                               Foreground="{StaticResource QuietTextBrush}"
+                               Foreground="{DynamicResource QuietTextBrush}"
                                FontFamily="{StaticResource MonoFont}"
                                FontSize="{StaticResource FontMicro}"
                                TextWrapping="Wrap"
@@ -653,7 +653,7 @@
                                 <Border Margin="12,0,0,0" Style="{StaticResource StatusPillStyle}">
                                     <TextBlock x:Name="BenchmarkStateText"
                                                Text="READY"
-                                               Foreground="{StaticResource SignalBrush}"
+                                               Foreground="{DynamicResource SignalBrush}"
                                                FontFamily="{StaticResource MonoFont}"
                                                FontSize="{StaticResource FontMicro}"
                                                FontWeight="SemiBold" />
@@ -665,7 +665,7 @@
                                        TextWrapping="Wrap"
                                        Text="Measures named local workloads without producing a synthetic PC score or cross-machine ranking." />
                             <TextBlock Margin="0,12,0,0"
-                                       Foreground="{StaticResource QuietTextBrush}"
+                                       Foreground="{DynamicResource QuietTextBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}"
                                        Text="about 4 seconds · 32 MiB scratch · cancelable · last result saved locally" />
@@ -698,18 +698,18 @@
 
                     <Border Style="{StaticResource HeroCardStyle}">
                         <StackPanel>
-                            <TextBlock Text="Processor" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
+                            <TextBlock Text="Processor" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold" />
                             <TextBlock x:Name="BenchmarkCpuValueText"
                                        Margin="0,18,0,0"
                                        Text="—"
                                        Style="{StaticResource MetricValueStyle}"
                                        FontSize="32" />
-                            <TextBlock Text="SHA-256 throughput" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock Text="SHA-256 throughput" Foreground="{DynamicResource MutedBrush}" />
                             <TextBlock x:Name="BenchmarkCpuDetailText"
                                        Margin="0,18,0,0"
                                        Text="Not measured"
                                        TextWrapping="Wrap"
-                                       Foreground="{StaticResource QuietTextBrush}"
+                                       Foreground="{DynamicResource QuietTextBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </StackPanel>
@@ -717,18 +717,18 @@
 
                     <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                         <StackPanel>
-                            <TextBlock Text="Memory" Foreground="{StaticResource SignalBrush}" FontWeight="SemiBold" />
+                            <TextBlock Text="Memory" Foreground="{DynamicResource SignalBrush}" FontWeight="SemiBold" />
                             <TextBlock x:Name="BenchmarkMemoryValueText"
                                        Margin="0,18,0,0"
                                        Text="—"
                                        Style="{StaticResource MetricValueStyle}"
                                        FontSize="32" />
-                            <TextBlock Text="Buffer copy throughput" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock Text="Buffer copy throughput" Foreground="{DynamicResource MutedBrush}" />
                             <TextBlock x:Name="BenchmarkMemoryDetailText"
                                        Margin="0,18,0,0"
                                        Text="Not measured"
                                        TextWrapping="Wrap"
-                                       Foreground="{StaticResource QuietTextBrush}"
+                                       Foreground="{DynamicResource QuietTextBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </StackPanel>
@@ -736,18 +736,18 @@
 
                     <Border Grid.Column="4" Style="{StaticResource CardStyle}">
                         <StackPanel>
-                            <TextBlock Text="Temporary storage" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" />
+                            <TextBlock Text="Temporary storage" Foreground="{DynamicResource WarningBrush}" FontWeight="SemiBold" />
                             <TextBlock x:Name="BenchmarkStorageValueText"
                                        Margin="0,18,0,0"
                                        Text="—"
                                        Style="{StaticResource MetricValueStyle}"
                                        FontSize="32" />
-                            <TextBlock Text="Write / read throughput" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock Text="Write / read throughput" Foreground="{DynamicResource MutedBrush}" />
                             <TextBlock x:Name="BenchmarkStorageDetailText"
                                        Margin="0,18,0,0"
                                        Text="No scratch file created"
                                        TextWrapping="Wrap"
-                                       Foreground="{StaticResource QuietTextBrush}"
+                                       Foreground="{DynamicResource QuietTextBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </StackPanel>
@@ -779,7 +779,7 @@
                                    Margin="0,10,0,0"
                                    Text="Ready. Performance sampling pauses while this lab is open so it does not compete with the measured workload."
                                    TextWrapping="Wrap"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    AutomationProperties.LiveSetting="Polite" />
                     </Grid>
                 </Border>

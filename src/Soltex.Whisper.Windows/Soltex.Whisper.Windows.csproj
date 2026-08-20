@@ -1,0 +1,62 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <RootNamespace>Soltex.Whisper.Windows</RootNamespace>
+    <AssemblyName>Soltex.Whisper.Windows</AssemblyName>
+    <Description>Bounded Windows capture, shortcut, target-inspection, insertion, and verified-submit adapters for the provider-neutral Soltex Whisper core.</Description>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Soltex.Audio\Soltex.Audio.csproj" />
+    <ProjectReference Include="..\Soltex.Security\Soltex.Security.csproj" />
+    <ProjectReference Include="..\Soltex.Whisper\Soltex.Whisper.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Whisper.net" Version="1.9.1" />
+    <PackageReference
+      Include="Whisper.net.Runtime"
+      Version="1.9.1"
+      ExcludeAssets="build"
+      GeneratePathProperty="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <!--
+      Whisper.net probes a runtime-specific directory at process startup. Keep
+      only the CPU win-x64 assets loose beside the single-file app so the loader
+      can resolve its native dependency chain without bundling other platforms.
+    -->
+    <Content
+      Include="$(PkgWhisper_net_Runtime)\build\win-x64\whisper.dll"
+      Link="runtimes\win-x64\whisper.dll"
+      CopyToOutputDirectory="PreserveNewest"
+      CopyToPublishDirectory="PreserveNewest"
+      ExcludeFromSingleFile="true" />
+    <Content
+      Include="$(PkgWhisper_net_Runtime)\build\win-x64\ggml-whisper.dll"
+      Link="runtimes\win-x64\ggml-whisper.dll"
+      CopyToOutputDirectory="PreserveNewest"
+      CopyToPublishDirectory="PreserveNewest"
+      ExcludeFromSingleFile="true" />
+    <Content
+      Include="$(PkgWhisper_net_Runtime)\build\win-x64\ggml-base-whisper.dll"
+      Link="runtimes\win-x64\ggml-base-whisper.dll"
+      CopyToOutputDirectory="PreserveNewest"
+      CopyToPublishDirectory="PreserveNewest"
+      ExcludeFromSingleFile="true" />
+    <Content
+      Include="$(PkgWhisper_net_Runtime)\build\win-x64\ggml-cpu-whisper.dll"
+      Link="runtimes\win-x64\ggml-cpu-whisper.dll"
+      CopyToOutputDirectory="PreserveNewest"
+      CopyToPublishDirectory="PreserveNewest"
+      ExcludeFromSingleFile="true" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Soltex.Whisper.Windows.Tests" />
+    <InternalsVisibleTo Include="Soltex.App.Tests" />
+  </ItemGroup>
+</Project>

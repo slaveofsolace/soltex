@@ -9,7 +9,7 @@ Source commit: `48e806092cb160e9edaef09e06552dfdbfea0530`
 `eng/capture-ui-evidence.ps1` captured and validated all 18 native WPF states
 at 1280x820 with source and tested commit both bound to `48e8060`.
 
-- Manifest: `C:\Users\suhai\.codex\visualizations\2026\08\13\soltex-product-rebuild\48e8060-native-validation\render-matrix.json`
+- Manifest: `<local-evidence-root>\2026\08\13\soltex-product-rebuild\48e8060-native-validation\render-matrix.json`
 - Manifest bytes: 8,274
 - Manifest SHA-256: `76F2DCC6C423822E358D8447D7C8716009CC5FA23614A30035C35C21AE7F3CF7`
 - Directly inspected: Overview, Quick benchmark, Audio, Security, Remote Assist,
