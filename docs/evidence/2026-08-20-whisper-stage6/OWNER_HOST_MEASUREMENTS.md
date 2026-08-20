@@ -10,6 +10,8 @@ content, target text, model bytes, local paths from application state, or creden
 - Runtime, capture, hook, and installer source: `9ab5543656b4eba455ecf47a1c25df053cc13d12`
 - Hosted installer lifecycle source and tested commit: `2215247e257a69e0c8c6317ffb347a1c244e69f2`
 - Extended target-matrix source and tested commit: `0c59d0fd186791c5bb591c7e1f5252af6dc7bf30`
+- Shipped model/session checkpoint: `2ab5a4eef1a719128f6e872f9141863e7ec5ef98`
+- Self-contained packaged-model source and tested commit: `d4132c472c2ca9ff7e995a8477b3734df3b668bd`
 - SDK: .NET `10.0.302`
 - Configuration: `Release`
 
@@ -56,6 +58,46 @@ The shortcut run proves registration, callback timing, injected-input rejection,
 clean unregistration. It does not replace a human physical-key or mouse-button pass.
 The capture run proves one current device path and buffer disposal. It does not prove
 disconnect recovery across a representative hardware matrix.
+
+## Local model and packaged-executable proof
+
+The shipped Setup surface completed an explicit owner action that downloaded and
+verified `large-v3-turbo-q5_0` for the local CPU provider. The model is `574041195`
+bytes with pinned SHA-256
+`394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2`.
+Installation took `33.893 s`; readiness reported `6/6`; a five-second 16 kHz mono
+microphone test passed and discarded its audio.
+
+The first owner-host runtime proof used the verified model and a pinned 11-second
+public PCM fixture. Initial transcription took `13133.2 ms`, explicit unload
+`21.9 ms`, post-unload restart transcription `13265.1 ms`, and native cancellation
+was observed in `107.4 ms`. Working set was `38395904` bytes before transcription,
+peaked at `1064660992` bytes, and was `54919168` bytes after the final unload.
+Neither audio nor transcript content entered the evidence log.
+
+At exact commit `d4132c4`, a fresh self-contained `win-x64` publish then exercised
+the same installed model through the packaged `Soltex.exe` evidence entry point:
+
+- Package payload: `82429825`-byte `Soltex.exe` plus exactly
+  `ggml-base-whisper.dll`, `ggml-cpu-whisper.dll`, `ggml-whisper.dll`, and
+  `whisper.dll`; the model file was not bundled
+- Package executable SHA-256:
+  `89509f18ec22ca5b4f8e28b6bc5e8e1850e2052bfe3a68bee5d2f7ea815fe4ad`
+- Initial transcription: `17508.7047 ms`; explicit unload: `45.5331 ms`
+- Restart transcription: `17922.0438 ms`; native cancellation observed in
+  `105.209 ms`; cancellation unload: `0.0028 ms`
+- Working set: `169467904` bytes before, `1198100480` bytes peak, and
+  `187895808` bytes after final unload
+- Content-free report: `artifacts/whisper-stage6/2026-08-20T20-19-32-603Z-packaged-model-d4132c47.json`;
+  SHA-256 `de1b8c20a8c68f42a8c58eda87430f234359c3a06a342fe3197a72217fcc23a0`
+- Report assertions: exact source/tested commit, verified model bytes, restart,
+  cancellation, no microphone access, no audio logging, and no transcript logging
+- The pinned temporary fixture was removed after the run
+
+These are one-host observations for one public fixture. They prove the published
+executable can open, unload, restart, and cancel the local CPU runtime; they do not
+prove owner-spoken accuracy, supported-hardware breadth, or the complete
+capture-to-verified-insertion path.
 
 ## Controlled target and latency proof
 
@@ -110,7 +152,7 @@ These values are one-host observations for the controlled sample, not a guarante
 control or application version.
 
 The Release solution build completed with zero warnings and zero errors. The provider-neutral core,
-Windows adapter, and application suites passed `115/115`, `61/61`, and `49/49`; identity,
+Windows adapter, and application suites passed `115/115`, `62/62`, and `49/49`; identity,
 design-token, and accessibility-contract gates also passed. The separate live Windows protection
 integration gate remained intentionally deferred during host servicing, so this checkpoint makes no
 Defender health or EICAR claim.
@@ -150,11 +192,13 @@ not publisher reputation, SmartScreen acceptance, or production release authoriz
 
 ## Still not proven
 
-- The 547 MiB production model was not downloaded or opened.
-- Model-backed accuracy, latency, memory, unload, and restart remain unmeasured.
-- Release-to-transcription and full capture-to-verified-submit latency remain pending.
+- Owner-spoken accuracy, release-to-transcription, and the complete
+  capture-to-verified-submit path remain pending.
+- The owner-host proof used a self-contained published executable, not a signed
+  installer-launched production release.
 - Physical shortcuts, live per-monitor DPI transitions, keyboard-only navigation, and
   a screen-reader walkthrough remain owner-proof gates.
+- Representative microphone disconnect/reconnect recovery remains an owner-hardware gate.
 - The navigation `SCAFFOLD` marker remains until a real model-backed capture,
   transcription, insertion, verification, and safe cancellation complete on the owner
   host.

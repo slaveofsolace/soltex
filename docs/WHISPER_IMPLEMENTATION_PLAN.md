@@ -61,7 +61,7 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Local transcription adapter | `WindowsWhisperLocalTranscriber` implements the unchanged provider-neutral interface over Whisper.net 1.9.1 and its CPU runtime. It holds a verified non-delete-sharing model lease through eager native load, projects owned 16 kHz mono PCM16 through a 44-byte no-copy WAVE header, passes validated language and bounded vocabulary hints, serializes one lazy native runtime, bounds output, supports cancellation/unload, clears owned capture buffers through the existing clip lifetime, and emits content-free failure categories only |
 | Shipped local setup | The WPF Setup surface exposes explicit local-provider selection, install, repair, cancellation, verified status, progress, and confirmed exact-owned deletion. No model download starts at launch or merely by opening Whisper; model repair/deletion first cancels and drains dictation and unloads the native runtime |
 | Shipped session composition | The app instantiates the production WASAPI capture, local transcriber, UI Automation inspector, insertion adapter, verified submitter, and provider-neutral session runner. Registered begin/release/toggle/cancel intents use this one owned path; saved exact-process profiles are resolved after target inspection; 19-minute warning/20-minute expiry, overlay state, optional bounded history, last-transcript actions, model mutation, and shutdown all share explicit owned task lifetimes |
-| Packaged CPU runtime | The `win-x64` package ships exactly the four Whisper.net CPU native DLLs beside the single-file app in the runtime layout the loader probes. A content-free packaged-process gate loads that runtime while proving no model or microphone was opened; the package is bounded below 256 MiB and rejects the 547 MiB model filename. This proves runtime availability, not transcription accuracy or model performance |
+| Packaged CPU runtime | The `win-x64` package ships exactly the four Whisper.net CPU native DLLs beside the single-file app in the runtime layout the loader probes. The package is bounded below 256 MiB and rejects the 547 MiB model filename. A separate explicit, content-free packaged-process gate opens the verified externally installed model, completes initial and post-unload transcription, observes native cancellation, and proves no microphone, audio logging, or transcript logging. This proves one owner-host CPU execution path, not transcription accuracy or supported-hardware breadth |
 | Whisper UI evidence | The shipped manifest declares per-monitor-v2 awareness. A bounded direct-process renderer captures light, dark, high-contrast, minimum-width, and 100/150/200-percent raster profiles plus every presenter-owned overlay state; each artifact records the exact owned PID, dimensions, evidence class, commit identities, and SHA-256 without microphone, transcript, clipboard, target, or model content |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
@@ -82,16 +82,18 @@ before the corresponding capability can be described as complete.
 
 1. Owner-controlled model proof is partial. The shipped UI downloaded and verified the pinned
    547 MiB model after an explicit action. The real CPU runtime completed content-free initial and
-   post-unload transcription runs, observed cancellation during native work, and unloaded afterward.
-   Owner-spoken accuracy and full capture-to-verified-insertion evidence are still required.
+   post-unload transcription runs, observed cancellation during native work, and unloaded afterward
+   both through the adapter harness and a self-contained published executable. Owner-spoken accuracy
+   and full capture-to-verified-insertion evidence are still required.
 2. Physical keyboard and mouse shortcut coverage plus callback and shortcut-to-listening latency
    measurements in the packaged app.
 3. Owner-controlled per-monitor DPI transitions, keyboard-only and screen-reader walkthroughs,
-   plus production-model performance evidence for the Whisper surfaces. The
+   plus interactive Whisper-surface performance evidence. The
    deterministic renderer now covers light/dark/high-contrast, minimum-width, synthetic
    100/150/200-percent raster profiles, and every overlay state. Synthetic high-density
    output is not a claim that live Windows DPI transitions passed. The self-contained package
-   proves its CPU native runtime and model exclusion, and the ephemeral Windows gate now proves
+   proves its CPU native runtime, model exclusion, and one externally installed model execution;
+   the ephemeral Windows gate now proves
    per-user install, 0.0.1-to-0.0.2 update, exact runtime payload, and clean uninstall. The
    installer remains unsigned, so SmartScreen reputation and production signing are not proven.
 4. Owner-controlled unplug/reconnect proof across a representative microphone matrix;
@@ -260,8 +262,9 @@ It resolves an exact saved application profile only after inspection and keeps d
 authorization in the existing provider-neutral policies. Still required: prove physical
 push-to-talk release and mouse buttons in the shipped app and record shortcut-to-listening latency.
 Current owner-host proof covers the adapter lifecycle, shipped-UI model installation, a five-second
-16 kHz mono microphone test whose audio was discarded, and one production-model CPU run. It does
-not yet cover a physical shortcut, owner-spoken capture-to-insertion, or a packaged-app model run.
+16 kHz mono microphone test whose audio was discarded, one harness production-model CPU run, and
+one self-contained published-executable model run. It does not yet cover a physical shortcut or
+owner-spoken capture-to-insertion.
 
 ### 4. Target inspection
 
