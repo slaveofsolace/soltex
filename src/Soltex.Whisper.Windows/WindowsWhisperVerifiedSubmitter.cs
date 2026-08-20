@@ -127,7 +127,11 @@ public sealed class WindowsWhisperVerifiedSubmitter : IWhisperVerifiedSubmitter
 
             cancellationToken.ThrowIfCancellationRequested();
             bool dispatched = await _submitPlatform
-                .TryEmitEnterAsync(authorization, cancellationToken)
+                .TryEmitEnterAsync(
+                    authorization,
+                    submitTarget ?? throw new InvalidOperationException(
+                        "An allowed submission requires a current target."),
+                    cancellationToken)
                 .ConfigureAwait(false);
             return Result(
                 request,
@@ -182,46 +186,91 @@ internal interface IWindowsWhisperSubmitPlatform
 {
     ValueTask<bool> TryEmitEnterAsync(
         WhisperSubmitAuthorization authorization,
+        WhisperTargetSnapshot target,
         CancellationToken cancellationToken);
 }
 
 internal sealed class WindowsWhisperSubmitPlatform : IWindowsWhisperSubmitPlatform
 {
     private const ushort EnterKey = 0x0D;
+    private readonly Func<int, bool> _foregroundBelongsToProcess;
+    private readonly Func<bool> _modifierIsDown;
+    private readonly Func<PasteNative.Input[], uint> _sendInput;
+
+    internal WindowsWhisperSubmitPlatform()
+        : this(
+            ForegroundBelongsToProcess,
+            PasteNative.ModifierIsDown,
+            SendInputs)
+    {
+    }
+
+    internal WindowsWhisperSubmitPlatform(
+        Func<int, bool> foregroundBelongsToProcess,
+        Func<bool> modifierIsDown,
+        Func<PasteNative.Input[], uint> sendInput)
+    {
+        ArgumentNullException.ThrowIfNull(foregroundBelongsToProcess);
+        ArgumentNullException.ThrowIfNull(modifierIsDown);
+        ArgumentNullException.ThrowIfNull(sendInput);
+        _foregroundBelongsToProcess = foregroundBelongsToProcess;
+        _modifierIsDown = modifierIsDown;
+        _sendInput = sendInput;
+    }
 
     public ValueTask<bool> TryEmitEnterAsync(
         WhisperSubmitAuthorization authorization,
+        WhisperTargetSnapshot target,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(authorization);
+        ArgumentNullException.ThrowIfNull(target);
         cancellationToken.ThrowIfCancellationRequested();
-        if (!authorization.TryConsume() || PasteNative.ModifierIsDown())
+        if (!authorization.TryConsume() ||
+            !_foregroundBelongsToProcess(target.Identity.ProcessId) ||
+            _modifierIsDown())
         {
             return ValueTask.FromResult(false);
         }
 
-        PasteNative.Input[] inputs =
-        [
-            PasteNative.Input.Keyboard(EnterKey, keyUp: false),
-            PasteNative.Input.Keyboard(EnterKey, keyUp: true)
-        ];
-        uint sent = PasteNative.SendInput(
-            checked((uint)inputs.Length),
-            inputs,
-            Marshal.SizeOf<PasteNative.Input>());
+        PasteNative.Input[] inputs = CreateEnterInputs();
+        uint sent = _sendInput(inputs);
         if (sent != inputs.Length)
         {
             PasteNative.Input[] cleanup =
             [
-                PasteNative.Input.Keyboard(EnterKey, keyUp: true)
+                PasteNative.Input.Keyboard(EnterKey, keyUp: true, extraInfo: 0)
             ];
-            _ = PasteNative.SendInput(
-                1,
-                cleanup,
-                Marshal.SizeOf<PasteNative.Input>());
+            _ = _sendInput(cleanup);
             return ValueTask.FromResult(false);
         }
 
         return ValueTask.FromResult(true);
     }
+
+    internal static PasteNative.Input[] CreateEnterInputs() =>
+        [
+            PasteNative.Input.Keyboard(EnterKey, keyUp: false, extraInfo: 0),
+            PasteNative.Input.Keyboard(EnterKey, keyUp: true, extraInfo: 0)
+        ];
+
+    private static uint SendInputs(PasteNative.Input[] inputs) =>
+        PasteNative.SendInput(
+            checked((uint)inputs.Length),
+            inputs,
+            Marshal.SizeOf<PasteNative.Input>());
+
+    private static bool ForegroundBelongsToProcess(int expectedProcessId)
+    {
+        nint foreground = GetForegroundWindow();
+        return foreground != 0 &&
+            GetWindowThreadProcessId(foreground, out uint processId) != 0 &&
+            processId == checked((uint)expectedProcessId);
+    }
+
+    [DllImport("user32.dll")]
+    private static extern nint GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(nint window, out uint processId);
 }

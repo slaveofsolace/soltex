@@ -467,7 +467,10 @@ internal static class PasteNative
         internal uint Type;
         internal InputUnion Data;
 
-        internal static Input Keyboard(ushort virtualKey, bool keyUp) => new()
+        internal static Input Keyboard(
+            ushort virtualKey,
+            bool keyUp,
+            nuint extraInfo = SoltexPasteTag) => new()
         {
             Type = KeyboardInputType,
             Data = new InputUnion
@@ -476,7 +479,7 @@ internal static class PasteNative
                 {
                     VirtualKey = virtualKey,
                     Flags = keyUp ? KeyUp : 0,
-                    ExtraInfo = SoltexPasteTag
+                    ExtraInfo = extraInfo
                 }
             }
         };

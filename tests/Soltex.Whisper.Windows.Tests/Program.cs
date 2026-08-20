@@ -39,6 +39,13 @@ if (args is ["--live-elevated-target"])
     return 0;
 }
 
+if (args is ["--live-winui-target"])
+{
+    await LiveWinUiTargetMatrix();
+    Console.WriteLine("PASS owner-host WinUI target verifies bounded submission");
+    return 0;
+}
+
 List<(string Name, Func<Task> Run)> tests =
 [
     ("selected device is passed to the backend and fallback is reported", DeviceSelectionAndFallback),
@@ -69,6 +76,8 @@ List<(string Name, Func<Task> Run)> tests =
     ("an unknown target copies without emitting paste input", DeliveryUnknownTarget),
     ("a rejected paste leaves the transcript copied", DeliveryPasteRejected),
     ("cancellation before paste restores an owned clipboard", DeliveryCancellationRestores),
+    ("verified Enter uses one untagged virtual-key press and release", VerifiedEnterInputEncoding),
+    ("verified Enter refuses foreground drift before native input", VerifiedEnterForegroundGuard),
     ("verified submission consumes one authorization and emits Enter once", VerifiedSubmitOnce),
     ("submission denies an unverified insertion", VerifiedSubmitRequiresReadback),
     ("submission denies altered target text", VerifiedSubmitRejectsAlteredText),
@@ -641,6 +650,54 @@ static async Task VerifiedSubmitOnce()
     Equal(1, platform.DispatchCount);
     True(platform.FirstConsume);
     False(platform.SecondConsume);
+}
+
+static Task VerifiedEnterInputEncoding()
+{
+    Equal(IntPtr.Size == 8 ? 40 : 28, Marshal.SizeOf<PasteNative.Input>());
+    Equal((nint)(IntPtr.Size == 8 ? 8 : 4),
+        Marshal.OffsetOf<PasteNative.Input>(nameof(PasteNative.Input.Data)));
+
+    PasteNative.Input[] inputs =
+        WindowsWhisperSubmitPlatform.CreateEnterInputs();
+
+    Equal(2, inputs.Length);
+    Equal((ushort)0x0D, inputs[0].Data.Keyboard.VirtualKey);
+    Equal((ushort)0, inputs[0].Data.Keyboard.ScanCode);
+    Equal(0u, inputs[0].Data.Keyboard.Flags);
+    Equal((nuint)0, inputs[0].Data.Keyboard.ExtraInfo);
+    Equal((ushort)0x0D, inputs[1].Data.Keyboard.VirtualKey);
+    Equal((ushort)0, inputs[1].Data.Keyboard.ScanCode);
+    Equal(0x0002u, inputs[1].Data.Keyboard.Flags);
+    Equal((nuint)0, inputs[1].Data.Keyboard.ExtraInfo);
+    return Task.CompletedTask;
+}
+
+static async Task VerifiedEnterForegroundGuard()
+{
+    WhisperTargetSnapshot captured = DeliveryTarget("chat", "el-1");
+    WhisperScriptedTargetInspector inspector = new(captured, captured);
+    FakeTargetTextReader reader = new("hello from Soltex");
+    int sendCount = 0;
+    WindowsWhisperSubmitPlatform platform = new(
+        foregroundBelongsToProcess: _ => false,
+        modifierIsDown: () => false,
+        sendInput: inputs =>
+        {
+            sendCount++;
+            return checked((uint)inputs.Length);
+        });
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector, reader, platform);
+
+    WhisperVerifiedSubmitResult result = await submitter.SubmitAsync(
+        VerifiedSubmitRequest(captured),
+        CancellationToken.None);
+
+    True(result.Authorization.Allowed);
+    False(result.EnterDispatched);
+    Equal(WhisperSubmitDispatchOutcome.DispatchRejected, result.Outcome);
+    Equal(0, sendCount);
+    False(result.Authorization.TryConsume());
 }
 
 static async Task VerifiedSubmitRequiresReadback()
@@ -1255,12 +1312,11 @@ static async Task LiveElectronTargetMatrix()
             insertion,
             FirstUseWarningAccepted: true),
         CancellationToken.None);
-    await target.WaitForEnterAsync();
-    submitTimer.Stop();
-
     True(submission.Authorization.Allowed);
     True(submission.Verification.Verified);
     True(submission.EnterDispatched);
+    await target.WaitForEnterAsync();
+    submitTimer.Stop();
     Console.WriteLine(
         $"MEASURE whisper_electron_matrix category={captured.Context.Kind} " +
         $"method={insertion.Method} insert_ms={insertionTimer.Elapsed.TotalMilliseconds:F2} " +
@@ -1350,6 +1406,89 @@ static async Task LiveElevatedTargetMatrix()
         $"inspection={inspector.LastFailure} " +
         $"decision={decision.Kind} " +
         "mutation_dispatches=0 submit_dispatches=0 content_logged=0");
+}
+
+static async Task LiveWinUiTargetMatrix()
+{
+    await using LiveWinUiTargetHost target = await LiveWinUiTargetHost.CreateAsync();
+    WindowsWhisperTargetInspector inspector = new();
+    WindowsWhisperTextDelivery delivery = new(inspector);
+    WindowsWhisperVerifiedSubmitter submitter = new(inspector);
+
+    await target.FocusEditorAsync();
+    WhisperTargetSnapshot captured = await WaitForControlledWinUiTargetAsync(
+        inspector,
+        target.ProcessId);
+    True(captured.Context.Kind is WhisperTargetKind.PlainText or WhisperTargetKind.RichText);
+    True(captured.Context.IsEditable);
+    False(captured.Context.IsElevated);
+    True(string.Equals(
+        "Soltex.Whisper.WinUiTarget",
+        captured.Context.ProcessName,
+        StringComparison.OrdinalIgnoreCase));
+
+    WhisperDeliveryDecision decision = new(
+        WhisperDeliveryKind.InsertAndSubmit,
+        LiveWinUiTargetHost.ProbeText,
+        WhisperSubmitOrigin.DedicatedShortcut,
+        RestoreClipboard: true,
+        "owner-controlled WinUI matrix");
+    Stopwatch insertionTimer = Stopwatch.StartNew();
+    WhisperTextDeliveryResult insertion = await delivery.DeliverAsync(
+        new WhisperTextDeliveryRequest(decision, captured),
+        CancellationToken.None);
+    insertionTimer.Stop();
+    True(insertion.MutationDispatched);
+    False(insertion.Copied);
+
+    await target.FocusEditorAsync();
+    Stopwatch submitTimer = Stopwatch.StartNew();
+    WhisperVerifiedSubmitResult submission = await submitter.SubmitAsync(
+        new WhisperVerifiedSubmitRequest(
+            decision,
+            captured,
+            insertion,
+            FirstUseWarningAccepted: true),
+        CancellationToken.None);
+    True(submission.Authorization.Allowed);
+    True(submission.Verification.Verified);
+    True(submission.EnterDispatched);
+    await target.WaitForEnterAsync();
+    submitTimer.Stop();
+    Console.WriteLine(
+        $"MEASURE whisper_winui_matrix category={captured.Context.Kind} " +
+        $"framework={target.FrameworkId} method={insertion.Method} " +
+        $"insert_ms={insertionTimer.Elapsed.TotalMilliseconds:F2} " +
+        $"verified_submit_ms={submitTimer.Elapsed.TotalMilliseconds:F2} " +
+        "enter_events=1 content_logged=0");
+}
+
+static async Task<WhisperTargetSnapshot> WaitForControlledWinUiTargetAsync(
+    WindowsWhisperTargetInspector inspector,
+    int processId)
+{
+    Stopwatch timeout = Stopwatch.StartNew();
+    WhisperTargetSnapshot? lastSnapshot = null;
+    while (timeout.Elapsed < TimeSpan.FromSeconds(10))
+    {
+        WhisperTargetSnapshot? snapshot = await inspector.InspectAsync(CancellationToken.None);
+        lastSnapshot = snapshot ?? lastSnapshot;
+        if (snapshot is { Context.IsEditable: true } &&
+            snapshot.Identity.ProcessId == processId &&
+            snapshot.Context.Kind is WhisperTargetKind.PlainText or WhisperTargetKind.RichText)
+        {
+            return snapshot;
+        }
+
+        await Task.Delay(100);
+    }
+
+    throw new InvalidOperationException(
+        $"The controlled WinUI target did not become inspectable " +
+        $"(failure={inspector.LastFailure}; expected_pid={processId}; " +
+        $"observed_pid={lastSnapshot?.Identity.ProcessId}; " +
+        $"category={lastSnapshot?.Context.Kind}; " +
+        $"editable={lastSnapshot?.Context.IsEditable}).");
 }
 
 static async Task<WhisperTargetSnapshot> WaitForControlledTerminalTargetAsync(
@@ -3030,9 +3169,11 @@ internal sealed class FakeSubmitPlatform(bool dispatchResult) :
 
     public ValueTask<bool> TryEmitEnterAsync(
         WhisperSubmitAuthorization authorization,
+        WhisperTargetSnapshot target,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(authorization);
+        ArgumentNullException.ThrowIfNull(target);
         cancellationToken.ThrowIfCancellationRequested();
         DispatchCount++;
         FirstConsume = authorization.TryConsume();
