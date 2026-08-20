@@ -181,7 +181,7 @@ static async Task IntegrityManifestDetectsChangesAsync()
             [new IntegrityManifestFile("plugin.dll", content.Length, await FileHashing.Sha256Async(contentPath))]);
         byte[] manifestBytes = JsonSerializer.SerializeToUtf8Bytes(
             manifest,
-            new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true });
+            TestJsonOptions.IndentedWeb);
         string manifestPath = Path.Combine(root, "integrity.json");
         string signaturePath = Path.Combine(root, "integrity.sig");
         await File.WriteAllBytesAsync(manifestPath, manifestBytes);
@@ -238,7 +238,7 @@ static async Task IntegrityManifestIdentityIsVersionedAsync()
                     await FileHashing.Sha256Async(contentPath))]);
             byte[] manifestBytes = JsonSerializer.SerializeToUtf8Bytes(
                 manifest,
-                new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = true });
+                TestJsonOptions.IndentedWeb);
             string token = accepted ? product : "unsupported";
             string manifestPath = Path.Combine(root, token + ".json");
             string signaturePath = Path.Combine(root, token + ".sig");
@@ -1039,6 +1039,15 @@ sealed class ScriptedHealthSource(IEnumerable<object> script) : IProtectionHealt
             _ => throw new InvalidOperationException("Unsupported scripted health observation.")
         };
     }
+}
+
+internal static class TestJsonOptions
+{
+    internal static JsonSerializerOptions IndentedWeb { get; } =
+        new(JsonSerializerDefaults.Web)
+        {
+            WriteIndented = true
+        };
 }
 
 sealed class DelegatingHealthSource(

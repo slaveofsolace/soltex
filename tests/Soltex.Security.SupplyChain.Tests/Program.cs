@@ -613,11 +613,9 @@ static async Task<SignedReleaseVerificationResult> CreateReleaseVerificationAsyn
                 await FileHashing.Sha256Async(contentPath))
         ]);
 
-    JsonSerializerOptions options = new(JsonSerializerDefaults.Web)
-    {
-        WriteIndented = true
-    };
-    byte[] manifestBytes = JsonSerializer.SerializeToUtf8Bytes(manifest, options);
+    byte[] manifestBytes = JsonSerializer.SerializeToUtf8Bytes(
+        manifest,
+        TestJsonOptions.IndentedWeb);
     byte[] signature = signingKey.SignData(
         manifestBytes,
         HashAlgorithmName.SHA256,
@@ -704,4 +702,13 @@ static async Task ThrowsAsync<T>(Func<Task> action) where T : Exception
     }
 
     throw new InvalidOperationException($"Expected {typeof(T).Name}.");
+}
+
+internal static class TestJsonOptions
+{
+    internal static JsonSerializerOptions IndentedWeb { get; } =
+        new(JsonSerializerDefaults.Web)
+        {
+            WriteIndented = true
+        };
 }
