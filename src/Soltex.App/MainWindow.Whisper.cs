@@ -19,6 +19,10 @@ public partial class MainWindow
     private WhisperCaptureException? _whisperCaptureFailure;
     private CancellationTokenSource? _whisperCaptureCancellation;
     private Task _whisperCaptureDrained = Task.CompletedTask;
+    private WindowsWhisperLocalModelManager? _whisperModelManager;
+    private WhisperModelStatus? _whisperModelStatus;
+    private CancellationTokenSource? _whisperModelCancellation;
+    private Task _whisperModelDrained = Task.CompletedTask;
     private readonly SemaphoreSlim _whisperShortcutGate = new(1, 1);
     private readonly WhisperShortcutGestureInterpreter _whisperShortcutGestures = new();
     private readonly CancellationTokenSource _whisperRuntimeCancellation = new();
@@ -38,6 +42,7 @@ public partial class MainWindow
         _whisperSettings = loaded.Settings;
         _whisperHistoryStore = new WindowsWhisperHistoryRetentionStore(
             Path.Combine(_runtime.DataRoot, "state"));
+        _whisperModelManager = new WindowsWhisperLocalModelManager(_runtime.DataRoot);
         _whisperCapture = new WhisperWasapiCaptureSource(_whisperSettings.InputDeviceId);
         _whisperCapture.InputLevelChanged += WhisperCapture_InputLevelChanged;
         _whisperCapture.DeviceSelectionChanged += WhisperCapture_DeviceSelectionChanged;
@@ -47,6 +52,9 @@ public partial class MainWindow
         WhisperPanel.MicrophoneTestRequested += WhisperPanel_MicrophoneTestRequested;
         WhisperPanel.MicrophoneTestStopRequested += WhisperPanel_MicrophoneTestStopRequested;
         WhisperPanel.FeatureEnabledRequested += WhisperPanel_FeatureEnabledRequested;
+        WhisperPanel.LocalProviderSelectRequested += WhisperPanel_LocalProviderSelectRequested;
+        WhisperPanel.ModelActionRequested += WhisperPanel_ModelActionRequested;
+        WhisperPanel.ModelDeleteRequested += WhisperPanel_ModelDeleteRequested;
         WhisperPanel.PersonalizationRequested += WhisperPanel_PersonalizationRequested;
         WhisperPanel.LibraryRequested += WhisperPanel_LibraryRequested;
         WhisperPanel.HistoryEntryDeleteRequested += WhisperPanel_HistoryEntryDeleteRequested;
@@ -65,6 +73,12 @@ public partial class MainWindow
             _whisperSettings.Enabled
                 ? "Whisper is on. Windows shortcut registration will be checked at startup."
                 : "Whisper is off. No global shortcuts are registered.");
+        WhisperPanel.SetLocalModelStatus(
+            _whisperSettings,
+            CreateUncheckedWhisperModelStatus(),
+            operationRunning: false,
+            progress: 0,
+            "Checking exact-owned local model state. No download starts automatically.");
         WhisperPanel.SetPersonalization(
             _whisperSettings,
             loaded.LoadedVersion == 0
@@ -453,6 +467,261 @@ public partial class MainWindow
                 "That change was not saved. Use one printable term of at most 64 characters.");
         }
     }
+
+    private void WhisperPanel_LocalProviderSelectRequested(object? sender, EventArgs e)
+    {
+        if (_shutdownStarted)
+        {
+            return;
+        }
+
+        try
+        {
+            WhisperSettingsDocument document = _whisperSettings.ToDocument();
+            document.TranscriberId = WhisperLocalModelDefaults.ProviderId;
+            document.TranscriptionModelId = WhisperLocalModelDefaults.ModelId;
+            document.TranscriptionRuntimeId = WhisperLocalModelDefaults.RuntimeId;
+            WhisperSettingsLoadResult loaded = WhisperSettingsMigrator.Load(document);
+            if (!loaded.IsClean)
+            {
+                WhisperPanel.SetLocalModelStatus(
+                    _whisperSettings,
+                    _whisperModelStatus ?? CreateUncheckedWhisperModelStatus(),
+                    operationRunning: false,
+                    progress: 0,
+                    "The local provider selection did not pass safe settings validation.");
+                return;
+            }
+
+            _whisperSettingsStore?.Save(loaded.Settings);
+            _whisperSettings = loaded.Settings;
+            UpdateWhisperModelView(
+                "Local transcription selected. Model bytes stay on this Windows account.");
+            UpdateWhisperReadiness();
+        }
+        catch (Exception exception) when (IsExpectedWhisperSettingsFailure(exception))
+        {
+            UpdateWhisperModelView(
+                "The local provider selection could not be saved for this Windows account.");
+        }
+    }
+
+    private async void WhisperPanel_ModelActionRequested(
+        object? sender,
+        WhisperModelActionRequestedEventArgs e)
+    {
+        if (e.Action == WhisperModelRequestedAction.Cancel)
+        {
+            _whisperModelCancellation?.Cancel();
+            return;
+        }
+
+        if (_shutdownStarted || !_whisperModelDrained.IsCompleted ||
+            _whisperModelManager is null)
+        {
+            return;
+        }
+
+        _whisperModelCancellation?.Dispose();
+        _whisperModelCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            _whisperRuntimeCancellation.Token);
+        _whisperModelDrained = RunWhisperModelOperationAsync(
+            e.Action,
+            _whisperModelCancellation.Token);
+        await _whisperModelDrained;
+    }
+
+    private async void WhisperPanel_ModelDeleteRequested(object? sender, EventArgs e)
+    {
+        if (_shutdownStarted || !_whisperModelDrained.IsCompleted ||
+            _whisperModelManager is null)
+        {
+            return;
+        }
+
+        MessageBoxResult choice = MessageBox.Show(
+            this,
+            "Delete the local Whisper model?\n\nDictation will stop working until the approximately 547 MiB model is installed and verified again. Personal settings and history are preserved.",
+            "Delete local Whisper model",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+        if (choice != MessageBoxResult.Yes)
+        {
+            return;
+        }
+
+        _whisperModelCancellation?.Dispose();
+        _whisperModelCancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            _whisperRuntimeCancellation.Token);
+        _whisperModelDrained = DeleteWhisperModelAsync(
+            _whisperModelCancellation.Token);
+        await _whisperModelDrained;
+    }
+
+    private async Task RefreshWhisperModelStatusAsync(CancellationToken cancellationToken)
+    {
+        if (_whisperModelManager is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _whisperModelStatus = await _whisperModelManager
+                .GetStatusAsync(cancellationToken)
+                .ConfigureAwait(false);
+            await Dispatcher.InvokeAsync(() =>
+            {
+                UpdateWhisperModelView(DescribeWhisperModelStatus(_whisperModelStatus));
+                UpdateWhisperReadiness();
+            });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // Shutdown or an explicit user cancellation owns the transition.
+        }
+        catch (WhisperModelInstallException exception)
+        {
+            await Dispatcher.InvokeAsync(() => UpdateWhisperModelView(
+                WhisperRedaction.Sanitize(exception.Message, 200)));
+        }
+    }
+
+    private async Task RunWhisperModelOperationAsync(
+        WhisperModelRequestedAction action,
+        CancellationToken cancellationToken)
+    {
+        WindowsWhisperLocalModelManager manager = _whisperModelManager ??
+            throw new InvalidOperationException("The local model manager is unavailable.");
+        Progress<WhisperModelInstallProgress> progress = new(value =>
+        {
+            double receivedMiB = value.ReceivedBytes / (1024d * 1024d);
+            double expectedMiB = value.ExpectedBytes / (1024d * 1024d);
+            WhisperPanel.SetLocalModelStatus(
+                _whisperSettings,
+                _whisperModelStatus ?? CreateUncheckedWhisperModelStatus(),
+                operationRunning: true,
+                progress: value.Fraction,
+                $"Downloading and verifying locally · {receivedMiB:F0} of {expectedMiB:F0} MiB.");
+        });
+        WhisperPanel.SetLocalModelStatus(
+            _whisperSettings,
+            _whisperModelStatus ?? CreateUncheckedWhisperModelStatus(),
+            operationRunning: true,
+            progress: 0,
+            action == WhisperModelRequestedAction.Repair
+                ? "Repairing the exact-owned local model. No transcript or audio is involved."
+                : "Downloading the pinned local model. Closing or cancelling removes its partial file.");
+        try
+        {
+            _whisperModelStatus = action == WhisperModelRequestedAction.Repair
+                ? await manager.RepairAsync(progress, cancellationToken).ConfigureAwait(false)
+                : await manager.InstallAsync(progress, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            _whisperModelStatus = await manager
+                .GetStatusAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        catch (WhisperModelInstallException)
+        {
+            _whisperModelStatus = await manager
+                .GetStatusAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            await Dispatcher.InvokeAsync(() =>
+            {
+                WhisperPanel.SetLocalModelStatus(
+                    _whisperSettings,
+                    _whisperModelStatus ?? CreateUncheckedWhisperModelStatus(),
+                    operationRunning: false,
+                    progress: 0,
+                    DescribeWhisperModelStatus(
+                        _whisperModelStatus ?? CreateUncheckedWhisperModelStatus()));
+                UpdateWhisperReadiness();
+            });
+        }
+    }
+
+    private async Task DeleteWhisperModelAsync(CancellationToken cancellationToken)
+    {
+        WindowsWhisperLocalModelManager manager = _whisperModelManager ??
+            throw new InvalidOperationException("The local model manager is unavailable.");
+        WhisperPanel.SetLocalModelStatus(
+            _whisperSettings,
+            _whisperModelStatus ?? CreateUncheckedWhisperModelStatus(),
+            operationRunning: true,
+            progress: 0,
+            "Removing only the exact-owned local model and recognized partial files.");
+        try
+        {
+            await manager.DeleteAsync(cancellationToken).ConfigureAwait(false);
+            _whisperModelStatus = await manager
+                .GetStatusAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The user or shutdown cancelled before exact-owned deletion completed.
+        }
+        catch (WhisperModelInstallException)
+        {
+            _whisperModelStatus = await manager
+                .GetStatusAsync(CancellationToken.None)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            await Dispatcher.InvokeAsync(() =>
+            {
+                WhisperPanel.SetLocalModelStatus(
+                    _whisperSettings,
+                    _whisperModelStatus ?? CreateUncheckedWhisperModelStatus(),
+                    operationRunning: false,
+                    progress: 0,
+                    DescribeWhisperModelStatus(
+                        _whisperModelStatus ?? CreateUncheckedWhisperModelStatus()));
+                UpdateWhisperReadiness();
+            });
+        }
+    }
+
+    private void UpdateWhisperModelView(string detail) =>
+        WhisperPanel.SetLocalModelStatus(
+            _whisperSettings,
+            _whisperModelStatus ?? CreateUncheckedWhisperModelStatus(),
+            operationRunning: false,
+            progress: 0,
+            detail);
+
+    private static string DescribeWhisperModelStatus(WhisperModelStatus status) =>
+        status.State switch
+        {
+            WhisperModelInstallState.Ready =>
+                "Verified local model ready. Transcription stays on this PC; no cloud endpoint or credential is used.",
+            WhisperModelInstallState.Invalid =>
+                status.FailureReason ?? "The local model failed verification and must be repaired.",
+            WhisperModelInstallState.Faulted =>
+                status.FailureReason ?? "The local model operation failed and can be retried safely.",
+            WhisperModelInstallState.Installing =>
+                "The local model operation is in progress.",
+            _ =>
+                "Not installed. Download begins only when you choose Install."
+        };
+
+    private static WhisperModelStatus CreateUncheckedWhisperModelStatus() => new(
+        WhisperLocalModelDefaults.ProviderId,
+        WhisperLocalModelDefaults.ModelId,
+        WhisperLocalModelDefaults.RuntimeId,
+        WhisperModelInstallState.NotInstalled,
+        ExpectedBytes: 0,
+        InstalledBytes: 0,
+        WhisperModelFailureKind.None,
+        FailureReason: null);
 
     private async void WhisperPanel_FeatureEnabledRequested(
         object? sender,
@@ -868,19 +1137,41 @@ public partial class MainWindow
         bool selectedDeviceAvailable = _whisperSettings.InputDeviceId is { Length: > 0 } id &&
             _whisperDevices.Devices.Any(device =>
                 string.Equals(device.Id, id, StringComparison.Ordinal));
+        bool localTranscriberSelected = string.Equals(
+                _whisperSettings.TranscriberId,
+                WhisperLocalModelDefaults.ProviderId,
+                StringComparison.Ordinal) &&
+            string.Equals(
+                _whisperSettings.TranscriptionModelId,
+                WhisperLocalModelDefaults.ModelId,
+                StringComparison.Ordinal) &&
+            string.Equals(
+                _whisperSettings.TranscriptionRuntimeId,
+                WhisperLocalModelDefaults.RuntimeId,
+                StringComparison.Ordinal);
+        string? modelError = _whisperModelStatus?.State is
+                WhisperModelInstallState.Invalid or WhisperModelInstallState.Faulted
+            ? _whisperModelStatus.FailureReason ??
+              "The local model failed verification and must be repaired."
+            : null;
         WhisperReadinessInputs inputs = new(
             FeatureEnabled: _whisperSettings.Enabled,
             MicrophoneSelected: selectedDeviceAvailable,
             MicrophonePermissionGranted: true,
             ShortcutsRegistered: _whisperShortcutHost?.IsRegistered == true,
             ShortcutRegistrationError: _whisperShortcutError,
-            TranscriberConfigured: false,
+            TranscriberConfigured: localTranscriberSelected,
             TranscriberCredentialAvailable: false,
             TargetInspectionAvailable: OperatingSystem.IsWindows(),
             AutoSendEnabled: _whisperSettings.AutoSendEnabled,
             AutoSendWarningAccepted: _whisperSettings.AutoSendWarningAccepted,
             EnabledAutoSendProfileCount: _whisperSettings.ApplicationProfiles.Count(
-                profile => profile.AutoSendAllowed));
+                profile => profile.AutoSendAllowed),
+            TranscriberCredentialRequired: false,
+            ModelAvailable: _whisperModelStatus?.IsVerified == true,
+            TranscriberRuntimeAvailable:
+                OperatingSystem.IsWindowsVersionAtLeast(10, 0, 22000),
+            ModelInstallationError: modelError);
         WhisperPanel.UpdateReadiness(WhisperCaptureReadiness.Apply(
             inputs,
             _whisperCaptureFailure,
@@ -902,6 +1193,19 @@ public partial class MainWindow
         _whisperCaptureCancellation?.Dispose();
         _whisperCaptureCancellation = null;
         _whisperDeviceRefreshGate.Dispose();
+    }
+
+    private async Task DisposeWhisperModelAsync()
+    {
+        _whisperModelCancellation?.Cancel();
+        _whisperModelCancellation?.Dispose();
+        _whisperModelCancellation = null;
+        WindowsWhisperLocalModelManager? manager =
+            Interlocked.Exchange(ref _whisperModelManager, null);
+        if (manager is not null)
+        {
+            await manager.DisposeAsync().ConfigureAwait(false);
+        }
     }
 
     private async Task DisposeWhisperRuntimeAsync()

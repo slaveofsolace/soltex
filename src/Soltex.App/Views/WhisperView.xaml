@@ -370,6 +370,8 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="10" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="10" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="12" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
@@ -459,8 +461,72 @@
                                       SelectionChanged="InputDevicePicker_SelectionChanged" />
                         </Grid>
                     </Border>
+                    <Border Grid.Row="6" Style="{StaticResource QuietCardStyle}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="7" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="8" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Local transcription" FontWeight="SemiBold" />
+                                    <TextBlock Margin="0,3,12,0"
+                                               Text="Whisper.net CPU · multilingual Turbo Q5 · about 547 MiB"
+                                               Style="{StaticResource MutedTextStyle}" />
+                                </StackPanel>
+                                <Border Grid.Column="1" Style="{StaticResource StatusPillStyle}">
+                                    <TextBlock x:Name="WhisperModelStatePill"
+                                               Text="NOT INSTALLED"
+                                               Foreground="{DynamicResource WarningBrush}"
+                                               FontFamily="{StaticResource MonoFont}"
+                                               FontSize="{StaticResource FontMicro}"
+                                               FontWeight="SemiBold" />
+                                </Border>
+                            </Grid>
+                            <TextBlock x:Name="WhisperModelStatus"
+                                       Grid.Row="2"
+                                       Text="Checking the local model. No download starts automatically."
+                                       Style="{StaticResource MutedTextStyle}"
+                                       AutomationProperties.LiveSetting="Polite"
+                                       TextWrapping="Wrap" />
+                            <ProgressBar x:Name="WhisperModelProgress"
+                                         Grid.Row="3"
+                                         Height="4"
+                                         Maximum="100"
+                                         Style="{StaticResource MetricProgressStyle}"
+                                         Visibility="Collapsed"
+                                         AutomationProperties.Name="Local Whisper model download progress" />
+                            <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button x:Name="WhisperProviderSelectButton"
+                                        Margin="0,0,8,0"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Content="Use local"
+                                        AutomationProperties.Name="Select the local Whisper transcription provider"
+                                        Click="ProviderSelect_Click" />
+                                <Button x:Name="WhisperModelDeleteButton"
+                                        Margin="0,0,8,0"
+                                        Style="{StaticResource SecondaryButton}"
+                                        Content="Delete"
+                                        Visibility="Collapsed"
+                                        AutomationProperties.Name="Delete the installed local Whisper model"
+                                        Click="ModelDelete_Click" />
+                                <Button x:Name="WhisperModelActionButton"
+                                        Style="{StaticResource ActionButton}"
+                                        Content="Install"
+                                        AutomationProperties.Name="Install the local Whisper model"
+                                        Click="ModelAction_Click" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                     <ItemsControl x:Name="WhisperReadinessList"
-                                  Grid.Row="6"
+                                  Grid.Row="8"
                                   ItemTemplate="{StaticResource ReadinessRowTemplate}"
                                   AutomationProperties.Name="Whisper readiness checks"
                                   ScrollViewer.HorizontalScrollBarVisibility="Disabled" />

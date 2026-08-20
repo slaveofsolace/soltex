@@ -22,6 +22,7 @@ public partial class WhisperView : UserControl
     private bool _updatingInputDevices;
     private bool _microphoneTestRunning;
     private bool _featureEnabled;
+    private WhisperModelRequestedAction _modelAction = WhisperModelRequestedAction.Install;
     private bool _updatingPersonalization;
     private string[] _vocabularyTerms = [];
     private WhisperSnippet[] _snippets = [];
@@ -84,6 +85,13 @@ public partial class WhisperView : UserControl
 
     public event EventHandler<WhisperFeatureEnabledRequestedEventArgs>?
         FeatureEnabledRequested;
+
+    public event EventHandler? LocalProviderSelectRequested;
+
+    public event EventHandler<WhisperModelActionRequestedEventArgs>?
+        ModelActionRequested;
+
+    public event EventHandler? ModelDeleteRequested;
 
     public event EventHandler<WhisperPersonalizationRequestedEventArgs>?
         PersonalizationRequested;
@@ -195,10 +203,95 @@ public partial class WhisperView : UserControl
                     ? "Turn Whisper off"
                     : "Turn Whisper on");
         WhisperShortcutStatus.Text = shortcutsRegistered
-            ? "Validated global shortcuts are registered. Until a provider is configured, a shortcut opens a clear setup message instead of recording."
+            ? "Validated global shortcuts are registered. Dictation starts only when every required Setup check is ready."
             : enabled
                 ? "Whisper is on, but Windows shortcuts are not registered. Review the readiness error above."
                 : "Whisper is off, so no global shortcut is registered.";
+    }
+
+    public void SetLocalModelStatus(
+        WhisperSettings settings,
+        WhisperModelStatus status,
+        bool operationRunning,
+        double progress,
+        string detail)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        ArgumentNullException.ThrowIfNull(status);
+        ArgumentException.ThrowIfNullOrWhiteSpace(detail);
+
+        bool localSelected = string.Equals(
+                settings.TranscriberId,
+                WhisperLocalModelDefaults.ProviderId,
+                StringComparison.Ordinal) &&
+            string.Equals(
+                settings.TranscriptionModelId,
+                WhisperLocalModelDefaults.ModelId,
+                StringComparison.Ordinal) &&
+            string.Equals(
+                settings.TranscriptionRuntimeId,
+                WhisperLocalModelDefaults.RuntimeId,
+                StringComparison.Ordinal);
+        WhisperProviderSelectButton.Content = localSelected ? "Selected" : "Use local";
+        WhisperProviderSelectButton.IsEnabled = !localSelected && !operationRunning;
+        AutomationProperties.SetName(
+            WhisperProviderSelectButton,
+            localSelected
+                ? "Local Whisper transcription provider selected"
+                : "Select the local Whisper transcription provider");
+
+        WhisperModelStatus.Text = detail;
+        WhisperModelProgress.Visibility = operationRunning
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        WhisperModelProgress.Value = Math.Clamp(progress, 0, 1) * 100;
+        WhisperModelDeleteButton.Visibility = status.State is
+                WhisperModelInstallState.Ready or WhisperModelInstallState.Invalid
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        WhisperModelDeleteButton.IsEnabled = !operationRunning;
+
+        Brush stateBrush;
+        string stateLabel;
+        if (operationRunning)
+        {
+            stateLabel = "INSTALLING";
+            stateBrush = ThemeBrush("AccentBrush");
+            _modelAction = WhisperModelRequestedAction.Cancel;
+            WhisperModelActionButton.Content = "Cancel";
+            AutomationProperties.SetName(
+                WhisperModelActionButton,
+                "Cancel the local Whisper model operation");
+        }
+        else
+        {
+            (stateLabel, stateBrush, _modelAction) = status.State switch
+            {
+                WhisperModelInstallState.Ready => (
+                    "VERIFIED",
+                    ThemeBrush("SignalBrush"),
+                    WhisperModelRequestedAction.Repair),
+                WhisperModelInstallState.Invalid or WhisperModelInstallState.Faulted => (
+                    "REPAIR",
+                    ThemeBrush("DangerBrush"),
+                    WhisperModelRequestedAction.Repair),
+                _ => (
+                    "NOT INSTALLED",
+                    ThemeBrush("WarningBrush"),
+                    WhisperModelRequestedAction.Install)
+            };
+            WhisperModelActionButton.Content =
+                _modelAction == WhisperModelRequestedAction.Install ? "Install" : "Repair";
+            AutomationProperties.SetName(
+                WhisperModelActionButton,
+                _modelAction == WhisperModelRequestedAction.Install
+                    ? "Install the local Whisper model"
+                    : "Repair the local Whisper model");
+        }
+
+        WhisperModelStatePill.Text = stateLabel;
+        WhisperModelStatePill.Foreground = stateBrush;
+        WhisperModelActionButton.IsEnabled = true;
     }
 
     public void SetPersonalization(WhisperSettings settings, string detail)
@@ -570,6 +663,17 @@ public partial class WhisperView : UserControl
         FeatureEnabledRequested?.Invoke(
             this,
             new WhisperFeatureEnabledRequestedEventArgs(!_featureEnabled));
+
+    private void ProviderSelect_Click(object sender, RoutedEventArgs e) =>
+        LocalProviderSelectRequested?.Invoke(this, EventArgs.Empty);
+
+    private void ModelAction_Click(object sender, RoutedEventArgs e) =>
+        ModelActionRequested?.Invoke(
+            this,
+            new WhisperModelActionRequestedEventArgs(_modelAction));
+
+    private void ModelDelete_Click(object sender, RoutedEventArgs e) =>
+        ModelDeleteRequested?.Invoke(this, EventArgs.Empty);
 
     private void WhisperSetupTab_Click(object sender, RoutedEventArgs e) =>
         SelectTab(WhisperSetupTab, WhisperSetupPanel);
@@ -1350,6 +1454,19 @@ public sealed class WhisperInputDeviceRequestedEventArgs : EventArgs
 public sealed class WhisperFeatureEnabledRequestedEventArgs(bool enabled) : EventArgs
 {
     public bool Enabled { get; } = enabled;
+}
+
+public enum WhisperModelRequestedAction
+{
+    Install,
+    Repair,
+    Cancel
+}
+
+public sealed class WhisperModelActionRequestedEventArgs(
+    WhisperModelRequestedAction action) : EventArgs
+{
+    public WhisperModelRequestedAction Action { get; } = action;
 }
 
 public sealed class WhisperPersonalizationRequestedEventArgs : EventArgs

@@ -72,6 +72,7 @@ internal static class Program
             ("Whisper device selection persists and oversized state fails safe", WhisperSettingsRoundTripAndRecovery),
             ("Whisper capture controls expose only working capture actions", WhisperCaptureControlsAreHonest),
             ("Whisper runtime toggle is explicit and reversible", WhisperRuntimeToggleIsExplicit),
+            ("Whisper local provider and model actions are explicit", WhisperLocalModelControlsAreExplicit),
             ("Whisper personalization controls persist explicit choices", WhisperPersonalizationControlsAreWorking),
             ("Whisper library editors persist bounded rules", WhisperLibraryControlsAreWorking),
             ("Whisper history supports per-entry and clear deletion", WhisperHistoryControlsAreWorking),
@@ -1239,6 +1240,79 @@ internal static class Program
         True(!view.WhisperFeatureToggleButton.IsEnabled &&
              (string)view.WhisperFeatureToggleButton.Content == "Applying",
             "The runtime control remained operable while a lifecycle change was in flight.");
+    }
+
+    private static void WhisperLocalModelControlsAreExplicit()
+    {
+        WhisperView view = new();
+        bool providerSelected = false;
+        bool deleteRequested = false;
+        WhisperModelRequestedAction? requestedAction = null;
+        view.LocalProviderSelectRequested += (_, _) => providerSelected = true;
+        view.ModelActionRequested += (_, args) => requestedAction = args.Action;
+        view.ModelDeleteRequested += (_, _) => deleteRequested = true;
+
+        WhisperModelStatus missing = new(
+            WhisperLocalModelDefaults.ProviderId,
+            WhisperLocalModelDefaults.ModelId,
+            WhisperLocalModelDefaults.RuntimeId,
+            WhisperModelInstallState.NotInstalled,
+            ExpectedBytes: 574_041_195,
+            InstalledBytes: 0,
+            WhisperModelFailureKind.None,
+            FailureReason: null);
+        view.SetLocalModelStatus(
+            WhisperSettings.CreateDefault(),
+            missing,
+            operationRunning: false,
+            progress: 0,
+            "No download starts automatically.");
+        True((string)view.WhisperProviderSelectButton.Content == "Use local" &&
+             (string)view.WhisperModelActionButton.Content == "Install" &&
+             view.WhisperModelDeleteButton.Visibility == Visibility.Collapsed,
+            "The missing-model state did not expose only explicit select/install actions.");
+        view.WhisperProviderSelectButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        view.WhisperModelActionButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(providerSelected && requestedAction == WhisperModelRequestedAction.Install,
+            "The local provider or explicit install action was not raised.");
+
+        WhisperSettingsDocument document = WhisperSettings.CreateDefault().ToDocument();
+        document.TranscriberId = WhisperLocalModelDefaults.ProviderId;
+        document.TranscriptionModelId = WhisperLocalModelDefaults.ModelId;
+        document.TranscriptionRuntimeId = WhisperLocalModelDefaults.RuntimeId;
+        WhisperSettings local = WhisperSettingsMigrator.Load(document).Settings;
+        WhisperModelStatus ready = missing with
+        {
+            State = WhisperModelInstallState.Ready,
+            InstalledBytes = missing.ExpectedBytes
+        };
+        requestedAction = null;
+        view.SetLocalModelStatus(
+            local,
+            ready,
+            operationRunning: false,
+            progress: 1,
+            "Verified local model ready.");
+        True(!view.WhisperProviderSelectButton.IsEnabled &&
+             (string)view.WhisperProviderSelectButton.Content == "Selected" &&
+             view.WhisperModelStatePill.Text == "VERIFIED" &&
+             view.WhisperModelDeleteButton.Visibility == Visibility.Visible &&
+             (string)view.WhisperModelActionButton.Content == "Repair",
+            "The verified local state did not expose repair and exact-owned deletion.");
+        view.WhisperModelDeleteButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(deleteRequested, "The exact-owned model deletion request was not raised.");
+
+        view.SetLocalModelStatus(
+            local,
+            ready,
+            operationRunning: true,
+            progress: 0.5,
+            "Downloading and verifying locally.");
+        view.WhisperModelActionButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requestedAction == WhisperModelRequestedAction.Cancel &&
+             view.WhisperModelProgress.Visibility == Visibility.Visible &&
+             Math.Abs(view.WhisperModelProgress.Value - 50) < 0.01,
+            "The in-flight model operation did not expose one bounded cancel/progress state.");
     }
 
     private static void WhisperPersonalizationControlsAreWorking()

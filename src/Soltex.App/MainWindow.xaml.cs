@@ -211,6 +211,8 @@ public partial class MainWindow : Window
             _whisperRuntimeCancellation.Token);
         _whisperHistoryDrained = LoadWhisperHistoryAsync(
             _whisperRuntimeCancellation.Token);
+        _whisperModelDrained = RefreshWhisperModelStatusAsync(
+            _whisperRuntimeCancellation.Token);
 
         _importMonitor = new ImportFolderMonitor(
             _runtime.ImportsPath,
@@ -227,7 +229,8 @@ public partial class MainWindow : Window
             applicationRefresh,
             whisperCaptureRefresh,
             _whisperShortcutDrained,
-            _whisperHistoryDrained);
+            _whisperHistoryDrained,
+            _whisperModelDrained);
         if (_shutdownStarted)
         {
             _startupCompleted.TrySetCanceled();
@@ -268,6 +271,7 @@ public partial class MainWindow : Window
         _audioMixCancellation?.Cancel();
         _benchmarkCancellation?.Cancel();
         _whisperCaptureCancellation?.Cancel();
+        _whisperModelCancellation?.Cancel();
         _whisperRuntimeCancellation.Cancel();
         _whisperCapture?.CompleteCurrentCapture();
         await _telemetryLoop.StopAsync();
@@ -277,6 +281,7 @@ public partial class MainWindow : Window
             _audioMixOperationDrained,
             _benchmarkOperationDrained,
             _whisperCaptureDrained,
+            _whisperModelDrained,
             _whisperShortcutDrained,
             _whisperHistoryDrained,
             _startupTask);
@@ -304,6 +309,7 @@ public partial class MainWindow : Window
 
         await DisposeWhisperRuntimeAsync();
         await DisposeWhisperCaptureAsync();
+        await DisposeWhisperModelAsync();
         await DisposeWhisperHistoryAsync();
 
         _updateJournal.Dispose();
