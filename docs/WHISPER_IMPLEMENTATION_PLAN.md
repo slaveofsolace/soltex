@@ -58,14 +58,15 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 | Provider secret boundary | Provider metadata is bounded and content-free; one provider-scoped credential is protected with current-user DPAPI inside the authenticated state envelope, acquired only through an owned zeroing lease, and rotated by removing prior Soltex generations before replacement |
 | Local model ownership | `IWhisperModelManager` exposes path-free state, progress, install, repair, verification, and exact deletion. The Windows adapter pins Turbo Q5 to upstream revision `98aa99a0a9db05ae2342309f5096248665f7cba3`, exact length 574,041,195 bytes, and LFS SHA-256 `394221709cd5ad1f40c46e6031ca61bce88931e6e088c188294c6d5a55ffa7e2`; downloads happen only after an explicit install/repair call, stream to one private bounded temporary artifact, and promote atomically after verification |
 | Local provider settings | Settings version 4 carries provider, model, and runtime identity. `local-whisper` + `large-v3-turbo-q5_0` + `cpu` round-trips; the version-3 local-provider shape migrates to that tuple, while unsupported or incomplete identities repair to the disabled state |
+| Local transcription adapter | `WindowsWhisperLocalTranscriber` implements the unchanged provider-neutral interface over Whisper.net 1.9.1 and its CPU runtime. It holds a verified non-delete-sharing model lease through eager native load, projects owned 16 kHz mono PCM16 through a 44-byte no-copy WAVE header, passes validated language and bounded vocabulary hints, serializes one lazy native runtime, bounds output, supports cancellation/unload, clears owned capture buffers through the existing clip lifetime, and emits content-free failure categories only |
 
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, Personalize, Library, Scratchpad, History, and Privacy tabs, and the floating listening
 surface — render this core.
 They are honest about capability: the navigation entry remains marked `SCAFFOLD`
-while a real provider and shipped capture-to-transcription-to-delivery session wiring
-are unavailable. Validated shortcuts can now be enabled and removed from the shipped
-page; without a provider they show one explicit setup message instead of recording or
+while shipped capture-to-transcription-to-delivery session wiring and provider/model
+controls are unavailable. Validated shortcuts can now be enabled and removed from the shipped
+page; without shipped provider wiring they show one explicit setup message instead of recording or
 silently doing nothing. The remaining Windows adapters are not yet connected to a
 complete shipped session, so the page does not claim it is ready. Capture controls
 are enabled only when a selected device exists.
@@ -75,9 +76,9 @@ are enabled only when a selected device exists.
 Nothing below exists yet. Any claim that it works is false until runtime evidence
 from an owner-controlled Windows host says otherwise.
 
-1. The real local `IWhisperTranscriber`, its Whisper.net CPU runtime, and shipped
-   provider/model controls. Model ownership and the safe local settings tuple are
-   implemented, but the app does not yet download, load, or transcribe with it.
+1. Shipped provider/model install, repair, delete, and status controls. The real local
+   transcriber and CPU adapter are implemented behind the unchanged core interface,
+   but the app does not yet instantiate them as a shipped session.
 2. Instantiation of the tested provider-neutral session runner with a real provider,
    followed by dispatch from registered shortcut intents (startup registration,
    cancellation, feedback, and shutdown unregistration are implemented).
@@ -150,7 +151,7 @@ removes the exact model and recognized owned partials, preserving unrelated stat
 
 The pinned digest is an integrity expectation derived from the upstream LFS object
 at that revision. It is not described as independent publisher authenticity proof.
-The 50-case Windows adapter suite covers normal install, declared and streamed
+The 57-case Windows adapter suite covers normal install, declared and streamed
 oversize, truncation, digest mismatch, cancellation cleanup, concurrent rejection,
 repair, exact deletion, interrupted partial cleanup, and post-install change
 detection with small benign fixtures. The 547 MiB production model was not
@@ -169,11 +170,35 @@ deletion removes only the provider's exact state artifacts and preserves the sha
 authenticated-state key. Bounds, round-trip, no-plaintext state, corruption,
 cancellation, rotation, deletion, and lease clearing have deterministic coverage.
 
-Still required: add Whisper.net 1.9.1 and its CPU runtime, implement
-`IWhisperTranscriber` alongside the deterministic double, wire model install/delete
-and provider status into the shipped setup page, and obtain owner-controlled live
-proof. This local provider has no credential or cloud endpoint and uploads no audio
-or transcript.
+`WindowsWhisperLocalTranscriber` now implements `IWhisperTranscriber` using
+Whisper.net 1.9.1 with `Whisper.net.Runtime` forced to the CPU backend. The adapter
+rejects non-16 kHz mono PCM16 and fewer than 201 samples before native entry, then
+exposes the existing owned capture memory through a read-only RIFF/WAVE stream with
+only a 44-byte header allocation. It never clones the full audio buffer. Language is
+validated and reduced from an owner setting such as `en-US` to the provider language
+identifier; personal vocabulary is passed as a bounded initial prompt and is never
+used to rewrite recognized words.
+
+Model verification and eager native loading overlap under one non-delete-sharing
+read lease. Native access is serialized, one runtime is loaded lazily, and a
+processor is reused only while its language/prompt configuration matches. The
+Whisper.net optional managed string pool is explicitly disabled. Empty or oversized
+output fails, runtime faults unload the failed native runtime before a later retry,
+explicit unload permits model repair/deletion, and cancellation after runtime
+creation disposes the newly created runtime before returning. Diagnostics contain
+only a duration bucket, fixed provider/model/runtime identities, result category, and
+fixed sanitized failure category.
+
+Seven new benign adapter tests prove the model lease, no-copy WAVE projection,
+language and vocabulary propagation, lazy reuse, runtime-fault recovery, content-free
+failures, cancellation classification, short/empty/oversized rejection, explicit
+unload/reload, and owned PCM clearing. Together with the existing model-manager and
+Windows coverage, the suite reports 57/57. The production model was not downloaded
+or executed: there is no live accuracy, latency, working-set, readiness, or supported-
+hardware claim. Still required: wire model install/delete/status and this adapter
+into the shipped setup/session surfaces, then obtain owner-controlled live proof.
+This local provider has no credential or cloud endpoint and uploads no audio or
+transcript.
 
 A provider returns transcription and optional polish metadata only. It never issues
 clicks, keypresses, application commands, or submission decisions. The deterministic

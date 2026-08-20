@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Soltex.Whisper;
@@ -61,7 +63,14 @@ List<(string Name, Func<Task> Run)> tests =
     ("local model installation rejects a concurrent writer", LocalModelConcurrentInstall),
     ("local model repair replaces an invalid owned artifact", LocalModelRepair),
     ("local model deletion preserves unrelated state", LocalModelOwnedDeletion),
-    ("local model installation cleans recognized interrupted downloads", LocalModelInterruptedCleanup)
+    ("local model installation cleans recognized interrupted downloads", LocalModelInterruptedCleanup),
+    ("a verified model lease blocks replacement while native loading begins", LocalModelVerifiedLease),
+    ("PCM audio is projected as bounded WAVE without a second audio buffer", PcmWaveProjection),
+    ("the local transcriber reuses one runtime and passes language and vocabulary hints", LocalTranscriberSuccess),
+    ("local runtime faults are sanitized, content-free, and recoverable", LocalTranscriberFailureRecovery),
+    ("local transcription cancellation is honored and classified", LocalTranscriberCancellation),
+    ("local transcription rejects short audio, empty text, and oversized output", LocalTranscriberBounds),
+    ("explicit local runtime unload releases model resources and reloads lazily", LocalTranscriberUnload)
 ];
 
 if (string.Equals(
@@ -1698,6 +1707,264 @@ static async Task LocalModelInterruptedCleanup()
     }
 }
 
+static async Task LocalModelVerifiedLease()
+{
+    byte[] model = Enumerable.Range(0, 1024).Select(index => (byte)(index % 211)).ToArray();
+    WhisperLocalModelArtifact artifact = TestModelArtifact(model);
+    using HttpClient client = new(new ScriptedModelHttpHandler(
+        (_, _) => Task.FromResult(ModelResponse(model))));
+    string root = CreateModelRoot();
+    try
+    {
+        await using WindowsWhisperLocalModelManager manager = new(root, client, artifact);
+        True((await manager.InstallAsync(null, CancellationToken.None)).IsVerified);
+        IWhisperLocalModelSource source = manager;
+        await using (WhisperVerifiedModelLease lease =
+                     await source.OpenVerifiedAsync(CancellationToken.None))
+        {
+            Equal(ModelPath(root, artifact), lease.ModelPath);
+            Throws<IOException>(() => File.WriteAllBytes(lease.ModelPath, model));
+        }
+
+        File.WriteAllBytes(ModelPath(root, artifact), model);
+        True((await manager.GetStatusAsync(CancellationToken.None)).IsVerified);
+    }
+    finally
+    {
+        DeleteModelRoot(root);
+        CryptographicOperations.ZeroMemory(model);
+    }
+}
+
+static Task PcmWaveProjection()
+{
+    byte[] pcm = Enumerable.Range(0, 640).Select(index => (byte)(index % 251)).ToArray();
+    using WhisperPcmWaveStream stream = new(pcm, 16_000, 1);
+    pcm[0] = 0x7D;
+    byte[] wave = new byte[checked((int)stream.Length)];
+    stream.ReadExactly(wave);
+
+    Equal("RIFF", System.Text.Encoding.ASCII.GetString(wave, 0, 4));
+    Equal("WAVE", System.Text.Encoding.ASCII.GetString(wave, 8, 4));
+    Equal("fmt ", System.Text.Encoding.ASCII.GetString(wave, 12, 4));
+    Equal((ushort)1, BinaryPrimitives.ReadUInt16LittleEndian(wave.AsSpan(20, 2)));
+    Equal((ushort)1, BinaryPrimitives.ReadUInt16LittleEndian(wave.AsSpan(22, 2)));
+    Equal(16_000u, BinaryPrimitives.ReadUInt32LittleEndian(wave.AsSpan(24, 4)));
+    Equal((ushort)16, BinaryPrimitives.ReadUInt16LittleEndian(wave.AsSpan(34, 2)));
+    Equal("data", System.Text.Encoding.ASCII.GetString(wave, 36, 4));
+    Equal((uint)pcm.Length, BinaryPrimitives.ReadUInt32LittleEndian(wave.AsSpan(40, 4)));
+    True(wave.AsSpan(WhisperPcmWaveStream.HeaderBytes).SequenceEqual(pcm));
+    Equal((byte)0x7D, wave[WhisperPcmWaveStream.HeaderBytes]);
+    return Task.CompletedTask;
+}
+
+static async Task LocalTranscriberSuccess()
+{
+    await using TestLocalModelSource model = new();
+    ScriptedLocalRuntime runtime = new(
+        LocalRuntimeScripts.Segments(" hello", " world "),
+        LocalRuntimeScripts.Segments("second"));
+    ScriptedLocalRuntimeFactory factory = new(runtime);
+    await using WindowsWhisperLocalTranscriber transcriber = new(model, factory);
+    byte[] owned = CreateTranscriberPcm();
+    using WhisperAudioClip clip = WhisperAudioClip.CreateOwned(
+        owned,
+        16_000,
+        1,
+        TimeSpan.FromMilliseconds(20));
+    WhisperTranscriptionContext context = new(
+        WhisperCaptureMode.PushToTalk,
+        "en-US",
+        "notepad",
+        "Message",
+        ["Soltex", "Aether Foundry"]);
+
+    Equal("hello world", await transcriber.TranscribeAsync(
+        clip,
+        context,
+        CancellationToken.None));
+    Equal("second", await transcriber.TranscribeAsync(
+        clip,
+        context,
+        CancellationToken.None));
+    Equal(1, factory.CreateCount);
+    Equal(1, model.OpenCount);
+    Equal(2, runtime.ObservedOptions.Count);
+    Equal("en", runtime.ObservedOptions[0].Language);
+    True(runtime.ObservedOptions[0].Prompt?.Contains("Soltex", StringComparison.Ordinal) == true);
+    True(runtime.ObservedOptions[0].Prompt?.Contains("Aether Foundry", StringComparison.Ordinal) == true);
+    True(runtime.ObservedWaveFiles.All(wave =>
+        wave.AsSpan(WhisperPcmWaveStream.HeaderBytes).SequenceEqual(owned)));
+    True(transcriber.CreateDiagnosticSnapshot().All(item =>
+        item.Result == WhisperLocalTranscriptionResultCategory.Succeeded &&
+        item.Failure == WhisperLocalTranscriptionFailureKind.None));
+}
+
+static async Task LocalTranscriberFailureRecovery()
+{
+    const string privateText = "owner-secret transcript C:\\private\\note.txt";
+    await using TestLocalModelSource model = new();
+    ScriptedLocalRuntime failing = new(LocalRuntimeScripts.Fault(privateText));
+    ScriptedLocalRuntime recovered = new(LocalRuntimeScripts.Segments("recovered"));
+    ScriptedLocalRuntimeFactory factory = new(failing, recovered);
+    await using WindowsWhisperLocalTranscriber transcriber = new(model, factory);
+    using WhisperAudioClip clip = CreateTranscriberClip();
+
+    WhisperLocalTranscriptionException failure =
+        await ThrowsValueAsync<WhisperLocalTranscriptionException>(async () =>
+            await transcriber.TranscribeAsync(
+                clip,
+                DefaultTranscriptionContext(),
+                CancellationToken.None));
+    Equal(WhisperLocalTranscriptionFailureKind.RuntimeFault, failure.Kind);
+    False(failure.ToString().Contains("owner-secret", StringComparison.Ordinal));
+    False(failure.ToString().Contains("private", StringComparison.Ordinal));
+    string evidence = string.Join(
+        "\n",
+        transcriber.CreateDiagnosticSnapshot().Select(item => item.ToString()));
+    False(evidence.Contains("owner-secret", StringComparison.Ordinal));
+    False(evidence.Contains("private", StringComparison.Ordinal));
+
+    Equal("recovered", await transcriber.TranscribeAsync(
+        clip,
+        DefaultTranscriptionContext(),
+        CancellationToken.None));
+    Equal(2, factory.CreateCount);
+    True(failing.IsDisposed);
+}
+
+static async Task LocalTranscriberCancellation()
+{
+    await using TestLocalModelSource model = new();
+    TaskCompletionSource started = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    ScriptedLocalRuntime runtime = new(LocalRuntimeScripts.Block(started));
+    ScriptedLocalRuntimeFactory factory = new(runtime);
+    await using WindowsWhisperLocalTranscriber transcriber = new(model, factory);
+    using WhisperAudioClip clip = CreateTranscriberClip();
+    using CancellationTokenSource cancellation = new();
+
+    Task<string> work = transcriber.TranscribeAsync(
+        clip,
+        DefaultTranscriptionContext(),
+        cancellation.Token).AsTask();
+    await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+    cancellation.Cancel();
+    await ThrowsAsync<OperationCanceledException>(async () => await work);
+    Equal(
+        WhisperLocalTranscriptionResultCategory.Cancelled,
+        transcriber.CreateDiagnosticSnapshot()[^1].Result);
+}
+
+static async Task LocalTranscriberBounds()
+{
+    await using TestLocalModelSource model = new();
+    ScriptedLocalRuntimeFactory shortAudioFactory = new(
+        new ScriptedLocalRuntime(LocalRuntimeScripts.Segments("unused")));
+    await using (WindowsWhisperLocalTranscriber transcriber =
+                 new(model, shortAudioFactory))
+    {
+        using WhisperAudioClip shortClip = WhisperAudioClip.CreateOwned(
+            new byte[WindowsWhisperLocalTranscriber.MinimumPcmSampleCount * sizeof(short) - 2],
+            16_000,
+            1,
+            TimeSpan.FromMilliseconds(10));
+        WhisperLocalTranscriptionException invalid =
+            await ThrowsValueAsync<WhisperLocalTranscriptionException>(async () =>
+                await transcriber.TranscribeAsync(
+                    shortClip,
+                    DefaultTranscriptionContext(),
+                    CancellationToken.None));
+        Equal(WhisperLocalTranscriptionFailureKind.InvalidAudio, invalid.Kind);
+        Equal(0, shortAudioFactory.CreateCount);
+    }
+
+    ScriptedLocalRuntimeFactory resultFactory = new(
+        new ScriptedLocalRuntime(LocalRuntimeScripts.Segments("   ")),
+        new ScriptedLocalRuntime(LocalRuntimeScripts.Segments(
+            new string('a', WhisperLimits.MaximumTranscriptCharacters),
+            "b")));
+    await using WindowsWhisperLocalTranscriber bounded = new(model, resultFactory);
+    using WhisperAudioClip clip = CreateTranscriberClip();
+    WhisperLocalTranscriptionException empty =
+        await ThrowsValueAsync<WhisperLocalTranscriptionException>(async () =>
+            await bounded.TranscribeAsync(
+                clip,
+                DefaultTranscriptionContext(),
+                CancellationToken.None));
+    Equal(WhisperLocalTranscriptionFailureKind.EmptyResult, empty.Kind);
+    await bounded.UnloadAsync();
+    WhisperLocalTranscriptionException oversized =
+        await ThrowsValueAsync<WhisperLocalTranscriptionException>(async () =>
+            await bounded.TranscribeAsync(
+                clip,
+                DefaultTranscriptionContext(),
+                CancellationToken.None));
+    Equal(WhisperLocalTranscriptionFailureKind.OutputTooLarge, oversized.Kind);
+}
+
+static async Task LocalTranscriberUnload()
+{
+    await using TestLocalModelSource model = new();
+    ScriptedLocalRuntime first = new(LocalRuntimeScripts.Segments("first"));
+    ScriptedLocalRuntime second = new(LocalRuntimeScripts.Segments("second"));
+    ScriptedLocalRuntimeFactory factory = new(first, second);
+    await using WindowsWhisperLocalTranscriber transcriber = new(model, factory);
+    byte[] owned = CreateTranscriberPcm();
+    WhisperAudioClip clip = WhisperAudioClip.CreateOwned(
+        owned,
+        16_000,
+        1,
+        TimeSpan.FromMilliseconds(20));
+    try
+    {
+        Equal("first", await transcriber.TranscribeAsync(
+            clip,
+            DefaultTranscriptionContext(),
+            CancellationToken.None));
+        await transcriber.UnloadAsync();
+        True(first.IsDisposed);
+        Equal("second", await transcriber.TranscribeAsync(
+            clip,
+            DefaultTranscriptionContext(),
+            CancellationToken.None));
+        Equal(2, factory.CreateCount);
+    }
+    finally
+    {
+        clip.Dispose();
+    }
+
+    True(owned.All(value => value == 0));
+}
+
+static WhisperAudioClip CreateTranscriberClip()
+{
+    return WhisperAudioClip.CreateOwned(
+        CreateTranscriberPcm(),
+        16_000,
+        1,
+        TimeSpan.FromMilliseconds(20));
+}
+
+static byte[] CreateTranscriberPcm()
+{
+    byte[] pcm = new byte[640];
+    for (int index = 0; index < pcm.Length; index += sizeof(short))
+    {
+        pcm[index] = (byte)(index % 251);
+        pcm[index + 1] = 0x20;
+    }
+
+    return pcm;
+}
+
+static WhisperTranscriptionContext DefaultTranscriptionContext() => new(
+    Mode: WhisperCaptureMode.PushToTalk,
+    PreferredLanguage: null,
+    ProcessName: "notepad",
+    StyleName: "Message",
+    DictionaryTerms: Array.Empty<string>());
+
 static WhisperLocalModelArtifact TestModelArtifact(byte[] model)
 {
     string sha256 = Convert.ToHexString(SHA256.HashData(model)).ToLowerInvariant();
@@ -1836,6 +2103,208 @@ static void Equal<T>(T expected, T actual)
     if (!EqualityComparer<T>.Default.Equals(expected, actual))
     {
         throw new InvalidOperationException($"Expected '{expected}', got '{actual}'.");
+    }
+}
+
+internal sealed class TestLocalModelSource : IWhisperLocalModelSource, IAsyncDisposable
+{
+    private readonly string _root;
+    private readonly string _modelPath;
+    private int _openCount;
+    private bool _disposed;
+
+    internal TestLocalModelSource()
+    {
+        string parent = Path.Combine(
+            Path.GetTempPath(),
+            "Soltex.Whisper.LocalTranscriber.Tests");
+        _root = Path.Combine(parent, Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(_root);
+        _modelPath = Path.Combine(_root, "verified-test-model.bin");
+        File.WriteAllBytes(_modelPath, [0x53, 0x4F, 0x4C, 0x54, 0x45, 0x58]);
+    }
+
+    internal int OpenCount => Volatile.Read(ref _openCount);
+
+    public ValueTask<WhisperVerifiedModelLease> OpenVerifiedAsync(
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        FileStream ownershipHandle = new(
+            _modelPath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            bufferSize: 4_096,
+            FileOptions.Asynchronous | FileOptions.SequentialScan);
+        try
+        {
+            WindowsWhisperFileIdentity identity =
+                WindowsWhisperFileIdentity.From(ownershipHandle.SafeFileHandle);
+            _ = Interlocked.Increment(ref _openCount);
+            return ValueTask.FromResult(
+                new WhisperVerifiedModelLease(_modelPath, ownershipHandle, identity));
+        }
+        catch
+        {
+            ownershipHandle.Dispose();
+            throw;
+        }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        if (_disposed)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        _disposed = true;
+        string fullRoot = Path.GetFullPath(_root)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        string expectedParent = Path.GetFullPath(Path.Combine(
+            Path.GetTempPath(),
+            "Soltex.Whisper.LocalTranscriber.Tests"))
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        if (!fullRoot.StartsWith(
+                expectedParent + Path.DirectorySeparatorChar,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("The local-transcriber test root escaped.");
+        }
+
+        if (Directory.Exists(fullRoot))
+        {
+            Directory.Delete(fullRoot, recursive: true);
+        }
+
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
+    }
+}
+
+internal delegate IAsyncEnumerable<string> LocalRuntimeScript(
+    CancellationToken cancellationToken);
+
+internal sealed class ScriptedLocalRuntimeFactory : IWhisperLocalRuntimeFactory
+{
+    private readonly ConcurrentQueue<IWhisperLocalRuntime> _runtimes;
+    private int _createCount;
+
+    internal ScriptedLocalRuntimeFactory(params IWhisperLocalRuntime[] runtimes)
+    {
+        _runtimes = new ConcurrentQueue<IWhisperLocalRuntime>(runtimes);
+    }
+
+    internal int CreateCount => Volatile.Read(ref _createCount);
+
+    public ValueTask<IWhisperLocalRuntime> CreateAsync(
+        WhisperVerifiedModelLease model,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!_runtimes.TryDequeue(out IWhisperLocalRuntime? runtime))
+        {
+            throw new InvalidOperationException("No scripted local runtime remains.");
+        }
+
+        _ = Interlocked.Increment(ref _createCount);
+        return ValueTask.FromResult(runtime);
+    }
+}
+
+internal sealed class ScriptedLocalRuntime : IWhisperLocalRuntime
+{
+    private readonly ConcurrentQueue<LocalRuntimeScript> _scripts;
+
+    internal ScriptedLocalRuntime(params LocalRuntimeScript[] scripts)
+    {
+        _scripts = new ConcurrentQueue<LocalRuntimeScript>(scripts);
+    }
+
+    internal List<WhisperLocalRuntimeOptions> ObservedOptions { get; } = [];
+
+    internal List<byte[]> ObservedWaveFiles { get; } = [];
+
+    internal bool IsDisposed { get; private set; }
+
+    public async IAsyncEnumerable<string> TranscribeAsync(
+        Stream waveStream,
+        WhisperLocalRuntimeOptions options,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(IsDisposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!_scripts.TryDequeue(out LocalRuntimeScript? script))
+        {
+            throw new InvalidOperationException("No scripted transcription remains.");
+        }
+
+        using MemoryStream captured = new();
+        await waveStream.CopyToAsync(captured, cancellationToken).ConfigureAwait(false);
+        ObservedWaveFiles.Add(captured.ToArray());
+        ObservedOptions.Add(options);
+
+        await foreach (string segment in script(cancellationToken)
+                           .WithCancellation(cancellationToken)
+                           .ConfigureAwait(false))
+        {
+            yield return segment;
+        }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        IsDisposed = true;
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
+    }
+}
+
+internal static class LocalRuntimeScripts
+{
+    internal static LocalRuntimeScript Segments(params string[] segments) =>
+        cancellationToken => YieldSegments(segments, cancellationToken);
+
+    internal static LocalRuntimeScript Fault(string message) =>
+        cancellationToken => ThrowFailure(message, cancellationToken);
+
+    internal static LocalRuntimeScript Block(TaskCompletionSource started) =>
+        cancellationToken => WaitForCancellation(started, cancellationToken);
+
+    private static async IAsyncEnumerable<string> YieldSegments(
+        IReadOnlyList<string> segments,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        foreach (string segment in segments)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await Task.Yield();
+            yield return segment;
+        }
+    }
+
+    private static async IAsyncEnumerable<string> ThrowFailure(
+        string message,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await Task.Yield();
+        throw new InvalidOperationException(message);
+#pragma warning disable CS0162
+        yield break;
+#pragma warning restore CS0162
+    }
+
+    private static async IAsyncEnumerable<string> WaitForCancellation(
+        TaskCompletionSource started,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        started.TrySetResult();
+        await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken).ConfigureAwait(false);
+        yield break;
     }
 }
 

@@ -150,6 +150,34 @@ headers, response text, and exception details out of diagnostics and apply
 `WhisperRedaction.Sanitize` before any provider failure crosses into content-free
 evidence.
 
+### Whisper local model and native runtime boundary
+
+The local provider accepts audio and text-bearing output inside the process, so a
+native-runtime fault must not turn those values, vocabulary hints, or the private
+model path into diagnostic evidence. The Windows adapter validates exact 16 kHz mono
+PCM16 bounds and rejects very short clips before calling native code. It projects the
+existing owned PCM memory through a read-only WAVE stream rather than retaining a
+second full audio copy. The existing `WhisperAudioClip` remains the sole managed
+owner and clears that buffer on success, failure, or cancellation. Vocabulary terms
+are bounded recognition hints only and never post-transcription substitutions.
+
+The model manager pins expected length and digest, while native initialization holds
+a verified, non-delete-sharing read handle across the eager path-based model load.
+All native use is serialized. One lazy runtime is reused, reset after faults, and can
+be explicitly unloaded before model repair or deletion. The optional Whisper.net
+managed string pool is disabled, and fewer than 201 PCM samples are rejected before
+native entry. Transcript accumulation stops at the core transcript bound. Exceptions
+crossing the adapter are replaced with fixed failure categories; content-free
+evidence contains only coarse duration, fixed provider/model/runtime identities, and
+result/failure categories.
+
+These controls reduce ordinary replacement races, duplicate sensitive buffers,
+known unsafe optional-runtime paths, and accidental disclosure. They do not make a
+third-party native runtime memory-safe, prove model publisher authenticity beyond the
+pinned upstream identity/digest expectation, defend against same-user process
+injection or an administrator, or prove live accuracy/performance. The production
+model has not been downloaded or run as part of deterministic verification.
+
 ### Whisper focused-target boundary
 
 A hostile, inaccessible, or hung UI Automation provider could block its caller,

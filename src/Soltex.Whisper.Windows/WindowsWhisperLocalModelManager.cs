@@ -14,7 +14,9 @@ namespace Soltex.Whisper.Windows;
 /// model is never bundled and network access occurs only from InstallAsync or
 /// RepairAsync after a user action reaches this boundary.
 /// </summary>
-public sealed class WindowsWhisperLocalModelManager : IWhisperModelManager
+public sealed class WindowsWhisperLocalModelManager :
+    IWhisperModelManager,
+    IWhisperLocalModelSource
 {
     public static TimeSpan MaximumInstallDuration { get; } = TimeSpan.FromMinutes(30);
 
@@ -111,6 +113,89 @@ public sealed class WindowsWhisperLocalModelManager : IWhisperModelManager
         IProgress<WhisperModelInstallProgress>? progress,
         CancellationToken cancellationToken) =>
         InstallCoreAsync(repair: true, progress, cancellationToken);
+
+    async ValueTask<WhisperVerifiedModelLease> IWhisperLocalModelSource.OpenVerifiedAsync(
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        if (!await _operationGate.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+        {
+            throw Failure(
+                WhisperModelFailureKind.Busy,
+                "Another local model operation is already running.");
+        }
+
+        FileStream? ownershipHandle = null;
+        try
+        {
+            EnsureRootIdentity();
+            RejectReparseFile(_targetPath);
+            ownershipHandle = new FileStream(
+                _targetPath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                TransferBufferBytes,
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
+            WindowsWhisperFileIdentity identity =
+                WindowsWhisperFileIdentity.From(ownershipHandle.SafeFileHandle);
+            WhisperModelStatus status = await InspectOwnedModelAsync(cancellationToken)
+                .ConfigureAwait(false);
+            if (!status.IsVerified)
+            {
+                throw Failure(
+                    status.FailureKind == WhisperModelFailureKind.None
+                        ? WhisperModelFailureKind.StorageUnavailable
+                        : status.FailureKind,
+                    status.FailureReason ?? "The verified local model is unavailable.");
+            }
+
+            EnsureRootIdentity();
+            RejectReparseFile(_targetPath);
+            if (WindowsWhisperFileIdentity.From(ownershipHandle.SafeFileHandle) != identity)
+            {
+                throw Failure(
+                    WhisperModelFailureKind.OwnershipChanged,
+                    "The local model identity changed before runtime loading.");
+            }
+
+            ownershipHandle.Position = 0;
+            WhisperVerifiedModelLease lease = new(_targetPath, ownershipHandle, identity);
+            ownershipHandle = null;
+            Publish(status);
+            return lease;
+        }
+        catch (FileNotFoundException exception)
+        {
+            throw Failure(
+                WhisperModelFailureKind.StorageUnavailable,
+                "The verified local model is not installed.",
+                exception);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            throw Failure(
+                WhisperModelFailureKind.AccessDenied,
+                "Windows denied access to the verified local model.",
+                exception);
+        }
+        catch (IOException exception)
+        {
+            throw Failure(
+                WhisperModelFailureKind.StorageUnavailable,
+                "The verified local model could not be opened safely.",
+                exception);
+        }
+        finally
+        {
+            if (ownershipHandle is not null)
+            {
+                await ownershipHandle.DisposeAsync().ConfigureAwait(false);
+            }
+
+            _operationGate.Release();
+        }
+    }
 
     public async ValueTask DeleteAsync(CancellationToken cancellationToken)
     {

@@ -17,6 +17,10 @@
     <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Whisper.net" Version="1.9.1" />
+    <PackageReference Include="Whisper.net.Runtime" Version="1.9.1" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="Soltex.Whisper.Windows.Tests" />
     <InternalsVisibleTo Include="Soltex.App.Tests" />
   </ItemGroup>
