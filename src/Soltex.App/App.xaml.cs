@@ -64,6 +64,17 @@ public partial class App : Application
             return;
         }
 
+        if (RuntimeLaunchPolicy.IsWhisperModelProbe(e.Args))
+        {
+            RunWhisperModelProbe(
+                Environment.GetEnvironmentVariable("SOLTEX_WHISPER_MODEL_REPORT_PATH"),
+                Environment.GetEnvironmentVariable("SOLTEX_WHISPER_LIVE_AUDIO_PATH"),
+                Environment.GetEnvironmentVariable("SOLTEX_WHISPER_LIVE_AUDIO_SHA256"),
+                Environment.GetEnvironmentVariable("SOLTEX_SOURCE_HEAD_SHA"),
+                Environment.GetEnvironmentVariable("SOLTEX_TESTED_COMMIT_SHA"));
+            return;
+        }
+
         bool renderRequestParsed = RuntimeLaunchPolicy.TryParseRenderSmoke(
             e.Args,
             out RenderSmokeRequest? renderRequest);
@@ -808,6 +819,111 @@ public partial class App : Application
                     File.WriteAllText(
                         fullOutputPath + ".error.txt",
                         "The packaged local CPU transcription runtime probe failed.");
+                }
+                catch (Exception writeException) when (writeException is IOException or
+                                                       UnauthorizedAccessException)
+                {
+                    // The nonzero process exit remains the authoritative failure signal.
+                }
+            }
+        }
+        finally
+        {
+            Environment.ExitCode = exitCode;
+            Shutdown(exitCode);
+        }
+    }
+
+    private void RunWhisperModelProbe(
+        string? outputPath,
+        string? audioFixturePath,
+        string? expectedAudioSha256,
+        string? sourceHeadSha,
+        string? testedCommitSha)
+    {
+        int exitCode = 0;
+        string? fullOutputPath = null;
+        try
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(audioFixturePath);
+            ArgumentException.ThrowIfNullOrWhiteSpace(expectedAudioSha256);
+            ArgumentException.ThrowIfNullOrWhiteSpace(sourceHeadSha);
+            ArgumentException.ThrowIfNullOrWhiteSpace(testedCommitSha);
+            string source = RuntimeCostProbe.ValidateCommit(sourceHeadSha);
+            string tested = RuntimeCostProbe.ValidateCommit(testedCommitSha);
+            fullOutputPath = Path.GetFullPath(outputPath);
+            string? outputDirectory = Path.GetDirectoryName(fullOutputPath);
+            if (string.IsNullOrWhiteSpace(outputDirectory))
+            {
+                throw new ArgumentException(
+                    "The Whisper model-probe output path must include a directory.",
+                    nameof(outputPath));
+            }
+
+            Directory.CreateDirectory(outputDirectory);
+            ProductDataRootResolution resolution = ProductDataRootResolver.ResolveDefault();
+            using CancellationTokenSource timeout = new(
+                WindowsWhisperLocalModelProbe.DefaultTimeout);
+            WhisperLocalModelProbeResult result = WindowsWhisperLocalModelProbe
+                .RunAsync(
+                    resolution.ProductRoot,
+                    audioFixturePath,
+                    expectedAudioSha256,
+                    timeout.Token)
+                .GetAwaiter()
+                .GetResult();
+            using FileStream stream = new(
+                fullOutputPath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None);
+            JsonSerializer.Serialize(
+                stream,
+                new
+                {
+                    schemaVersion = 1,
+                    sourceHeadSha = source,
+                    testedCommitSha = tested,
+                    providerId = WhisperLocalModelDefaults.ProviderId,
+                    modelId = WhisperLocalModelDefaults.ModelId,
+                    runtimeId = WhisperLocalModelDefaults.RuntimeId,
+                    modelBytes = result.ModelBytes,
+                    fixtureSha256 = expectedAudioSha256.ToLowerInvariant(),
+                    audioDurationMilliseconds = result.AudioDurationMilliseconds,
+                    initialTranscriptionMilliseconds = result.InitialTranscriptionMilliseconds,
+                    initialUnloadMilliseconds = result.InitialUnloadMilliseconds,
+                    restartTranscriptionMilliseconds = result.RestartTranscriptionMilliseconds,
+                    cancellationMilliseconds = result.CancellationMilliseconds,
+                    cancellationUnloadMilliseconds = result.CancellationUnloadMilliseconds,
+                    workingSetBeforeBytes = result.WorkingSetBeforeBytes,
+                    peakWorkingSetBytes = result.PeakWorkingSetBytes,
+                    workingSetAfterBytes = result.WorkingSetAfterBytes,
+                    restartSucceeded = result.RestartSucceeded,
+                    cancellationObserved = result.CancellationObserved,
+                    modelOpened = true,
+                    microphoneOpened = false,
+                    audioLogged = false,
+                    transcriptLogged = false
+                },
+                RuntimeReportJsonOptions);
+            stream.Flush(flushToDisk: true);
+        }
+        catch (Exception exception) when (exception is IOException or
+                                           UnauthorizedAccessException or
+                                           InvalidOperationException or
+                                           ArgumentException or
+                                           NotSupportedException or
+                                           OperationCanceledException)
+        {
+            exitCode = 1;
+            if (!string.IsNullOrWhiteSpace(fullOutputPath))
+            {
+                try
+                {
+                    File.WriteAllText(
+                        fullOutputPath + ".error.txt",
+                        "The packaged local-model transcription probe failed.");
                 }
                 catch (Exception writeException) when (writeException is IOException or
                                                        UnauthorizedAccessException)

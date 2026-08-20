@@ -1759,130 +1759,77 @@ static async Task LiveLocalModel()
     string audioPath = RequireLiveModelValue("SOLTEX_WHISPER_LIVE_AUDIO_PATH");
     string expectedAudioSha256 = RequireLiveModelValue(
         "SOLTEX_WHISPER_LIVE_AUDIO_SHA256");
-    using WhisperAudioClip clip = await LoadLiveModelFixtureAsync(
-        audioPath,
-        expectedAudioSha256);
-
     ProductDataRootResolution resolution = ProductDataRootResolver.ResolveDefault();
-    await using WindowsWhisperLocalModelManager manager = new(resolution.ProductRoot);
-    WhisperModelStatus model = await manager.GetStatusAsync(CancellationToken.None);
-    True(model.IsVerified);
-    Equal(574_041_195L, model.InstalledBytes);
-
-    await using WindowsWhisperLocalTranscriber transcriber = new(manager);
     using CancellationTokenSource timeout = new(TimeSpan.FromMinutes(5));
-    using Process process = Process.GetCurrentProcess();
-    process.Refresh();
-    long workingSetBefore = process.WorkingSet64;
-    Stopwatch transcription = Stopwatch.StartNew();
-    string transcript = await transcriber.TranscribeAsync(
-        clip,
-        new WhisperTranscriptionContext(
-            WhisperCaptureMode.PushToTalk,
-            "en",
-            "owner-controlled-live-model",
-            "default",
-            Array.Empty<string>()),
+    WhisperLocalModelProbeResult result = await WindowsWhisperLocalModelProbe.RunAsync(
+        resolution.ProductRoot,
+        audioPath,
+        expectedAudioSha256,
         timeout.Token);
-    transcription.Stop();
-    True(!string.IsNullOrWhiteSpace(transcript));
-
-    WhisperLocalTranscriptionDiagnostic diagnostic = transcriber
-        .CreateDiagnosticSnapshot()
-        .Last();
-    Equal(WhisperLocalTranscriptionResultCategory.Succeeded, diagnostic.Result);
-    Equal(WhisperLocalTranscriptionFailureKind.None, diagnostic.Failure);
-    Equal(WhisperLocalModelDefaults.ProviderId, diagnostic.ProviderId);
-    Equal(WhisperLocalModelDefaults.ModelId, diagnostic.ModelId);
-    Equal(WhisperLocalModelDefaults.RuntimeId, diagnostic.RuntimeId);
-
-    Stopwatch unload = Stopwatch.StartNew();
-    await transcriber.UnloadAsync(timeout.Token);
-    unload.Stop();
-    transcript = string.Empty;
-
-    Stopwatch restart = Stopwatch.StartNew();
-    string restartedTranscript = await transcriber.TranscribeAsync(
-        clip,
-        new WhisperTranscriptionContext(
-            WhisperCaptureMode.PushToTalk,
-            "en",
-            "owner-controlled-live-model-restart",
-            "default",
-            Array.Empty<string>()),
-        timeout.Token);
-    restart.Stop();
-    True(!string.IsNullOrWhiteSpace(restartedTranscript));
-    restartedTranscript = string.Empty;
-    await transcriber.UnloadAsync(timeout.Token);
-
-    using CancellationTokenSource cancellationProbe =
-        CancellationTokenSource.CreateLinkedTokenSource(timeout.Token);
-    cancellationProbe.CancelAfter(TimeSpan.FromMilliseconds(100));
-    Stopwatch cancellation = Stopwatch.StartNew();
-    bool cancellationObserved = false;
-    try
-    {
-        string canceledTranscript = await transcriber.TranscribeAsync(
-            clip,
-            new WhisperTranscriptionContext(
-                WhisperCaptureMode.PushToTalk,
-                "en",
-                "owner-controlled-live-model-cancellation",
-                "default",
-                Array.Empty<string>()),
-            cancellationProbe.Token);
-        canceledTranscript = string.Empty;
-    }
-    catch (OperationCanceledException) when (cancellationProbe.IsCancellationRequested)
-    {
-        cancellationObserved = true;
-    }
-
-    cancellation.Stop();
-    True(cancellationObserved);
-    Stopwatch cancellationUnload = Stopwatch.StartNew();
-    await transcriber.UnloadAsync(timeout.Token);
-    cancellationUnload.Stop();
-    process.Refresh();
-    long workingSetAfter = process.WorkingSet64;
-    long peakWorkingSet = process.PeakWorkingSet64;
+    True(result.RestartSucceeded);
+    True(result.CancellationObserved);
+    Equal(574_041_195L, result.ModelBytes);
     Console.WriteLine(
-        $"MEASURE whisper_live_model duration_ms={clip.Duration.TotalMilliseconds:F1} " +
-        $"transcription_ms={transcription.Elapsed.TotalMilliseconds:F1} " +
-        $"unload_ms={unload.Elapsed.TotalMilliseconds:F1} " +
-        $"restart_transcription_ms={restart.Elapsed.TotalMilliseconds:F1} " +
-        $"cancellation_ms={cancellation.Elapsed.TotalMilliseconds:F1} " +
-        $"cancellation_unload_ms={cancellationUnload.Elapsed.TotalMilliseconds:F1} " +
-        $"working_set_before_bytes={workingSetBefore} " +
-        $"working_set_after_bytes={workingSetAfter} " +
-        $"peak_working_set_bytes={peakWorkingSet} " +
+        $"MEASURE whisper_live_model duration_ms={result.AudioDurationMilliseconds:F1} " +
+        $"transcription_ms={result.InitialTranscriptionMilliseconds:F1} " +
+        $"unload_ms={result.InitialUnloadMilliseconds:F1} " +
+        $"restart_transcription_ms={result.RestartTranscriptionMilliseconds:F1} " +
+        $"cancellation_ms={result.CancellationMilliseconds:F1} " +
+        $"cancellation_unload_ms={result.CancellationUnloadMilliseconds:F1} " +
+        $"working_set_before_bytes={result.WorkingSetBeforeBytes} " +
+        $"working_set_after_bytes={result.WorkingSetAfterBytes} " +
+        $"peak_working_set_bytes={result.PeakWorkingSetBytes} " +
         "restart=succeeded cancellation=observed result=succeeded " +
         "audio_logged=false transcript_logged=false");
 }
 
-static Task LiveModelFixtureParsing()
+static async Task LiveModelFixtureParsing()
 {
     byte[] valid = CreateLiveModelWave();
     byte[] invalidRate = (byte[])valid.Clone();
     byte[] truncated = valid[..^1];
+    string root = Path.Combine(
+        Path.GetTempPath(),
+        "soltex-whisper-model-probe-tests-" + Guid.NewGuid().ToString("N"));
+    string fixturePath = Path.Combine(root, "fixture.wav");
     try
     {
-        using WhisperAudioClip clip = ParseLiveModelPcm16MonoWave(valid);
+        using WhisperAudioClip clip = WindowsWhisperLocalModelProbe.ParsePcm16MonoWave(valid);
         Equal(16_000, clip.SampleRateHz);
         Equal(1, clip.ChannelCount);
         Equal(402, clip.Pcm16.Length);
 
         BinaryPrimitives.WriteUInt32LittleEndian(invalidRate.AsSpan(24), 44_100);
-        Throws<InvalidDataException>(() => ParseLiveModelPcm16MonoWave(invalidRate));
-        Throws<InvalidDataException>(() => ParseLiveModelPcm16MonoWave(truncated));
-        return Task.CompletedTask;
+        Throws<InvalidDataException>(() =>
+            WindowsWhisperLocalModelProbe.ParsePcm16MonoWave(invalidRate));
+        Throws<InvalidDataException>(() =>
+            WindowsWhisperLocalModelProbe.ParsePcm16MonoWave(truncated));
+
+        Directory.CreateDirectory(root);
+        await File.WriteAllBytesAsync(fixturePath, valid);
+        string digest = Convert.ToHexString(SHA256.HashData(valid));
+        using WhisperAudioClip loaded = await WindowsWhisperLocalModelProbe.LoadFixtureAsync(
+            fixturePath,
+            digest,
+            CancellationToken.None);
+        Equal(402, loaded.Pcm16.Length);
+        await ThrowsAsync<InvalidDataException>(async () =>
+        {
+            using WhisperAudioClip _ = await WindowsWhisperLocalModelProbe.LoadFixtureAsync(
+                fixturePath,
+                new string('0', 64),
+                CancellationToken.None);
+        });
     }
     finally
     {
         CryptographicOperations.ZeroMemory(valid);
         CryptographicOperations.ZeroMemory(invalidRate);
         CryptographicOperations.ZeroMemory(truncated);
+        if (Directory.Exists(root))
+        {
+            Directory.Delete(root, recursive: true);
+        }
     }
 }
 
@@ -1916,155 +1863,6 @@ static string RequireLiveModelValue(string variableName)
     }
 
     return value.Trim();
-}
-
-static async ValueTask<WhisperAudioClip> LoadLiveModelFixtureAsync(
-    string configuredPath,
-    string expectedSha256)
-{
-    const int maximumFixtureBytes = 8 * 1_024 * 1_024;
-    string path = Path.GetFullPath(configuredPath);
-    if (!File.Exists(path) ||
-        (File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0)
-    {
-        throw new InvalidOperationException(
-            "The owner-selected live-model audio fixture is unavailable or unsafe.");
-    }
-
-    await using FileStream stream = new(
-        path,
-        FileMode.Open,
-        FileAccess.Read,
-        FileShare.Read,
-        64 * 1_024,
-        FileOptions.Asynchronous | FileOptions.SequentialScan);
-    if (stream.Length is < 44 or > maximumFixtureBytes)
-    {
-        throw new InvalidDataException(
-            "The owner-selected live-model audio fixture is outside its byte bound.");
-    }
-
-    byte[] wave = GC.AllocateUninitializedArray<byte>(checked((int)stream.Length));
-    try
-    {
-        await stream.ReadExactlyAsync(wave, CancellationToken.None);
-        byte[] expected;
-        try
-        {
-            expected = Convert.FromHexString(expectedSha256);
-        }
-        catch (FormatException exception)
-        {
-            throw new InvalidDataException(
-                "The live-model audio fixture digest is invalid.",
-                exception);
-        }
-
-        byte[] observed = SHA256.HashData(wave);
-        try
-        {
-            if (expected.Length != observed.Length ||
-                !CryptographicOperations.FixedTimeEquals(expected, observed))
-            {
-                throw new InvalidDataException(
-                    "The live-model audio fixture did not match its owner-pinned digest.");
-            }
-        }
-        finally
-        {
-            CryptographicOperations.ZeroMemory(expected);
-            CryptographicOperations.ZeroMemory(observed);
-        }
-
-        return ParseLiveModelPcm16MonoWave(wave);
-    }
-    finally
-    {
-        CryptographicOperations.ZeroMemory(wave);
-    }
-}
-
-static WhisperAudioClip ParseLiveModelPcm16MonoWave(ReadOnlySpan<byte> wave)
-{
-    if (wave.Length < 44 ||
-        !wave[..4].SequenceEqual("RIFF"u8) ||
-        !wave.Slice(8, 4).SequenceEqual("WAVE"u8))
-    {
-        throw new InvalidDataException(
-            "The live-model fixture is not a bounded RIFF WAVE file.");
-    }
-
-    ushort format = 0;
-    ushort channels = 0;
-    uint sampleRate = 0;
-    ushort blockAlign = 0;
-    ushort bitsPerSample = 0;
-    int dataOffset = -1;
-    int dataLength = -1;
-    int offset = 12;
-    while (offset <= wave.Length - 8)
-    {
-        ReadOnlySpan<byte> id = wave.Slice(offset, 4);
-        uint declaredLength = BinaryPrimitives.ReadUInt32LittleEndian(
-            wave.Slice(offset + 4, sizeof(uint)));
-        if (declaredLength > int.MaxValue)
-        {
-            throw new InvalidDataException(
-                "The live-model fixture contains an oversized WAVE chunk.");
-        }
-
-        int chunkLength = checked((int)declaredLength);
-        int contentOffset = checked(offset + 8);
-        int contentEnd = checked(contentOffset + chunkLength);
-        if (contentEnd > wave.Length)
-        {
-            throw new InvalidDataException(
-                "The live-model fixture contains a truncated WAVE chunk.");
-        }
-
-        if (id.SequenceEqual("fmt "u8))
-        {
-            if (chunkLength < 16)
-            {
-                throw new InvalidDataException(
-                    "The live-model fixture has an incomplete format chunk.");
-            }
-
-            ReadOnlySpan<byte> value = wave.Slice(contentOffset, chunkLength);
-            format = BinaryPrimitives.ReadUInt16LittleEndian(value);
-            channels = BinaryPrimitives.ReadUInt16LittleEndian(value[2..]);
-            sampleRate = BinaryPrimitives.ReadUInt32LittleEndian(value[4..]);
-            blockAlign = BinaryPrimitives.ReadUInt16LittleEndian(value[12..]);
-            bitsPerSample = BinaryPrimitives.ReadUInt16LittleEndian(value[14..]);
-        }
-        else if (id.SequenceEqual("data"u8))
-        {
-            if (dataOffset >= 0)
-            {
-                throw new InvalidDataException(
-                    "The live-model fixture contains multiple audio data chunks.");
-            }
-
-            dataOffset = contentOffset;
-            dataLength = chunkLength;
-        }
-
-        offset = checked(contentEnd + (chunkLength & 1));
-    }
-
-    if (format != 1 || channels != 1 || sampleRate != 16_000 ||
-        blockAlign != sizeof(short) || bitsPerSample != 16 ||
-        dataOffset < 0 || dataLength < sizeof(short) ||
-        dataLength % sizeof(short) != 0)
-    {
-        throw new InvalidDataException(
-            "The live-model fixture must contain 16 kHz mono PCM16 audio.");
-    }
-
-    byte[] pcm = wave.Slice(dataOffset, dataLength).ToArray();
-    TimeSpan duration = TimeSpan.FromSeconds(
-        dataLength / (double)(sampleRate * blockAlign));
-    return WhisperAudioClip.CreateOwned(pcm, checked((int)sampleRate), channels, duration);
 }
 
 static async Task MeteringIsThrottled()

@@ -537,6 +537,14 @@ internal static class Program
         True(!RuntimeLaunchPolicy.IsWhisperRuntimeProbe(
                 ["--whisper-runtime-probe", "--whisper-runtime-probe"]),
             "Duplicate Whisper runtime-probe options were accepted.");
+        True(RuntimeLaunchPolicy.IsWhisperModelProbe(["--whisper-model-probe"]),
+            "The packaged Whisper model-probe option was not recognized.");
+        True(!RuntimeLaunchPolicy.IsWhisperModelProbe(
+                ["--whisper-model-probe", "--whisper-runtime-probe"]),
+            "Conflicting Whisper model and runtime probes were accepted.");
+        True(!RuntimeLaunchPolicy.IsWhisperModelProbe(
+                ["--whisper-model-probe", "--whisper-model-probe"]),
+            "Duplicate Whisper model-probe options were accepted.");
         True(RuntimeLaunchPolicy.IsWhisperUninstallCleanup(
                 ["--whisper-uninstall-cleanup"]),
             "The exact Whisper uninstall cleanup option was not recognized.");
@@ -549,9 +557,16 @@ internal static class Program
         True(!RuntimeLaunchPolicy.IsRuntimeProbe(
                 ["--runtime-probe", "--whisper-uninstall-cleanup"]),
             "Runtime probing accepted a conflicting uninstall cleanup request.");
+        True(!RuntimeLaunchPolicy.IsRuntimeProbe(
+                ["--runtime-probe", "--whisper-model-probe"]),
+            "Runtime probing accepted a conflicting Whisper model request.");
         True(RuntimeLaunchPolicy.HasControlledRuntimeOption(
                 ["--runtime-probe", "--render-smoke"]),
             "A conflicting controlled-runtime request could fall through to normal startup.");
+        True(RuntimeLaunchPolicy.UsesControlledRuntime(["--whisper-model-probe"]),
+            "The packaged Whisper model probe was not classified as a controlled runtime.");
+        True(RuntimeLaunchPolicy.HasControlledRuntimeOption(["--whisper-model-probe"]),
+            "An incomplete packaged Whisper model probe could fall through to normal startup.");
         True(!RuntimeLaunchPolicy.HasControlledRuntimeOption(["--ordinary-option"]),
             "An ordinary option was mistaken for a controlled runtime request.");
         True(!RuntimeLaunchPolicy.UsesSoftwareRendering(["--runtime-probe"]),

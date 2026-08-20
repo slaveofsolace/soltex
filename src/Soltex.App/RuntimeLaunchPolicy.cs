@@ -49,6 +49,7 @@ internal static class RuntimeLaunchPolicy
         CountOption(arguments, "--runtime-probe") == 1 &&
         CountOption(arguments, "--render-smoke") == 0 &&
         CountOption(arguments, "--whisper-runtime-probe") == 0 &&
+        CountOption(arguments, "--whisper-model-probe") == 0 &&
         CountOption(arguments, "--whisper-overlay-smoke") == 0 &&
         CountOption(arguments, "--whisper-uninstall-cleanup") == 0;
 
@@ -56,6 +57,15 @@ internal static class RuntimeLaunchPolicy
         CountOption(arguments, "--whisper-runtime-probe") == 1 &&
         CountOption(arguments, "--runtime-probe") == 0 &&
         CountOption(arguments, "--render-smoke") == 0 &&
+        CountOption(arguments, "--whisper-model-probe") == 0 &&
+        CountOption(arguments, "--whisper-overlay-smoke") == 0 &&
+        CountOption(arguments, "--whisper-uninstall-cleanup") == 0;
+
+    internal static bool IsWhisperModelProbe(IReadOnlyList<string> arguments) =>
+        CountOption(arguments, "--whisper-model-probe") == 1 &&
+        CountOption(arguments, "--runtime-probe") == 0 &&
+        CountOption(arguments, "--render-smoke") == 0 &&
+        CountOption(arguments, "--whisper-runtime-probe") == 0 &&
         CountOption(arguments, "--whisper-overlay-smoke") == 0 &&
         CountOption(arguments, "--whisper-uninstall-cleanup") == 0;
 
@@ -67,6 +77,7 @@ internal static class RuntimeLaunchPolicy
         CountOption(arguments, "--runtime-probe") == 1 ||
         CountOption(arguments, "--render-smoke") == 1 ||
         CountOption(arguments, "--whisper-runtime-probe") == 1 ||
+        CountOption(arguments, "--whisper-model-probe") == 1 ||
         CountOption(arguments, "--whisper-overlay-smoke") == 1 ||
         CountOption(arguments, "--whisper-uninstall-cleanup") == 1;
 
@@ -75,11 +86,13 @@ internal static class RuntimeLaunchPolicy
          CountOption(arguments, "--whisper-overlay-smoke") == 1) &&
         CountOption(arguments, "--runtime-probe") == 0 &&
         CountOption(arguments, "--whisper-runtime-probe") == 0 &&
+        CountOption(arguments, "--whisper-model-probe") == 0 &&
         CountOption(arguments, "--whisper-uninstall-cleanup") == 0;
 
     internal static bool HasControlledRuntimeOption(IReadOnlyList<string> arguments) =>
         CountOption(arguments, "--runtime-probe") > 0 ||
         CountOption(arguments, "--whisper-runtime-probe") > 0 ||
+        CountOption(arguments, "--whisper-model-probe") > 0 ||
         CountOption(arguments, "--whisper-overlay-smoke") > 0 ||
         CountOption(arguments, "--whisper-uninstall-cleanup") > 0 ||
         CountOption(arguments, "--render-smoke") > 0 ||
@@ -97,6 +110,7 @@ internal static class RuntimeLaunchPolicy
         if (CountOption(arguments, "--render-smoke") != 1 ||
             CountOption(arguments, "--runtime-probe") != 0 ||
             CountOption(arguments, "--whisper-runtime-probe") != 0 ||
+            CountOption(arguments, "--whisper-model-probe") != 0 ||
             CountOption(arguments, "--whisper-overlay-smoke") != 0 ||
             CountOption(arguments, "--whisper-uninstall-cleanup") != 0)
         {
@@ -173,6 +187,7 @@ internal static class RuntimeLaunchPolicy
         if (CountOption(arguments, "--whisper-overlay-smoke") != 1 ||
             CountOption(arguments, "--runtime-probe") != 0 ||
             CountOption(arguments, "--whisper-runtime-probe") != 0 ||
+            CountOption(arguments, "--whisper-model-probe") != 0 ||
             CountOption(arguments, "--render-smoke") != 0 ||
             CountOption(arguments, "--whisper-uninstall-cleanup") != 0)
         {
