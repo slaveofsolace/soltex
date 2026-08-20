@@ -8,6 +8,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Microsoft.Win32;
 
 namespace Soltex.App;
 
@@ -26,6 +27,9 @@ public partial class App : Application
     private MainWindow? _ownedMainWindow;
     private NotificationAreaController? _notificationArea;
     private bool _explicitExitRequested;
+    private bool _appearanceTrackingStarted;
+    private AppearancePreference _appearancePreference = AppearancePreference.System;
+    private ResolvedAppearance _resolvedAppearance = ResolvedAppearance.Dark;
 
     public App()
     {
@@ -41,9 +45,34 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        bool renderRequestParsed = RuntimeLaunchPolicy.TryParseRenderSmoke(
+            e.Args,
+            out RenderSmokeRequest? renderRequest);
+        if (renderRequestParsed)
+        {
+            _appearancePreference = RuntimeLaunchPolicy.ResolveRenderPreference(
+                renderRequest!.Appearance);
+            _resolvedAppearance = RuntimeLaunchPolicy.ResolveRenderAppearance(
+                renderRequest.Appearance);
+            AppearanceThemeManager.ApplyResolved(Resources, _resolvedAppearance);
+        }
+        else
+        {
+            _appearancePreference = PreferencesStore.CreateDefault()
+                .Load()
+                .Preferences
+                .AppearancePreference;
+            _resolvedAppearance = AppearanceThemeManager.ApplyPreference(
+                Resources,
+                _appearancePreference);
+        }
+
         MainWindow window = new();
         MainWindow = window;
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        window.UpdateAppearanceResolution(
+            _resolvedAppearance,
+            SystemParameters.HighContrast);
 
         if (RuntimeLaunchPolicy.IsRuntimeProbe(e.Args))
         {
@@ -55,22 +84,17 @@ public partial class App : Application
             return;
         }
 
-        if (e.Args is ["--render-smoke", var outputPath])
+        if (renderRequestParsed)
         {
-            RenderSmokeSnapshot(window, outputPath);
-            return;
-        }
-
-        if (e.Args is ["--render-smoke", var panelOutputPath, "--panel", var panelName])
-        {
-            if (!window.TrySelectRenderSmokePanel(panelName))
+            if (renderRequest!.Panel is not null &&
+                !window.TrySelectRenderSmokePanel(renderRequest.Panel))
             {
                 throw new ArgumentException(
                     "The render-smoke panel must be one of: home, monitoring, monitoring-details, monitoring-benchmark, applications, applications-services, settings, devices, " +
                     "security, security-activity, remote, whisper, whisper-personalize, whisper-library, whisper-library-styles, whisper-library-apps, whisper-scratchpad, whisper-history, whisper-privacy, whisper-privacy-warning, activity, update, mixer, mixer-devices, mixer-more, command-palette, clips.");
             }
 
-            RenderSmokeSnapshot(window, panelOutputPath);
+            RenderSmokeSnapshot(window, renderRequest.OutputPath);
             return;
         }
 
@@ -81,13 +105,94 @@ public partial class App : Application
         }
 
         StartNormalRuntime(window);
+        StartAppearanceTracking();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
+        StopAppearanceTracking();
         _notificationArea?.Dispose();
         _notificationArea = null;
         base.OnExit(e);
+    }
+
+    internal void SetAppearancePreference(AppearancePreference preference)
+    {
+        _appearancePreference = Enum.IsDefined(preference)
+            ? preference
+            : AppearancePreference.System;
+        ApplyCurrentAppearance();
+    }
+
+    private void StartAppearanceTracking()
+    {
+        if (_appearanceTrackingStarted)
+        {
+            return;
+        }
+
+        SystemParameters.StaticPropertyChanged += SystemParameters_StaticPropertyChanged;
+        SystemEvents.UserPreferenceChanged += SystemEvents_UserPreferenceChanged;
+        _appearanceTrackingStarted = true;
+    }
+
+    private void StopAppearanceTracking()
+    {
+        if (!_appearanceTrackingStarted)
+        {
+            return;
+        }
+
+        SystemParameters.StaticPropertyChanged -= SystemParameters_StaticPropertyChanged;
+        SystemEvents.UserPreferenceChanged -= SystemEvents_UserPreferenceChanged;
+        _appearanceTrackingStarted = false;
+    }
+
+    private void SystemParameters_StaticPropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs e)
+    {
+        if (string.Equals(
+                e.PropertyName,
+                nameof(SystemParameters.HighContrast),
+                StringComparison.Ordinal))
+        {
+            QueueAppearanceRefresh();
+        }
+    }
+
+    private void SystemEvents_UserPreferenceChanged(
+        object sender,
+        UserPreferenceChangedEventArgs e)
+    {
+        if (e.Category is UserPreferenceCategory.Color or
+                          UserPreferenceCategory.General or
+                          UserPreferenceCategory.VisualStyle)
+        {
+            QueueAppearanceRefresh();
+        }
+    }
+
+    private void QueueAppearanceRefresh()
+    {
+        if (Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished)
+        {
+            return;
+        }
+
+        _ = Dispatcher.BeginInvoke(
+            DispatcherPriority.Normal,
+            new Action(ApplyCurrentAppearance));
+    }
+
+    private void ApplyCurrentAppearance()
+    {
+        _resolvedAppearance = AppearanceThemeManager.ApplyPreference(
+            Resources,
+            _appearancePreference);
+        _ownedMainWindow?.UpdateAppearanceResolution(
+            _resolvedAppearance,
+            SystemParameters.HighContrast);
     }
 
     private void StartNormalRuntime(MainWindow window)

@@ -40,6 +40,7 @@ internal static class Program
         List<(string Name, Action Test)> tests =
         [
             ("Shared theme exposes required control resources", ThemeResourcesAreAvailable),
+            ("Appearance themes resolve and update shared brushes", AppearanceThemesAreDeterministic),
             ("Workspace command catalog is bounded and searchable", WorkspaceCommandsAreBounded),
             ("Every command palette workspace resolves to its intended target", WorkspaceCommandRoutesResolve),
             ("Whisper Core Audio startup waits for the shared audio refresh", WhisperAudioStartupIsSerialized),
@@ -121,6 +122,90 @@ internal static class Program
         True(resources.Contains("AccentBrush"), "The shared accent brush is missing.");
         True(resources.Contains("HeroCardStyle"), "The shared hero-card style is missing.");
         True(resources.Contains("SoltexSliderStyle"), "The shared slider style is missing.");
+    }
+
+    private static void AppearanceThemesAreDeterministic()
+    {
+        True(
+            AppearanceThemeManager.Resolve(
+                AppearancePreference.System,
+                highContrast: false,
+                appsUseLightTheme: true) == ResolvedAppearance.Light,
+            "System appearance did not follow a light Windows app theme.");
+        True(
+            AppearanceThemeManager.Resolve(
+                AppearancePreference.System,
+                highContrast: false,
+                appsUseLightTheme: false) == ResolvedAppearance.Dark,
+            "System appearance did not follow a dark Windows app theme.");
+        True(
+            AppearanceThemeManager.Resolve(
+                AppearancePreference.Dark,
+                highContrast: true,
+                appsUseLightTheme: false) == ResolvedAppearance.HighContrast,
+            "Windows High Contrast did not override an explicit Soltex theme.");
+
+        ResourceDictionary resources = Application.Current.Resources;
+        AppearanceThemeManager.ApplyResolved(resources, ResolvedAppearance.Dark);
+        SolidColorBrush canvas = (SolidColorBrush)Application.Current.FindResource("CanvasBrush");
+        SolidColorBrush accent = (SolidColorBrush)Application.Current.FindResource("AccentBrush");
+        Color lightCanvas = (Color)Application.Current.FindResource("LightCanvasColor");
+        Color lightAccent = (Color)Application.Current.FindResource("LightAccentColor");
+        SettingsView view = new();
+        Window host = new()
+        {
+            Content = view,
+            Width = 900,
+            Height = 700,
+            Left = -32_000,
+            Top = -32_000,
+            Opacity = 0,
+            ShowActivated = false,
+            ShowInTaskbar = false,
+            WindowStyle = WindowStyle.None
+        };
+        Window? previousMainWindow = Application.Current.MainWindow;
+        ShutdownMode previousShutdownMode = Application.Current.ShutdownMode;
+        Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        host.Show();
+        host.UpdateLayout();
+        try
+        {
+            AppearanceThemeManager.ApplyResolved(resources, ResolvedAppearance.Light);
+            host.UpdateLayout();
+            SolidColorBrush activeCanvas =
+                (SolidColorBrush)Application.Current.FindResource("CanvasBrush");
+            SolidColorBrush activeAccent =
+                (SolidColorBrush)Application.Current.FindResource("AccentBrush");
+            True(!ReferenceEquals(canvas, activeCanvas) && activeCanvas.Color == lightCanvas,
+                "Live appearance switching did not replace the frozen canvas resource.");
+            True(!ReferenceEquals(accent, activeAccent) &&
+                 activeAccent.Color == lightAccent &&
+                 view.SystemAppearanceButton.Foreground is SolidColorBrush selectedAccent &&
+                 selectedAccent.Color == lightAccent,
+                "A stateful control did not resolve the live-updated semantic accent resource.");
+
+            AppearanceThemeManager.ApplyResolved(resources, ResolvedAppearance.HighContrast);
+            True(((SolidColorBrush)Application.Current.FindResource("CanvasBrush")).Color ==
+                 SystemColors.WindowColor,
+                "High Contrast did not map the canvas to the Windows system colour.");
+            True(((SolidColorBrush)Application.Current.FindResource("TextBrush")).Color ==
+                 SystemColors.WindowTextColor,
+                "High Contrast did not map primary text to the Windows system colour.");
+        }
+        finally
+        {
+            try
+            {
+                AppearanceThemeManager.ApplyResolved(resources, ResolvedAppearance.Dark);
+            }
+            finally
+            {
+                host.Close();
+                Application.Current.MainWindow = previousMainWindow;
+                Application.Current.ShutdownMode = previousShutdownMode;
+            }
+        }
     }
 
     private static void TelemetryRunsOnlyInLiveWorkspaces()
@@ -447,6 +532,29 @@ internal static class Program
             "The runtime-cost probe incorrectly forced software rendering.");
         True(RuntimeLaunchPolicy.UsesSoftwareRendering(["--render-smoke", "image.png"]),
             "Native render smoke did not retain deterministic software rendering.");
+        True(RuntimeLaunchPolicy.TryParseRenderSmoke(
+                ["--render-smoke", "image.png", "--panel", "whisper", "--theme", "light"],
+                out RenderSmokeRequest? lightRequest) &&
+             lightRequest is
+             {
+                 OutputPath: "image.png",
+                 Panel: "whisper",
+                 Appearance: RenderSmokeAppearance.Light
+             },
+            "Render-smoke did not parse the explicit light appearance.");
+        True(RuntimeLaunchPolicy.TryParseRenderSmoke(
+                ["Soltex.exe", "--render-smoke", "image.png", "--theme", "high-contrast"],
+                out RenderSmokeRequest? contrastRequest) &&
+             contrastRequest?.Appearance == RenderSmokeAppearance.HighContrast,
+            "Render-smoke did not tolerate the executable prefix or parse High Contrast.");
+        True(!RuntimeLaunchPolicy.TryParseRenderSmoke(
+                ["--render-smoke", "image.png", "--theme", "light", "--theme", "dark"],
+                out _),
+            "Render-smoke accepted duplicate appearance options.");
+        True(!RuntimeLaunchPolicy.TryParseRenderSmoke(
+                ["--render-smoke", "image.png", "--theme", "system"],
+                out _),
+            "Render-smoke accepted a nondeterministic System appearance.");
         True(RuntimeLaunchPolicy.RenderSmokeStartupTimeout == TimeSpan.FromSeconds(40),
             "Render-smoke startup no longer covers the composed bounded protection query while remaining finite.");
     }
@@ -852,7 +960,8 @@ internal static class Program
                 CloseBehavior: CloseBehavior.NotificationArea,
                 PreferredPlaybackEndpointKey: new string('a', 64),
                 PreferredRecordingEndpointKey: new string('b', 64),
-                LastWorkspace: "security");
+                LastWorkspace: "security",
+                AppearancePreference: AppearancePreference.Light);
             store.Save(expected);
             PreferencesLoadResult loaded = store.Load();
             True(!loaded.RecoveredFromInvalid,
@@ -873,6 +982,8 @@ internal static class Program
                 migrated.Preferences.PreferredPlaybackEndpointKey.Length == 0 &&
                 migrated.Preferences.PreferredRecordingEndpointKey.Length == 0,
                 "Legacy preferences did not migrate to empty audio fallback reminders.");
+            True(migrated.Preferences.AppearancePreference == AppearancePreference.System,
+                "Legacy preferences did not migrate to the safe System appearance default.");
 
             File.WriteAllText(
                 filePath,
@@ -888,6 +999,19 @@ internal static class Program
                 invalidEndpointKey.Preferences.PreferredPlaybackEndpointKey.Length == 0 &&
                 invalidEndpointKey.Preferences.LastWorkspace == "mixer",
                 "Malformed audio fallback state did not recover only the unsupported value.");
+
+            File.WriteAllText(
+                filePath,
+                "{\"schemaVersion\":4,\"telemetryCadence\":\"Balanced\",\"restoreLastWorkspace\":true," +
+                "\"openPerformanceDetails\":false,\"activityRetention\":\"SessionOnly\"," +
+                "\"closeBehavior\":\"Exit\",\"preferredPlaybackEndpointKey\":\"\"," +
+                "\"preferredRecordingEndpointKey\":\"\",\"lastWorkspace\":\"home\"," +
+                "\"appearancePreference\":\"transparent\"}",
+                Encoding.UTF8);
+            PreferencesLoadResult invalidAppearance = store.Load();
+            True(invalidAppearance.RecoveredFromInvalid &&
+                 invalidAppearance.Preferences.AppearancePreference == AppearancePreference.System,
+                "An unsupported appearance did not repair to the safe System preference.");
 
             File.WriteAllText(filePath, "{ invalid", Encoding.UTF8);
             PreferencesLoadResult invalid = store.Load();
@@ -1532,7 +1656,9 @@ internal static class Program
             CloseBehavior: CloseBehavior.Exit,
             PreferredPlaybackEndpointKey: string.Empty,
             PreferredRecordingEndpointKey: string.Empty,
-            LastWorkspace: "monitoring");
+            LastWorkspace: "monitoring",
+            AppearancePreference: AppearancePreference.Dark);
+        view.UpdateAppearanceStatus(ResolvedAppearance.Dark, highContrastOverride: false);
         view.UpdateNotificationAreaAvailability(available: true);
         view.UpdatePreferences(
             preferences,
@@ -1568,6 +1694,12 @@ internal static class Program
         view.NotificationAreaButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         True(changed?.CloseBehavior == CloseBehavior.NotificationArea,
             "Settings did not emit the explicit notification-area behavior.");
+        view.LightAppearanceButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(changed?.AppearancePreference == AppearancePreference.Light,
+            "Settings did not emit the explicit light appearance.");
+        view.UpdateAppearanceStatus(ResolvedAppearance.HighContrast, highContrastOverride: true);
+        True(view.AppearanceResolvedText.Text.Contains("overrides", StringComparison.Ordinal),
+            "Settings did not explain the active Windows High Contrast override.");
         byte[] pixels = Render(view, 980, 720);
         True(CountVisiblePixels(pixels) > 5_000,
             "The Settings view render was unexpectedly empty.");

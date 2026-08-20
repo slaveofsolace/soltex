@@ -2,7 +2,7 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Background="Transparent"
-             Foreground="{StaticResource TextBrush}"
+             Foreground="{DynamicResource TextBrush}"
              FontFamily="{StaticResource UiFont}">
     <UserControl.Resources>
         <!--
@@ -25,11 +25,11 @@
                                    FontWeight="SemiBold" />
                         <Border Margin="8,0,0,0"
                                 Style="{StaticResource StatusPillStyle}"
-                                Background="{StaticResource SignalQuietBrush}"
-                                BorderBrush="{StaticResource SignalBorderBrush}"
+                                Background="{DynamicResource SignalQuietBrush}"
+                                BorderBrush="{DynamicResource SignalBorderBrush}"
                                 Visibility="{Binding DefaultVisibility}">
                             <TextBlock Text="DEFAULT"
-                                       Foreground="{StaticResource SignalBrush}"
+                                       Foreground="{DynamicResource SignalBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Border>
@@ -37,7 +37,7 @@
                                 Style="{StaticResource StatusPillStyle}"
                                 Visibility="{Binding PreferredVisibility}">
                             <TextBlock Text="PREFERRED"
-                                       Foreground="{StaticResource AccentBrush}"
+                                       Foreground="{DynamicResource AccentBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Border>
@@ -45,7 +45,7 @@
                                 Style="{StaticResource StatusPillStyle}"
                                 Visibility="{Binding MuteVisibility}">
                             <TextBlock Text="MUTED"
-                                       Foreground="{StaticResource WarningBrush}"
+                                       Foreground="{DynamicResource WarningBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
                         </Border>
@@ -100,7 +100,7 @@
                     <TextBlock Margin="0,3,0,0"
                                Text="{Binding EndpointName}"
                                TextTrimming="CharacterEllipsis"
-                               Foreground="{StaticResource QuietTextBrush}"
+                               Foreground="{DynamicResource QuietTextBrush}"
                                FontFamily="{StaticResource MonoFont}"
                                FontSize="{StaticResource FontMicro}" />
                 </StackPanel>
@@ -173,12 +173,12 @@
                             <Ellipse x:Name="MixerStateDot"
                                      Width="7"
                                      Height="7"
-                                     Fill="{StaticResource WarningBrush}"
+                                     Fill="{DynamicResource WarningBrush}"
                                      VerticalAlignment="Center" />
                             <TextBlock x:Name="MixerStateText"
                                        Margin="8,0,0,0"
                                        Text="WAITING"
-                                       Foreground="{StaticResource WarningBrush}"
+                                       Foreground="{DynamicResource WarningBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMono}"
                                        FontWeight="SemiBold" />
@@ -199,8 +199,8 @@
                 <StackPanel>
                     <Border Margin="0,0,0,14"
                             Padding="12,10"
-                            Background="{StaticResource QuietBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
+                            Background="{DynamicResource QuietBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusSm}">
                         <Grid>
@@ -210,11 +210,11 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="Mix snapshot" FontWeight="SemiBold" Foreground="{StaticResource TextBrightBrush}" />
+                                    <TextBlock Text="Mix snapshot" FontWeight="SemiBold" Foreground="{DynamicResource TextBrightBrush}" />
                                     <TextBlock x:Name="MixSnapshotStateText"
                                                Margin="10,1,0,0"
                                                Text="NOT SAVED"
-                                               Foreground="{StaticResource QuietTextBrush}"
+                                               Foreground="{DynamicResource QuietTextBrush}"
                                                FontFamily="{StaticResource MonoFont}"
                                                FontSize="{StaticResource FontMicro}"
                                                FontWeight="SemiBold" />
@@ -276,7 +276,7 @@
                                   AutomationProperties.Name="Active app audio sessions" />
                     <TextBlock x:Name="NoSessionsText"
                                Margin="0,14,0,0"
-                               Foreground="{StaticResource MutedBrush}"
+                               Foreground="{DynamicResource MutedBrush}"
                                Text="No active shared-mode playback session was observed." />
                     <ItemsControl x:Name="MoreSessionItems"
                                   Margin="0,4,0,0"
@@ -286,7 +286,7 @@
 
                     <Border Margin="0,4,0,0"
                             Padding="0,10,0,0"
-                            BorderBrush="{StaticResource BorderBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="0,1,0,0">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -295,7 +295,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock x:Name="SessionActionStateText"
                                        Text="READY"
-                                       Foreground="{StaticResource SignalBrush}"
+                                       Foreground="{DynamicResource SignalBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}"
                                        FontWeight="SemiBold" />
@@ -303,7 +303,7 @@
                                        Grid.Column="1"
                                        Margin="12,0,0,0"
                                        Text="Changes are confirmed by an immediate Windows read-back."
-                                       Foreground="{StaticResource QuietTextBrush}"
+                                       Foreground="{DynamicResource QuietTextBrush}"
                                        TextTrimming="CharacterEllipsis" />
                         </Grid>
                     </Border>
@@ -321,7 +321,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <StackPanel>
-                        <TextBlock Text="Active now" Foreground="{StaticResource SignalBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
+                        <TextBlock Text="Active now" Foreground="{DynamicResource SignalBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                         <StackPanel Orientation="Horizontal" Margin="0,4,0,0" VerticalAlignment="Bottom">
                             <TextBlock x:Name="ActiveCountText"
                                        Text="—"
@@ -330,13 +330,13 @@
                             <TextBlock x:Name="TotalCountText"
                                        Margin="10,0,0,8"
                                        Text="of 0 endpoints"
-                                       Foreground="{StaticResource MutedBrush}" />
+                                       Foreground="{DynamicResource MutedBrush}" />
                         </StackPanel>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                         <TextBlock Text="Default playback"
-                                   Foreground="{StaticResource QuietTextBrush}"
+                                   Foreground="{DynamicResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="{StaticResource FontMicro}" />
                         <TextBlock x:Name="DefaultPlaybackText"
@@ -347,7 +347,7 @@
                                    FontWeight="SemiBold" />
                         <TextBlock Text="Default recording"
                                    Margin="0,12,0,0"
-                                   Foreground="{StaticResource QuietTextBrush}"
+                                   Foreground="{DynamicResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="{StaticResource FontMicro}" />
                         <TextBlock x:Name="DefaultRecordingText"
@@ -360,14 +360,14 @@
 
                     <StackPanel Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right">
                         <TextBlock Text="Device state"
-                                   Foreground="{StaticResource QuietTextBrush}"
+                                   Foreground="{DynamicResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="{StaticResource FontMicro}"
                                    HorizontalAlignment="Right" />
                         <TextBlock x:Name="StateBreakdownText"
                                    Margin="0,6,0,0"
                                    Text="awaiting observation"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="{StaticResource FontMono}"
                                    HorizontalAlignment="Right"
@@ -429,7 +429,7 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Name="EndpointPreferenceStateText"
                                Text="OPTIONAL"
-                               Foreground="{StaticResource QuietTextBrush}"
+                               Foreground="{DynamicResource QuietTextBrush}"
                                FontFamily="{StaticResource MonoFont}"
                                FontSize="{StaticResource FontMicro}"
                                FontWeight="SemiBold" />
@@ -437,7 +437,7 @@
                                Grid.Column="1"
                                Margin="12,0,0,0"
                                Text="No fallback reminders saved. Windows remains the owner of system default selection."
-                               Foreground="{StaticResource QuietTextBrush}"
+                               Foreground="{DynamicResource QuietTextBrush}"
                                TextWrapping="Wrap" />
                 </Grid>
             </Border>
@@ -459,7 +459,7 @@
                             <TextBlock x:Name="PlaybackCountText"
                                        Grid.Column="1"
                                        Text="0"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMono}"
                                        VerticalAlignment="Center" />
@@ -469,7 +469,7 @@
                                    Text="Render endpoints, connected first." />
                         <ItemsControl x:Name="PlaybackItems" ItemTemplate="{StaticResource AudioEndpointTemplate}" />
                         <TextBlock x:Name="NoPlaybackText"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    Text="No active playback endpoint was observed." />
                     </StackPanel>
                 </Border>
@@ -485,7 +485,7 @@
                             <TextBlock x:Name="RecordingCountText"
                                        Grid.Column="1"
                                        Text="0"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMono}"
                                        VerticalAlignment="Center" />
@@ -495,7 +495,7 @@
                                    Text="Capture endpoints, connected first." />
                         <ItemsControl x:Name="RecordingItems" ItemTemplate="{StaticResource AudioEndpointTemplate}" />
                         <TextBlock x:Name="NoRecordingText"
-                                   Foreground="{StaticResource MutedBrush}"
+                                   Foreground="{DynamicResource MutedBrush}"
                                    Text="No active recording endpoint was observed." />
                     </StackPanel>
                 </Border>
@@ -521,7 +521,7 @@
                             <TextBlock x:Name="MorePlaybackCountText"
                                        Grid.Column="1"
                                        Text="0"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="{StaticResource MonoFont}" />
                         </Grid>
                         <ItemsControl x:Name="MorePlaybackItems"
@@ -529,7 +529,7 @@
                                       AutomationProperties.Name="Additional playback endpoints" />
                         <TextBlock x:Name="NoMorePlaybackText"
                                    Text="No additional playback endpoints."
-                                   Foreground="{StaticResource MutedBrush}" />
+                                   Foreground="{DynamicResource MutedBrush}" />
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <Grid Margin="0,0,0,14">
@@ -541,7 +541,7 @@
                             <TextBlock x:Name="MoreRecordingCountText"
                                        Grid.Column="1"
                                        Text="0"
-                                       Foreground="{StaticResource MutedBrush}"
+                                       Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="{StaticResource MonoFont}" />
                         </Grid>
                         <ItemsControl x:Name="MoreRecordingItems"
@@ -549,7 +549,7 @@
                                       AutomationProperties.Name="Additional recording endpoints" />
                         <TextBlock x:Name="NoMoreRecordingText"
                                    Text="No additional recording endpoints."
-                                   Foreground="{StaticResource MutedBrush}" />
+                                   Foreground="{DynamicResource MutedBrush}" />
                     </StackPanel>
                 </Grid>
             </Border>
@@ -559,13 +559,13 @@
             <Grid Grid.Row="4" Margin="2,0">
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                 <TextBlock x:Name="MixerProvenanceText"
-                           Foreground="{StaticResource QuietTextBrush}"
+                           Foreground="{DynamicResource QuietTextBrush}"
                            FontFamily="{StaticResource MonoFont}"
                            FontSize="{StaticResource FontMicro}"
                            TextTrimming="CharacterEllipsis"
                            ToolTip="App volume and mute are the only direct audio writes. Windows owns default-device selection; Soltex does not route signal, create virtual devices, or apply EQ or effects."
                            Text="Waiting for the first audio observation" />
-                <TextBlock Grid.Column="1" Margin="14,0,0,0" Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}" Text="Core Audio · read-back confirmed" />
+                <TextBlock Grid.Column="1" Margin="14,0,0,0" Foreground="{DynamicResource MutedBrush}" FontSize="{StaticResource FontCaption}" Text="Core Audio · read-back confirmed" />
             </Grid>
     </Grid>
 </UserControl>

@@ -101,6 +101,69 @@
     <Color x:Key="SignalAreaColor">#1A5DD39E</Color>
     <Color x:Key="SelectionColor">#6067B7FF</Color>
     <Color x:Key="ModalScrimColor">#B0000509</Color>
+    <Color x:Key="TransparentColor">#00000000</Color>
+
+    <!--
+        Light appearance. These values mirror the semantic roles above rather
+        than introducing a second component language. Runtime code replaces the
+        colour on each semantic brush, so DynamicResource consumers and
+        stateful controls receive the active palette during a live switch.
+    -->
+    <Color x:Key="LightSidebarColor">#EEF2F5</Color>
+    <Color x:Key="LightFieldColor">#FFFFFF</Color>
+    <Color x:Key="LightInsetColor">#F2F5F7</Color>
+    <Color x:Key="LightCanvasColor">#F7F9FB</Color>
+    <Color x:Key="LightQuietColor">#EDF2F5</Color>
+    <Color x:Key="LightSurfaceColor">#FFFFFF</Color>
+    <Color x:Key="LightRaisedColor">#E8EEF3</Color>
+    <Color x:Key="LightElevatedColor">#DDE7EE</Color>
+    <Color x:Key="LightHeroBaseColor">#FFFFFF</Color>
+    <Color x:Key="LightTrackColor">#D3DEE6</Color>
+    <Color x:Key="LightScrollTrackColor">#E5EBF0</Color>
+    <Color x:Key="LightScrollThumbColor">#718390</Color>
+
+    <Color x:Key="LightBorderColor">#C8D3DC</Color>
+    <Color x:Key="LightBorderStrongColor">#9BADBA</Color>
+    <Color x:Key="LightHeroBorderColor">#B8C6D1</Color>
+
+    <Color x:Key="LightTextBrightColor">#101820</Color>
+    <Color x:Key="LightTextColor">#1B2730</Color>
+    <Color x:Key="LightTextSecondaryColor">#40515E</Color>
+    <Color x:Key="LightMutedColor">#5E6F7C</Color>
+    <Color x:Key="LightQuietTextColor">#71818E</Color>
+
+    <Color x:Key="LightAccentColor">#0B6FBF</Color>
+    <Color x:Key="LightAccentFocusColor">#00599D</Color>
+    <Color x:Key="LightAccentDimColor">#3C8CC9</Color>
+    <Color x:Key="LightAccentQuietColor">#E1F1FD</Color>
+    <Color x:Key="LightOnAccentColor">#FFFFFF</Color>
+
+    <Color x:Key="LightSignalColor">#147A4A</Color>
+    <Color x:Key="LightSignalTextColor">#16683F</Color>
+    <Color x:Key="LightSignalSurfaceColor">#E6F5ED</Color>
+    <Color x:Key="LightSignalQuietColor">#DDF0E7</Color>
+    <Color x:Key="LightSignalBorderColor">#88BFA2</Color>
+
+    <Color x:Key="LightWarningColor">#8A5700</Color>
+    <Color x:Key="LightWarningSurfaceColor">#FFF3D9</Color>
+    <Color x:Key="LightWarningBorderColor">#C99435</Color>
+    <Color x:Key="LightDangerColor">#B4233A</Color>
+    <Color x:Key="LightDangerTextColor">#9C1C31</Color>
+    <Color x:Key="LightDangerSurfaceColor">#FDE8EC</Color>
+    <Color x:Key="LightDangerBorderColor">#D88C99</Color>
+
+    <Color x:Key="LightNavSelectedColor">#DCEFFC</Color>
+    <Color x:Key="LightOverlayColor">#FFFFFF</Color>
+    <Color x:Key="LightOverlayBorderColor">#9BADBA</Color>
+    <Color x:Key="LightMeterTrackColor">#D3DEE6</Color>
+    <Color x:Key="LightMeterQuietColor">#B8C6D1</Color>
+    <Color x:Key="LightKeycapColor">#E8EEF3</Color>
+    <Color x:Key="LightKeycapBorderColor">#9BADBA</Color>
+
+    <Color x:Key="LightAccentAreaColor">#240B6FBF</Color>
+    <Color x:Key="LightSignalAreaColor">#1A147A4A</Color>
+    <Color x:Key="LightSelectionColor">#600B6FBF</Color>
+    <Color x:Key="LightModalScrimColor">#660B1116</Color>
 
     <!-- ============================================================ -->
     <!-- 2. Semantic brushes                                           -->
@@ -157,7 +220,7 @@
 
     <!-- Navigation. -->
     <SolidColorBrush x:Key="SelectedNavBrush" Color="{StaticResource NavSelectedColor}" />
-    <SolidColorBrush x:Key="NavRestBrush" Color="Transparent" />
+    <SolidColorBrush x:Key="NavRestBrush" Color="{StaticResource TransparentColor}" />
 
     <!-- Whisper overlay, level meter, and keycaps. -->
     <SolidColorBrush x:Key="OverlayBrush" Color="{StaticResource OverlayColor}" />

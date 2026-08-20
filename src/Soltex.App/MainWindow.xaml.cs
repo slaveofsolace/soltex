@@ -72,6 +72,11 @@ public partial class MainWindow : Window
 
     internal Task StartupCompleted => _startupCompleted.Task;
 
+    internal void UpdateAppearanceResolution(
+        ResolvedAppearance appearance,
+        bool highContrastOverride) =>
+        SettingsPanel.UpdateAppearanceStatus(appearance, highContrastOverride);
+
     public MainWindow()
     {
         InitializeComponent();
@@ -81,13 +86,20 @@ public partial class MainWindow : Window
         _preferences = preferencesLoad.Preferences;
         if (_renderSmokeMode)
         {
+            AppearancePreference renderAppearance =
+                RuntimeLaunchPolicy.TryParseRenderSmoke(
+                    Environment.GetCommandLineArgs(),
+                    out RenderSmokeRequest? renderRequest)
+                    ? RuntimeLaunchPolicy.ResolveRenderPreference(renderRequest!.Appearance)
+                    : AppearancePreference.Dark;
             _preferences = _preferences with
             {
                 RestoreLastWorkspace = false,
                 ActivityRetention = ActivityRetention.SessionOnly,
                 CloseBehavior = CloseBehavior.Exit,
                 PreferredPlaybackEndpointKey = string.Empty,
-                PreferredRecordingEndpointKey = string.Empty
+                PreferredRecordingEndpointKey = string.Empty,
+                AppearancePreference = renderAppearance
             };
         }
         Volatile.Write(
@@ -1456,6 +1468,8 @@ public partial class MainWindow : Window
 
         bool closeBehaviorChanged =
             requested.CloseBehavior != _preferences.CloseBehavior;
+        bool appearanceChanged =
+            requested.AppearancePreference != _preferences.AppearancePreference;
         _preferences = requested;
         Volatile.Write(
             ref _telemetryIntervalMilliseconds,
@@ -1471,6 +1485,10 @@ public partial class MainWindow : Window
             _preferences.ActivityRetention,
             retentionResult.Detail,
             retentionResult.StorageHealthy);
+        if (appearanceChanged && Application.Current is App application)
+        {
+            application.SetAppearancePreference(_preferences.AppearancePreference);
+        }
         try
         {
             _preferencesStore.Save(_preferences);
@@ -1888,8 +1906,12 @@ public partial class MainWindow : Window
                  })
         {
             button.Tag = button == selectedButton ? "Selected" : null;
-            button.Background = (Brush)FindResource("NavRestBrush");
-            button.Foreground = (Brush)FindResource("MutedBrush");
+            button.SetResourceReference(
+                System.Windows.Controls.Control.BackgroundProperty,
+                "NavRestBrush");
+            button.SetResourceReference(
+                System.Windows.Controls.Control.ForegroundProperty,
+                "MutedBrush");
         }
 
         _activeWorkspace =

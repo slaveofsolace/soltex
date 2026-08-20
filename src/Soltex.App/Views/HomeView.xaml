@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="clr-namespace:Soltex.App.Controls"
              Background="Transparent"
-             Foreground="{StaticResource TextBrush}"
+             Foreground="{DynamicResource TextBrush}"
              FontFamily="{StaticResource UiFont}">
     <Grid>
         <Grid.RowDefinitions>
@@ -26,11 +26,11 @@
                 </StackPanel>
                 <Border x:Name="HomeStatePill" Grid.Column="1" Style="{StaticResource StatusPillStyle}" VerticalAlignment="Top">
                     <StackPanel Orientation="Horizontal">
-                        <Ellipse x:Name="HomeStateDot" Width="7" Height="7" Fill="{StaticResource WarningBrush}" VerticalAlignment="Center" />
+                        <Ellipse x:Name="HomeStateDot" Width="7" Height="7" Fill="{DynamicResource WarningBrush}" VerticalAlignment="Center" />
                         <TextBlock x:Name="HomeStateText"
                                    Margin="8,0,0,0"
                                    Text="WAITING"
-                                   Foreground="{StaticResource WarningBrush}"
+                                   Foreground="{DynamicResource WarningBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="10"
                                    FontWeight="SemiBold" />
@@ -51,22 +51,22 @@
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Text="Processor" Foreground="{StaticResource SignalBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
+                        <TextBlock Text="Processor" Foreground="{DynamicResource SignalBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                         <StackPanel Grid.Row="1" Margin="0,5,0,0" Orientation="Horizontal" VerticalAlignment="Bottom">
                             <TextBlock x:Name="CpuHeroValue" Text="—" FontFamily="{StaticResource DisplayFont}" FontSize="52" FontWeight="SemiBold" />
-                            <TextBlock Margin="12,0,0,10" Text="CPU" Foreground="{StaticResource MutedBrush}" FontSize="13" />
+                            <TextBlock Margin="12,0,0,10" Text="CPU" Foreground="{DynamicResource MutedBrush}" FontSize="13" />
                         </StackPanel>
                         <controls:Sparkline x:Name="CpuSparkline"
                                             Grid.Row="2"
                                             Margin="0,8,0,6"
                                             MinHeight="62"
-                                            Stroke="{StaticResource AccentBrush}"
-                                            Fill="{StaticResource AccentAreaBrush}"
+                                            Stroke="{DynamicResource AccentBrush}"
+                                            Fill="{DynamicResource AccentAreaBrush}"
                                             StrokeThickness="2.4"
                                             AutomationProperties.Name="Recent CPU utilization" />
                         <TextBlock x:Name="HomeCapturedText"
                                    Grid.Row="3"
-                                   Foreground="{StaticResource QuietTextBrush}"
+                                   Foreground="{DynamicResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
                                    FontSize="10"
                                    TextWrapping="Wrap"
@@ -75,28 +75,28 @@
 
                     <Border x:Name="MachineProfileCard"
                             Grid.Column="1"
-                            Background="{StaticResource QuietBrush}"
-                            BorderBrush="{StaticResource BorderBrush}"
+                            Background="{DynamicResource QuietBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
                             BorderThickness="1"
                             CornerRadius="{StaticResource RadiusSm}"
                             Padding="14">
                         <StackPanel>
-                            <TextBlock Text="This PC" Foreground="{StaticResource MutedBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
+                            <TextBlock Text="This PC" Foreground="{DynamicResource MutedBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                             <TextBlock x:Name="MachineNameText" Margin="0,8,0,0" Text="Local machine" FontSize="20" FontWeight="SemiBold" />
-                            <TextBlock x:Name="MachineOsText" Margin="0,5,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" Text="Reading Windows profile…" />
-                            <Border Margin="0,16,0,0" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="0,14,0,0">
+                            <TextBlock x:Name="MachineOsText" Margin="0,5,0,0" Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" Text="Reading Windows profile…" />
+                            <Border Margin="0,16,0,0" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="0,14,0,0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock Text="Device mesh" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                                        <TextBlock Text="Device mesh" Foreground="{DynamicResource MutedBrush}" FontSize="11" />
                                         <TextBlock Text="Local observation only" Margin="0,4,0,0" FontWeight="SemiBold" />
                                     </StackPanel>
                                     <TextBlock Grid.Column="1"
                                                Text="NOT ENROLLED"
-                                               Foreground="{StaticResource WarningBrush}"
+                                               Foreground="{DynamicResource WarningBrush}"
                                                FontFamily="{StaticResource MonoFont}"
                                                FontSize="9"
                                                VerticalAlignment="Center" />
@@ -124,7 +124,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="82" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Memory" Foreground="{StaticResource MutedBrush}" />
+                            <TextBlock Text="Memory" Foreground="{DynamicResource MutedBrush}" />
                             <ProgressBar x:Name="MemoryProgress" Grid.Column="1" Margin="12,0" Style="{StaticResource MetricProgressStyle}" Maximum="100" VerticalAlignment="Center" AutomationProperties.Name="Physical memory in use" />
                             <TextBlock x:Name="MemoryText" Grid.Column="2" Text="Unavailable" HorizontalAlignment="Right" />
                         </Grid>
@@ -134,11 +134,11 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="82" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock x:Name="StorageNameText" Text="Storage" Foreground="{StaticResource MutedBrush}" />
-                            <ProgressBar x:Name="StorageProgress" Grid.Column="1" Margin="12,0" Style="{StaticResource MetricProgressStyle}" Maximum="100" VerticalAlignment="Center" Foreground="{StaticResource SignalBrush}" AutomationProperties.Name="Primary storage in use" />
+                            <TextBlock x:Name="StorageNameText" Text="Storage" Foreground="{DynamicResource MutedBrush}" />
+                            <ProgressBar x:Name="StorageProgress" Grid.Column="1" Margin="12,0" Style="{StaticResource MetricProgressStyle}" Maximum="100" VerticalAlignment="Center" Foreground="{DynamicResource SignalBrush}" AutomationProperties.Name="Primary storage in use" />
                             <TextBlock x:Name="StorageText" Grid.Column="2" Text="Unavailable" HorizontalAlignment="Right" />
                         </Grid>
-                        <Grid Margin="0,17,0,0" Background="{StaticResource QuietBrush}">
+                        <Grid Margin="0,17,0,0" Background="{DynamicResource QuietBrush}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -151,7 +151,7 @@
                                        Grid.Column="1"
                                        Margin="12"
                                        Text="—"
-                                       Foreground="{StaticResource AccentBrush}"
+                                       Foreground="{DynamicResource AccentBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        VerticalAlignment="Center" />
                         </Grid>
@@ -165,15 +165,15 @@
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock x:Name="NetworkRateText" Text="Unavailable" FontFamily="{StaticResource DisplayFont}" FontSize="25" />
-                            <TextBlock x:Name="NetworkStatusText" Grid.Column="1" Text="WAITING" Foreground="{StaticResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" VerticalAlignment="Center" />
+                            <TextBlock x:Name="NetworkStatusText" Grid.Column="1" Text="WAITING" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" VerticalAlignment="Center" />
                         </Grid>
-                        <TextBlock x:Name="NetworkDetailText" Margin="0,3,0,0" Text="Waiting for a stable interface sample" Foreground="{StaticResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" TextWrapping="Wrap" />
+                        <TextBlock x:Name="NetworkDetailText" Margin="0,3,0,0" Text="Waiting for a stable interface sample" Foreground="{DynamicResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="9" TextWrapping="Wrap" />
                         <controls:Sparkline x:Name="NetworkSparkline"
                                             Height="52"
                                             Margin="0,12,0,14"
                                             AutoScale="True"
-                                            Stroke="{StaticResource SignalBrush}"
-                                            Fill="{StaticResource SignalAreaBrush}"
+                                            Stroke="{DynamicResource SignalBrush}"
+                                            Fill="{DynamicResource SignalAreaBrush}"
                                             StrokeThickness="2"
                                             AutomationProperties.Name="Recent aggregate network throughput" />
                     </StackPanel>

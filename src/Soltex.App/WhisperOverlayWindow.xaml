@@ -11,7 +11,7 @@
         ShowActivated="False"
         Topmost="True"
         ResizeMode="NoResize"
-        Foreground="{StaticResource TextBrush}"
+        Foreground="{DynamicResource TextBrush}"
         FontFamily="{StaticResource UiFont}"
         AutomationProperties.Name="Whisper listening surface">
 
@@ -50,7 +50,7 @@
                        VerticalAlignment="Center"
                        Text="0:00"
                        Visibility="Collapsed"
-                       Foreground="{StaticResource TextSecondaryBrush}"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
                        FontFamily="{StaticResource MonoFont}"
                        FontSize="{StaticResource FontMono}"
                        AutomationProperties.Name="Elapsed dictation time" />

@@ -2,6 +2,7 @@ using System.IO;
 using System.Security;
 using System.Text;
 using System.Text.Json;
+using Soltex.Security;
 
 namespace Soltex.App;
 
@@ -25,6 +26,13 @@ internal enum CloseBehavior
     NotificationArea
 }
 
+internal enum AppearancePreference
+{
+    System,
+    Dark,
+    Light
+}
+
 internal sealed record SoltexPreferences(
     TelemetryCadence TelemetryCadence,
     bool RestoreLastWorkspace,
@@ -33,9 +41,10 @@ internal sealed record SoltexPreferences(
     CloseBehavior CloseBehavior,
     string PreferredPlaybackEndpointKey,
     string PreferredRecordingEndpointKey,
-    string LastWorkspace)
+    string LastWorkspace,
+    AppearancePreference AppearancePreference = global::Soltex.App.AppearancePreference.System)
 {
-    internal const int CurrentSchemaVersion = 3;
+    internal const int CurrentSchemaVersion = 4;
 
     internal static SoltexPreferences Default { get; } =
         new(
@@ -46,7 +55,8 @@ internal sealed record SoltexPreferences(
             global::Soltex.App.CloseBehavior.Exit,
             string.Empty,
             string.Empty,
-            "home");
+            "home",
+            global::Soltex.App.AppearancePreference.System);
 
     internal int TelemetryIntervalMilliseconds => TelemetryCadence switch
     {
@@ -68,7 +78,10 @@ internal sealed record SoltexPreferences(
                 : global::Soltex.App.CloseBehavior.Exit,
             NormalizeEndpointPreferenceKey(PreferredPlaybackEndpointKey),
             NormalizeEndpointPreferenceKey(PreferredRecordingEndpointKey),
-            NormalizeWorkspace(LastWorkspace));
+            NormalizeWorkspace(LastWorkspace),
+            Enum.IsDefined(AppearancePreference)
+                ? AppearancePreference
+                : global::Soltex.App.AppearancePreference.System);
 
     internal static string NormalizeEndpointPreferenceKey(string? value)
     {
@@ -121,6 +134,13 @@ internal sealed class PreferencesStore
         _filePath = Path.GetFullPath(filePath);
     }
 
+    internal static PreferencesStore CreateDefault()
+    {
+        ProductDataRootResolution resolution = ProductDataRootResolver.ResolveDefault();
+        return new PreferencesStore(
+            Path.Combine(resolution.ProductRoot, "Security", "preferences.json"));
+    }
+
     internal PreferencesLoadResult Load()
     {
         if (!File.Exists(_filePath))
@@ -147,7 +167,7 @@ internal sealed class PreferencesStore
 
             PreferencesDocument? document =
                 JsonSerializer.Deserialize<PreferencesDocument>(json, SerializerOptions);
-            if (document is null || document.SchemaVersion is not (1 or 2 or SoltexPreferences.CurrentSchemaVersion))
+            if (document is null || document.SchemaVersion is not (1 or 2 or 3 or SoltexPreferences.CurrentSchemaVersion))
             {
                 return Recovered("The saved preferences use an unsupported schema.");
             }
@@ -176,6 +196,15 @@ internal sealed class PreferencesStore
                     ignoreCase: true,
                     out closeBehavior) &&
                  Enum.IsDefined(closeBehavior));
+            bool appearanceMissing = string.IsNullOrWhiteSpace(document.AppearancePreference);
+            AppearancePreference appearance = global::Soltex.App.AppearancePreference.System;
+            bool validAppearance =
+                appearanceMissing ||
+                (Enum.TryParse(
+                    document.AppearancePreference,
+                    ignoreCase: true,
+                    out appearance) &&
+                 Enum.IsDefined(appearance));
             string workspace = SoltexPreferences.NormalizeWorkspace(document.LastWorkspace);
             string preferredPlayback =
                 SoltexPreferences.NormalizeEndpointPreferenceKey(document.PreferredPlaybackEndpointKey);
@@ -185,6 +214,7 @@ internal sealed class PreferencesStore
                 !validCadence ||
                 (!retentionMissing && !validRetention) ||
                 (!closeBehaviorMissing && !validCloseBehavior) ||
+                (!appearanceMissing && !validAppearance) ||
                 (!string.IsNullOrWhiteSpace(document.PreferredPlaybackEndpointKey) &&
                  !string.Equals(
                      preferredPlayback,
@@ -211,16 +241,21 @@ internal sealed class PreferencesStore
                     : global::Soltex.App.CloseBehavior.Exit,
                 preferredPlayback,
                 preferredRecording,
-                workspace);
+                workspace,
+                validAppearance && !appearanceMissing
+                    ? appearance
+                    : global::Soltex.App.AppearancePreference.System);
             bool migrated =
-                document.SchemaVersion < SoltexPreferences.CurrentSchemaVersion || closeBehaviorMissing;
+                document.SchemaVersion < SoltexPreferences.CurrentSchemaVersion ||
+                closeBehaviorMissing ||
+                appearanceMissing;
             return new PreferencesLoadResult(
                 preferences,
                 normalized,
                 normalized
                     ? "Unsupported preference values were reset to safe defaults."
                     : migrated
-                        ? "Preferences loaded; new lifecycle and audio-device preferences remain at safe defaults."
+                        ? "Preferences loaded; new appearance, lifecycle, and audio-device preferences remain at safe defaults."
                         : "Preferences loaded from this Windows account.");
         }
         catch (Exception exception) when (IsExpectedReadFailure(exception))
@@ -242,7 +277,8 @@ internal sealed class PreferencesStore
             normalized.CloseBehavior.ToString(),
             normalized.PreferredPlaybackEndpointKey,
             normalized.PreferredRecordingEndpointKey,
-            normalized.LastWorkspace);
+            normalized.LastWorkspace,
+            normalized.AppearancePreference.ToString());
         string json = JsonSerializer.Serialize(document, SerializerOptions);
         if (Encoding.UTF8.GetByteCount(json) > MaximumPreferenceBytes)
         {
@@ -286,5 +322,6 @@ internal sealed class PreferencesStore
         string? CloseBehavior,
         string? PreferredPlaybackEndpointKey,
         string? PreferredRecordingEndpointKey,
-        string LastWorkspace);
+        string LastWorkspace,
+        string? AppearancePreference);
 }
