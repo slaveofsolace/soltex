@@ -32,6 +32,9 @@
     <Color x:Key="FieldColor">#0F141A</Color>
     <Color x:Key="InsetColor">#11171E</Color>
     <Color x:Key="CanvasColor">#0B0E12</Color>
+    <Color x:Key="ShellBackdropColor">#EC0B0E12</Color>
+    <Color x:Key="ShellTitleBarColor">#E60D1116</Color>
+    <Color x:Key="ShellNavigationColor">#E80D1116</Color>
     <Color x:Key="QuietColor">#131A21</Color>
     <Color x:Key="SurfaceColor">#171E26</Color>
     <Color x:Key="RaisedColor">#1D2630</Color>
@@ -113,6 +116,9 @@
     <Color x:Key="LightFieldColor">#FFFFFF</Color>
     <Color x:Key="LightInsetColor">#F2F5F7</Color>
     <Color x:Key="LightCanvasColor">#F7F9FB</Color>
+    <Color x:Key="LightShellBackdropColor">#ECF7F9FB</Color>
+    <Color x:Key="LightShellTitleBarColor">#EAF2F5F7</Color>
+    <Color x:Key="LightShellNavigationColor">#EAEFF3F6</Color>
     <Color x:Key="LightQuietColor">#EDF2F5</Color>
     <Color x:Key="LightSurfaceColor">#FFFFFF</Color>
     <Color x:Key="LightRaisedColor">#E8EEF3</Color>
@@ -171,6 +177,10 @@
 
     <!-- Surfaces. -->
     <SolidColorBrush x:Key="CanvasBrush" Color="{StaticResource CanvasColor}" />
+    <SolidColorBrush x:Key="ShellBackdropBrush" Color="{StaticResource ShellBackdropColor}" />
+    <SolidColorBrush x:Key="ShellTitleBarBrush" Color="{StaticResource ShellTitleBarColor}" />
+    <SolidColorBrush x:Key="ShellNavigationBrush" Color="{StaticResource ShellNavigationColor}" />
+    <SolidColorBrush x:Key="TransparentBrush" Color="{StaticResource TransparentColor}" />
     <SolidColorBrush x:Key="SidebarBrush" Color="{StaticResource SidebarColor}" />
     <SolidColorBrush x:Key="FieldBrush" Color="{StaticResource FieldColor}" />
     <SolidColorBrush x:Key="InsetBrush" Color="{StaticResource InsetColor}" />

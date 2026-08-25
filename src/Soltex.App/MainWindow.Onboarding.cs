@@ -12,6 +12,7 @@ public partial class MainWindow
 
     private void InitializeNativeShellExperience()
     {
+        InitializeNativeWindowLifecycle();
         OnboardingPanel.ProgressChanged += OnboardingPanel_ProgressChanged;
         OnboardingPanel.Completed += OnboardingPanel_Completed;
         OnboardingPanel.ThemeChanged += OnboardingPanel_ThemeChanged;
@@ -136,8 +137,11 @@ public partial class MainWindow
         return false;
     }
 
-    private void Window_SizeChanged(object sender, SizeChangedEventArgs e) =>
+    private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
         ApplyShellLayout(e.NewSize.Width);
+        QueueNativeDragRegionUpdate();
+    }
 
     private void ApplyShellLayout(double availableWidth)
     {

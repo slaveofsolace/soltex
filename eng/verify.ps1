@@ -51,6 +51,7 @@ try {
         'tests\Soltex.Benchmarks.Tests\Soltex.Benchmarks.Tests.csproj',
         'tests\Soltex.Whisper.Tests\Soltex.Whisper.Tests.csproj',
         'tests\Soltex.Whisper.Windows.Tests\Soltex.Whisper.Windows.Tests.csproj',
+        'tests\Soltex.NativeShell.Tests\Soltex.NativeShell.Tests.csproj',
         'tests\Soltex.App.Tests\Soltex.App.Tests.csproj'
     )
 

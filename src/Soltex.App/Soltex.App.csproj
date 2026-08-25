@@ -8,6 +8,10 @@
     <AssemblyName>Soltex</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Soltex.ico</ApplicationIcon>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <WinUISDKReferences>false</WinUISDKReferences>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Soltex.RemoteAssist\Soltex.RemoteAssist.csproj" />
@@ -19,8 +23,21 @@
     <ProjectReference Include="..\Soltex.Benchmarks\Soltex.Benchmarks.csproj" />
     <ProjectReference Include="..\Soltex.Whisper\Soltex.Whisper.csproj" />
     <ProjectReference Include="..\Soltex.Whisper.Windows\Soltex.Whisper.Windows.csproj" />
+    <ProjectReference Include="..\Soltex.NativeShell\Soltex.NativeShell.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Soltex.App.Tests" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences"
+                      Version="2.1.6"
+                      PrivateAssets="all" />
+  </ItemGroup>
+  <Target Name="RemoveUnusedWinRtSourceGeneratorFromWpfHost"
+          BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)"
+                Condition="'%(Analyzer.Filename)' == 'WinRT.SourceGenerator'" />
+    </ItemGroup>
+  </Target>
 </Project>

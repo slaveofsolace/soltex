@@ -35,6 +35,9 @@ internal static class AppearanceThemeManager
     private static readonly BrushBinding[] BrushBindings =
     [
         new("CanvasBrush", "CanvasColor", "LightCanvasColor", HighContrastRole.Surface),
+        new("ShellBackdropBrush", "ShellBackdropColor", "LightShellBackdropColor", HighContrastRole.Surface),
+        new("ShellTitleBarBrush", "ShellTitleBarColor", "LightShellTitleBarColor", HighContrastRole.Surface),
+        new("ShellNavigationBrush", "ShellNavigationColor", "LightShellNavigationColor", HighContrastRole.Surface),
         new("SidebarBrush", "SidebarColor", "LightSidebarColor", HighContrastRole.Surface),
         new("FieldBrush", "FieldColor", "LightFieldColor", HighContrastRole.Surface),
         new("InsetBrush", "InsetColor", "LightInsetColor", HighContrastRole.Surface),

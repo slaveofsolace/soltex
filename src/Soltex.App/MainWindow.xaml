@@ -8,7 +8,7 @@
         MinWidth="860"
         MinHeight="640"
         WindowStartupLocation="CenterScreen"
-        Background="{DynamicResource CanvasBrush}"
+        Background="{DynamicResource ShellBackdropBrush}"
         Foreground="{DynamicResource TextBrush}"
         FontFamily="{StaticResource UiFont}"
         Loaded="Window_Loaded"
@@ -16,15 +16,64 @@
         SizeChanged="Window_SizeChanged"
         PreviewKeyDown="Window_PreviewKeyDown">
 
-    <Grid Background="{DynamicResource CanvasBrush}">
+    <Grid x:Name="ShellRoot" Background="{DynamicResource ShellBackdropBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition x:Name="NativeTitleBarRow" Height="0" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition x:Name="NavigationColumn" Width="220" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
+        <Border x:Name="NativeTitleBar"
+                Grid.Row="0"
+                Grid.ColumnSpan="2"
+                Height="40"
+                Background="{DynamicResource ShellTitleBarBrush}"
+                BorderBrush="{DynamicResource TrackBrush}"
+                BorderThickness="0,0,0,1"
+                Visibility="Collapsed"
+                AutomationProperties.Name="Soltex window title bar">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="NativeCaptionLeftInsetColumn" Width="0" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="13" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition x:Name="NativeCaptionRightInsetColumn" Width="138" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="1"
+                           Margin="14,0,0,0"
+                           Text="Soltex"
+                           Foreground="{DynamicResource TextBrightBrush}"
+                           FontFamily="{StaticResource DisplayFont}"
+                           FontSize="{StaticResource FontBody}"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+                <Border Grid.Column="2"
+                        Width="1"
+                        Height="14"
+                        Background="{DynamicResource BorderBrush}"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center" />
+                <TextBlock x:Name="NativeWorkspaceTitle"
+                           Grid.Column="3"
+                           Text="Overview"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           FontSize="{StaticResource FontCaption}"
+                           VerticalAlignment="Center" />
+                <Grid x:Name="NativeTitleBarDragRegion"
+                      Grid.Column="0"
+                      Grid.ColumnSpan="4"
+                      Background="{DynamicResource TransparentBrush}" />
+            </Grid>
+        </Border>
+
         <Border x:Name="NavigationRail"
+                Grid.Row="1"
                 Grid.Column="0"
-                Background="{DynamicResource SidebarBrush}"
+                Background="{DynamicResource ShellNavigationBrush}"
                 BorderBrush="{DynamicResource TrackBrush}"
                 BorderThickness="0,0,1,0"
                 TextElement.Foreground="{DynamicResource TextBrush}"
@@ -189,6 +238,7 @@
         </Border>
 
         <Grid x:Name="WorkspaceHost"
+              Grid.Row="1"
               Grid.Column="1"
               Margin="28,22,28,24"
               ClipToBounds="True"
@@ -749,6 +799,7 @@
         </Grid>
 
         <Grid x:Name="OnboardingOverlay"
+              Grid.RowSpan="2"
               Grid.ColumnSpan="2"
               Panel.ZIndex="110"
               Background="{DynamicResource ModalScrimBrush}"
@@ -771,6 +822,7 @@
         </Grid>
 
         <Grid x:Name="CommandPaletteOverlay"
+              Grid.RowSpan="2"
               Grid.ColumnSpan="2"
               Panel.ZIndex="100"
               Background="{DynamicResource ModalScrimBrush}"

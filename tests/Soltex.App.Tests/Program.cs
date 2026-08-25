@@ -120,13 +120,18 @@ internal static class Program
         Console.WriteLine();
         Console.WriteLine($"{tests.Count - failed}/{tests.Count} tests passed.");
         Console.WriteLine($"MEASURE app_control_suite tests={tests.Count} failed={failed} total_ms={suite.Elapsed.TotalMilliseconds:F1}");
-        return failed == 0 ? 0 : 1;
+        int exitCode = failed == 0 ? 0 : 1;
+        application.Shutdown(exitCode);
+        return exitCode;
     }
 
     private static void ThemeResourcesAreAvailable()
     {
         ResourceDictionary resources = Application.Current.Resources;
         True(resources.Contains("AccentBrush"), "The shared accent brush is missing.");
+        True(resources.Contains("ShellBackdropBrush"), "The native shell backdrop brush is missing.");
+        True(resources.Contains("ShellTitleBarBrush"), "The native title bar brush is missing.");
+        True(resources.Contains("ShellNavigationBrush"), "The native navigation brush is missing.");
         True(resources.Contains("HeroCardStyle"), "The shared hero-card style is missing.");
         True(resources.Contains("SoltexSliderStyle"), "The shared slider style is missing.");
     }
@@ -157,6 +162,8 @@ internal static class Program
         SolidColorBrush canvas = (SolidColorBrush)Application.Current.FindResource("CanvasBrush");
         SolidColorBrush accent = (SolidColorBrush)Application.Current.FindResource("AccentBrush");
         Color lightCanvas = (Color)Application.Current.FindResource("LightCanvasColor");
+        Color lightShellBackdrop =
+            (Color)Application.Current.FindResource("LightShellBackdropColor");
         Color lightAccent = (Color)Application.Current.FindResource("LightAccentColor");
         SettingsView view = new();
         Window host = new()
@@ -184,13 +191,17 @@ internal static class Program
                 (SolidColorBrush)Application.Current.FindResource("CanvasBrush");
             SolidColorBrush activeAccent =
                 (SolidColorBrush)Application.Current.FindResource("AccentBrush");
+            SolidColorBrush activeShellBackdrop =
+                (SolidColorBrush)Application.Current.FindResource("ShellBackdropBrush");
             True(!ReferenceEquals(canvas, activeCanvas) && activeCanvas.Color == lightCanvas,
                 "Live appearance switching did not replace the frozen canvas resource.");
             True(!ReferenceEquals(accent, activeAccent) &&
                  activeAccent.Color == lightAccent &&
                  view.SystemAppearanceButton.Foreground is SolidColorBrush selectedAccent &&
                  selectedAccent.Color == lightAccent,
-                "A stateful control did not resolve the live-updated semantic accent resource.");
+                 "A stateful control did not resolve the live-updated semantic accent resource.");
+            True(activeShellBackdrop.Color == lightShellBackdrop,
+                "The native shell backdrop did not follow the live light appearance.");
 
             AppearanceThemeManager.ApplyProfileResolved(
                 resources,
@@ -211,8 +222,11 @@ internal static class Program
                  SystemColors.WindowColor,
                 "High Contrast did not map the canvas to the Windows system colour.");
             True(((SolidColorBrush)Application.Current.FindResource("TextBrush")).Color ==
-                 SystemColors.WindowTextColor,
+                  SystemColors.WindowTextColor,
                 "High Contrast did not map primary text to the Windows system colour.");
+            True(((SolidColorBrush)Application.Current.FindResource("ShellBackdropBrush")).Color ==
+                 SystemColors.WindowColor,
+                "High Contrast did not replace the translucent native backdrop with a system surface.");
         }
         finally
         {

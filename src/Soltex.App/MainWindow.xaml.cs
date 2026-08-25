@@ -77,8 +77,11 @@ public partial class MainWindow : Window
 
     internal void UpdateAppearanceResolution(
         ResolvedAppearance appearance,
-        bool highContrastOverride) =>
+        bool highContrastOverride)
+    {
         SettingsPanel.UpdateAppearanceStatus(appearance, highContrastOverride);
+        UpdateNativeWindowAppearance(appearance, highContrastOverride);
+    }
 
     public MainWindow()
     {
@@ -274,6 +277,7 @@ public partial class MainWindow : Window
     private async void Window_Closed(object? sender, EventArgs e)
     {
         _shutdownStarted = true;
+        DisposeNativeWindowLifecycle();
         if (!_renderSmokeMode)
         {
             SavePreferencesForClose();
@@ -1976,6 +1980,8 @@ public partial class MainWindow : Window
             panel == UpdatePanel ? "updates" :
             panel == SettingsPanel ? "settings" :
             "home";
+
+        UpdateNativeWorkspaceTitle(panel);
 
         panel.BeginAnimation(OpacityProperty, null);
         panel.Opacity = 1;

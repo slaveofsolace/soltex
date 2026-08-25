@@ -6,6 +6,8 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>Soltex.App.Tests</RootNamespace>
     <AssemblyName>Soltex.App.Tests</AssemblyName>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <WindowsPackageType>None</WindowsPackageType>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Soltex.App\Soltex.App.csproj" />
@@ -13,4 +15,16 @@
     <ProjectReference Include="..\..\src\Soltex.DeviceFabric\Soltex.DeviceFabric.csproj" />
     <ProjectReference Include="..\..\src\Soltex.Monitoring\Soltex.Monitoring.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences"
+                      Version="2.1.6"
+                      PrivateAssets="all" />
+  </ItemGroup>
+  <Target Name="RemoveUnusedWinRtSourceGeneratorFromWpfTestHost"
+          BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)"
+                Condition="'%(Analyzer.Filename)' == 'WinRT.SourceGenerator'" />
+    </ItemGroup>
+  </Target>
 </Project>

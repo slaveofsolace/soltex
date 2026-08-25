@@ -10,6 +10,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Microsoft.Win32;
 using Soltex.Security;
+using Soltex.NativeShell;
 using Soltex.Whisper;
 using Soltex.Whisper.Windows;
 
@@ -550,6 +551,26 @@ public partial class App : Application
                 encoder.Frames.Add(BitmapFrame.Create(bitmap));
                 using FileStream stream = new(fullOutputPath, FileMode.Create, FileAccess.Write, FileShare.None);
                 encoder.Save(stream);
+                NativeWindowAttachment? native = window.NativeWindowAttachment;
+                var nativeEvidence = new
+                {
+                    schemaVersion = 1,
+                    appWindowAttached = native?.AppWindowAttached == true,
+                    backdropApplied = native?.BackdropApplied == true,
+                    backdrop = native?.Decision.Backdrop.ToString() ?? "Unavailable",
+                    chrome = native?.Decision.Chrome.ToString() ?? "System",
+                    backdropFallback = native?.Decision.BackdropFallbackReason.ToString() ?? "Unavailable",
+                    chromeFallback = native?.Decision.ChromeFallbackReason.ToString() ?? "Unavailable",
+                    captionLeftInset = native?.CaptionLeftInset ?? 0,
+                    captionRightInset = native?.CaptionRightInset ?? 0,
+                    captionReserveDip = window.NativeCaptionReserveDip,
+                    nativeFrameCaptured = false,
+                    contentCaptured = false,
+                    capturedAtUtc = DateTimeOffset.UtcNow
+                };
+                File.WriteAllText(
+                    fullOutputPath + ".native.json",
+                    JsonSerializer.Serialize(nativeEvidence, RuntimeReportJsonOptions));
             }
             catch (Exception exception)
             {
