@@ -10,15 +10,19 @@
     <WindowsPackageType>None</WindowsPackageType>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Soltex.App\Soltex.App.csproj" />
+    <ProjectReference Include="..\..\src\Soltex.App\Soltex.App.csproj"
+                      AdditionalProperties="OutputType=Library;WindowsAppSDKSelfContained=false" />
     <ProjectReference Include="..\..\src\Soltex.Audio\Soltex.Audio.csproj" />
     <ProjectReference Include="..\..\src\Soltex.DeviceFabric\Soltex.DeviceFabric.csproj" />
     <ProjectReference Include="..\..\src\Soltex.Monitoring\Soltex.Monitoring.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences"
-                      Version="2.1.6"
-                      PrivateAssets="all" />
+    <!-- Tests load the projection metadata referenced by Soltex.NativeShell but
+         do not activate or package the Windows App SDK runtime. -->
+    <Reference Include="Microsoft.InteractiveExperiences.Projection">
+      <HintPath>$(NuGetPackageRoot)\microsoft.windowsappsdk.interactiveexperiences\2.1.6\lib\net6.0-windows10.0.18362.0\Microsoft.InteractiveExperiences.Projection.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
   </ItemGroup>
   <Target Name="RemoveUnusedWinRtSourceGeneratorFromWpfTestHost"
           BeforeTargets="CoreCompile">

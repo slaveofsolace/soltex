@@ -93,7 +93,6 @@
                     </Border>
                     <StackPanel x:Name="BrandTextPanel" Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
                         <TextBlock Text="Soltex" Foreground="{DynamicResource TextBrightBrush}" FontFamily="{StaticResource DisplayFont}" FontSize="18" FontWeight="SemiBold" />
-                        <TextBlock Text="Local control" Margin="0,2,0,0" Foreground="{DynamicResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" />
                     </StackPanel>
                 </Grid>
 
@@ -163,12 +162,11 @@
                             <TextBlock Grid.Column="2" Tag="NavDetail" Margin="8,0,0,0" Text="PREVIEW" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Grid>
                     </Button>
-                    <Button x:Name="ClipsNavButton" Visibility="Collapsed" Style="{StaticResource NavButton}" AutomationProperties.Name="Capture preview" Click="ClipsNav_Click">
+                    <Button x:Name="ClipsNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Capture" Click="ClipsNav_Click">
                         <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE714;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                             <TextBlock Grid.Column="1" Tag="NavLabel" Text="Capture" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="2" Tag="NavDetail" Margin="8,0,0,0" Text="PREVIEW" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Grid>
                     </Button>
                     <Button x:Name="ActivityNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Activity" Click="ActivityNav_Click">
@@ -228,7 +226,7 @@
                             <TextBlock x:Name="ProtectionSummaryDetail" Margin="15,5,0,0" Text="Reading Windows Security" Foreground="{DynamicResource MutedBrush}" FontSize="{StaticResource FontCaption}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                     </Border>
-                    <Grid x:Name="NavigationFooter" Margin="3,10,3,0">
+                    <Grid x:Name="NavigationFooter" Margin="3,10,3,0" Visibility="Collapsed">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <TextBlock Text="Local workspace" Foreground="{DynamicResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" />
                         <TextBlock x:Name="ShellBuildText" Grid.Column="1" Text="1.0.0" Foreground="{DynamicResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
@@ -760,37 +758,7 @@
 
             <views:MixerView x:Name="MixerPanel" Visibility="Collapsed" />
 
-            <Grid x:Name="ClipsPanel" Visibility="Collapsed">
-                <StackPanel>
-                    <Grid>
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                        <StackPanel>
-                            <TextBlock Style="{StaticResource PageTitleStyle}" Text="Capture" />
-                            <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Local screenshots and recordings." />
-                        </StackPanel>
-                        <Border Grid.Column="1" Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
-                            <TextBlock Text="UNAVAILABLE" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
-                        </Border>
-                    </Grid>
-                    <Border Margin="0,18,0,0"
-                            MaxWidth="640"
-                            HorizontalAlignment="Left"
-                            Style="{StaticResource HeroCardStyle}">
-                        <StackPanel>
-                            <TextBlock Text="Capture unavailable" Foreground="{DynamicResource WarningBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
-                            <TextBlock Margin="0,6,0,0"
-                                       Text="Recording is not available in this build"
-                                       FontFamily="{StaticResource DisplayFont}"
-                                       FontSize="{StaticResource FontDisplaySm}" />
-                            <TextBlock Margin="0,7,0,0"
-                                       MaxWidth="520"
-                                       Text="When enabled, Soltex will always show when capture is active and store clips locally."
-                                       TextWrapping="Wrap"
-                                       Foreground="{DynamicResource MutedBrush}" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </Grid>
+            <views:CaptureView x:Name="CapturePanel" Visibility="Collapsed" />
         </Grid>
 
         <Grid x:Name="OnboardingOverlay"

@@ -137,6 +137,7 @@ public partial class MainWindow : Window
         MonitoringPanel.UpdateBenchmarkLoad(_benchmarkResultStore.Load());
         MonitoringPanel.SetDetailsVisible(_preferences.OpenPerformanceDetails);
         InitializeWhisperCapture();
+        InitializeCaptureWorkspace();
         _updateStagingRoot = Path.Combine(_runtime.DataRoot, "update", "staging");
         _updateJournal = new UpdatePlanningJournal(Path.Combine(_runtime.DataRoot, "update", "journal"));
         QuarantineGrid.ItemsSource = _quarantineRows;
@@ -281,6 +282,7 @@ public partial class MainWindow : Window
         _whisperCaptureCancellation?.Cancel();
         _whisperModelCancellation?.Cancel();
         _whisperSessionCancellation?.Cancel();
+        _captureCancellation?.Cancel();
         _whisperRuntimeCancellation.Cancel();
         _whisperCapture?.CompleteCurrentCapture();
         await _telemetryLoop.StopAsync();
@@ -294,6 +296,7 @@ public partial class MainWindow : Window
             _whisperSessionDrained,
             _whisperShortcutDrained,
             _whisperHistoryDrained,
+            _captureOperationDrained,
             _startupTask);
         if (!ownedWorkDrained)
         {
@@ -321,6 +324,8 @@ public partial class MainWindow : Window
         await DisposeWhisperCaptureAsync();
         await DisposeWhisperModelAsync();
         await DisposeWhisperHistoryAsync();
+        _captureCancellation?.Dispose();
+        _captureCancellation = null;
 
         _updateJournal.Dispose();
         _runtime.Dispose();
@@ -1386,7 +1391,7 @@ public partial class MainWindow : Window
         await RefreshAudioAsync();
     }
 
-    private void ClipsNav_Click(object sender, RoutedEventArgs e) => ShowPanel(ClipsPanel, ClipsNavButton);
+    private void ClipsNav_Click(object sender, RoutedEventArgs e) => ShowPanel(CapturePanel, ClipsNavButton);
 
     private void SecurityNav_Click(object sender, RoutedEventArgs e) => ShowPanel(SecurityPanel, SecurityNavButton);
 
@@ -1861,7 +1866,7 @@ public partial class MainWindow : Window
 
         if (string.Equals(normalized, "clips", StringComparison.OrdinalIgnoreCase))
         {
-            ShowPanel(ClipsPanel, ClipsNavButton);
+            ShowPanel(CapturePanel, ClipsNavButton);
             return true;
         }
 
@@ -1926,7 +1931,7 @@ public partial class MainWindow : Window
         SettingsPanel.Visibility = panel == SettingsPanel ? Visibility.Visible : Visibility.Collapsed;
         DevicesPanel.Visibility = panel == DevicesPanel ? Visibility.Visible : Visibility.Collapsed;
         MixerPanel.Visibility = panel == MixerPanel ? Visibility.Visible : Visibility.Collapsed;
-        ClipsPanel.Visibility = panel == ClipsPanel ? Visibility.Visible : Visibility.Collapsed;
+        CapturePanel.Visibility = panel == CapturePanel ? Visibility.Visible : Visibility.Collapsed;
         SecurityPanel.Visibility = panel == SecurityPanel ? Visibility.Visible : Visibility.Collapsed;
         RemotePanel.Visibility = panel == RemotePanel ? Visibility.Visible : Visibility.Collapsed;
         WhisperPanel.Visibility = panel == WhisperPanel ? Visibility.Visible : Visibility.Collapsed;
@@ -1960,7 +1965,9 @@ public partial class MainWindow : Window
         _activeWorkspace =
             panel == MonitoringPanel ? "monitoring" :
             panel == ApplicationsPanel ? "applications" :
+            panel == DevicesPanel ? "devices" :
             panel == MixerPanel ? "mixer" :
+            panel == CapturePanel ? "clips" :
             panel == SecurityPanel ? "security" :
             panel == RemotePanel ? "remote" :
             panel == WhisperPanel ? "whisper" :
@@ -1994,7 +2001,7 @@ public partial class MainWindow : Window
                      ApplicationsPanel,
                      DevicesPanel,
                      MixerPanel,
-                     ClipsPanel,
+                     CapturePanel,
                      SecurityPanel,
                      RemotePanel,
                      WhisperPanel,

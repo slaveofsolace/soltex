@@ -38,7 +38,10 @@
                             Content="Show system detail"
                             AutomationProperties.Name="Show storage and process details"
                             Click="MonitoringDetails_Click" />
-                    <Border Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
+                    <Border x:Name="MonitoringHeaderState"
+                            Style="{StaticResource StatusPillStyle}"
+                            VerticalAlignment="Center"
+                            Visibility="Collapsed">
                         <StackPanel Orientation="Horizontal">
                             <Ellipse x:Name="MonitorStateDot"
                                      Width="7"

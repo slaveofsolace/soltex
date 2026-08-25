@@ -2,7 +2,7 @@
 
 ## Overview
 
-Soltex is a proprietary Windows desktop application intended to combine audio controls, local clip capture, security visibility, verified update planning, and user-approved remote assistance. In the current repository, the primary runtime surface is the .NET 10 WPF app under `src/Soltex.App`, the Security companion under `src/Soltex.Security`, the non-installing planner under `src/Soltex.Update`, and a narrow external-client adapter under `src/Soltex.RemoteAssist`. Audio provides bounded Core Audio observation plus guarded per-app volume and mute with immediate read-back; routing, DSP, virtual endpoints, APO, and driver work are absent. Capture remains a user-visible preview with no recorder or encoder. Remote Assist does not contain a capture, transport, input, relay, or authentication implementation; it can only launch a separate RustDesk client.
+Soltex is a proprietary Windows desktop application intended to combine audio controls, local clip capture, security visibility, verified update planning, and user-approved remote assistance. In the current repository, the primary runtime surface is the .NET 10 WPF app under `src/Soltex.App`, the Security companion under `src/Soltex.Security`, the non-installing planner under `src/Soltex.Update`, and a narrow external-client adapter under `src/Soltex.RemoteAssist`. Audio provides bounded Core Audio observation plus guarded per-app volume and mute with immediate read-back; routing, DSP, virtual endpoints, APO, and driver work are absent. Capture source now contains a consent-owned one-frame screenshot path; current app-host build and live acceptance remain pending, and no recorder, encoder, audio mix, replay, or overlay exists. Remote Assist does not contain a capture, transport, input, relay, or authentication implementation; it can only launch a separate RustDesk client.
 
 The Security companion runs unelevated. It reads antivirus health, invokes supported Microsoft Defender operations, assesses Soltex-bound content, and manages a per-user quarantine. It does not provide system-wide enforcement and must coexist with the antivirus product registered with Windows.
 
@@ -34,6 +34,13 @@ Security-sensitive assets are user files, quarantined payloads, original restore
 13. **Whisper to target and clipboard mutation.** The core reauthorizes the captured target before Windows code acts and again after clipboard staging. Direct UIA replacement is whole-value-only; other insertion uses one paste chord. Clipboard restore requires a matching sequence number and unique operation token and never inspects prior formats.
 14. **Whisper settings to global shortcut lifecycle.** The shipped host installs hooks only after versioned settings migration/validation and an explicit persisted enable action. Disable, shutdown, render evidence, registration failure, and runtime hook fault all fail closed to no active action path.
 15. **Whisper to retained transcript state.** Disk history is opt-in. Transcript text crosses into current-user DPAPI only through the provider-neutral retention boundary, then its ciphertext and bounded metadata enter the existing authenticated-state envelope. The global Activity and diagnostic paths never receive that text.
+16. **Windows capture consent to local screenshot storage.** The Windows picker
+    chooses a display or window and returns a single capture item. Soltex accepts
+    one bounded frame, encodes it in memory, writes a unique exact-owned temporary
+    file with no sharing, hashes through the same open handle, and atomically
+    promotes it under the configured local root. Activity receives only a generic
+    success/failure event; source names, file names, paths, pixels, and hashes do
+    not enter Activity or diagnostics.
 
 ### Invariants
 
@@ -56,8 +63,38 @@ Security-sensitive assets are user files, quarantined payloads, original restore
 - Never read a password value, field value, selected text, caption, or surrounding text while inspecting a Whisper target.
 - Never treat a timed-out, inaccessible, focus-changing, identity-less, or cross-integrity UI Automation provider as an editable target.
 - Never upgrade a core copy decision to insertion, restore a clipboard after ownership changes, or treat an accepted `SendInput` sequence as proof that text arrived.
+- Never capture without a visible Windows picker, accept loopback/system audio in
+  the screenshot path, retain more than one bounded frame, follow a pre-existing
+  output file, upload a screenshot, or treat screenshot success as recording,
+  replay, encoder, long-run, or protected-content proof.
 
 ## Attack Surface, Mitigations, and Attacker Stories
+
+### Capture and local screenshot storage boundary
+
+The selected window or display can close, resize, become protected, stop
+producing frames, or lose its graphics device after consent. Soltex bounds both
+the selected and delivered dimensions, keeps a one-frame pool, waits at most 12
+seconds, unsubscribes frame/source events in `finally`, and maps ordinary source
+and device failure to a content-free state. Raw frame, bitmap, encoder stream,
+D3D, DXGI, and WinRT objects are disposed on success, failure, and cancellation.
+
+The output directory can be unavailable, full, or concurrently modified by
+another process running as the same user. The screenshot path never overwrites a
+file: it uses a random `CreateNew` temporary artifact with `FileShare.None`,
+checks the final byte bound, hashes by rewinding that same exclusive handle, and
+moves to a unique final name without overwrite. Failure cleanup addresses only
+that exact temporary path. The current lexical root-containment check and
+same-user Pictures destination are not a privilege boundary; stronger
+directory-handle/reparse identity proof remains a release gate. A same-user
+malware process can still delete, replace, or disclose screenshots after Soltex
+releases its handle.
+
+The Direct3D binding packages are managed interop dependencies, not a capture
+policy authority. Their exact direct and transitive package archives, hashes,
+licenses, and active-code inventories are retained outside the repository, and
+their notices ship in `THIRD_PARTY_NOTICES.md`. Static inspection and 16 focused
+tests are not malware clearance or live graphics proof.
 
 ### Defender process boundary
 

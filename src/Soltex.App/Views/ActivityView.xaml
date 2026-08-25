@@ -25,9 +25,11 @@
                            Style="{StaticResource MutedTextStyle}"
                            Text="Meaningful Soltex state changes and recovery events." />
             </StackPanel>
-            <Border Grid.Column="1"
+            <Border x:Name="ActivityHeaderState"
+                    Grid.Column="1"
                     Style="{StaticResource StatusPillStyle}"
-                    VerticalAlignment="Top">
+                    VerticalAlignment="Top"
+                    Visibility="Collapsed">
                 <StackPanel Orientation="Horizontal">
                     <Ellipse x:Name="ActivityStateDot"
                              Width="7"

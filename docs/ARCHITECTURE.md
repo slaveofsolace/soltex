@@ -89,6 +89,11 @@ Soltex installs no Windows service, kernel driver, browser extension, network pr
 ## Future subsystem boundaries
 
 - Per-session volume/mute is implemented through supported Core Audio shared-session interfaces. Default-device observation plus a user-mediated Windows Settings handoff is implemented without binding undocumented policy interfaces. Direct system endpoint switching, routing, processing, and stable system-wide virtual endpoints remain separate work requiring documented APIs and, where necessary, a separately designed/signed SysVAD/APO-derived package or other supported architecture.
-- Clips requires Windows Graphics Capture, D3D11, Media Foundation hardware encoding, a bounded segment ring, and a separate click-through/no-activate overlay.
+- Capture now has a one-frame screenshot seam: the Windows picker owns source
+  consent, Windows Graphics Capture owns the frame, a narrow managed D3D11/DXGI
+  adapter creates the WinRT device, Windows Imaging encodes PNG, and Soltex owns
+  bounded local storage plus the session state. Video recording, system/mic
+  audio mixing, Media Foundation encoding, replay segments, hotkeys, and the
+  no-activate overlay remain separate gates.
 - Device Fabric Stage 1 now has a local observation and UI, but a future multi-device fabric still requires capability-bounded Windows/macOS agents, a signed and replay-resistant job protocol, device-local approval policy, OS-backed secret storage, and connector isolation. Tailscale, RustDesk, the NAS, Google Drive, and Box remain separate trust domains. See `docs/PERSONAL_DEVICE_FABRIC.md`.
 - A true antivirus provider is a separate product program, not an extension of the current WPF process.

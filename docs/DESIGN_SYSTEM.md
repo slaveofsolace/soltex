@@ -263,6 +263,7 @@ default for navigation, tabs, headings, and buttons.
 | Performance | Live telemetry grid with optional detail; local Benchmark mode owns one bounded run and result surface |
 | Applications | Dense process/app table + row detail/action pane |
 | Audio | Repeated channel lanes with volume sliders; Devices/More as local tabs |
+| Capture | One working screenshot instrument + local storage/consent state; unavailable recording is one concise boundary, not a fake control deck |
 | Security | Posture/status band + scan command deck + Activity/Quarantine local tabs |
 | Remote Assist | Device/session master-detail deck + compact permission disclosure |
 | Whisper | Readiness checklist + dictation controls; Shortcuts, Personalize, Library, Scratchpad, and Privacy as local tabs |

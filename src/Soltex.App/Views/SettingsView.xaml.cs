@@ -44,7 +44,10 @@ public partial class SettingsView : UserControl
     {
         _preferences = preferences.Normalize();
         RenderPreferences();
-        SettingsSaveDetailText.Text = detail;
+        SettingsSaveDetailText.Text = recoveredFromInvalid ? detail : string.Empty;
+        SettingsSaveDetailText.Visibility = recoveredFromInvalid
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         SetState(
             recoveredFromInvalid ? "CHECK" : "LOCAL",
             recoveredFromInvalid ? "WarningBrush" : "SignalBrush");
@@ -53,6 +56,7 @@ public partial class SettingsView : UserControl
     internal void ShowSaved()
     {
         SettingsSaveDetailText.Text = "Saved for this Windows account.";
+        SettingsSaveDetailText.Visibility = Visibility.Visible;
         SetState("SAVED", "SignalBrush");
     }
 
@@ -60,6 +64,7 @@ public partial class SettingsView : UserControl
     {
         SettingsSaveDetailText.Text =
             "The preference could not be saved. The current session still uses this choice.";
+        SettingsSaveDetailText.Visibility = Visibility.Visible;
         SetState("NOT SAVED", "DangerBrush");
     }
 

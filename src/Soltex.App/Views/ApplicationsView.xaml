@@ -35,8 +35,10 @@
                         Content="Refresh"
                         AutomationProperties.Name="Refresh application inventory"
                         Click="Refresh_Click" />
-                <Border Style="{StaticResource StatusPillStyle}"
-                        VerticalAlignment="Center">
+                <Border x:Name="InventoryHeaderState"
+                        Style="{StaticResource StatusPillStyle}"
+                        VerticalAlignment="Center"
+                        Visibility="Collapsed">
                     <StackPanel Orientation="Horizontal">
                         <Ellipse x:Name="InventoryStateDot"
                                  Width="7"

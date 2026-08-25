@@ -2,6 +2,24 @@
 
 ## Native Instrument V1 finalization (in progress)
 
+Latest local candidate: the quiet app-wide copy pass is committed at
+`26527fc0cff2baaefe1c5cd71c7ee822cea647db`. The following uncommitted Capture
+slice adds versioned profile/session/storage contracts, an explicit
+Windows-picker screenshot adapter, bounded one-frame PNG output, a screenshot-
+only workspace, truthful unavailable recording/replay copy, and MIT notices for
+the resolved managed D3D dependencies. The focused Capture project builds with
+zero warnings and its 16/16 tests pass.
+
+This Capture slice is **implemented, verification pending**. The WPF source and
+test-host build is zero-warning and the app-control suite passes 54/54, including
+the working screenshot-only surface and its rendered pixels. A separate direct
+five-minute build of the real self-contained executable timed out after all
+referenced projects compiled, during the Windows App SDK manifest phase; the
+exact owned process tree was terminated by the bounded runner. Current native
+app renders, live picker/capture/cancellation, package payload, and owner
+acceptance therefore remain unverified; screenshot, recording, replay, and
+Capture-complete claims are not made.
+
 The finalization branch now has public `ThemeProfile`, `FeatureCapability`, and
 versioned `OnboardingState` contracts. Preference schema 5 preserves the prior
 appearance and audio state while adding a Windows-or-Glacier accent, Compact or

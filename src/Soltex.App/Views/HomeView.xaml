@@ -28,7 +28,8 @@
             <Border x:Name="HomeStatePill"
                     Grid.Column="1"
                     Style="{StaticResource StatusPillStyle}"
-                    VerticalAlignment="Top">
+                    VerticalAlignment="Top"
+                    Visibility="Collapsed">
                 <StackPanel Orientation="Horizontal">
                     <Ellipse x:Name="HomeStateDot"
                              Width="7"

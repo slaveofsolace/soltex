@@ -12,6 +12,7 @@ using Soltex.App.Controls;
 using Soltex.App.Views;
 using Soltex.Audio;
 using Soltex.Benchmarks;
+using Soltex.Capture;
 using Soltex.DeviceFabric;
 using Soltex.Monitoring;
 using Soltex.Whisper;
@@ -22,10 +23,16 @@ namespace Soltex.App.Tests;
 internal static class Program
 {
     [STAThread]
-    private static int Main()
+    private static int Main(string[] args)
     {
         global::Soltex.App.App application = new();
         application.InitializeComponent();
+        if (TryRenderCaptureEvidence(args, out int renderExitCode))
+        {
+            application.Shutdown(renderExitCode);
+            return renderExitCode;
+        }
+
         LocalDeviceObservation device = LocalDeviceObservationProvider.Capture();
         SystemTelemetrySnapshot snapshot = SystemTelemetryProvider.CaptureAsync(
             TimeSpan.FromMilliseconds(150),
@@ -64,12 +71,14 @@ internal static class Program
             ("Benchmark lab is explicit, bounded, and progressively disclosed", BenchmarkLabIsProgressive),
             ("Benchmark execution is limited to the visible lab", BenchmarkExecutionRequiresVisibleLab),
             ("Benchmark result store is bounded, atomic, and recoverable", BenchmarkResultStoreIsRecoverable),
+            ("Capture workspace exposes only the working screenshot action", CaptureWorkspaceIsHonest),
             ("Application inventory is bounded and path-free", () => ApplicationInventoryIsBounded(applicationSnapshot)),
             ("Windows service inventory is bounded and read-only", () => ServiceInventoryIsBounded(serviceSnapshot)),
             ("Applications view progressively discloses startup and services", () =>
                 ApplicationsViewRenders(applicationSnapshot, serviceSnapshot)),
             ("Experience contracts normalize capability, theme, and onboarding state", ExperienceContractsAreSafe),
             ("Shell layout responds without hiding capability state", ShellLayoutIsResponsive),
+            ("Workspace headers keep state next to its control", WorkspaceHeadersStayQuiet),
             ("First-run setup is complete, truthful, and executable", OnboardingExperienceIsBounded),
             ("Preference store recovers and round-trips bounded local state", PreferencesRoundTripAndRecovery),
             ("Whisper device selection persists and oversized state fails safe", WhisperSettingsRoundTripAndRecovery),
@@ -1192,6 +1201,32 @@ internal static class Program
             "The minimum-width shell did not protect the primary workspace.");
         True(ShellLayoutPolicy.Resolve(double.NaN, (InterfaceDensity)99) == expanded,
             "Invalid shell inputs did not repair to the compatible desktop layout.");
+    }
+
+    private static void WorkspaceHeadersStayQuiet()
+    {
+        HomeView home = new();
+        MonitoringView monitoring = new();
+        ApplicationsView applications = new();
+        DevicesView devices = new();
+        MixerView mixer = new();
+        ActivityView activity = new();
+        SettingsView settings = new();
+        CaptureView capture = new();
+
+        FrameworkElement[] redundantHeaderStates =
+        [
+            home.HomeStatePill,
+            monitoring.MonitoringHeaderState,
+            applications.InventoryHeaderState,
+            devices.DeviceHeaderState,
+            mixer.MixerHeaderState,
+            activity.ActivityHeaderState,
+            settings.SettingsHeaderState,
+            capture.CaptureHeaderState
+        ];
+        True(redundantHeaderStates.All(item => item.Visibility == Visibility.Collapsed),
+            "A workspace restored a redundant floating header-state label.");
     }
 
     private static void OnboardingExperienceIsBounded()
@@ -2627,16 +2662,99 @@ internal static class Program
             "Render-smoke clipped content that expanded beyond the constrained host viewport.");
     }
 
+    private static bool TryRenderCaptureEvidence(string[] args, out int exitCode)
+    {
+        exitCode = 0;
+        if (args.Length == 0)
+        {
+            return false;
+        }
+
+        if (args.Length != 3 ||
+            !string.Equals(args[0], "--render-capture", StringComparison.Ordinal))
+        {
+            Console.Error.WriteLine("usage: --render-capture <new-png-path> <dark|light|high-contrast>");
+            exitCode = 64;
+            return true;
+        }
+
+        ResolvedAppearance appearance = args[2] switch
+        {
+            "dark" => ResolvedAppearance.Dark,
+            "light" => ResolvedAppearance.Light,
+            "high-contrast" => ResolvedAppearance.HighContrast,
+            _ => (ResolvedAppearance)(-1)
+        };
+        if (!Enum.IsDefined(appearance))
+        {
+            Console.Error.WriteLine("Capture render theme is invalid.");
+            exitCode = 64;
+            return true;
+        }
+
+        string outputPath = Path.GetFullPath(args[1]);
+        string? outputDirectory = Path.GetDirectoryName(outputPath);
+        if (string.IsNullOrWhiteSpace(outputDirectory))
+        {
+            Console.Error.WriteLine("Capture render path has no parent directory.");
+            exitCode = 64;
+            return true;
+        }
+
+        AppearanceThemeManager.ApplyResolved(Application.Current.Resources, appearance);
+        CaptureView view = new();
+        view.UpdateCapabilities(
+            new CaptureCapabilitySnapshot(
+                DateTimeOffset.UtcNow,
+                [
+                    new CaptureCapability(
+                        "screenshot",
+                        Available: true,
+                        RequiresConsent: true,
+                        "Windows will ask you to choose a display or window."),
+                    new CaptureCapability("recording", false, true, "Recording is unavailable."),
+                    new CaptureCapability("replay", false, true, "Instant replay is unavailable.")
+                ]),
+            "Pictures\\Soltex");
+        Border surface = new()
+        {
+            Background = (Brush)Application.Current.FindResource("CanvasBrush"),
+            Padding = new Thickness(24),
+            Child = view
+        };
+        RenderTargetBitmap bitmap = RenderBitmap(surface, 1_028, 768);
+        Directory.CreateDirectory(outputDirectory);
+        PngBitmapEncoder encoder = new();
+        encoder.Frames.Add(BitmapFrame.Create(bitmap));
+        using FileStream stream = new(
+            outputPath,
+            FileMode.CreateNew,
+            FileAccess.Write,
+            FileShare.None);
+        encoder.Save(stream);
+        Console.WriteLine($"CAPTURE_RENDER theme={args[2]} width={bitmap.PixelWidth} height={bitmap.PixelHeight}");
+        return true;
+    }
+
     private static byte[] Render(FrameworkElement element, int width, int height)
+    {
+        RenderTargetBitmap bitmap = RenderBitmap(element, width, height);
+        byte[] pixels = new byte[checked(width * height * 4)];
+        bitmap.CopyPixels(pixels, checked(width * 4), 0);
+        return pixels;
+    }
+
+    private static RenderTargetBitmap RenderBitmap(
+        FrameworkElement element,
+        int width,
+        int height)
     {
         element.Measure(new Size(width, height));
         element.Arrange(new Rect(0, 0, width, height));
         element.UpdateLayout();
         RenderTargetBitmap bitmap = new(width, height, 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(element);
-        byte[] pixels = new byte[checked(width * height * 4)];
-        bitmap.CopyPixels(pixels, checked(width * 4), 0);
-        return pixels;
+        return bitmap;
     }
 
     private static int CountVisiblePixels(byte[] pixels)
@@ -2659,6 +2777,54 @@ internal static class Program
         {
             throw new InvalidOperationException(message);
         }
+    }
+
+    private static void CaptureWorkspaceIsHonest()
+    {
+        CaptureView view = new();
+        CaptureCapabilitySnapshot capabilities = new(
+            DateTimeOffset.UtcNow,
+            [
+                new CaptureCapability(
+                    "screenshot",
+                    Available: true,
+                    RequiresConsent: true,
+                    "Windows will ask you to choose a display or window."),
+                new CaptureCapability("recording", false, true, "Recording is unavailable."),
+                new CaptureCapability("replay", false, true, "Instant replay is unavailable.")
+            ]);
+        view.UpdateCapabilities(capabilities, "Pictures\\Soltex");
+
+        True(view.TakeScreenshotButton.IsEnabled,
+            "Capture did not enable its available screenshot action.");
+        True(view.CaptureStatusPillText.Text == "READY",
+            "Capture did not present the working screenshot path as ready.");
+        True(view.CaptureStorageText.Text.Contains("Pictures\\Soltex", StringComparison.Ordinal),
+            "Capture omitted the local storage destination.");
+
+        bool requested = false;
+        bool includedPointer = true;
+        view.ScreenshotRequested += (_, args) =>
+        {
+            requested = true;
+            includedPointer = args.IncludePointer;
+        };
+        view.IncludePointerCheckBox.IsChecked = false;
+        view.TakeScreenshotButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(requested && !includedPointer,
+            "Capture did not emit the explicit screenshot options.");
+
+        view.SetBusy(true);
+        True(!view.TakeScreenshotButton.IsEnabled && !view.IncludePointerCheckBox.IsEnabled,
+            "Capture left conflicting controls enabled while the Windows picker was active.");
+        view.SetBusy(false);
+        view.ShowCancelled();
+        True(view.TakeScreenshotButton.IsEnabled && view.CaptureStatusPillText.Text == "READY",
+            "Capture did not recover after source selection was cancelled.");
+
+        byte[] pixels = Render(view, 980, 720);
+        True(CountVisiblePixels(pixels) > 5_000,
+            "The Capture workspace render was unexpectedly empty.");
     }
 
     private static void Throws<TException>(Action action, string message)

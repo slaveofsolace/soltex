@@ -188,7 +188,7 @@ public partial class MainWindow
             panel == ApplicationsPanel ? "Applications" :
             panel == DevicesPanel ? "Devices" :
             panel == MixerPanel ? "Audio" :
-            panel == ClipsPanel ? "Capture" :
+            panel == CapturePanel ? "Capture" :
             panel == SecurityPanel ? "Security" :
             panel == RemotePanel ? "Remote Assist" :
             panel == WhisperPanel ? "Whisper" :

@@ -156,9 +156,21 @@ mixer.
 
 ### Capture
 
-Implement opt-in Windows Graphics Capture, D3D11 surfaces, Media Foundation
-hardware encoding, bounded rolling segments, storage budgets, encoder/device-loss
-recovery, hotkeys, and a no-activate/click-through overlay. No game injection.
+Current source implements explicit Windows-picker consent, a bounded one-frame
+Windows Graphics Capture path, PNG encoding, exact-owned temporary output,
+atomic promotion, content-free Activity reporting, cancellation, source-close
+and device-loss states, and a working screenshot-only workspace. Focused Capture
+contracts pass 16/16. The current app-host build is not accepted: the Windows App
+SDK self-contained manifest task timed out after five minutes. The library-shaped
+WPF verification host is zero-warning and 54/54 app-control tests pass, but no
+current live picker, native executable render, package, or owner-acceptance claim
+exists.
+
+Next: resolve that app-host build gate, prove a real display/window screenshot
+and cancellation on the owner host, then add Media Foundation hardware encoding,
+mic/system-audio combinations, bounded rolling segments, storage exhaustion and
+device-loss recovery, hotkeys, and a no-activate/click-through indicator. No game
+injection.
 
 Exit gate: sustained latency/CPU/GPU/memory/I/O evidence and isolation from
 security, telemetry, and benchmark work.

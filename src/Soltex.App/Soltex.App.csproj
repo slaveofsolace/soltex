@@ -24,9 +24,14 @@
     <ProjectReference Include="..\Soltex.Whisper\Soltex.Whisper.csproj" />
     <ProjectReference Include="..\Soltex.Whisper.Windows\Soltex.Whisper.Windows.csproj" />
     <ProjectReference Include="..\Soltex.NativeShell\Soltex.NativeShell.csproj" />
+    <ProjectReference Include="..\Soltex.Capture\Soltex.Capture.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Soltex.App.Tests" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(OutputType)' == 'Library'">
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Include="App.xaml" Generator="MSBuild:Compile" SubType="Designer" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences"

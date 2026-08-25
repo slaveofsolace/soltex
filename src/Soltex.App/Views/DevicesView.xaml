@@ -21,7 +21,11 @@
                 <TextBlock Style="{StaticResource PageTitleStyle}" Text="Devices" />
                 <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="This PC and optional remote connections." />
             </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel x:Name="DeviceHeaderState"
+                        Grid.Column="1"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        Visibility="Collapsed">
                 <Border Style="{StaticResource StatusPillStyle}">
                     <StackPanel Orientation="Horizontal">
                         <Ellipse Width="7" Height="7" Fill="{DynamicResource WarningBrush}" VerticalAlignment="Center" />

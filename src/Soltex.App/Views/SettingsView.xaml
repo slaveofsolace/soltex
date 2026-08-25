@@ -28,9 +28,11 @@
                            Style="{StaticResource MutedTextStyle}"
                            Text="Local preferences for this Windows account." />
             </StackPanel>
-            <Border Grid.Column="1"
+            <Border x:Name="SettingsHeaderState"
+                    Grid.Column="1"
                     Style="{StaticResource StatusPillStyle}"
-                    VerticalAlignment="Center">
+                    VerticalAlignment="Center"
+                    Visibility="Collapsed">
                 <StackPanel Orientation="Horizontal">
                     <Ellipse x:Name="SettingsStateDot"
                              Width="7"

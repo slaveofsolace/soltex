@@ -14,3 +14,4 @@ TestResults/
 *.suo
 *.nupkg
 *.snupkg
+*_wpftmp.csproj

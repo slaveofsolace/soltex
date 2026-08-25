@@ -168,7 +168,10 @@
                             Content="Refresh"
                             AutomationProperties.Name="Refresh audio observation"
                             Click="RefreshAudio_Click" />
-                    <Border Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
+                    <Border x:Name="MixerHeaderState"
+                            Style="{StaticResource StatusPillStyle}"
+                            VerticalAlignment="Center"
+                            Visibility="Collapsed">
                         <StackPanel Orientation="Horizontal">
                             <Ellipse x:Name="MixerStateDot"
                                      Width="7"

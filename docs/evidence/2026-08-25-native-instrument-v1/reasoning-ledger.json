@@ -3,7 +3,7 @@
   "ledger_id": "soltex_native_instrument_v1",
   "created_at": "2026-08-25T15:55:00Z",
   "depth": "DEEP",
-  "iteration": 3,
+  "iteration": 5,
   "root": {
     "kind": "DECISION",
     "node_id": "root_native_instrument",
@@ -277,6 +277,14 @@
       "evidence_ids": ["evidence_ui_copy_build", "evidence_ui_copy_tests", "evidence_ui_copy_policy", "evidence_ui_copy_renders", "evidence_ui_copy_scan"],
       "contradiction_claim_ids": [],
       "confidence": {"level":"HIGH","basis":"Current zero-warning focused build, 53 application tests, tracked-source design-tell scan, and controlled dark, light, and high-contrast render inspection."}
+    },
+    {
+      "id": "claim_capture_screenshot",
+      "label": "MEASURED",
+      "statement": "The Capture workspace has a bounded local Windows display/window screenshot mechanism, explicit consent and cancellation states, exact-owned storage promotion, one working action, and concise truthful unavailable recording state; live picker and real-pixel behavior remain unproven.",
+      "evidence_ids": ["evidence_capture_source", "evidence_capture_tests", "evidence_capture_app_tests", "evidence_capture_renders", "evidence_capture_security_diff", "evidence_capture_host_blocker"],
+      "contradiction_claim_ids": [],
+      "confidence": {"level":"HIGH","basis":"Current source inspection, 16 capture tests, 55 application tests, zero-warning focused builds, the final sealed partial-coverage security scan, and inspected dark, light, and high-contrast WPF surface renders; the executable host blocker is recorded separately."}
     }
   ],
   "evidence": [
@@ -569,6 +577,66 @@
       "integrity": "SHA-256 877825cfe491bfcb62dc0e21584eaf2f465f289dc66ed3f17fb9554c48557d46; zero candidate findings in tracked application XAML and C# source; human visual inspection remained separately required and was performed",
       "supports_claim_ids": ["claim_overview_performance_copy"],
       "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_capture_source",
+      "kind": "SOURCE",
+      "access": "INSPECTED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\src\\Soltex.Capture and D:\\soltex-native-instrument-v1\\src\\Soltex.App\\Views\\CaptureView.xaml",
+      "captured_at": "2026-08-25T21:20:00Z",
+      "integrity": "Direct review of the task-owned capture contracts, Windows screenshot adapter, same-handle bounded hashing and atomic promotion, lifecycle integration, and quiet-copy WPF surface",
+      "supports_claim_ids": ["claim_capture_screenshot"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_capture_tests",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "docs/evidence/2026-08-25-native-instrument-v1/CAPTURE_SCREENSHOT_SLICE.md",
+      "captured_at": "2026-08-25T21:20:00Z",
+      "integrity": "Zero-warning focused Release build; 16/16 capture tests passed in 72.1 ms",
+      "supports_claim_ids": ["claim_capture_screenshot"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_capture_app_tests",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "docs/evidence/2026-08-25-native-instrument-v1/CAPTURE_SCREENSHOT_SLICE.md",
+      "captured_at": "2026-08-25T21:20:00Z",
+      "integrity": "Zero-warning serial Release test-host build; 55/55 application tests passed in 1,633.3 ms, including the app-wide quiet-header contract",
+      "supports_claim_ids": ["claim_capture_screenshot"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_capture_renders",
+      "kind": "ARTIFACT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\capture",
+      "captured_at": "2026-08-25T21:20:00Z",
+      "integrity": "Second-pass inspected 1028x768 dark, light, and high-contrast WPF surface PNGs remove duplicate instructions and floating status text; exact SHA-256 values are recorded in CAPTURE_SCREENSHOT_SLICE.md",
+      "supports_claim_ids": ["claim_capture_screenshot"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_capture_security_diff",
+      "kind": "ARTIFACT",
+      "access": "GENERATED_CURRENT",
+      "locator": "codex-security-scan:2c7d8901-d56c-470d-8510-1e336eeac4ab",
+      "captured_at": "2026-08-25T21:50:42.157558Z",
+      "integrity": "Sealed snapshot codex-security-snapshot/v1:sha256:fea4b6bafd7cfcc183b3d8ce7c48ea49b3b0b9223f4141ba8da32f7bacaf1bba; zero reportable findings with partial coverage; findings SHA-256 094c8a9177a2064b988ed7d83adf075ef70ce1591ff1ce9a609f986e6a2a1edc; coverage SHA-256 37850e2c17e261f4a450a0a0ce73d7402a30f1617e69633017f7bc07b838af31; live executable, picker, pixels, callback interleavings, directory identity/reparse resistance, packaging, accessibility, physical-device, and owner-acceptance claims remain unproven",
+      "supports_claim_ids": ["claim_capture_screenshot"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_capture_host_blocker",
+      "kind": "LOG",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\capture\\app-build-direct-20260825-1535.log",
+      "captured_at": "2026-08-25T20:35:00Z",
+      "integrity": "Repository-external direct runner timed out the exact owned app-build PID after five minutes in Windows App SDK self-contained manifest work; no live picker or packaged-shell claim follows",
+      "supports_claim_ids": ["claim_capture_screenshot"],
+      "contradicts_claim_ids": []
     }
   ],
   "hypotheses": [],
@@ -621,6 +689,15 @@
         "kind": "CONSEQUENCE",
         "statement": "Default workspaces now prioritize current state, usable measurements, and direct actions while retaining honest unavailable, degraded, privacy, and trust boundaries.",
         "claim_id": "claim_overview_performance_copy",
+        "depth": 1,
+        "terminal": true,
+        "closure_reason": "BOUNDED"
+      },
+      {
+        "id": "node_capture_screenshot_effects",
+        "kind": "CONSEQUENCE",
+        "statement": "Capture exposes one consented local screenshot action backed by bounded exact-owned storage while recording and replay remain explicit unavailable states.",
+        "claim_id": "claim_capture_screenshot",
         "depth": 1,
         "terminal": true,
         "closure_reason": "BOUNDED"
@@ -728,6 +805,24 @@
         "detection": {"signal":"Focused build, 53 application tests, tracked-source design scan, and controlled dark, light, and high-contrast renders.","latency":"Within the same bounded verification run.","failure_to_detect":"Controlled renders cannot prove every live data permutation, physical keyboard traversal, Narrator wording, or subjective owner acceptance."},
         "falsifier": "A default surface exposes provider names, capture timings, empty counters, or internal capability ledgers, or the cleanup hides an unavailable state or working control.",
         "confidence": {"level":"HIGH","basis":"Direct source review, focused tests, automated design-tell scan, and inspected controlled render evidence."}
+      },
+      {
+        "id": "edge_capture_screenshot_effects",
+        "relation": "FORWARD",
+        "source_node_id": "root_native_instrument",
+        "target_node_id": "node_capture_screenshot_effects",
+        "source_delta": "The solution gains a typed Capture assembly, a Windows display/window screenshot adapter, and one shipped Capture workspace action.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "The user invokes the Windows picker; one bounded frame is encoded to a private exact-owned temporary PNG, hashed through the same exclusive handle, and atomically promoted without exposing names or paths to Activity.",
+        "conditions": ["Windows Graphics Capture and required runtime projection are available.", "The user completes picker consent and the exact-owned local destination remains writable."],
+        "lag": "At explicit screenshot invocation and bounded frame arrival.",
+        "target_delta": "A local screenshot can be requested through one clear action while cancellation and unavailable future capabilities remain truthful.",
+        "affected_refs": ["inv_truthful_claims", "dep_windows_runtime"],
+        "supporting_claim_ids": ["claim_capture_screenshot"],
+        "contradicting_claim_ids": [],
+        "detection": {"signal":"16 capture tests, 55 application tests, zero-warning focused builds, direct source review, the final sealed partial-coverage security diff scan, and three inspected token-driven renders.","latency":"Within the same bounded verification run.","failure_to_detect":"The library-shaped WPF host cannot prove the self-contained executable, live picker, real pixel capture, protected content, live DPI, Narrator, or owner acceptance."},
+        "falsifier": "The action runs without explicit picker consent, writes outside the owned root, logs source or path content, survives cancellation incorrectly, or appears available when the runtime capability is absent.",
+        "confidence": {"level":"HIGH","basis":"Direct source and focused automated evidence with explicit executable-host and live-capability nonclaims."}
       }
     ],
     "feedback_loops": [],
@@ -735,14 +830,14 @@
   },
   "decision": {
     "iteration_choice": "ACT",
-    "recommendation": "Keep the verified native shell and quieter app-wide presentation, then continue the next bounded Native Instrument workspace slice without reintroducing implementation trivia on default surfaces.",
-    "selected_action_ids": ["action_overview_performance_copy"],
+    "recommendation": "Keep the verified native shell, quieter app-wide presentation, and bounded Capture screenshot slice; resolve the executable host gate before live picker proof, then continue the next bounded Audio workspace slice.",
+    "selected_action_ids": ["action_capture_screenshot"],
     "rejected_options": [
       "Do not restart from main or mutate the protected owner checkout.",
       "Do not replace WPF wholesale or import competitor code or trade dress.",
       "Do not treat Stage 6 automation as Native Instrument completion."
     ],
-    "decision_claim_ids": ["claim_objective", "claim_source", "claim_capacity", "claim_shell_onboarding", "claim_native_shell", "claim_overview_performance_copy"],
+    "decision_claim_ids": ["claim_objective", "claim_source", "claim_capacity", "claim_shell_onboarding", "claim_native_shell", "claim_overview_performance_copy", "claim_capture_screenshot"],
     "remaining_unknown_claim_ids": ["claim_shipping_pending"],
     "human_owner": "Soltex owner",
     "consecutive_stable_checks": 0,
@@ -808,17 +903,32 @@
       "rollback":{"kind":"TRUE_ROLLBACK","procedure":"Revert only the coherent task-owned Overview, Performance, and app-wide presentation commit while retaining the verified native-shell parent.","preconditions":["The protected owner checkout remains untouched.","Parent commit b95a0790658238be912ef24575ac69ead454d12d remains reachable."],"verification":"Build, test, and render parent commit b95a0790658238be912ef24575ac69ead454d12d in the isolated worktree.","evidence_ids":["evidence_native_shell_build","evidence_native_shell_app_tests","evidence_native_shell_runtime"],"irreversible_residue":"No user data or machine-wide state is changed; derived render and test evidence remains separately removable."},
       "recovery":{"procedure":"Recreate the task worktree from the pushed native-shell parent and reapply only the reviewed presentation commit; do not reset or mutate owner state.","owner":"Task implementation owner","evidence_ids":["evidence_recovery_snapshot","evidence_ui_copy_build","evidence_ui_copy_tests"]},
       "mitigation_consequence_node_ids":["node_ui_copy_effects"]
+    },
+    {
+      "id":"action_capture_screenshot",
+      "description":"Add the typed Capture contracts and one bounded Windows display/window screenshot workflow, then present only the working action and truthful future-capability state in the quiet token-driven workspace.",
+      "status":"EXECUTED",
+      "authorization_status":"AUTHORIZED",
+      "authority_basis":"The approved Native Instrument V1 goal explicitly includes secure Windows display/window/region Capture and authorizes reversible isolated implementation.",
+      "destructive":false,
+      "production":false,
+      "external_state_change":false,
+      "irreversible":false,
+      "monitoring":"Run zero-warning focused builds, 16 Capture tests, 55 application tests, direct design and identity predicates, three-theme WPF renders, diff security review, and the executable/live picker gate before upgrading this action to verified.",
+      "rollback":{"kind":"TRUE_ROLLBACK","procedure":"Revert only the coherent task-owned Capture commit while retaining the verified presentation parent.","preconditions":["The protected owner checkout remains untouched.","Parent commit 26527fc0cff2baaefe1c5cd71c7ee822cea647db remains reachable."],"verification":"Build and test parent commit 26527fc0cff2baaefe1c5cd71c7ee822cea647db in the isolated worktree.","evidence_ids":["evidence_recovery_snapshot","evidence_capture_tests","evidence_capture_app_tests"],"irreversible_residue":"No live screenshot has been taken by the verification harness; derived logs and renders remain separately removable."},
+      "recovery":{"procedure":"Recreate the task worktree from the pushed presentation parent and reapply only the reviewed Capture commit; do not reset or mutate owner state.","owner":"Task implementation owner","evidence_ids":["evidence_recovery_snapshot","evidence_capture_source","evidence_capture_tests"]},
+      "mitigation_consequence_node_ids":["node_capture_screenshot_effects"]
     }
   ],
   "verification": {
-    "mechanism": {"status":"PASS","signal":"The experience-contract, shell/onboarding, native-window, and quieter workspace-presentation mechanisms are implemented and pass their focused tests, policy gates, source inspection, and controlled render evidence.","evidence_ids":["evidence_experience_tests","evidence_experience_build","evidence_experience_render","evidence_experience_policy","evidence_shell_tests","evidence_shell_build","evidence_shell_render_standard","evidence_shell_render_compact","evidence_shell_policy","evidence_native_shell_build","evidence_native_shell_tests","evidence_native_shell_app_tests","evidence_native_shell_policy","evidence_native_shell_runtime","evidence_native_shell_manifest","evidence_native_shell_security_review","evidence_ui_copy_build","evidence_ui_copy_tests","evidence_ui_copy_policy","evidence_ui_copy_renders","evidence_ui_copy_scan"],"rationale":"This pass applies to the first four bounded implementation mechanisms only; the Native Instrument V1 endpoint remains open."},
+    "mechanism": {"status":"PASS","signal":"The experience-contract, shell/onboarding, native-window, quieter workspace-presentation, and bounded Capture screenshot source mechanisms pass their focused automated and controlled visual evidence.","evidence_ids":["evidence_experience_tests","evidence_experience_build","evidence_experience_render","evidence_experience_policy","evidence_shell_tests","evidence_shell_build","evidence_shell_render_standard","evidence_shell_render_compact","evidence_shell_policy","evidence_native_shell_build","evidence_native_shell_tests","evidence_native_shell_app_tests","evidence_native_shell_policy","evidence_native_shell_runtime","evidence_native_shell_manifest","evidence_native_shell_security_review","evidence_ui_copy_build","evidence_ui_copy_tests","evidence_ui_copy_policy","evidence_ui_copy_renders","evidence_ui_copy_scan","evidence_capture_source","evidence_capture_tests","evidence_capture_app_tests","evidence_capture_renders","evidence_capture_security_diff","evidence_capture_host_blocker"],"rationale":"The Capture source and test-host mechanism are green, but the self-contained executable and live picker are explicit open gates; Native Instrument V1 remains incomplete."},
     "endpoint": {"status":"UNKNOWN","signal":"Native Instrument V1 is not implemented.","evidence_ids":[],"rationale":"The requested user outcome remains open."},
     "guardrails": {"status":"PASS","signal":"Protected owner work and Stage 6 evidence remain separate and preserved after worktree creation.","evidence_ids":["evidence_recovery_snapshot","evidence_worktree_add","evidence_stage6_contract"],"rationale":"Current direct evidence verifies the recovery boundary only."},
     "recovery": {"status":"UNKNOWN","signal":"Source recovery is preserved, but shipping migration and rollback are not implemented.","evidence_ids":["evidence_recovery_snapshot","evidence_worktree_add"],"rationale":"Broader recovery gates remain open."}
   },
   "closure": {
     "status": "OPEN",
-    "summary": "Recovery plus the experience-contract, shell/onboarding, native-window, and quieter Overview, Performance, and app-wide presentation slices are durable; remaining workspace capability, shipping, full validation, physical checks, and human acceptance remain open.",
+    "summary": "Recovery plus the experience-contract, shell/onboarding, native-window, quieter app-wide presentation, and bounded Capture screenshot source/test-host slices are durable; executable Capture proof, recording, Audio, shipping, full validation, physical checks, and human acceptance remain open.",
     "residual_risks": [
       "Controlled AppWindow and DWM Mica paths are proven, but non-client caption controls, snap hover, visual transparency, live per-monitor DPI, keyboard-only, and Narrator behavior remain physical gates.",
       "C: remains capacity constrained, so future artifacts must stay on the isolated D: worktree or another bounded evidence location.",
