@@ -93,7 +93,7 @@ public partial class MainWindow
             _whisperDevices,
             _whisperSettings.InputDeviceId,
             _renderSmokeMode
-                ? "Microphone discovery is skipped during render evidence."
+            ? "Choose a microphone to continue."
                 : "Refresh to enumerate Windows input devices.");
         WhisperPanel.SetFeatureState(
             _whisperSettings.Enabled,
@@ -108,7 +108,7 @@ public partial class MainWindow
             operationRunning: false,
             progress: 0,
             _renderSmokeMode
-                ? "Model verification is skipped during deterministic render evidence."
+            ? "Install the local model to continue."
                 : "Checking exact-owned local model state. No download starts automatically.");
         WhisperPanel.SetPersonalization(
             _whisperSettings,
@@ -520,7 +520,7 @@ public partial class MainWindow
                     _whisperModelStatus ?? CreateUncheckedWhisperModelStatus(),
                     operationRunning: false,
                     progress: 0,
-                    "The local provider selection did not pass safe settings validation.");
+                    "The local Whisper option could not be selected.");
                 return;
             }
 
@@ -533,7 +533,7 @@ public partial class MainWindow
         catch (Exception exception) when (IsExpectedWhisperSettingsFailure(exception))
         {
             UpdateWhisperModelView(
-                "The local provider selection could not be saved for this Windows account.");
+                "The local Whisper option could not be saved for this Windows account.");
         }
     }
 
@@ -879,7 +879,7 @@ public partial class MainWindow
             string detail = !_whisperSettings.Enabled
                 ? "Whisper is off. No global shortcuts are registered."
                 : _renderSmokeMode
-                    ? "Shortcuts are skipped during controlled render evidence."
+            ? "Shortcuts are not used in preview mode."
                     : registered
                         ? "Whisper is on and its validated shortcuts are registered."
                         : _whisperShortcutError ??

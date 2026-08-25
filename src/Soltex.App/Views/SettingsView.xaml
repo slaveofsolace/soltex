@@ -73,8 +73,8 @@
                 <Button x:Name="AboutSettingsTab"
                         Margin="8,0,0,0"
                         Style="{StaticResource TabButtonStyle}"
-                        Content="Boundaries"
-                        AutomationProperties.Name="Show runtime boundaries"
+                        Content="About"
+                        AutomationProperties.Name="Show local app details"
                         Click="AboutSettingsTab_Click" />
             </StackPanel>
         </Border>
@@ -150,7 +150,7 @@
                             <TextBlock FontWeight="SemiBold" Text="Open Performance details" />
                             <TextBlock Margin="0,4,0,0"
                                        Style="{StaticResource MutedTextStyle}"
-                                       Text="Show volumes, providers, and processes when Performance opens." />
+                                       Text="Open Performance with storage and process details visible." />
                         </StackPanel>
                         <Button x:Name="PerformanceDetailsButton"
                                 Grid.Column="1"
@@ -371,7 +371,7 @@
                             <TextBlock FontWeight="SemiBold" Text="Keep recent activity" />
                             <TextBlock Margin="0,4,0,0"
                                        Style="{StaticResource MutedTextStyle}"
-                                       Text="Meaningful Soltex events only; sanitized and bounded to 120 entries." />
+                                       Text="Only meaningful Soltex events are kept, never file paths or personal content." />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="24,0,0,0" Orientation="Horizontal">
                             <Button x:Name="SessionActivityButton"
@@ -416,23 +416,23 @@
                         <RowDefinition Height="1" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Runtime boundaries" />
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Privacy and runtime" />
                     <Grid Grid.Row="2">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <TextBlock Text="Preferences stay on this Windows account." />
-                        <TextBlock Grid.Column="1" Foreground="{DynamicResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" Text="ON DEVICE" />
+                        <TextBlock Grid.Column="1" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="{StaticResource FontCaption}" Text="Local" />
                     </Grid>
                     <Border Grid.Row="3" Margin="0,14" Background="{DynamicResource BorderBrush}" />
                     <Grid Grid.Row="4">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <TextBlock Text="Performance sampling pauses while minimized or hidden." />
-                        <TextBlock Grid.Column="1" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" Text="SUSPENDS" />
+                        <TextBlock Grid.Column="1" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="{StaticResource FontCaption}" Text="When hidden" />
                     </Grid>
                     <Border Grid.Row="5" Margin="0,14" Background="{DynamicResource BorderBrush}" />
                     <Grid Grid.Row="6">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <TextBlock Text="Soltex installs no background service." />
-                        <TextBlock Grid.Column="1" Foreground="{DynamicResource TextSecondaryBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" Text="DESKTOP ONLY" />
+                        <TextBlock Grid.Column="1" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="{StaticResource FontCaption}" Text="No service" />
                     </Grid>
                 </Grid>
             </Grid>

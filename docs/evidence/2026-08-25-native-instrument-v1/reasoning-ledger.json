@@ -269,6 +269,14 @@
       "evidence_ids": ["evidence_native_shell_build", "evidence_native_shell_tests", "evidence_native_shell_app_tests", "evidence_native_shell_policy", "evidence_native_shell_runtime", "evidence_native_shell_manifest", "evidence_native_shell_security_review"],
       "contradiction_claim_ids": [],
       "confidence": {"level":"HIGH","basis":"Current direct build, test, policy, runtime sidecar, client render, manifest, and bounded payload evidence."}
+    },
+    {
+      "id": "claim_overview_performance_copy",
+      "label": "MEASURED",
+      "statement": "The Overview and Performance workspaces use unframed primary instruments, while app-wide default surfaces suppress implementation trivia, empty counters, internal ledgers, and routine startup chatter without hiding capability limits or actionable state.",
+      "evidence_ids": ["evidence_ui_copy_build", "evidence_ui_copy_tests", "evidence_ui_copy_policy", "evidence_ui_copy_renders", "evidence_ui_copy_scan"],
+      "contradiction_claim_ids": [],
+      "confidence": {"level":"HIGH","basis":"Current zero-warning focused build, 53 application tests, tracked-source design-tell scan, and controlled dark, light, and high-contrast render inspection."}
     }
   ],
   "evidence": [
@@ -511,6 +519,56 @@
       "integrity": "SHA-256 831732b970c64cbb8350310e4184e82d7d7b0860609f48f43331adbeb85b0670; frozen snapshot digest a1d91d804eb6d1a2aafb3c67d4cf6992d38a445c2698cbfeba4208a058799e4d; seven of seven changed source files reviewed; zero reportable findings",
       "supports_claim_ids": ["claim_native_shell"],
       "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_ui_copy_build",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\overview-performance\\copy-cleanup-solution-release.log",
+      "captured_at": "2026-08-25T19:51:47Z",
+      "integrity": "SHA-256 1d51b318a60caf250197b2e4b5252366061be2ea7021cd9a7e4ce58152b16730; canonical solution Release build completed with zero warnings and zero errors",
+      "supports_claim_ids": ["claim_overview_performance_copy"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_ui_copy_tests",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\overview-performance\\copy-cleanup-app-tests-canonical.log",
+      "captured_at": "2026-08-25T19:51:47Z",
+      "integrity": "SHA-256 9bc38169f6026d61a522b694bb923149ef74d41c84ce565ec430cad9d313cf3d; 53/53 application tests passed after the canonical solution build",
+      "supports_claim_ids": ["claim_overview_performance_copy"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_ui_copy_policy",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\overview-performance\\copy-cleanup-policy-gates-final.log",
+      "captured_at": "2026-08-25T19:51:47Z",
+      "integrity": "SHA-256 dad14ac7f6e3887dbb16d9b656eb54fb8093c96f112a83a54a185255d02a2918; design-token policy passed across 13 XAML files and identity policy passed across 331 tracked text files",
+      "supports_claim_ids": ["claim_overview_performance_copy"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_ui_copy_renders",
+      "kind": "ARTIFACT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\overview-performance",
+      "captured_at": "2026-08-25T19:51:47Z",
+      "integrity": "Controlled final render set covers eleven dark workspaces plus Overview and Performance in light and high contrast; exact filenames and SHA-256 values are recorded in OVERVIEW_PERFORMANCE_COPY_SLICE.md",
+      "supports_claim_ids": ["claim_overview_performance_copy"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_ui_copy_scan",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\overview-performance\\tracked-ui-design-tell-scan.log",
+      "captured_at": "2026-08-25T19:51:47Z",
+      "integrity": "SHA-256 877825cfe491bfcb62dc0e21584eaf2f465f289dc66ed3f17fb9554c48557d46; zero candidate findings in tracked application XAML and C# source; human visual inspection remained separately required and was performed",
+      "supports_claim_ids": ["claim_overview_performance_copy"],
+      "contradicts_claim_ids": []
     }
   ],
   "hypotheses": [],
@@ -554,6 +612,15 @@
         "kind": "CONSEQUENCE",
         "statement": "The WPF host now uses an isolated native window adapter for AppWindow, title-bar, DPI geometry, and Mica behavior, with opaque system-chrome fallback when capability or accessibility policy disallows the native path.",
         "claim_id": "claim_native_shell",
+        "depth": 1,
+        "terminal": true,
+        "closure_reason": "BOUNDED"
+      },
+      {
+        "id": "node_ui_copy_effects",
+        "kind": "CONSEQUENCE",
+        "statement": "Default workspaces now prioritize current state, usable measurements, and direct actions while retaining honest unavailable, degraded, privacy, and trust boundaries.",
+        "claim_id": "claim_overview_performance_copy",
         "depth": 1,
         "terminal": true,
         "closure_reason": "BOUNDED"
@@ -643,6 +710,24 @@
           "level": "HIGH",
           "basis": "Direct source, focused tests, zero-warning solution build, controlled runtime sidecar, render, manifest, and payload evidence."
         }
+      },
+      {
+        "id": "edge_ui_copy_effects",
+        "relation": "FORWARD",
+        "source_node_id": "root_native_instrument",
+        "target_node_id": "node_ui_copy_effects",
+        "source_delta": "Overview and Performance are reorganized around one primary instrument, and default workspace copy is reduced to user-facing state and actions.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "Existing data and command bindings remain intact while decorative framing, internal implementation labels, zero-value diagnostics, and routine startup events are hidden or rewritten at the presentation boundary.",
+        "conditions": ["Existing typed services continue to supply the same source state.", "Unavailable and degraded capability states remain explicit."],
+        "lag": "At workspace render and after each existing state update.",
+        "target_delta": "Users see a calmer hierarchy without losing current measurements, direct controls, trust state, or honest capability limits.",
+        "affected_refs": ["inv_truthful_claims", "dep_stage6_source", "dep_windows_runtime"],
+        "supporting_claim_ids": ["claim_overview_performance_copy"],
+        "contradicting_claim_ids": [],
+        "detection": {"signal":"Focused build, 53 application tests, tracked-source design scan, and controlled dark, light, and high-contrast renders.","latency":"Within the same bounded verification run.","failure_to_detect":"Controlled renders cannot prove every live data permutation, physical keyboard traversal, Narrator wording, or subjective owner acceptance."},
+        "falsifier": "A default surface exposes provider names, capture timings, empty counters, or internal capability ledgers, or the cleanup hides an unavailable state or working control.",
+        "confidence": {"level":"HIGH","basis":"Direct source review, focused tests, automated design-tell scan, and inspected controlled render evidence."}
       }
     ],
     "feedback_loops": [],
@@ -650,18 +735,18 @@
   },
   "decision": {
     "iteration_choice": "ACT",
-    "recommendation": "Keep the verified experience, first-run, and native-window slices, then replace the Overview and Performance card-grid composition with one calm, unframed primary instrument per workspace.",
-    "selected_action_ids": ["action_native_shell"],
+    "recommendation": "Keep the verified native shell and quieter app-wide presentation, then continue the next bounded Native Instrument workspace slice without reintroducing implementation trivia on default surfaces.",
+    "selected_action_ids": ["action_overview_performance_copy"],
     "rejected_options": [
       "Do not restart from main or mutate the protected owner checkout.",
       "Do not replace WPF wholesale or import competitor code or trade dress.",
       "Do not treat Stage 6 automation as Native Instrument completion."
     ],
-    "decision_claim_ids": ["claim_objective", "claim_source", "claim_capacity", "claim_shell_onboarding", "claim_native_shell"],
+    "decision_claim_ids": ["claim_objective", "claim_source", "claim_capacity", "claim_shell_onboarding", "claim_native_shell", "claim_overview_performance_copy"],
     "remaining_unknown_claim_ids": ["claim_shipping_pending"],
     "human_owner": "Soltex owner",
     "consecutive_stable_checks": 0,
-    "reopen_trigger": "Reopen the native-shell slice if AppWindow attachment, caption reserve, Mica fallback policy, isolated build integration, setup persistence, compact navigation access, or current design and identity gates regress."
+    "reopen_trigger": "Reopen the presentation slice if default surfaces expose internal provider or timing trivia, empty counters, decorative card grids, or routine startup chatter, or if useful state, capability limits, or working controls disappear."
   },
   "actions": [
     {
@@ -708,17 +793,32 @@
       "rollback":{"kind":"TRUE_ROLLBACK","procedure":"Revert only the coherent task-owned native-shell commit while retaining the verified shell/onboarding parent.","preconditions":["The protected owner checkout remains untouched.","Parent commit 449b84ed0e8aef8de843e29708e1b8e4273d2262 remains reachable."],"verification":"Build, test, and render parent commit 449b84ed0e8aef8de843e29708e1b8e4273d2262 in the isolated worktree.","evidence_ids":["evidence_shell_build","evidence_shell_tests","evidence_shell_render_standard"],"irreversible_residue":"No user data or machine-wide state is changed; the isolated package cache and derived evidence remain separately removable."},
       "recovery":{"procedure":"Recreate the task worktree from the pushed shell/onboarding parent and reapply only the reviewed native-shell commit; do not reset or mutate owner state.","owner":"Task implementation owner","evidence_ids":["evidence_recovery_snapshot","evidence_native_shell_build","evidence_native_shell_tests"]},
       "mitigation_consequence_node_ids":["node_native_shell_effects"]
+    },
+    {
+      "id":"action_overview_performance_copy",
+      "description":"Replace the Overview and Performance card-grid hierarchy with calm unframed instruments and remove internal, empty, or routine diagnostic copy from default surfaces app-wide while retaining useful state and capability limits.",
+      "status":"VERIFIED",
+      "authorization_status":"AUTHORIZED",
+      "authority_basis":"The user explicitly requested removal of extra weird floating text while retaining useful app-wide information, within the approved reversible Native Instrument implementation goal.",
+      "destructive":false,
+      "production":false,
+      "external_state_change":false,
+      "irreversible":false,
+      "monitoring":"Run focused Release build and 53 application tests, inspect controlled dark, light, and high-contrast renders, scan tracked UI source for template-like design tells, then run canonical solution and policy gates before commit.",
+      "rollback":{"kind":"TRUE_ROLLBACK","procedure":"Revert only the coherent task-owned Overview, Performance, and app-wide presentation commit while retaining the verified native-shell parent.","preconditions":["The protected owner checkout remains untouched.","Parent commit b95a0790658238be912ef24575ac69ead454d12d remains reachable."],"verification":"Build, test, and render parent commit b95a0790658238be912ef24575ac69ead454d12d in the isolated worktree.","evidence_ids":["evidence_native_shell_build","evidence_native_shell_app_tests","evidence_native_shell_runtime"],"irreversible_residue":"No user data or machine-wide state is changed; derived render and test evidence remains separately removable."},
+      "recovery":{"procedure":"Recreate the task worktree from the pushed native-shell parent and reapply only the reviewed presentation commit; do not reset or mutate owner state.","owner":"Task implementation owner","evidence_ids":["evidence_recovery_snapshot","evidence_ui_copy_build","evidence_ui_copy_tests"]},
+      "mitigation_consequence_node_ids":["node_ui_copy_effects"]
     }
   ],
   "verification": {
-    "mechanism": {"status":"PASS","signal":"The experience-contract, shell/onboarding, and native-window mechanisms are implemented and pass focused tests, full Release build, staged-source policy checks, complete diff-scoped security review, controlled runtime evidence, embedded-manifest inspection, and native client rendering.","evidence_ids":["evidence_experience_tests","evidence_experience_build","evidence_experience_render","evidence_experience_policy","evidence_shell_tests","evidence_shell_build","evidence_shell_render_standard","evidence_shell_render_compact","evidence_shell_policy","evidence_native_shell_build","evidence_native_shell_tests","evidence_native_shell_app_tests","evidence_native_shell_policy","evidence_native_shell_runtime","evidence_native_shell_manifest","evidence_native_shell_security_review"],"rationale":"This pass applies to the first three implementation mechanisms only; the Native Instrument V1 endpoint remains open."},
+    "mechanism": {"status":"PASS","signal":"The experience-contract, shell/onboarding, native-window, and quieter workspace-presentation mechanisms are implemented and pass their focused tests, policy gates, source inspection, and controlled render evidence.","evidence_ids":["evidence_experience_tests","evidence_experience_build","evidence_experience_render","evidence_experience_policy","evidence_shell_tests","evidence_shell_build","evidence_shell_render_standard","evidence_shell_render_compact","evidence_shell_policy","evidence_native_shell_build","evidence_native_shell_tests","evidence_native_shell_app_tests","evidence_native_shell_policy","evidence_native_shell_runtime","evidence_native_shell_manifest","evidence_native_shell_security_review","evidence_ui_copy_build","evidence_ui_copy_tests","evidence_ui_copy_policy","evidence_ui_copy_renders","evidence_ui_copy_scan"],"rationale":"This pass applies to the first four bounded implementation mechanisms only; the Native Instrument V1 endpoint remains open."},
     "endpoint": {"status":"UNKNOWN","signal":"Native Instrument V1 is not implemented.","evidence_ids":[],"rationale":"The requested user outcome remains open."},
     "guardrails": {"status":"PASS","signal":"Protected owner work and Stage 6 evidence remain separate and preserved after worktree creation.","evidence_ids":["evidence_recovery_snapshot","evidence_worktree_add","evidence_stage6_contract"],"rationale":"Current direct evidence verifies the recovery boundary only."},
     "recovery": {"status":"UNKNOWN","signal":"Source recovery is preserved, but shipping migration and rollback are not implemented.","evidence_ids":["evidence_recovery_snapshot","evidence_worktree_add"],"rationale":"Broader recovery gates remain open."}
   },
   "closure": {
     "status": "OPEN",
-    "summary": "Recovery plus the experience-contract, shell/onboarding, and native-window slices are durable; remaining workspaces, shipping, full validation, physical checks, and human acceptance remain open.",
+    "summary": "Recovery plus the experience-contract, shell/onboarding, native-window, and quieter Overview, Performance, and app-wide presentation slices are durable; remaining workspace capability, shipping, full validation, physical checks, and human acceptance remain open.",
     "residual_risks": [
       "Controlled AppWindow and DWM Mica paths are proven, but non-client caption controls, snap hover, visual transparency, live per-monitor DPI, keyboard-only, and Narrator behavior remain physical gates.",
       "C: remains capacity constrained, so future artifacts must stay on the isolated D: worktree or another bounded evidence location.",

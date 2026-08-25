@@ -104,7 +104,7 @@ public partial class MonitoringView : UserControl
             System.Windows.Automation.AutomationProperties.NameProperty,
             _detailsVisible
                 ? "Show live performance overview"
-                : "Show storage, provider, and process details");
+                : "Show storage and process details");
         BenchmarkModeButton.Content = _benchmarkVisible ? "Live overview" : "Benchmark";
         BenchmarkModeButton.SetCurrentValue(
             System.Windows.Automation.AutomationProperties.NameProperty,
@@ -114,8 +114,8 @@ public partial class MonitoringView : UserControl
         PerformanceSubtitleText.Text = _benchmarkVisible
             ? "Short, cancelable local workloads with explicit limits."
             : _detailsVisible
-                ? "Storage, provider coverage, and guarded process actions."
-                : "Live CPU, memory, network, storage, and process activity.";
+                ? "Storage details and guarded process actions."
+                : "Live processor, memory, and network activity.";
         if (_benchmarkVisible)
         {
             SetStatePill((Brush)FindResource("AccentBrush"), "LOCAL");
@@ -380,7 +380,7 @@ public partial class MonitoringView : UserControl
         NetworkCoverageText.Text = "UNAVAILABLE";
         NetworkCoverageText.Foreground = danger;
         MonitoringProvenanceText.Text =
-            "The bounded Windows telemetry provider could not complete a sample. No values were synthesized.";
+            "Live metrics are unavailable. No estimated values are shown.";
     }
 
     public void ShowStale()
@@ -390,7 +390,7 @@ public partial class MonitoringView : UserControl
         NetworkCoverageText.Text = "STALE";
         NetworkCoverageText.Foreground = warning;
         MonitoringProvenanceText.Text =
-            "Last confirmed values are retained while the bounded provider retries; no new values were synthesized.";
+            "Showing the last confirmed values while Soltex reconnects.";
     }
 
     private void RenderCpu(double? cpuPercent)
@@ -537,11 +537,15 @@ public partial class MonitoringView : UserControl
         }
         UpdateProcessActionControls(selected);
         ProcessCountText.Text =
-            $"{processes.Length} rows · {snapshot.InaccessibleProcessCount} inaccessible";
+            $"{processes.Length} shown · {snapshot.InaccessibleProcessCount} unavailable";
+        string limitation = snapshot.Limitations.Any(item =>
+            item.Contains("GPU", StringComparison.OrdinalIgnoreCase))
+            ? " · GPU metrics unavailable"
+            : snapshot.Limitations.Count > 0
+                ? " · Some metrics unavailable"
+                : string.Empty;
         MonitoringProvenanceText.Text =
-            $"{snapshot.Provenance} · captured {snapshot.CapturedAtUtc.ToLocalTime():T} · " +
-            $"provider {snapshot.CaptureDuration.TotalMilliseconds:F0} ms · " +
-            string.Join(" · ", snapshot.Limitations);
+            $"Updated {snapshot.CapturedAtUtc.ToLocalTime():t}{limitation}";
     }
 
     private static string DescribeWindow(int sampleCount) =>

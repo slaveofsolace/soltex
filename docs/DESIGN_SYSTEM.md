@@ -126,6 +126,9 @@ pane may scroll independently.
   master-detail split is required.
 - A warning is shown only when it changes the next decision. Persistent legal,
   provenance, privacy, and nonclaim detail belongs behind an info disclosure.
+- Default workspaces show decisions, current state, and usable measurements.
+  Provider API names, capture duration, history capacity, internal provenance,
+  and diagnostic trivia belong behind an explicit detail or diagnostic action.
 - Empty states state what is empty and provide one next action. They do not teach
   the whole subsystem.
 

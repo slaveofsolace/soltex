@@ -25,8 +25,7 @@ public partial class HomeView : UserControl
 
         CpuHeroValue.Text = TelemetryDisplay.Percent(snapshot.CpuPercent);
         CpuSparkline.Values ??= _cpuHistory.CreateSnapshot();
-        HomeCapturedText.Text =
-            $"Updated {snapshot.CapturedAtUtc.ToLocalTime():t} · {snapshot.CaptureDuration.TotalMilliseconds:F0} ms sample";
+        HomeCapturedText.Text = $"Updated {snapshot.CapturedAtUtc.ToLocalTime():t}";
 
         Brush stateBrush = (Brush)FindResource(snapshot.State == TelemetryObservationState.Current
             ? "SignalBrush"
@@ -77,7 +76,7 @@ public partial class HomeView : UserControl
         HomeStateDot.Fill = (Brush)FindResource("DangerBrush");
         HomeStateText.Foreground = (Brush)FindResource("DangerBrush");
         HomeStateText.Text = "UNAVAILABLE";
-        HomeCapturedText.Text = "The bounded Windows telemetry provider could not complete a sample.";
+        HomeCapturedText.Text = "Live metrics are unavailable.";
         MachineNameText.Text = device.DisplayName;
         MachineOsText.Text = $"{device.OperatingSystem} · {device.OperatingSystemArchitecture}";
         NetworkStatusText.Text = "UNAVAILABLE";
@@ -89,7 +88,7 @@ public partial class HomeView : UserControl
         HomeStateDot.Fill = (Brush)FindResource("WarningBrush");
         HomeStateText.Foreground = (Brush)FindResource("WarningBrush");
         HomeStateText.Text = TelemetryDisplay.State(TelemetryObservationState.Stale);
-        HomeCapturedText.Text = "Last confirmed values retained while the bounded provider retries.";
+        HomeCapturedText.Text = "Showing the last confirmed values while Soltex reconnects.";
         NetworkStatusText.Text = "STALE";
         NetworkStatusText.Foreground = (Brush)FindResource("WarningBrush");
     }
@@ -99,7 +98,7 @@ public partial class HomeView : UserControl
         if (network is null)
         {
             NetworkRateText.Text = "Unavailable";
-            NetworkDetailText.Text = "No stable active-interface sample completed";
+            NetworkDetailText.Text = "No active network connection is available";
             NetworkStatusText.Text = "UNAVAILABLE";
             NetworkStatusText.Foreground = (Brush)FindResource("WarningBrush");
             NetworkSparkline.Values ??= _networkHistory.CreateSnapshot();

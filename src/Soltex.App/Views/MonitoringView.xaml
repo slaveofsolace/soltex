@@ -23,7 +23,7 @@
                     <TextBlock x:Name="PerformanceSubtitleText"
                                Margin="0,3,0,0"
                                Style="{StaticResource MutedTextStyle}"
-                               Text="Live CPU, memory, network, storage, and process activity." />
+                               Text="Live processor, memory, and network activity." />
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                     <Button x:Name="BenchmarkModeButton"
@@ -36,7 +36,7 @@
                             Margin="0,0,10,0"
                             Style="{StaticResource SecondaryButton}"
                             Content="Show system detail"
-                            AutomationProperties.Name="Show storage, provider, and process details"
+                            AutomationProperties.Name="Show storage and process details"
                             Click="MonitoringDetails_Click" />
                     <Border Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
@@ -59,20 +59,20 @@
 
             <Grid x:Name="MonitoringOverviewPanel" Grid.Row="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="248" />
-                    <RowDefinition Height="14" />
+                    <RowDefinition Height="260" />
+                    <RowDefinition Height="24" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
             <!-- Processor and physical memory -->
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="16" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="1.55*" />
+                    <ColumnDefinition Width="36" />
+                    <ColumnDefinition Width="1*" MinWidth="250" />
                 </Grid.ColumnDefinitions>
 
-                <Border Style="{StaticResource HeroCardStyle}" MinHeight="248">
+                <Border x:Name="PerformanceCpuInstrument" Background="Transparent" MinHeight="248">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -93,7 +93,8 @@
                                        Text="GetSystemTimes"
                                        Foreground="{DynamicResource QuietTextBrush}"
                                        FontFamily="{StaticResource MonoFont}"
-                                       FontSize="{StaticResource FontMicro}" />
+                                       FontSize="{StaticResource FontMicro}"
+                                       Visibility="Collapsed" />
                         </Grid>
 
                         <StackPanel Grid.Row="1"
@@ -103,8 +104,11 @@
                             <TextBlock x:Name="CpuValueText"
                                        Text="—"
                                        Style="{StaticResource MetricValueStyle}"
-                                       FontSize="50" />
-                            <TextBlock Margin="10,0,0,8" Text="total CPU" Foreground="{DynamicResource MutedBrush}" />
+                                       FontSize="62" />
+                            <TextBlock Margin="10,0,0,8"
+                                       Text="total CPU"
+                                       Foreground="{DynamicResource MutedBrush}"
+                                       VerticalAlignment="Bottom" />
                         </StackPanel>
 
                         <controls:Sparkline x:Name="CpuHistoryChart"
@@ -128,7 +132,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock x:Name="CpuStatsText"
                                        Grid.Column="1"
-                                       Text="awaiting samples"
+                                       Text="Waiting for data"
                                        Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
@@ -136,14 +140,21 @@
 
                         <TextBlock x:Name="CpuWindowText"
                                    Grid.Row="4"
-                                   Text="up to 72 samples"
+                                   Text="Recent activity"
                                    Foreground="{DynamicResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
-                                   FontSize="{StaticResource FontMicro}" />
+                                   FontSize="{StaticResource FontMicro}"
+                                   Visibility="Collapsed" />
                     </Grid>
                 </Border>
 
-                <Border Grid.Column="2" Style="{StaticResource CardStyle}" MinHeight="248">
+                <Border x:Name="PerformanceMemoryRail"
+                        Grid.Column="2"
+                        MinHeight="248"
+                        Padding="28,0,0,0"
+                        Background="Transparent"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1,0,0,0">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -167,7 +178,8 @@
                                        Text="GlobalMemoryStatusEx"
                                        Foreground="{DynamicResource QuietTextBrush}"
                                        FontFamily="{StaticResource MonoFont}"
-                                       FontSize="{StaticResource FontMicro}" />
+                                       FontSize="{StaticResource FontMicro}"
+                                       Visibility="Collapsed" />
                         </Grid>
 
                         <StackPanel Grid.Row="1"
@@ -207,7 +219,7 @@
                                        FontSize="{StaticResource FontMicro}" />
                             <TextBlock x:Name="MemoryStatsText"
                                        Grid.Column="1"
-                                       Text="awaiting samples"
+                                       Text="Waiting for data"
                                        Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
@@ -243,11 +255,16 @@
             </Grid>
 
             <!-- Network throughput -->
-            <Border Grid.Row="2" Style="{StaticResource CardStyle}">
+            <Border x:Name="PerformanceNetworkInstrument"
+                    Grid.Row="2"
+                    Padding="0,22,0,0"
+                    Background="Transparent"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,1,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="1.45*" />
-                        <ColumnDefinition Width="18" />
+                        <ColumnDefinition Width="36" />
                         <ColumnDefinition Width="1*" />
                     </Grid.ColumnDefinitions>
 
@@ -344,10 +361,16 @@
                                    Text="Autoscaled to the observed peak"
                                    Foreground="{DynamicResource QuietTextBrush}"
                                    FontFamily="{StaticResource MonoFont}"
-                                   FontSize="{StaticResource FontMicro}" />
+                                   FontSize="{StaticResource FontMicro}"
+                                   Visibility="Collapsed" />
                     </Grid>
 
-                    <Border Grid.Column="2" Style="{StaticResource QuietCardStyle}" Padding="14">
+                    <Border x:Name="PerformanceInterfaceRail"
+                            Grid.Column="2"
+                            Padding="28,0,0,0"
+                            Background="Transparent"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1,0,0,0">
                         <StackPanel>
                             <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Active interfaces" />
                             <ItemsControl x:Name="NetworkInterfaceItems" Margin="0,12,0,0">
@@ -397,18 +420,18 @@
             <Grid x:Name="MonitoringDetailsPanel" Grid.Row="2" Visibility="Collapsed">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="14" />
+                    <RowDefinition Height="24" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
             <!-- Volumes and provider coverage -->
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="1.3*" />
-                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="1.45*" />
+                    <ColumnDefinition Width="36" />
                     <ColumnDefinition Width="1*" />
                 </Grid.ColumnDefinitions>
 
-                <Border Style="{StaticResource CardStyle}">
+                <Border Background="Transparent">
                     <StackPanel>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -453,12 +476,16 @@
                     </StackPanel>
                 </Border>
 
-                <Border Grid.Column="2" Style="{StaticResource QuietCardStyle}">
+                <Border Grid.Column="2"
+                        Padding="28,0,0,0"
+                        Background="Transparent"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1,0,0,0">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Provider coverage" />
+                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Available data" />
                         <TextBlock Margin="0,4,0,15"
                                    Style="{StaticResource MutedTextStyle}"
-                                   Text="Unsupported data stays explicit." />
+                                   Text="Hardware data appears only when Windows reports it." />
                         <Grid Margin="0,0,0,11">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -476,9 +503,9 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="Processes · volumes" />
+                            <TextBlock Text="Processes and storage" />
                             <TextBlock Grid.Column="1"
-                                       Text="BOUNDED"
+                                       Text="AVAILABLE"
                                        Foreground="{DynamicResource SignalBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
@@ -502,7 +529,7 @@
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Per-core CPU" />
                             <TextBlock Grid.Column="1"
-                                       Text="NOT SAMPLED"
+                                       Text="UNAVAILABLE"
                                        Foreground="{DynamicResource MutedBrush}"
                                        FontFamily="{StaticResource MonoFont}"
                                        FontSize="{StaticResource FontMicro}" />
@@ -524,7 +551,11 @@
             </Grid>
 
             <!-- Processes -->
-            <Border Grid.Row="2" Style="{StaticResource CardStyle}">
+            <Border Grid.Row="2"
+                    Padding="0,22,0,0"
+                    Background="Transparent"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,1,0,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -624,7 +655,7 @@
                                FontFamily="{StaticResource MonoFont}"
                                FontSize="{StaticResource FontMicro}"
                                TextWrapping="Wrap"
-                               Text="Waiting for provider provenance" />
+                               Text="Waiting for system details" />
                 </Grid>
             </Border>
             </Grid>
@@ -635,13 +666,13 @@
                   AutomationProperties.Name="Quick local benchmark">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="14" />
+                    <RowDefinition Height="24" />
                     <RowDefinition Height="220" />
-                    <RowDefinition Height="14" />
+                    <RowDefinition Height="24" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <Border Style="{StaticResource CardStyle}">
+                <Border Background="Transparent">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -681,7 +712,7 @@
                             <Button x:Name="RunBenchmarkButton"
                                     Style="{StaticResource ActionButton}"
                                     Content="Run quick benchmark"
-                                    AutomationProperties.Name="Run bounded quick benchmark"
+                                    AutomationProperties.Name="Run quick benchmark"
                                     Click="RunBenchmark_Click" />
                         </StackPanel>
                     </Grid>
@@ -690,13 +721,13 @@
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="36" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="36" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <Border Style="{StaticResource HeroCardStyle}">
+                    <Border Background="Transparent">
                         <StackPanel>
                             <TextBlock Text="Processor" Foreground="{DynamicResource AccentBrush}" FontWeight="SemiBold" />
                             <TextBlock x:Name="BenchmarkCpuValueText"
@@ -715,7 +746,11 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                    <Border Grid.Column="2"
+                            Padding="28,0,0,0"
+                            Background="Transparent"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1,0,0,0">
                         <StackPanel>
                             <TextBlock Text="Memory" Foreground="{DynamicResource SignalBrush}" FontWeight="SemiBold" />
                             <TextBlock x:Name="BenchmarkMemoryValueText"
@@ -734,7 +769,11 @@
                         </StackPanel>
                     </Border>
 
-                    <Border Grid.Column="4" Style="{StaticResource CardStyle}">
+                    <Border Grid.Column="4"
+                            Padding="28,0,0,0"
+                            Background="Transparent"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1,0,0,0">
                         <StackPanel>
                             <TextBlock Text="Temporary storage" Foreground="{DynamicResource WarningBrush}" FontWeight="SemiBold" />
                             <TextBlock x:Name="BenchmarkStorageValueText"
@@ -754,7 +793,11 @@
                     </Border>
                 </Grid>
 
-                <Border Grid.Row="4" Style="{StaticResource QuietCardStyle}">
+                <Border Grid.Row="4"
+                        Padding="0,22,0,0"
+                        Background="Transparent"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="0,1,0,0">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />

@@ -186,7 +186,7 @@ public partial class MainWindow
     {
         string workspaceTitle = panel == MonitoringPanel ? "Performance" :
             panel == ApplicationsPanel ? "Applications" :
-            panel == DevicesPanel ? "Device mesh" :
+            panel == DevicesPanel ? "Devices" :
             panel == MixerPanel ? "Audio" :
             panel == ClipsPanel ? "Capture" :
             panel == SecurityPanel ? "Security" :

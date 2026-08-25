@@ -323,8 +323,8 @@ public partial class WhisperView : UserControl
         AutomationProperties.SetName(
             WhisperProviderSelectButton,
             localSelected
-                ? "Local Whisper transcription provider selected"
-                : "Select the local Whisper transcription provider");
+                ? "Local Whisper selected"
+                : "Select local Whisper");
 
         WhisperModelStatus.Text = detail;
         WhisperModelProgress.Visibility = operationRunning
@@ -635,7 +635,7 @@ public partial class WhisperView : UserControl
                 WhisperHistoryMode.Off => "Completed transcripts are not retained.",
                 WhisperHistoryMode.SessionMemory => "Session memory is cleared when Soltex closes.",
                 WhisperHistoryMode.EncryptedDisk =>
-                    "Transcript text is DPAPI-protected inside authenticated Soltex state.",
+                "Dictation history is encrypted for this Windows account.",
                 _ => "Choose a supported history mode."
             };
 

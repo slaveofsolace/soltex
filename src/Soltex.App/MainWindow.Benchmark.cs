@@ -32,7 +32,7 @@ public partial class MainWindow
         _benchmarkCancellation = cancellation;
         _benchmarkOperationDrained = drained.Task;
         MonitoringPanel.ShowBenchmarkRunning(
-            "Pausing live Performance sampling, then measuring the three bounded local workloads.");
+            "Preparing three short local tests.");
         try
         {
             await _telemetryLoop.StopAsync();

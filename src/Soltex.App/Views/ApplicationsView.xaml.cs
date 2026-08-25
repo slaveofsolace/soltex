@@ -26,7 +26,7 @@ public partial class ApplicationsView : UserControl
         InventoryStateText.Foreground = (Brush)FindResource("WarningBrush");
         InventoryStateText.Text = "READING";
         InventorySummaryText.Text = "Reading software, sign-in entries, and Windows services…";
-        InventoryProvenanceText.Text = "Reading bounded, supported Windows inventory sources…";
+        InventoryProvenanceText.Text = "Loading application and service data…";
     }
 
     internal void UpdateSnapshot(
@@ -60,7 +60,7 @@ public partial class ApplicationsView : UserControl
         InventoryStateText.Foreground = stateBrush;
         InventoryStateText.Text = complete ? "CURRENT" : "PARTIAL";
         InventoryProvenanceText.Text =
-            $"Updated {snapshot.CapturedAtUtc.ToLocalTime():t} · apps {snapshot.CaptureDuration.TotalMilliseconds:F0} ms · services {serviceSnapshot.CaptureDuration.TotalMilliseconds:F0} ms · supported Windows sources";
+            $"Updated {snapshot.CapturedAtUtc.ToLocalTime():t}";
         ServiceAttentionColumn.Visibility = serviceSnapshot.Services.Any(item =>
             !string.IsNullOrWhiteSpace(item.Signal))
             ? Visibility.Visible
@@ -83,7 +83,7 @@ public partial class ApplicationsView : UserControl
         InventoryStateText.Text = "UNAVAILABLE";
         InventoryCoverageText.Text = "READ FAILED";
         InventoryProvenanceText.Text =
-            "Windows did not expose a bounded inventory. No values were synthesized.";
+            "Windows could not read the inventory. No estimated entries are shown.";
         InventoryEmptyText.Text = "System inventory could not be read.";
         InventoryEmptyText.Visibility = Visibility.Visible;
     }

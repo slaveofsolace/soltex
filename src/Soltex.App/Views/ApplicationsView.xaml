@@ -185,7 +185,7 @@
                        Foreground="{DynamicResource QuietTextBrush}"
                        FontSize="{StaticResource FontCaption}"
                        TextTrimming="CharacterEllipsis"
-                       Text="Waiting for a bounded Windows inventory." />
+                       Text="Waiting for Windows" />
             <TextBlock x:Name="InventoryCoverageText"
                        Grid.Column="1"
                        Margin="14,0,0,0"

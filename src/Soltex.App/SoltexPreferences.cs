@@ -335,7 +335,7 @@ internal sealed class PreferencesStore
                 normalized
                     ? "Unsupported preference values were reset to safe defaults."
                     : migrated
-                        ? "Preferences loaded; new experience preferences remain at safe defaults."
+                        ? "Settings loaded. New options use their recommended defaults."
                         : "Preferences loaded from this Windows account.");
         }
         catch (Exception exception) when (IsExpectedReadFailure(exception))

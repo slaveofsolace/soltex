@@ -135,12 +135,11 @@ public partial class MixerView : UserControl
         UpdateSnapshot(endpointSnapshot);
         UpdateSessions(sessionSnapshot);
         RenderState(MergeState(endpointSnapshot.State, sessionSnapshot.State));
-        MixerProvenanceText.Text =
-            $"Windows Core Audio · device read {endpointSnapshot.CaptureDuration.TotalMilliseconds:F0} ms · " +
-            $"session read {sessionSnapshot.CaptureDuration.TotalMilliseconds:F0} ms · " +
-            $"{endpointSnapshot.InaccessibleEndpointCount} device records unavailable · " +
-            $"{sessionSnapshot.InaccessibleSessionCount} session records unavailable · " +
-            $"{sessionSnapshot.OmittedSessionCount} session records omitted";
+        MixerProvenanceText.Text = DescribeFooter(
+            endpointSnapshot.CapturedAtUtc,
+            endpointSnapshot.InaccessibleEndpointCount,
+            sessionSnapshot.InaccessibleSessionCount,
+            sessionSnapshot.OmittedSessionCount);
     }
 
     public void UpdateSnapshot(AudioEndpointSnapshot snapshot)
@@ -191,19 +190,17 @@ public partial class MixerView : UserControl
 
         int active = snapshot.Endpoints.Count(endpoint => endpoint.State == AudioEndpointState.Active);
         ActiveCountText.Text = active.ToString(CultureInfo.CurrentCulture);
-        TotalCountText.Text = snapshot.Endpoints.Count == 1
-            ? "of 1 endpoint"
-            : $"of {snapshot.Endpoints.Count} endpoints";
+        TotalCountText.Text = active == 1 ? "active endpoint" : "active endpoints";
         DefaultPlaybackText.Text = DescribeDefault(snapshot.Render);
         DefaultRecordingText.Text = DescribeDefault(snapshot.Capture);
         StateBreakdownText.Text = DescribeStates(snapshot.Endpoints);
         UpdatePreferenceStatus(snapshot);
 
-        MixerProvenanceText.Text =
-            $"{snapshot.Provenance} · captured {snapshot.CapturedAtUtc.ToLocalTime():T} · " +
-            $"provider {snapshot.CaptureDuration.TotalMilliseconds:F0} ms · " +
-            $"{snapshot.InaccessibleEndpointCount} inaccessible · " +
-            string.Join(" · ", snapshot.Limitations);
+        MixerProvenanceText.Text = DescribeFooter(
+            snapshot.CapturedAtUtc,
+            snapshot.InaccessibleEndpointCount,
+            inaccessibleApps: 0,
+            quietApps: 0);
         if (_lastSessionState is AudioObservationState sessionState)
         {
             RenderState(MergeState(snapshot.State, sessionState));
@@ -244,7 +241,7 @@ public partial class MixerView : UserControl
             "Windows Core Audio sessions could not be reached. No controls were enabled.");
         UpdateDeviceDetailsVisibility();
         UpdateMoreVisibility();
-        MixerProvenanceText.Text = "Windows Core Audio could not be reached. No values were synthesized.";
+        MixerProvenanceText.Text = "Audio controls are unavailable. Current Windows audio settings were not changed.";
     }
 
     internal void ShowSessionMutationPending(AudioSession session, AudioSessionMutationKind kind)
@@ -456,12 +453,15 @@ public partial class MixerView : UserControl
     {
         int controllable = snapshot.Sessions.Count(session => session.CanControl);
         string active = snapshot.Sessions.Count == 1
-            ? "1 active playback session"
-            : $"{snapshot.Sessions.Count} active playback sessions";
-        string omitted = snapshot.OmittedSessionCount > 0
-            ? $" · {snapshot.OmittedSessionCount} omitted by bounds"
+            ? "1 app using audio"
+            : $"{snapshot.Sessions.Count} apps using audio";
+        string adjustable = controllable < snapshot.Sessions.Count
+            ? $" · {controllable} adjustable"
             : string.Empty;
-        return $"{active} · {controllable} controllable{omitted}";
+        string omitted = snapshot.OmittedSessionCount > 0
+            ? $" · {snapshot.OmittedSessionCount} quiet apps hidden"
+            : string.Empty;
+        return $"{active}{adjustable}{omitted}";
     }
 
     private static string DescribeMutation(AudioSessionMutationKind kind) =>
@@ -647,11 +647,35 @@ public partial class MixerView : UserControl
     private static string DescribeStates(IEnumerable<AudioEndpoint> endpoints)
     {
         var counts = endpoints
+            .Where(endpoint => endpoint.State != AudioEndpointState.Active &&
+                               endpoint.State != AudioEndpointState.NotPresent)
             .GroupBy(endpoint => endpoint.State)
             .OrderBy(group => StateRank(group.Key))
             .Select(group => $"{group.Count()} {StateLabel(group.Key).ToLowerInvariant()}")
             .ToArray();
-        return counts.Length == 0 ? "no endpoints reported" : string.Join(" · ", counts);
+        return counts.Length == 0 ? "All available devices are ready" : string.Join(" · ", counts);
+    }
+
+    private static string DescribeFooter(
+        DateTimeOffset capturedAtUtc,
+        int inaccessibleDevices,
+        int inaccessibleApps,
+        int quietApps)
+    {
+        List<string> parts = [$"Updated {capturedAtUtc.ToLocalTime():t}"];
+        if (inaccessibleDevices > 0)
+        {
+            parts.Add($"{inaccessibleDevices} devices unavailable");
+        }
+        if (inaccessibleApps > 0)
+        {
+            parts.Add($"{inaccessibleApps} apps unavailable");
+        }
+        if (quietApps > 0)
+        {
+            parts.Add($"{quietApps} quiet apps hidden");
+        }
+        return string.Join(" · ", parts);
     }
 
     private static string StateLabel(AudioEndpointState state) => state switch

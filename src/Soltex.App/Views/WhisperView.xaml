@@ -261,7 +261,7 @@
                         Margin="0,0,10,0"
                         Style="{StaticResource StatusPillStyle}"
                         ToolTip="Local transcription and verified delivery are wired. Readiness remains blocked until the model, microphone, shortcuts, and target prerequisites are proven on this PC.">
-                    <TextBlock Text="Scaffold"
+                    <TextBlock Text="Setup"
                                Foreground="{DynamicResource WarningBrush}"
                                FontFamily="{StaticResource MonoFont}"
                                FontSize="{StaticResource FontMicro}"
@@ -269,8 +269,8 @@
                 </Border>
                 <Button x:Name="WhisperPreviewOverlayButton"
                         Style="{StaticResource SecondaryButton}"
-                        Content="Preview listening surface"
-                        AutomationProperties.Name="Preview the Whisper listening surface"
+                        Content="Preview overlay"
+                        AutomationProperties.Name="Preview the Whisper overlay"
                         Click="PreviewOverlay_Click" />
             </StackPanel>
         </Grid>
@@ -331,7 +331,7 @@
                         Margin="8,0,0,0"
                         Style="{StaticResource TabButtonStyle}"
                         Content="Checks"
-                        AutomationProperties.Name="Show owner-controlled Whisper checks"
+                        AutomationProperties.Name="Show Whisper checks"
                         Click="WhisperChecksTab_Click" />
                 <Button x:Name="WhisperPersonalizeTab"
                         Margin="8,0,0,0"
@@ -515,7 +515,7 @@
                                         Margin="0,0,8,0"
                                         Style="{StaticResource SecondaryButton}"
                                         Content="Use local"
-                                        AutomationProperties.Name="Select the local Whisper transcription provider"
+                                        AutomationProperties.Name="Select local Whisper"
                                         Click="ProviderSelect_Click" />
                                 <Button x:Name="WhisperModelDeleteButton"
                                         Margin="0,0,8,0"
@@ -659,7 +659,7 @@
                         <TextBlock Margin="0,3,0,12"
                                    Style="{StaticResource MutedTextStyle}"
                                    TextWrapping="Wrap"
-                                   Text="These settings shape recognition and formatting. Vocabulary is sent as provider hints and is never substituted into a finished transcript." />
+                                   Text="Vocabulary guides recognition; formatting is applied after transcription." />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
@@ -671,7 +671,7 @@
                                     <TextBlock Text="Language" FontWeight="SemiBold" />
                                     <TextBlock Margin="0,3,0,8"
                                                Style="{StaticResource MutedTextStyle}"
-                                               Text="Auto-detect keeps mixed-language speech available to the provider." />
+                                               Text="Auto-detect supports mixed-language speech." />
                                     <ComboBox x:Name="WhisperLanguagePicker"
                                               Style="{StaticResource SoltexComboBoxStyle}"
                                               DisplayMemberPath="DisplayName"
@@ -864,7 +864,7 @@
                                             <TextBlock Text="New style" FontWeight="SemiBold" />
                                             <TextBlock Margin="0,3,0,0"
                                                        Style="{StaticResource MutedTextStyle}"
-                                                       Text="Start from visible, deterministic formatting rules." />
+                                                Text="Choose a predictable formatting style." />
                                         </StackPanel>
                                         <TextBlock x:Name="WhisperCustomStyleCount"
                                                    Grid.Column="1"
@@ -1164,7 +1164,7 @@
                                        FontWeight="SemiBold" />
                             <TextBlock Margin="0,5,0,0"
                                        Style="{StaticResource MutedTextStyle}"
-                                       Text="History appears here only after provider-backed dictation succeeds." />
+                                       Text="History appears after a successful dictation." />
                         </StackPanel>
                     </Border>
                     <ScrollViewer Grid.Row="4"
@@ -1387,11 +1387,11 @@
                             </Border>
                             <Border Grid.Column="2" Style="{StaticResource QuietCardStyle}">
                                 <StackPanel>
-                                    <TextBlock Text="Content-free evidence" FontWeight="SemiBold" />
+                                    <TextBlock Text="Private diagnostics" FontWeight="SemiBold" />
                                     <TextBlock Margin="0,6,0,0"
                                                Style="{StaticResource MutedTextStyle}"
                                                TextWrapping="Wrap"
-                                               Text="Diagnostics retain categories and policy outcomes, never transcript or audio content." />
+                                               Text="Diagnostics record status and outcomes, never dictated words or audio." />
                                 </StackPanel>
                             </Border>
                         </Grid>

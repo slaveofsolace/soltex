@@ -258,19 +258,6 @@ public partial class MainWindow : Window
         }
 
         _protectionMonitor.Start();
-        AddActivity("Soltex import guard is active.", "Security");
-        if (_runtime.DataRootKind == ProductDataRootKind.LegacyCompatibility)
-        {
-            AddActivity(
-                "Soltex is using the existing compatible data location; no files were moved.",
-                "Security");
-        }
-
-        AddActivity(
-            _protectionMonitor.ChangeNotificationsAvailable
-                ? "Windows Security change notifications are active."
-                : "Windows Security notifications are unavailable; bounded polling remains active.",
-            "Security");
         _startupCompleted.TrySetResult(true);
     }
 
@@ -362,7 +349,7 @@ public partial class MainWindow : Window
                     if (recoveryNoticeRequired)
                     {
                         AddActivity(
-                            "Windows telemetry recovered after a bounded retry.",
+                            "Windows telemetry reconnected.",
                             "Performance");
                     }
                 });
@@ -393,7 +380,7 @@ public partial class MainWindow : Window
                     if (consecutiveFailures == 1)
                     {
                         AddActivity(
-                            "Windows telemetry was unavailable; a bounded retry is scheduled.",
+                            "Windows telemetry is unavailable; Soltex will try again.",
                             "Performance");
                     }
                 });
@@ -479,25 +466,24 @@ public partial class MainWindow : Window
             : health.WindowsSecurityCenterHealth == WindowsSecurityHealth.Poor ? "ATTENTION" : "CHECK";
         ProtectionSummaryState.Foreground = stateBrush;
         ProtectionSummaryDetail.Text = health.IsProtected
-            ? "Windows provider reports healthy"
-            : "Open Security for provider details";
+            ? "Windows protection active"
+            : "Open Security to review";
         SecurityNavButton.ToolTip =
             $"{ProtectionSummaryTitle.Text}: {ProtectionSummaryDetail.Text}";
-        string wsc = health.WindowsSecurityCenterHealth.ToString();
         string mode = string.IsNullOrWhiteSpace(health.AMRunningMode)
             ? "mode unavailable"
             : health.AMRunningMode;
         HealthDetail.Text = health.StatusQuerySucceeded
-            ? $"WSC {wsc} · Defender {mode} · intelligence " +
-              $"{health.AntivirusSignatureVersion ?? "version unavailable"} · checked {health.CheckedAtUtc.ToLocalTime():t}"
-            : $"WSC {wsc} · {health.Error ?? "Defender details are managed by the registered provider."}";
+            ? $"Microsoft Defender · {mode} · intelligence " +
+              $"{health.AntivirusSignatureVersion ?? "version unavailable"} · updated {health.CheckedAtUtc.ToLocalTime():t}"
+            : "Windows reports protection through the registered security app.";
 
         SetState(RealTimeStatus, health.RealTimeProtectionEnabled, health.StatusQuerySucceeded);
         SetState(BehaviorStatus, health.BehaviorMonitorEnabled, health.StatusQuerySucceeded);
         SetState(CloudStatus, health.CloudProtectionEnabled, health.StatusQuerySucceeded);
         if (!health.StatusQuerySucceeded)
         {
-            SignatureStatus.Text = "Provider-managed";
+            SignatureStatus.Text = "Security app";
             SignatureStatus.Foreground = warning;
         }
         else if (health.SignaturesOutOfDate)
@@ -727,7 +713,9 @@ public partial class MainWindow : Window
             _defenderEventRows.Add(new DefenderEventRow(item));
         }
 
-        EventQueryStatus.Text = $"{result.Events.Count} events · {result.Duration.TotalMilliseconds:F0} ms";
+        EventQueryStatus.Text = result.Events.Count == 1
+            ? "1 recent event"
+            : $"{result.Events.Count} recent events";
         EventQueryStatus.Foreground = (Brush)FindResource("MutedBrush");
         if (result.Events.Count == 0)
         {
@@ -789,7 +777,7 @@ public partial class MainWindow : Window
 
     private void SetState(System.Windows.Controls.TextBlock control, bool enabled, bool known)
     {
-        control.Text = !known ? "Provider-managed" : enabled ? "Active" : "Attention";
+        control.Text = !known ? "Security app" : enabled ? "Active" : "Attention";
         control.Foreground = (Brush)FindResource(!known
             ? "WarningBrush"
             : enabled ? "SignalBrush" : "DangerBrush");
@@ -1233,7 +1221,7 @@ public partial class MainWindow : Window
             ? "RustDesk is not connected"
             : trusted ? "Trusted external client" : "Signature trust failed";
         RemoteTrustDetail.Text = executable is null
-            ? "Choose an installed, signed RustDesk.exe. Soltex never bundles or silently downloads the remote-control runtime."
+            ? "Choose an installed, signed RustDesk.exe."
             : _remoteAssistTrust!.Detail;
         RemoteTrustDot.Fill = (Brush)FindResource(executable is null
             ? "MutedBrush"
@@ -1332,15 +1320,15 @@ public partial class MainWindow : Window
             UpdateStatePill.Text = reviewRequired ? "REVIEW" : "OFF";
             UpdateStatePill.Foreground = stateBrush;
             UpdateStateDetail.Text = reviewRequired
-                ? report.Detail
-                : "No signed release source is configured, and no incomplete planning attempt is recorded.";
+                ? "An unfinished update needs review."
+                : "Updates are off. No unfinished update was found.";
             UpdateRecoveryTitle.Text = reviewRequired
-                ? "Interrupted evidence exists"
-                : "No interrupted attempt";
+                ? "Unfinished update found"
+                : "Nothing to recover";
             UpdateRecoveryTitle.Foreground = stateBrush;
             UpdateRecoveryDetail.Text = reviewRequired
-                ? $"{report.ExistingPrivateStagingTokens.Count} private staging token(s) require explicit owner review. Nothing was activated."
-                : "No private staging token requires review.";
+                ? $"{report.ExistingPrivateStagingTokens.Count} staged update item(s) need review. Nothing was installed."
+                : "No unfinished update needs attention.";
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
                                           InvalidDataException or CryptographicException)
@@ -1350,14 +1338,14 @@ public partial class MainWindow : Window
             UpdateJournalCount.Text = "Unavailable";
             UpdateStateDot.Fill = danger;
             UpdateReadinessHero.BorderBrush = danger;
-            UpdateStateTitle.Text = "Planning evidence unavailable";
-            UpdateStatePill.Text = "FAILED CLOSED";
+            UpdateStateTitle.Text = "Update history unavailable";
+            UpdateStatePill.Text = "CHECK";
             UpdateStatePill.Foreground = danger;
-            UpdateStateDetail.Text = "Soltex could not authenticate the local planning journal. No update action is available.";
-            UpdateRecoveryTitle.Text = "Manual review required";
+            UpdateStateDetail.Text = "Soltex could not verify local update history. Update actions stay off.";
+            UpdateRecoveryTitle.Text = "Review required";
             UpdateRecoveryTitle.Foreground = danger;
             UpdateRecoveryDetail.Text =
-                "The authenticated journal could not be read. No path or update action is exposed from this failed-closed state.";
+                "Update history could not be verified, so Soltex will not use it.";
         }
         finally
         {

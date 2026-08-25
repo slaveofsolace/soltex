@@ -68,7 +68,7 @@ The provider-neutral core in `src/Soltex.Whisper` is complete and covered by the
 The WPF surfaces in `src/Soltex.App` — navigation entry, Whisper page with Setup,
 Shortcuts, Checks, Personalize, Library, Scratchpad, History, and Privacy tabs, and the floating listening
 surface — render this core.
-They are honest about capability: the navigation entry remains marked `SCAFFOLD`
+They are honest about capability: the navigation entry remains marked `SETUP`
 because an owner-spoken capture-to-verified-insertion session and the remaining physical-input and
 accessibility checks are still pending. The label hides only after all six owner checks pass in the
 current process; those session-only observations are not persisted or inferred from CI. The shipped session and model controls are real,

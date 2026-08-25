@@ -797,6 +797,10 @@ internal static class Program
         True(view.NetworkStatusText.Text is "LIVE" or "UNAVAILABLE", "Home did not expose the network observation state.");
         True(view.HomeHeroCard.ActualHeight <= 266, "The Home hero exceeded its bounded viewport height.");
         True(view.MachineProfileCard.ActualWidth >= 220, "The Home machine profile collapsed below its usable width.");
+        view.ShowUnavailable(device);
+        True(!view.HomeCapturedText.Text.Contains("provider", StringComparison.OrdinalIgnoreCase) &&
+             !view.HomeCapturedText.Text.Contains("bounded", StringComparison.OrdinalIgnoreCase),
+            "Overview exposed implementation terminology in its unavailable state.");
     }
 
     private static void MonitoringViewRenders(SystemTelemetrySnapshot snapshot)
@@ -806,9 +810,21 @@ internal static class Program
         byte[] pixels = Render(view, 980, 720);
         True(CountVisiblePixels(pixels) > 5_000, "The Monitoring view render was unexpectedly empty.");
         True(view.ProcessGrid.Items.Count <= SystemTelemetryProvider.MaximumProcessCount, "Monitoring exceeded the process-row bound.");
-        True(view.MonitoringProvenanceText.Text.Contains("GetSystemTimes", StringComparison.Ordinal), "Monitoring omitted provider provenance.");
+        True(!view.MonitoringProvenanceText.Text.Contains("GetSystemTimes", StringComparison.Ordinal),
+            "Monitoring leaked implementation provenance into the product surface.");
+        True(!view.MonitoringProvenanceText.Text.Contains("provider", StringComparison.OrdinalIgnoreCase) &&
+             !view.MonitoringProvenanceText.Text.Contains("bounded", StringComparison.OrdinalIgnoreCase),
+            "Performance exposed implementation terminology in its default status.");
         True(view.MonitoringProvenanceText.Text.Contains("GPU", StringComparison.Ordinal), "Monitoring omitted the GPU limitation.");
         True(view.NetworkCoverageText.Text is "SAMPLED" or "UNAVAILABLE", "Monitoring did not expose the network provider state.");
+        True(view.PerformanceCpuInstrument.BorderThickness == new Thickness(0),
+            "The primary performance instrument regained card framing.");
+        True(view.PerformanceMemoryRail.BorderThickness.Left == 1,
+            "The memory rail lost its quiet workspace separator.");
+        True(view.PerformanceNetworkInstrument.BorderThickness.Top == 1,
+            "The network instrument lost its quiet workspace separator.");
+        True(view.PerformanceInterfaceRail.BorderThickness.Left == 1,
+            "The interface rail lost its quiet workspace separator.");
         True(!view.EndTaskButton.IsEnabled, "End task must remain disabled until a process is selected.");
         True(view.ProcessActionPanel.Visibility == Visibility.Collapsed, "Process action feedback must be quiet by default.");
     }
@@ -1068,6 +1084,10 @@ internal static class Program
         view.UpdateSnapshot(snapshot, serviceSnapshot);
         True(view.InventorySummaryText.Text.Contains("installed", StringComparison.Ordinal),
             "Applications view omitted the compact inventory summary.");
+        True(!view.InventoryProvenanceText.Text.Contains(" ms", StringComparison.Ordinal) &&
+             !view.InventoryProvenanceText.Text.Contains("provider", StringComparison.OrdinalIgnoreCase) &&
+             !view.InventoryProvenanceText.Text.Contains("provenance", StringComparison.OrdinalIgnoreCase),
+            "Applications exposed capture or implementation provenance in its default footer.");
         True(ReferenceEquals(view.InventorySearchBox.Style, Application.Current.FindResource("FieldStyle")),
             "Applications search must use the shared field style.");
         True(view.SearchHintText.Visibility == Visibility.Visible,
@@ -1609,7 +1629,7 @@ internal static class Program
         True(view.WhisperScaffoldPill.Visibility == Visibility.Collapsed &&
              !view.WhisperOwnerCheckActionButton.IsEnabled &&
              (string)view.WhisperOwnerCheckActionButton.Content == "Complete",
-            "The Scaffold marker did not require all owner checks in the current session.");
+            "The Setup marker did not require all owner checks in the current session.");
 
         byte[] pixels = Render(view, 980, 720);
         True(CountVisiblePixels(pixels) > 5_000,
@@ -1948,6 +1968,12 @@ internal static class Program
         True(
             view.WhisperHistoryRetentionPanel.Visibility == Visibility.Visible &&
             view.WhisperHistoryStorageDetail.Text.Contains(
+                "encrypted",
+                StringComparison.OrdinalIgnoreCase) &&
+            view.WhisperHistoryStorageDetail.Text.Contains(
+                "Windows account",
+                StringComparison.OrdinalIgnoreCase) &&
+            !view.WhisperHistoryStorageDetail.Text.Contains(
                 "DPAPI",
                 StringComparison.Ordinal),
             "Encrypted history did not render its protection and retention controls.");
@@ -2262,8 +2288,12 @@ internal static class Program
         view.MoreSessionsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         True(view.MoreSessionItems.Visibility == Visibility.Visible,
             "Mixer additional app sessions did not open from their disclosure control.");
-        True(view.SessionSummaryText.Text.Contains("7 active", StringComparison.Ordinal),
-            "Mixer omitted its bounded active-session summary.");
+        True(view.SessionSummaryText.Text.Contains("7 apps using audio", StringComparison.Ordinal),
+            "Mixer omitted its active-app summary.");
+        True(!view.MixerProvenanceText.Text.Contains("0 devices unavailable", StringComparison.Ordinal) &&
+             !view.MixerProvenanceText.Text.Contains("0 apps unavailable", StringComparison.Ordinal) &&
+             !view.MixerProvenanceText.Text.Contains("0 quiet apps hidden", StringComparison.Ordinal),
+            "Mixer cluttered its footer with zero-value diagnostics.");
         True(view.CaptureMixSnapshotButton.IsEnabled &&
              !view.ApplyMixSnapshotButton.IsEnabled &&
              !view.ClearMixSnapshotButton.IsEnabled,
@@ -2527,7 +2557,12 @@ internal static class Program
         byte[] pixels = Render(view, 980, 720);
         True(CountVisiblePixels(pixels) > 5_000, "The Devices view render was unexpectedly empty.");
         True(view.CapabilityItems.Items.Count == 6, "Devices did not render the exact capability catalog.");
-        True(view.DeviceProvenanceText.Text.Contains("NotEnrolled", StringComparison.Ordinal), "Devices did not expose the unenrolled state.");
+        True(view.CapabilityItems.Visibility == Visibility.Collapsed,
+            "Devices exposed the internal capability catalog in the default product surface.");
+        True(view.DeviceProvenanceText.Text.Contains("Not connected", StringComparison.Ordinal),
+            "Devices did not explain the unenrolled state in user-facing language.");
+        True(view.FrameworkText.Visibility == Visibility.Collapsed,
+            "Devices exposed runtime framework trivia in the product surface.");
         True(view.DeviceHeroCard.ActualHeight <= 221, "The Devices hero exceeded its bounded viewport height.");
         True(view.DeviceProfileCard.ActualWidth >= 240, "The Devices profile collapsed below its usable width.");
     }

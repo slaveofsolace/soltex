@@ -144,7 +144,7 @@
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE720;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                             <TextBlock Grid.Column="1" Tag="NavLabel" Text="Whisper" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="2" Tag="NavDetail" Margin="8,0,0,0" Text="SCAFFOLD" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                            <TextBlock Grid.Column="2" Tag="NavDetail" Margin="8,0,0,0" Text="SETUP" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Grid>
                     </Button>
                     <Button x:Name="RemoteNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Remote Assist" Click="RemoteNav_Click">
@@ -274,12 +274,12 @@
                         <TextBlock Style="{StaticResource PageTitleStyle}" Text="Security" />
                         <TextBlock Margin="0,3,0,0"
                                    Style="{StaticResource MutedTextStyle}"
-                                   Text="Windows protection status, scans, and recoverable isolation." />
+                                   Text="Windows protection, scans, and quarantine." />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <Border Margin="0,0,10,0" Style="{StaticResource StatusPillStyle}"
-                                ToolTip="Soltex is a Windows security companion. The registered Windows provider supplies system-wide real-time protection.">
-                            <TextBlock Text="Windows companion" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="{StaticResource FontCaption}" />
+                                ToolTip="Windows Security or your registered antivirus app supplies system-wide real-time protection.">
+                            <TextBlock Text="System protection" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="{StaticResource FontCaption}" />
                         </Border>
                         <Button Style="{StaticResource SecondaryButton}"
                                 Content="Open Windows Security"
@@ -493,12 +493,12 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Style="{StaticResource PageTitleStyle}" Text="Remote Assist" />
-                        <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Launch an authorized session through a user-selected RustDesk client." />
+                        <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Use your installed RustDesk client." />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <Border Margin="0,0,10,0" Style="{StaticResource StatusPillStyle}"
-                                ToolTip="Soltex does not bundle, download, authenticate, elevate, or install the remote-control runtime.">
-                            <TextBlock Text="External runtime" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="{StaticResource FontCaption}" />
+                                ToolTip="Soltex launches only the client you select. It does not install RustDesk.">
+                            <TextBlock Text="RustDesk" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="{StaticResource FontCaption}" />
                         </Border>
                         <Button Style="{StaticResource SecondaryButton}" Content="Source &amp; license" Click="OpenRustDeskSource_Click" />
                     </StackPanel>
@@ -598,7 +598,7 @@
 
                 <Border Grid.Row="6" Background="{DynamicResource InsetBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusSm}" Padding="10">
                     <TextBlock Foreground="{DynamicResource MutedBrush}" FontSize="{StaticResource FontCaption}"
-                               Text="Each launch is confirmed in Soltex; authentication, consent, session controls, and termination stay in RustDesk." />
+                               Text="Soltex asks before launch. RustDesk handles authentication and session controls." />
                 </Border>
             </Grid>
 
@@ -620,11 +620,11 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Style="{StaticResource PageTitleStyle}" Text="Updates" />
-                        <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Inspect authenticated planning evidence before any install boundary exists." />
+                        <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Review the installed version and update readiness." />
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <Border Margin="0,0,10,0" Style="{StaticResource StatusPillStyle}"
-                                ToolTip="This component authenticates, acquires, stages, verifies, and previews a candidate. It does not install, elevate, activate, repair, uninstall, or claim automatic rollback.">
+                                 ToolTip="Soltex checks update readiness in this build. It does not install anything.">
                             <TextBlock Text="Preview only" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="{StaticResource FontCaption}" />
                         </Border>
                         <Button x:Name="UpdateInspectButton" Style="{StaticResource SecondaryButton}" Content="Inspect local state" Click="UpdateInspect_Click" />
@@ -658,8 +658,8 @@
 
                 <Border Grid.Row="4" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
                     <StackPanel Orientation="Horizontal">
-                        <Button x:Name="UpdatePreviewTab" Tag="Selected" Style="{StaticResource TabButtonStyle}" Content="Prepared preview" AutomationProperties.Name="Show prepared update preview" Click="UpdatePreviewTab_Click" />
-                        <Button x:Name="UpdateJournalTab" Margin="8,0,0,0" Style="{StaticResource TabButtonStyle}" Content="Planning journal" AutomationProperties.Name="Show update planning journal" Click="UpdateJournalTab_Click" />
+                        <Button x:Name="UpdatePreviewTab" Tag="Selected" Style="{StaticResource TabButtonStyle}" Content="Preview" AutomationProperties.Name="Show update preview" Click="UpdatePreviewTab_Click" />
+                        <Button x:Name="UpdateJournalTab" Margin="8,0,0,0" Style="{StaticResource TabButtonStyle}" Content="History" AutomationProperties.Name="Show update history" Click="UpdateJournalTab_Click" />
                         <Button x:Name="UpdateRecoveryTab" Margin="8,0,0,0" Style="{StaticResource TabButtonStyle}" Content="Recovery" AutomationProperties.Name="Show update recovery review" Click="UpdateRecoveryTab_Click" />
                     </StackPanel>
                 </Border>
@@ -676,7 +676,7 @@
                             </Grid.RowDefinitions>
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Candidate evidence" />
+                                <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Update preview" />
                                 <TextBlock x:Name="UpdatePreviewStatus" Grid.Column="1" Text="NO PREVIEW" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" VerticalAlignment="Center" />
                             </Grid>
                             <Grid Grid.Row="2">
@@ -704,9 +704,9 @@
                             <Grid Grid.Row="4">
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <Border Background="{DynamicResource InsetBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusSm}" Padding="12">
-                                    <TextBlock Text="Planning stays unavailable until a production release key, publisher pin, and authenticated descriptor source are configured." Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                                    <TextBlock Text="Automatic updates are not configured for this build." Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
                                 </Border>
-                                <Button Grid.Column="1" Margin="12,0,0,0" Style="{StaticResource ActionButton}" Content="Plan update" IsEnabled="False" ToolTip="Unavailable until production signing identities and an authenticated release source are configured." />
+                                <Button Grid.Column="1" Margin="12,0,0,0" Style="{StaticResource ActionButton}" Content="Plan update" IsEnabled="False" ToolTip="Available after a signed release channel is configured." />
                             </Grid>
                         </Grid>
 
@@ -715,15 +715,15 @@
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                 <StackPanel>
-                                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Authenticated planning journal" />
-                                    <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Bounded phases and sanitized detail; URLs and local paths are hidden." />
+                                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Update history" />
+                                    <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="URLs and local file paths are not saved." />
                                 </StackPanel>
                                 <TextBlock x:Name="UpdateJournalCount" Grid.Column="1" Text="0 entries" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
                             </Grid>
                             <DataGrid x:Name="UpdateJournalGrid"
                                       Grid.Row="2"
                                       SelectionMode="Single"
-                                      AutomationProperties.Name="Authenticated update planning journal">
+                                      AutomationProperties.Name="Update history">
                                 <DataGrid.Columns>
                                     <DataGridTextColumn Header="When" Binding="{Binding When}" Width="135" />
                                     <DataGridTextColumn Header="Phase" Binding="{Binding Phase}" Width="135" />
@@ -741,16 +741,16 @@
                             <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Recovery review" />
                             <StackPanel Grid.Row="2">
                                 <TextBlock x:Name="UpdateRecoveryTitle" Text="No interrupted attempt" Foreground="{DynamicResource SignalBrush}" FontWeight="SemiBold" />
-                                <TextBlock x:Name="UpdateRecoveryDetail" Margin="0,5,0,0" Text="No private staging token requires review." Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
+                            <TextBlock x:Name="UpdateRecoveryDetail" Margin="0,5,0,0" Text="No unfinished update needs attention." Style="{StaticResource MutedTextStyle}" TextWrapping="Wrap" />
                             </StackPanel>
                             <Border Grid.Row="4" Background="{DynamicResource SignalSurfaceBrush}" BorderBrush="{DynamicResource SignalBorderBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusSm}" Padding="12">
                                 <Grid>
                                     <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                                     <StackPanel>
-                                        <TextBlock FontWeight="SemiBold" Text="Non-installing boundary" />
-                                        <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedTextStyle}" Text="Signed metadata → pinned acquisition → private staging → exact confirmation." />
+                                        <TextBlock FontWeight="SemiBold" Text="Your confirmation is required" />
+                                        <TextBlock Margin="0,4,0,0" Style="{StaticResource MutedTextStyle}" Text="Soltex verifies an update before presenting it." />
                                     </StackPanel>
-                                    <TextBlock Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource SignalBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" Text="NO INSTALLER · NO ELEVATION · NO SERVICE" />
+                                    <TextBlock Grid.Column="1" Margin="18,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="{StaticResource FontCaption}" Text="Preview only" />
                                 </Grid>
                             </Border>
                         </Grid>
@@ -766,10 +766,10 @@
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <StackPanel>
                             <TextBlock Style="{StaticResource PageTitleStyle}" Text="Capture" />
-                            <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Consent-first local capture concept; no recorder is installed." />
+                            <TextBlock Margin="0,3,0,0" Style="{StaticResource MutedTextStyle}" Text="Local screenshots and recordings." />
                         </StackPanel>
                         <Border Grid.Column="1" Style="{StaticResource StatusPillStyle}" VerticalAlignment="Center">
-                            <TextBlock Text="PREVIEW" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                            <TextBlock Text="UNAVAILABLE" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Border>
                     </Grid>
                     <Border Margin="0,18,0,0"
@@ -777,21 +777,16 @@
                             HorizontalAlignment="Left"
                             Style="{StaticResource HeroCardStyle}">
                         <StackPanel>
-                            <TextBlock Text="Capture off" Foreground="{DynamicResource WarningBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
+                            <TextBlock Text="Capture unavailable" Foreground="{DynamicResource WarningBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                             <TextBlock Margin="0,6,0,0"
-                                       Text="Capture is not installed"
+                                       Text="Recording is not available in this build"
                                        FontFamily="{StaticResource DisplayFont}"
                                        FontSize="{StaticResource FontDisplaySm}" />
                             <TextBlock Margin="0,7,0,0"
                                        MaxWidth="520"
-                                       Text="A future Windows Graphics Capture implementation must be opt-in, visibly active, locally stored, and performance-bounded."
+                                       Text="When enabled, Soltex will always show when capture is active and store clips locally."
                                        TextWrapping="Wrap"
                                        Foreground="{DynamicResource MutedBrush}" />
-                            <TextBlock Margin="0,12,0,0"
-                                       Text="No recorder · no overlay · no game injection"
-                                       Foreground="{DynamicResource QuietTextBrush}"
-                                       FontFamily="{StaticResource MonoFont}"
-                                       FontSize="10" />
                         </StackPanel>
                     </Border>
                 </StackPanel>

@@ -21,11 +21,10 @@ public partial class DevicesView : UserControl
         ProcessArchitectureText.Text = observation.ProcessArchitecture;
         FrameworkText.Text = observation.Framework;
         ObservationStateText.Text = observation.State == LocalDeviceObservationState.Current
-            ? "CURRENT LOCAL OBSERVATION"
-            : "PARTIAL LOCAL OBSERVATION";
+            ? "CURRENT"
+            : "PARTIAL";
         DeviceProvenanceText.Text =
-            $"{observation.Provenance} · captured {observation.CapturedAtUtc.ToLocalTime():G} · " +
-            "enrollment NotEnrolled" +
+            $"Updated {observation.CapturedAtUtc.ToLocalTime():t} · Not connected" +
             (observation.Limitations.Count == 0 ? string.Empty : " · " + string.Join(" · ", observation.Limitations));
     }
 
