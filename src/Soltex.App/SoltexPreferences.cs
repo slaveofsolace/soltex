@@ -42,9 +42,12 @@ internal sealed record SoltexPreferences(
     string PreferredPlaybackEndpointKey,
     string PreferredRecordingEndpointKey,
     string LastWorkspace,
-    AppearancePreference AppearancePreference = global::Soltex.App.AppearancePreference.System)
+    AppearancePreference AppearancePreference = global::Soltex.App.AppearancePreference.System,
+    ThemeAccent ThemeAccent = global::Soltex.App.ThemeAccent.SoltexGlacier,
+    InterfaceDensity InterfaceDensity = global::Soltex.App.InterfaceDensity.Comfortable,
+    OnboardingState OnboardingState = default)
 {
-    internal const int CurrentSchemaVersion = 4;
+    internal const int CurrentSchemaVersion = 5;
 
     internal static SoltexPreferences Default { get; } =
         new(
@@ -56,7 +59,21 @@ internal sealed record SoltexPreferences(
             string.Empty,
             string.Empty,
             "home",
-            global::Soltex.App.AppearancePreference.System);
+            global::Soltex.App.AppearancePreference.System,
+            global::Soltex.App.ThemeAccent.SoltexGlacier,
+            global::Soltex.App.InterfaceDensity.Comfortable,
+            global::Soltex.App.OnboardingState.Default);
+
+    internal ThemeProfile ThemeProfile =>
+        new(
+            AppearancePreference switch
+            {
+                global::Soltex.App.AppearancePreference.Light => ThemeMode.Light,
+                global::Soltex.App.AppearancePreference.Dark => ThemeMode.Dark,
+                _ => ThemeMode.System
+            },
+            ThemeAccent,
+            InterfaceDensity);
 
     internal int TelemetryIntervalMilliseconds => TelemetryCadence switch
     {
@@ -81,7 +98,16 @@ internal sealed record SoltexPreferences(
             NormalizeWorkspace(LastWorkspace),
             Enum.IsDefined(AppearancePreference)
                 ? AppearancePreference
-                : global::Soltex.App.AppearancePreference.System);
+                : global::Soltex.App.AppearancePreference.System,
+            Enum.IsDefined(ThemeAccent)
+                ? ThemeAccent
+                : global::Soltex.App.ThemeAccent.SoltexGlacier,
+            Enum.IsDefined(InterfaceDensity)
+                ? InterfaceDensity
+                : global::Soltex.App.InterfaceDensity.Comfortable,
+            OnboardingState == default
+                ? global::Soltex.App.OnboardingState.Default
+                : OnboardingState.Normalize());
 
     internal static string NormalizeEndpointPreferenceKey(string? value)
     {
@@ -167,7 +193,9 @@ internal sealed class PreferencesStore
 
             PreferencesDocument? document =
                 JsonSerializer.Deserialize<PreferencesDocument>(json, SerializerOptions);
-            if (document is null || document.SchemaVersion is not (1 or 2 or 3 or SoltexPreferences.CurrentSchemaVersion))
+            if (document is null ||
+                document.SchemaVersion < 1 ||
+                document.SchemaVersion > SoltexPreferences.CurrentSchemaVersion)
             {
                 return Recovered("The saved preferences use an unsupported schema.");
             }
@@ -205,6 +233,45 @@ internal sealed class PreferencesStore
                     ignoreCase: true,
                     out appearance) &&
                  Enum.IsDefined(appearance));
+            bool accentMissing = string.IsNullOrWhiteSpace(document.ThemeAccent);
+            ThemeAccent themeAccent = global::Soltex.App.ThemeAccent.SoltexGlacier;
+            bool validAccent =
+                accentMissing ||
+                (Enum.TryParse(
+                    document.ThemeAccent,
+                    ignoreCase: true,
+                    out themeAccent) &&
+                 Enum.IsDefined(themeAccent));
+            bool densityMissing = string.IsNullOrWhiteSpace(document.InterfaceDensity);
+            InterfaceDensity interfaceDensity = global::Soltex.App.InterfaceDensity.Comfortable;
+            bool validDensity =
+                densityMissing ||
+                (Enum.TryParse(
+                    document.InterfaceDensity,
+                    ignoreCase: true,
+                    out interfaceDensity) &&
+                 Enum.IsDefined(interfaceDensity));
+            bool onboardingMissing =
+                document.OnboardingContractVersion is null ||
+                document.OnboardingCompletedAreas is null ||
+                document.OnboardingCompleted is null;
+            OnboardingArea completedAreas = document.OnboardingCompletedAreas is int areasValue
+                ? (OnboardingArea)areasValue
+                : OnboardingArea.None;
+            bool validOnboarding =
+                onboardingMissing ||
+                (document.OnboardingContractVersion == OnboardingState.CurrentContractVersion &&
+                 (completedAreas & ~OnboardingArea.All) == 0 &&
+                 (document.OnboardingCompleted != true ||
+                  (completedAreas == OnboardingArea.All &&
+                   document.OnboardingCompletedAtUtc is not null)));
+            OnboardingState onboarding = validOnboarding && !onboardingMissing
+                ? new OnboardingState(
+                    OnboardingState.CurrentContractVersion,
+                    completedAreas,
+                    document.OnboardingCompleted!.Value,
+                    document.OnboardingCompletedAtUtc).Normalize()
+                : OnboardingState.Default;
             string workspace = SoltexPreferences.NormalizeWorkspace(document.LastWorkspace);
             string preferredPlayback =
                 SoltexPreferences.NormalizeEndpointPreferenceKey(document.PreferredPlaybackEndpointKey);
@@ -215,6 +282,9 @@ internal sealed class PreferencesStore
                 (!retentionMissing && !validRetention) ||
                 (!closeBehaviorMissing && !validCloseBehavior) ||
                 (!appearanceMissing && !validAppearance) ||
+                (!accentMissing && !validAccent) ||
+                (!densityMissing && !validDensity) ||
+                (!onboardingMissing && !validOnboarding) ||
                 (!string.IsNullOrWhiteSpace(document.PreferredPlaybackEndpointKey) &&
                  !string.Equals(
                      preferredPlayback,
@@ -244,18 +314,28 @@ internal sealed class PreferencesStore
                 workspace,
                 validAppearance && !appearanceMissing
                     ? appearance
-                    : global::Soltex.App.AppearancePreference.System);
+                    : global::Soltex.App.AppearancePreference.System,
+                validAccent && !accentMissing
+                    ? themeAccent
+                    : global::Soltex.App.ThemeAccent.SoltexGlacier,
+                validDensity && !densityMissing
+                    ? interfaceDensity
+                    : global::Soltex.App.InterfaceDensity.Comfortable,
+                onboarding);
             bool migrated =
                 document.SchemaVersion < SoltexPreferences.CurrentSchemaVersion ||
                 closeBehaviorMissing ||
-                appearanceMissing;
+                appearanceMissing ||
+                accentMissing ||
+                densityMissing ||
+                onboardingMissing;
             return new PreferencesLoadResult(
                 preferences,
                 normalized,
                 normalized
                     ? "Unsupported preference values were reset to safe defaults."
                     : migrated
-                        ? "Preferences loaded; new appearance, lifecycle, and audio-device preferences remain at safe defaults."
+                        ? "Preferences loaded; new experience preferences remain at safe defaults."
                         : "Preferences loaded from this Windows account.");
         }
         catch (Exception exception) when (IsExpectedReadFailure(exception))
@@ -278,7 +358,13 @@ internal sealed class PreferencesStore
             normalized.PreferredPlaybackEndpointKey,
             normalized.PreferredRecordingEndpointKey,
             normalized.LastWorkspace,
-            normalized.AppearancePreference.ToString());
+            normalized.AppearancePreference.ToString(),
+            normalized.ThemeAccent.ToString(),
+            normalized.InterfaceDensity.ToString(),
+            normalized.OnboardingState.ContractVersion,
+            (int)normalized.OnboardingState.CompletedAreas,
+            normalized.OnboardingState.IsCompleted,
+            normalized.OnboardingState.CompletedAtUtc);
         string json = JsonSerializer.Serialize(document, SerializerOptions);
         if (Encoding.UTF8.GetByteCount(json) > MaximumPreferenceBytes)
         {
@@ -323,5 +409,11 @@ internal sealed class PreferencesStore
         string? PreferredPlaybackEndpointKey,
         string? PreferredRecordingEndpointKey,
         string LastWorkspace,
-        string? AppearancePreference);
+        string? AppearancePreference,
+        string? ThemeAccent = null,
+        string? InterfaceDensity = null,
+        int? OnboardingContractVersion = null,
+        int? OnboardingCompletedAreas = null,
+        bool? OnboardingCompleted = null,
+        DateTimeOffset? OnboardingCompletedAtUtc = null);
 }

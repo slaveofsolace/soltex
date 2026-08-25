@@ -109,6 +109,18 @@ public partial class SettingsView : UserControl
             AppearancePreference = AppearancePreference.Light
         });
 
+    private void GlacierAccent_Click(object sender, RoutedEventArgs e) =>
+        Commit(_preferences with { ThemeAccent = ThemeAccent.SoltexGlacier });
+
+    private void WindowsAccent_Click(object sender, RoutedEventArgs e) =>
+        Commit(_preferences with { ThemeAccent = ThemeAccent.Windows });
+
+    private void ComfortableDensity_Click(object sender, RoutedEventArgs e) =>
+        Commit(_preferences with { InterfaceDensity = InterfaceDensity.Comfortable });
+
+    private void CompactDensity_Click(object sender, RoutedEventArgs e) =>
+        Commit(_preferences with { InterfaceDensity = InterfaceDensity.Compact });
+
     private void ExitOnClose_Click(object sender, RoutedEventArgs e) =>
         Commit(_preferences with
         {
@@ -191,6 +203,18 @@ public partial class SettingsView : UserControl
         SetSelected(
             LightAppearanceButton,
             _preferences.AppearancePreference == AppearancePreference.Light);
+        SetSelected(
+            GlacierAccentButton,
+            _preferences.ThemeAccent == ThemeAccent.SoltexGlacier);
+        SetSelected(
+            WindowsAccentButton,
+            _preferences.ThemeAccent == ThemeAccent.Windows);
+        SetSelected(
+            ComfortableDensityButton,
+            _preferences.InterfaceDensity == InterfaceDensity.Comfortable);
+        SetSelected(
+            CompactDensityButton,
+            _preferences.InterfaceDensity == InterfaceDensity.Compact);
         RenderAppearanceStatus();
         SetSelected(
             ExitOnCloseButton,

@@ -1,5 +1,19 @@
 # Implementation status
 
+## Native Instrument V1 finalization (in progress)
+
+The finalization branch now has public `ThemeProfile`, `FeatureCapability`, and
+versioned `OnboardingState` contracts. Preference schema 5 preserves the prior
+appearance and audio state while adding a Windows-or-Glacier accent, Compact or
+Comfortable density, and fail-closed first-run progress. Settings controls execute
+immediately through the same application-level theme boundary; high contrast
+continues to override saved colour choices.
+
+Current evidence for this slice: 51/51 focused application tests, zero-warning
+Release build, design-token and identity gates, plus a focused 1280x820 native WPF
+Settings render. This is not yet the native-shell, Mica, Capture, Audio DSP,
+packaging, accessibility, physical-device, or owner-acceptance gate.
+
 Snapshot: 2026-08-12
 Product: **Soltex**  
 Repository: `slaveofsolace/soltex`  

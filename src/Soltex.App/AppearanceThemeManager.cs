@@ -119,6 +119,42 @@ internal static class AppearanceThemeManager
         return resolved;
     }
 
+    internal static ResolvedAppearance ApplyProfile(
+        ResourceDictionary resources,
+        ThemeProfile profile,
+        Color? windowsAccent = null)
+    {
+        ArgumentNullException.ThrowIfNull(resources);
+        ThemeProfile normalized = profile.Normalize();
+        AppearancePreference preference = normalized.Mode switch
+        {
+            ThemeMode.Light => AppearancePreference.Light,
+            ThemeMode.Dark => AppearancePreference.Dark,
+            _ => AppearancePreference.System
+        };
+        ResolvedAppearance resolved = Resolve(
+            preference,
+            SystemParameters.HighContrast,
+            ReadWindowsAppsUseLightTheme());
+        ApplyProfileResolved(resources, normalized, resolved, windowsAccent);
+        return resolved;
+    }
+
+    internal static void ApplyProfileResolved(
+        ResourceDictionary resources,
+        ThemeProfile profile,
+        ResolvedAppearance resolved,
+        Color? windowsAccent = null)
+    {
+        ArgumentNullException.ThrowIfNull(resources);
+        ThemeProfile normalized = profile.Normalize();
+        ApplyResolved(resources, resolved);
+        ApplyAccent(resources, resolved, normalized.Accent, windowsAccent);
+        ApplyDensity(resources, normalized.Density);
+        resources["ResolvedThemeAccent"] = normalized.Accent.ToString();
+        resources["ResolvedInterfaceDensity"] = normalized.Density.ToString();
+    }
+
     internal static void ApplyResolved(
         ResourceDictionary resources,
         ResolvedAppearance appearance)
@@ -166,6 +202,120 @@ internal static class AppearanceThemeManager
         {
             return false;
         }
+    }
+
+    private static void ApplyAccent(
+        ResourceDictionary resources,
+        ResolvedAppearance appearance,
+        ThemeAccent accentPreference,
+        Color? windowsAccent)
+    {
+        if (appearance == ResolvedAppearance.HighContrast ||
+            accentPreference != ThemeAccent.Windows)
+        {
+            return;
+        }
+
+        Color canvas = ((SolidColorBrush)resources["CanvasBrush"]).Color;
+        Color accent = windowsAccent ?? SystemParameters.WindowGlassColor;
+        accent = Color.FromRgb(accent.R, accent.G, accent.B);
+        accent = EnsureContrast(accent, canvas, 4.5);
+        Color toward = RelativeLuminance(canvas) < 0.5 ? Colors.White : Colors.Black;
+        Color focus = EnsureContrast(Mix(accent, toward, 0.28), canvas, 4.5);
+        Color dim = Mix(accent, canvas, 0.34);
+        Color quiet = Mix(canvas, accent, 0.14);
+        Color onAccent = ContrastRatio(Colors.Black, accent) >=
+                         ContrastRatio(Colors.White, accent)
+            ? Colors.Black
+            : Colors.White;
+
+        PublishBrush(resources, "AccentBrush", accent);
+        PublishBrush(resources, "AccentFocusBrush", focus);
+        PublishBrush(resources, "AccentDimBrush", dim);
+        PublishBrush(resources, "AccentQuietBrush", quiet);
+        PublishBrush(resources, "OnAccentBrush", onAccent);
+        PublishBrush(resources, "SelectedNavBrush", quiet);
+        PublishBrush(resources, "MeterFillBrush", accent);
+        PublishBrush(resources, "AccentAreaBrush", Color.FromArgb(36, accent.R, accent.G, accent.B));
+        PublishBrush(resources, "SelectionBrush", Color.FromArgb(96, accent.R, accent.G, accent.B));
+    }
+
+    private static void ApplyDensity(
+        ResourceDictionary resources,
+        InterfaceDensity density)
+    {
+        bool compact = density == InterfaceDensity.Compact;
+        resources["PadButtonActive"] = compact
+            ? new Thickness(10, 6, 10, 6)
+            : new Thickness(12, 8, 12, 8);
+        resources["PadNavActive"] = compact
+            ? new Thickness(10, 6, 10, 6)
+            : new Thickness(11, 9, 11, 9);
+        resources["PadTabActive"] = compact
+            ? new Thickness(9, 6, 9, 6)
+            : new Thickness(10, 8, 10, 8);
+        resources["PadFieldActive"] = compact
+            ? new Thickness(9, 6, 9, 6)
+            : new Thickness(10, 8, 10, 8);
+        resources["PadComboActive"] = compact
+            ? new Thickness(9, 6, 9, 6)
+            : new Thickness(10, 7, 10, 7);
+    }
+
+    private static void PublishBrush(
+        ResourceDictionary resources,
+        string key,
+        Color color) => resources[key] = new SolidColorBrush(color);
+
+    private static Color EnsureContrast(Color foreground, Color background, double minimum)
+    {
+        if (ContrastRatio(foreground, background) >= minimum)
+        {
+            return foreground;
+        }
+
+        Color target = RelativeLuminance(background) < 0.5 ? Colors.White : Colors.Black;
+        for (int step = 1; step <= 10; step++)
+        {
+            Color candidate = Mix(foreground, target, step / 10d);
+            if (ContrastRatio(candidate, background) >= minimum)
+            {
+                return candidate;
+            }
+        }
+
+        return target;
+    }
+
+    private static Color Mix(Color first, Color second, double secondWeight)
+    {
+        double weight = Math.Clamp(secondWeight, 0d, 1d);
+        return Color.FromRgb(
+            (byte)Math.Round((first.R * (1d - weight)) + (second.R * weight)),
+            (byte)Math.Round((first.G * (1d - weight)) + (second.G * weight)),
+            (byte)Math.Round((first.B * (1d - weight)) + (second.B * weight)));
+    }
+
+    private static double ContrastRatio(Color first, Color second)
+    {
+        double firstLuminance = RelativeLuminance(first);
+        double secondLuminance = RelativeLuminance(second);
+        double lighter = Math.Max(firstLuminance, secondLuminance);
+        double darker = Math.Min(firstLuminance, secondLuminance);
+        return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    private static double RelativeLuminance(Color color) =>
+        (0.2126 * Linearize(color.R)) +
+        (0.7152 * Linearize(color.G)) +
+        (0.0722 * Linearize(color.B));
+
+    private static double Linearize(byte channel)
+    {
+        double value = channel / 255d;
+        return value <= 0.04045
+            ? value / 12.92
+            : Math.Pow((value + 0.055) / 1.055, 2.4);
     }
 
     private static Color ResolveHighContrastColor(HighContrastRole role) =>

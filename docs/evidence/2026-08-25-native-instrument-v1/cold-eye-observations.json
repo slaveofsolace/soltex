@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "session": {
+    "buildId": "overall-matrix 0ad57e2646f94d39c79d280a7053c88a1c004acf plus Whisper package-state capture from Stage 6 history; exact a711d767 matrix in progress",
+    "mode": "black-box",
+    "platform": "Windows 11 native WPF software render",
+    "input": "static rendered evidence; no interactive input",
+    "resolution": "1280x820",
+    "observedAt": "2026-08-25T16:00:00Z",
+    "evidenceRoot": "C:\\Users\\suhai\\Documents\\soltex-whisper-scaffold-v1\\artifacts"
+  },
+  "observations": [
+    {
+      "id": "OBS-UI-001",
+      "component": "cross-surface hierarchy",
+      "label": "OBSERVED",
+      "title": "Uniform bordered panels flatten every workspace into the same dashboard",
+      "context": "Overview, Performance, Security, and Whisper at 1280x820 dark theme",
+      "action": "Scan each surface for the primary task and next action",
+      "expectation": "One dominant instrument or working surface should be obvious before supporting context",
+      "actual": "Near-identical dark rounded rectangles, borders, padding, and headings give primary, secondary, status, and empty content similar weight",
+      "playerConsequence": "The app reads as a generated admin dashboard instead of a mature native system instrument, and task priority takes longer to parse",
+      "reproduction": [
+        "Open the home, monitoring, security, and Whisper baseline captures",
+        "Compare the first focal point and relative weight of every panel"
+      ],
+      "frequency": 5,
+      "severity": 4,
+      "reach": 5,
+      "trust": 4,
+      "friction": 4,
+      "blocker": false,
+      "confidence": "HIGH",
+      "evidence": [
+        "C:\\Users\\suhai\\Documents\\soltex-whisper-scaffold-v1\\artifacts\\ci-31920242709\\soltex-windows-evidence-31920242709-1\\visual\\home-current-source.png",
+        "C:\\Users\\suhai\\Documents\\soltex-whisper-scaffold-v1\\artifacts\\ci-31920242709\\soltex-windows-evidence-31920242709-1\\visual\\monitoring-current-source.png",
+        "C:\\Users\\suhai\\Documents\\soltex-whisper-scaffold-v1\\artifacts\\ci-31920242709\\soltex-windows-evidence-31920242709-1\\visual\\security-current-source.png"
+      ],
+      "hypotheses": [
+        "The shared container style is applied to nearly every group regardless of interaction role"
+      ],
+      "nextDiscriminatingTest": "Inspect the exact-head render matrix and then map shared container styles to semantic roles in the design system",
+      "recommendedOutcome": "Use unframed workspaces with one dominant instrument and reserve bordered containers for repeated actionable entities or true overlays",
+      "status": "OPEN"
+    },
+    {
+      "id": "OBS-UI-002",
+      "component": "navigation and global status",
+      "label": "OBSERVED",
+      "title": "The rail spends more attention on persistent chrome than on orientation",
+      "context": "All baseline surfaces",
+      "action": "Move from current module toward another tool and assess global protection state",
+      "expectation": "Navigation, command search, profile, and global status should remain compact and easy to locate",
+      "actual": "A wide rail contains large unused vertical areas while a persistent amber protection card competes with the active page and truncates its own message",
+      "playerConsequence": "The shell feels unfinished and alert-heavy; a global issue can distract even when unrelated to the current task",
+      "reproduction": [
+        "Open any baseline capture",
+        "Compare the active navigation row, empty rail space, and bottom protection card"
+      ],
+      "frequency": 5,
+      "severity": 3,
+      "reach": 5,
+      "trust": 4,
+      "friction": 3,
+      "blocker": false,
+      "confidence": "HIGH",
+      "evidence": [
+        "C:\\Users\\suhai\\Documents\\soltex-whisper-scaffold-v1\\artifacts\\ci-31920242709\\soltex-windows-evidence-31920242709-1\\visual\\home-current-source.png"
+      ],
+      "hypotheses": [
+        "The shell reserves a fixed wide rail and places provider health in a generic footer card rather than a compact status center"
+      ],
+      "nextDiscriminatingTest": "Inspect shell layout constraints and the global status presenter after exact-head capture",
+      "recommendedOutcome": "Use a responsive native navigation rail and compact status center; promote only prioritized current risks into Overview",
+      "status": "OPEN"
+    },
+    {
+      "id": "OBS-UI-003",
+      "component": "typography and information density",
+      "label": "OBSERVED",
+      "title": "Small low-contrast metadata makes precision look like noise",
+      "context": "Performance charts, Overview footers, Applications metadata, and status labels",
+      "action": "Read update time, source method, sample counts, current state, and secondary descriptions",
+      "expectation": "Technical metadata should be compact but comfortably scannable at the target viewport",
+      "actual": "Several secondary labels and monospaced readouts are tiny and low contrast, while large empty regions remain elsewhere",
+      "playerConsequence": "Important provenance and state details become harder to read without earning meaningful density",
+      "reproduction": [
+        "Open the Overview and Performance captures at 100 percent",
+        "Read chart footers and rail/footer status without zooming"
+      ],
+      "frequency": 5,
+      "severity": 3,
+      "reach": 5,
+      "trust": 3,
+      "friction": 4,
+      "blocker": false,
+      "confidence": "HIGH",
+      "evidence": [
+        "C:\\Users\\suhai\\Documents\\soltex-whisper-scaffold-v1\\artifacts\\ci-31920242709\\soltex-windows-evidence-31920242709-1\\visual\\home-current-source.png",
+        "C:\\Users\\suhai\\Documents\\soltex-whisper-scaffold-v1\\artifacts\\ci-31920242709\\soltex-windows-evidence-31920242709-1\\visual\\monitoring-current-source.png"
+      ],
+      "hypotheses": [
+        "The type scale reduces metadata size rather than using hierarchy, grouping, and progressive disclosure"
+      ],
+      "nextDiscriminatingTest": "Map typography tokens and measure contrast and effective size across 100 to 200 percent scaling",
+      "recommendedOutcome": "Use Segoe UI Variable roles with readable compact metrics, progressive diagnostics, and stronger spacing hierarchy",
+      "status": "OPEN"
+    },
+    {
+      "id": "OBS-UI-004",
+      "component": "Whisper readiness",
+      "label": "OBSERVED",
+      "title": "Whisper repeats the same blocked state across banner, setup panels, rows, and badges",
+      "context": "Whisper setup and local-model capture",
+      "action": "Determine why dictation is unavailable and perform the next resolving action",
+      "expectation": "The page should present one guided next step with supporting diagnostics on demand",
+      "actual": "The not-ready banner, model panel, six readiness rows, yellow setup labels, and scaffold labeling repeat related state at equal visual weight",
+      "playerConsequence": "A capable fail-closed workflow feels like a diagnostic scaffold and asks the user to re-parse the same problem several times",
+      "reproduction": [
+        "Open Whisper setup with the local model not installed",
+        "Count separate surfaces that restate not-ready or setup state"
+      ],
+      "frequency": 4,
+      "severity": 3,
+      "reach": 3,
+      "trust": 4,
+      "friction": 5,
+      "blocker": false,
+      "confidence": "HIGH",
+      "evidence": [
+        "C:\\Users\\suhai\\Documents\\soltex-whisper-scaffold-v1\\artifacts\\hosted\\32356853289\\validation\\package-whisper.png"
+      ],
+      "hypotheses": [
+        "Readiness facts are rendered independently instead of composed into a guided diagnostics state"
+      ],
+      "nextDiscriminatingTest": "Inspect the readiness presenter and exact-head Whisper checks render",
+      "recommendedOutcome": "Lead with one actionable readiness path, keep the full checklist in a deliberate diagnostics view, and remove scaffold language only after live proof",
+      "status": "OPEN"
+    },
+    {
+      "id": "OBS-UI-005",
+      "component": "Applications workspace",
+      "label": "OBSERVED",
+      "title": "The Applications data grid is the strongest mature-system pattern",
+      "context": "Applications installed-software view",
+      "action": "Search, scan, and compare installed software",
+      "expectation": "Dense system inventory should privilege rows, columns, search, and direct state over decoration",
+      "actual": "The view uses most of the workspace for a real searchable table with clear columns and minimal ornament",
+      "playerConsequence": "The surface feels closer to a native administrative instrument and provides a useful pattern for other data-heavy modules",
+      "reproduction": [
+        "Open the Applications capture",
+        "Compare useful content density with Overview and Security"
+      ],
+      "frequency": 4,
+      "severity": 1,
+      "reach": 3,
+      "trust": 1,
+      "friction": 1,
+      "blocker": false,
+      "confidence": "HIGH",
+      "evidence": [
+        "C:\\Users\\suhai\\Documents\\soltex-whisper-scaffold-v1\\artifacts\\ci-31920242709\\soltex-windows-evidence-31920242709-1\\visual\\applications-current-source.png"
+      ],
+      "hypotheses": [
+        "The view succeeds because it lets the real system inventory determine the composition"
+      ],
+      "nextDiscriminatingTest": "Verify keyboard, scaling, row actions, loading, empty, and error states in the exact-head runtime",
+      "recommendedOutcome": "Keep the data-first structure and use it as the density benchmark for process, clips, activity, and device workspaces",
+      "status": "OPEN"
+    },
+    {
+      "id": "OBS-UI-006",
+      "component": "native shell integration",
+      "label": "UNKNOWN",
+      "title": "Static client-area renders cannot prove Mica, native caption buttons, or snap-layout behavior",
+      "context": "Software-rendered 1280x820 evidence without visible owner-host window chrome",
+      "action": "Assess whether the shell behaves like a Windows 11 application",
+      "expectation": "Mica, native title bar, caption buttons, snap layouts, solid fallback, and high contrast should be directly observable",
+      "actual": "The evidence captures client content only and cannot establish shell-level integration",
+      "playerConsequence": "A visual matrix could look coherent while the actual window still feels custom, flat, or incompatible with native shell behavior",
+      "reproduction": [
+        "Inspect the current static render matrix",
+        "Observe that native caption and snap behavior are outside the artifact boundary"
+      ],
+      "frequency": 5,
+      "severity": 4,
+      "reach": 5,
+      "trust": 5,
+      "friction": 3,
+      "blocker": false,
+      "confidence": "LOW",
+      "evidence": [
+        "C:\\Users\\suhai\\Documents\\soltex-whisper-scaffold-v1\\artifacts\\ci-31920242709\\soltex-windows-evidence-31920242709-1\\validation\\render-matrix.json"
+      ],
+      "hypotheses": [
+        "Shell integration is absent",
+        "Shell integration exists but is outside the software-render capture boundary"
+      ],
+      "nextDiscriminatingTest": "Launch the exact-head app on the owner host and capture full-window shell behavior, snap layouts, themes, and DPI",
+      "recommendedOutcome": "Keep this gate UNKNOWN until live native-window evidence exists",
+      "status": "OPEN"
+    }
+  ]
+}

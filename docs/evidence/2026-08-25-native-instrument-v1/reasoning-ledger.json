@@ -1,0 +1,496 @@
+{
+  "schema_version": "2.0.0",
+  "ledger_id": "soltex_native_instrument_v1",
+  "created_at": "2026-08-25T15:55:00Z",
+  "depth": "DEEP",
+  "iteration": 2,
+  "root": {
+    "kind": "DECISION",
+    "node_id": "root_native_instrument",
+    "statement": "Under the approved Windows 11 and .NET 10 constraints, evolve the authoritative Soltex Stage 6 source into Native Instrument V1 while preserving owner work, fail-closed security boundaries, truthful capability claims, rollback, and human-reserved acceptance.",
+    "source_state": "Whisper Stage 6 is clean and remotely preserved, while the broader Native Instrument shell, Capture, Audio, state, packaging, and final acceptance gates remain incomplete.",
+    "target_state": "A reviewable, validated Native Instrument V1 is ready for one batched owner acceptance and a separate final release decision.",
+    "conditions": [
+      "Use only the isolated finalization worktree for source mutation.",
+      "Keep public publication and subjective acceptance human-reserved."
+    ],
+    "boundary": "D:\\soltex-native-instrument-v1, its task branch and source PRs, approved local Windows runtime evidence, and non-published packaging artifacts.",
+    "objective_claim_id": "claim_objective",
+    "invariant_ids": [
+      "inv_owner_checkout",
+      "inv_whisper_evidence",
+      "inv_truthful_claims",
+      "inv_release_authority"
+    ],
+    "uncertainty_changes_decision": false
+  },
+  "project_model": {
+    "status": "PARTIAL",
+    "facets": {
+      "intent": {
+        "summary": "Deliver a coherent Windows-native system instrument rather than another scaffold or dashboard mockup.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_objective"],
+        "unknown_disposition": ""
+      },
+      "decision": {
+        "summary": "Recover from exact Stage 6 source, then land reviewable native-shell, workspace, state, shipping, and validation slices.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_source", "claim_capacity"],
+        "unknown_disposition": ""
+      },
+      "acceptance_contract": {
+        "summary": "Automated, runtime, visual, accessibility, security, recovery, packaging, physical-device, and human-acceptance gates remain distinct.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_stage6_pending", "claim_objective"],
+        "unknown_disposition": ""
+      },
+      "mechanism": {
+        "summary": "The current solution is a .NET 10 WPF shell with typed Monitoring, Audio, DeviceFabric, RemoteAssist, Update, Security, Benchmarks, and Whisper assemblies; incremental native Windows adapters and unframed workspaces can extend it without a shell rewrite.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_architecture"],
+        "unknown_disposition": ""
+      },
+      "current_state_history": {
+        "summary": "The clean finalization worktree is based on the exact remote and PR Stage 6 head; the owner checkout is separately dirty and protected.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_source", "claim_owner_dirty", "claim_capacity"],
+        "unknown_disposition": ""
+      },
+      "people_incentives": {
+        "summary": "The user owns product direction, physical-device evidence, subjective acceptance, and final publication; this task owns isolated implementation and review evidence.",
+        "knowledge": "KNOWN",
+        "load_bearing": true,
+        "claim_ids": ["claim_objective", "claim_stage6_pending"],
+        "unknown_disposition": ""
+      },
+      "lifecycle_recovery": {
+        "summary": "Remote Stage 6 refs and the isolated D: worktree provide source recovery; shipping migration and package rollback still require implementation and VM proof.",
+        "knowledge": "ASSUMED",
+        "load_bearing": true,
+        "claim_ids": ["claim_source", "claim_shipping_pending"],
+        "unknown_disposition": "Add and test transactional migrations, package repair, update rollback, and uninstall before shipping closure."
+      }
+    },
+    "invariants": [
+      {
+        "id": "inv_owner_checkout",
+        "statement": "The dirty owner checkout is never reset, cleaned, stashed, discarded, bulk overwritten, or repurposed.",
+        "owner": "User",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": ["evidence_recovery_snapshot"]
+      },
+      {
+        "id": "inv_whisper_evidence",
+        "statement": "Stage 6 evidence and its six unresolved physical checks remain preserved and are not upgraded without owner-controlled proof.",
+        "owner": "User and task implementation owner",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": ["evidence_stage6_contract"]
+      },
+      {
+        "id": "inv_truthful_claims",
+        "statement": "Unavailable, degraded, consent-required, and unsupported capabilities are represented honestly; automation never substitutes for physical or human evidence.",
+        "owner": "Task implementation owner",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": ["evidence_delegation"]
+      },
+      {
+        "id": "inv_release_authority",
+        "statement": "Store submission, beta publication, winget publication, machine-wide mutation, and subjective acceptance remain separate human-reserved actions.",
+        "owner": "User",
+        "status": "PRESERVED",
+        "hard_gate": true,
+        "evidence_ids": ["evidence_delegation"]
+      }
+    ],
+    "dependencies": [
+      {
+        "id": "dep_stage6_source",
+        "name": "Authoritative Whisper Stage 6 source",
+        "role": "Base history and preserved fail-closed dictation authority",
+        "claim_ids": ["claim_source", "claim_stage6_pending"]
+      },
+      {
+        "id": "dep_windows_runtime",
+        "name": "Windows 11, .NET 10 WPF, and documented Windows APIs",
+        "role": "Supported native runtime and capability boundary",
+        "claim_ids": ["claim_objective", "claim_architecture"]
+      }
+    ],
+    "stakeholders": [
+      {
+        "id": "stakeholder_owner",
+        "name": "Soltex owner",
+        "role": "Product, physical acceptance, risk, and release decision owner",
+        "claim_ids": ["claim_objective", "claim_stage6_pending"]
+      },
+      {
+        "id": "stakeholder_operator",
+        "name": "Soltex local operator",
+        "role": "Receives system actions, capture consent, privacy state, and rollback evidence",
+        "claim_ids": ["claim_objective"]
+      }
+    ]
+  },
+  "authority": {
+    "scope": "Reversible local implementation and validation, coherent commits, source PRs, and exact-SHA merges after green gates are authorized; public release actions are not.",
+    "decision_owner": "User",
+    "authorized_actions": [
+      "Inspect and change only the isolated finalization worktree.",
+      "Run bounded local builds, tests, runtime captures, security checks, and package generation.",
+      "Create coherent commits, push task branches, open source PRs, and merge only after exact-SHA gates pass."
+    ],
+    "forbidden_actions": [
+      "Mutate or discard the protected owner checkout.",
+      "Publish Store, beta, winget, or public release artifacts without a final action-time decision.",
+      "Disable or evade Windows security, overwrite Sonar configuration, or claim unsupported parity."
+    ],
+    "human_reserved_decisions": [
+      "Physical device and Whisper acceptance checks.",
+      "Subjective visual acceptance and residual-risk approval.",
+      "Public distribution and irreversible machine-wide actions."
+    ],
+    "external_state_allowed": true,
+    "hard_gates": [
+      {"id":"gate_authority","category":"AUTHORITY","status":"CLEAR","rationale":"The replacement goal explicitly authorizes isolated implementation and source delivery.","claim_ids":["claim_objective"]},
+      {"id":"gate_safety","category":"SAFETY","status":"CLEAR","rationale":"The current iteration is bounded source inspection in an isolated worktree.","claim_ids":["claim_source"]},
+      {"id":"gate_privacy","category":"PRIVACY_SECURITY_LEGAL","status":"CLEAR","rationale":"No external asset or sensitive runtime input is being acquired in this recovery iteration.","claim_ids":["claim_objective"]},
+      {"id":"gate_external","category":"IRREVERSIBLE_EXTERNAL_STATE","status":"CLEAR","rationale":"Public release actions remain forbidden and no irreversible external action is selected.","claim_ids":["claim_objective"]},
+      {"id":"gate_production","category":"DESTRUCTIVE_PRODUCTION","status":"CLEAR","rationale":"The isolated worktree action is reversible and non-production.","claim_ids":["claim_source"]},
+      {"id":"gate_human","category":"HUMAN_RESERVED","status":"CLEAR","rationale":"Physical and subjective acceptance stay open and are not crossed by source inspection.","claim_ids":["claim_stage6_pending"]},
+      {"id":"gate_rollback","category":"ROLLBACK_FAILURE","status":"CLEAR","rationale":"The authoritative remote Stage 6 branch and PR preserve the source baseline independently of the new worktree.","claim_ids":["claim_source"]}
+    ]
+  },
+  "companion_findings": {
+    "lead_skill": "HUMAN_CORTEX",
+    "applicable_domains": ["VISUAL", "UI", "AUDIO", "RUNTIME_EXPERIENCE", "ACCESSIBILITY_COMFORT"],
+    "observation_input": "RUNNABLE_BUILD",
+    "cold_eye_status": "COMPLETED",
+    "cold_eye_before_source_inspection": true,
+    "findings": [
+      {"id":"finding_ui_hierarchy","source_skill":"HUMAN_EYE","domain":"UI","label":"OBSERVED","verdict":"REVISE","statement":"Uniform bordered panels flatten primary and supporting content into a generic dashboard hierarchy.","evidence_ids":["evidence_cold_eye","evidence_exact_render"]},
+      {"id":"finding_ui_shell","source_skill":"HUMAN_EYE","domain":"RUNTIME_EXPERIENCE","label":"OBSERVED","verdict":"REVISE","statement":"The wide rail, persistent protection card, and repeated blocked-state narration consume attention without improving the current task.","evidence_ids":["evidence_cold_eye","evidence_exact_render"]},
+      {"id":"finding_ui_data","source_skill":"HUMAN_EYE","domain":"UI","label":"OBSERVED","verdict":"KEEP","statement":"The Applications table is the strongest mature system-instrument pattern and should guide dense process, clips, device, and activity surfaces.","evidence_ids":["evidence_cold_eye","evidence_exact_render"]},
+      {"id":"finding_native_unknown","source_skill":"HUMAN_EYE","domain":"RUNTIME_EXPERIENCE","label":"UNKNOWN","verdict":"UNKNOWN","statement":"Static software-rendered client captures cannot prove Mica, native caption buttons, snap layouts, live DPI, or screen-reader behavior.","evidence_ids":["evidence_exact_render"]}
+    ],
+    "completion_axes": {
+      "functional_implementation": {"status":"UNKNOWN","signal":"Existing typed workspaces are implemented, but Capture is preview-only and the Native Instrument shell, state, and shipping expansion is open.","evidence_ids":["evidence_release_build","evidence_exact_render"],"rationale":"Exact-head build and 29-state rendering establish the current baseline only, not V1 completion."},
+      "runtime_integration": {"status":"UNKNOWN","signal":"The exact source launches through the native WPF render harness; live shell, device, capture, audio-processing, and package behavior remain unproven.","evidence_ids":["evidence_exact_render"],"rationale":"Static software-rendered evidence is not live owner-host proof."},
+      "player_eye_presentation": {"status":"FAIL","signal":"Quiet Native Instrument direction selected after cold-eye scoring; current hierarchy remains dashboard-like.","evidence_ids":["evidence_cold_eye","evidence_exact_render"],"rationale":"The current evidence fails the replacement goal's visual maturity target."},
+      "evidence_regression_coverage": {"status":"UNKNOWN","signal":"Exact-head Release build is warning-free and 29 native WPF states were hashed; full unit, accessibility, performance, package, and device matrices remain open.","evidence_ids":["evidence_release_build","evidence_exact_render"],"rationale":"Baseline source and visual gates passed, not the replacement final matrix."},
+      "human_acceptance": {"status":"UNKNOWN","signal":"The owner has not accepted Native Instrument V1.","evidence_ids":[],"rationale":"Subjective acceptance is human-reserved."}
+    }
+  },
+  "claims": [
+    {
+      "id": "claim_objective",
+      "label": "OBSERVED",
+      "statement": "The approved objective is the complete Soltex Native Instrument V1 plan with explicit product, architecture, shipping, validation, and authority constraints.",
+      "evidence_ids": ["evidence_delegation"],
+      "contradiction_claim_ids": [],
+      "confidence": {"level":"HIGH","basis":"Direct current coordinator delegation."}
+    },
+    {
+      "id": "claim_source",
+      "label": "OBSERVED",
+      "statement": "The clean Whisper worktree, its remote branch, and PR #12 all resolve to a711d767699c6a5ddbeb289b196e4454452f66cc, and the isolated finalization worktree was created from that exact commit.",
+      "evidence_ids": ["evidence_recovery_snapshot", "evidence_worktree_add"],
+      "contradiction_claim_ids": [],
+      "confidence": {"level":"HIGH","basis":"Current direct Git commands and worktree verification."}
+    },
+    {
+      "id": "claim_owner_dirty",
+      "label": "OBSERVED",
+      "statement": "The owner checkout remains dirty at main@bf2662de80992cfed761625642f084d3caaa0f04 and is not the implementation checkout.",
+      "evidence_ids": ["evidence_recovery_snapshot"],
+      "contradiction_claim_ids": [],
+      "confidence": {"level":"HIGH","basis":"Current porcelain-v2 and worktree evidence."}
+    },
+    {
+      "id": "claim_capacity",
+      "label": "MEASURED",
+      "statement": "C: had approximately 1.17 GiB free and D: approximately 99.57 GiB free, making D: the safer bounded finalization location.",
+      "evidence_ids": ["evidence_storage_snapshot"],
+      "contradiction_claim_ids": [],
+      "confidence": {"level":"HIGH","basis":"Current filesystem statfs measurement."}
+    },
+    {
+      "id": "claim_stage6_pending",
+      "label": "OBSERVED",
+      "statement": "Six Whisper checks remain physical owner gates: shortcut latency, spoken capture/transcription/verified insertion, Escape cancellation, microphone reconnect, per-monitor DPI, and keyboard-only or screen-reader review.",
+      "evidence_ids": ["evidence_stage6_contract"],
+      "contradiction_claim_ids": [],
+      "confidence": {"level":"HIGH","basis":"Current inspected Stage 6 acceptance contract."}
+    },
+    {
+      "id": "claim_architecture",
+      "label": "OBSERVED",
+      "statement": "The current solution preserves typed .NET 10 WPF services and already has shared tokens, live appearance switching, command navigation, and independently rendered workspaces; the first coherent slice is public experience contracts plus transactional theme, density, accent, capability, and onboarding state before shell composition changes.",
+      "evidence_ids": ["evidence_release_build", "evidence_exact_render", "evidence_cold_eye"],
+      "contradiction_claim_ids": [],
+      "confidence": {"level":"HIGH","basis":"Current source inspection, exact-head build, and exact-head render evidence."}
+    },
+    {
+      "id": "claim_shipping_pending",
+      "label": "UNKNOWN",
+      "statement": "MSIX, App Installer, migration, repair, rollback, and uninstall readiness remain unverified for Native Instrument V1.",
+      "evidence_ids": [],
+      "contradiction_claim_ids": [],
+      "confidence": {"level":"LOW","basis":"The replacement shipping matrix has not run."}
+    },
+    {
+      "id": "claim_experience_slice",
+      "label": "MEASURED",
+      "statement": "The first Native Instrument slice adds normalized theme, capability, and onboarding contracts, schema-5 migration, live accent and density settings, and passes its focused tests, policy gates, Release build, and focused native render.",
+      "evidence_ids": ["evidence_experience_tests", "evidence_experience_build", "evidence_experience_render", "evidence_experience_policy"],
+      "contradiction_claim_ids": [],
+      "confidence": {"level":"HIGH","basis":"Current exact local test, build, policy, and render artifacts."}
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence_delegation",
+      "kind": "SOURCE",
+      "access": "INSPECTED_CURRENT",
+      "locator": "Current REPLACEMENT GOAL - SOLTEX NATIVE INSTRUMENT V1 coordinator delegation",
+      "captured_at": "2026-08-25T15:50:00Z",
+      "integrity": "Current task authority input",
+      "supports_claim_ids": ["claim_objective"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_recovery_snapshot",
+      "kind": "LOG",
+      "access": "GENERATED_CURRENT",
+      "locator": "C:\\Users\\suhai\\AppData\\Local\\Temp\\soltex-native-instrument-recovery\\recovery-snapshot-2026-08-25T15-52-47-050Z.json",
+      "captured_at": "2026-08-25T15:52:47Z",
+      "integrity": "Direct-executable Git, process, filesystem, and SHA-256 snapshot",
+      "supports_claim_ids": ["claim_source", "claim_owner_dirty"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_storage_snapshot",
+      "kind": "MEASUREMENT",
+      "access": "GENERATED_CURRENT",
+      "locator": "C:\\Users\\suhai\\AppData\\Local\\Temp\\soltex-native-instrument-recovery\\package-storage-snapshot-2026-08-25T15-53-19-758Z.json",
+      "captured_at": "2026-08-25T15:53:19Z",
+      "integrity": "Current statfs and tracked package-input snapshot",
+      "supports_claim_ids": ["claim_capacity"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_worktree_add",
+      "kind": "LOG",
+      "access": "GENERATED_CURRENT",
+      "locator": "C:\\Users\\suhai\\AppData\\Local\\Temp\\soltex-native-instrument-recovery\\worktree-add-2026-08-25T15-54-08-992Z.json",
+      "captured_at": "2026-08-25T15:54:09Z",
+      "integrity": "Exact PID and direct Git worktree result",
+      "supports_claim_ids": ["claim_source"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_stage6_contract",
+      "kind": "SOURCE",
+      "access": "INSPECTED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\docs\\evidence\\2026-08-20-whisper-stage6\\OWNER_ACCEPTANCE_CENTER.md",
+      "captured_at": "2026-08-25T15:52:47Z",
+      "integrity": "SHA-256 ea59b1c581d8bf416bcd9d24a2b9c53ce48869f3bcf4be7c8b1dd52df8df08e2",
+      "supports_claim_ids": ["claim_stage6_pending"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_release_build",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\recovery\\release-build-no-restore-serialized-2026-08-25T16-08-33-364Z.log",
+      "captured_at": "2026-08-25T16:08:54Z",
+      "integrity": "Private .NET 10 Release build, serialized, node reuse disabled, exit 0, zero warnings and zero errors",
+      "supports_claim_ids": ["claim_source", "claim_architecture"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_exact_render",
+      "kind": "ARTIFACT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\baseline-validation\\2026-08-25T16-09-25-310Z\\render-matrix.json",
+      "captured_at": "2026-08-25T16:16:48Z",
+      "integrity": "SHA-256 58ff1f90bac25dd7daaaa9a220b6a4a274ab93289d6ee4606436e67383bf2b0e; 29 hashed native WPF states at exact source and tested commit a711d767699c6a5ddbeb289b196e4454452f66cc",
+      "supports_claim_ids": ["claim_source", "claim_architecture"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_cold_eye",
+      "kind": "ARTIFACT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\docs\\evidence\\2026-08-25-native-instrument-v1\\COLD_EYE_PRIORITY_REPORT.md",
+      "captured_at": "2026-08-25T16:17:00Z",
+      "integrity": "Scored from bounded observation JSON before source-led design changes",
+      "supports_claim_ids": ["claim_architecture"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_experience_tests",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\experience-contracts\\app-tests-final-2026-08-25T16-39-46-289Z.log",
+      "captured_at": "2026-08-25T16:39:56Z",
+      "integrity": "SHA-256 e7b984dd184481fcf7a1beecd3d858c6099b3543b6d82850cfde8491b1254b3a; 51/51 passed",
+      "supports_claim_ids": ["claim_experience_slice"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_experience_build",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\experience-contracts\\release-build-final-2026-08-25T16-40-19-646Z.log",
+      "captured_at": "2026-08-25T16:40:24Z",
+      "integrity": "SHA-256 0df9d35e1f3976ce22186891513b3a73c8f3b82079d124a9c4b83bd981db2c24; zero warnings and zero errors",
+      "supports_claim_ids": ["claim_experience_slice"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_experience_render",
+      "kind": "ARTIFACT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\experience-contracts\\render-2026-08-25T16-36-22-507Z\\settings-current-source.png",
+      "captured_at": "2026-08-25T16:36:37Z",
+      "integrity": "SHA-256 d5dfde2d91bc601fe80a3e6f4c735fe804d26079348c6e3f3879922ff152d71e; 1280 by 820 native WPF render with no error sidecar",
+      "supports_claim_ids": ["claim_experience_slice"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_experience_policy",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\docs\\evidence\\2026-08-25-native-instrument-v1\\EXPERIENCE_CONTRACTS_SLICE.md",
+      "captured_at": "2026-08-25T16:41:00Z",
+      "integrity": "Design-token and identity gates passed; exact source artifact hashes recorded in the evidence summary",
+      "supports_claim_ids": ["claim_experience_slice"],
+      "contradicts_claim_ids": []
+    }
+  ],
+  "hypotheses": [],
+  "tests": [],
+  "trace": {
+    "bounds": {
+      "max_depth": 6,
+      "max_nodes": 80,
+      "stop_rule": "Expand only consequences that change implementation order, acceptance, invariants, rollback, monitoring, or a human-reserved decision."
+    },
+    "nodes": [
+      {
+        "id": "root_native_instrument",
+        "kind": "ROOT",
+        "statement": "Recover the exact source and establish the smallest coherent Native Instrument implementation slice.",
+        "claim_id": "claim_objective",
+        "depth": 0,
+        "terminal": false,
+        "closure_reason": "EXPANDED"
+      },
+      {
+        "id": "node_experience_migration_effects",
+        "kind": "CONSEQUENCE",
+        "statement": "The new experience profile changes persisted settings and live semantic resources while legacy users are repaired to safe appearance and onboarding defaults.",
+        "claim_id": "claim_experience_slice",
+        "depth": 1,
+        "terminal": true,
+        "closure_reason": "BOUNDED"
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_experience_migration_effects",
+        "relation": "FORWARD",
+        "source_node_id": "root_native_instrument",
+        "target_node_id": "node_experience_migration_effects",
+        "source_delta": "The application gains versioned theme, accent, density, capability, and onboarding state.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "Schema migration normalizes legacy or unknown values before transactional persistence, and the appearance manager republishes only semantic interaction and density resources.",
+        "conditions": [
+          "The application loads an existing or new Soltex preference document.",
+          "The live WPF resource dictionaries remain available to the appearance manager."
+        ],
+        "lag": "During preference load and immediately after an accepted appearance change.",
+        "target_delta": "Existing users receive bounded safe defaults, selected profiles persist, and status semantics remain unchanged while interaction styling updates live.",
+        "affected_refs": ["inv_truthful_claims", "dep_stage6_source", "dep_windows_runtime"],
+        "supporting_claim_ids": ["claim_experience_slice"],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Migration tests, focused application tests, design and identity gates, Release build, and native Settings render.",
+          "latency": "Within the same focused verification run.",
+          "failure_to_detect": "Static rendering cannot prove live OS accent changes or every future schema downgrade path."
+        },
+        "falsifier": "A legacy preference document fails to normalize safely, a semantic status brush changes with the accent, or the selected profile does not survive reload.",
+        "confidence": {
+          "level": "HIGH",
+          "basis": "Direct migration tests, focused app coverage, source inspection, and exact native render evidence."
+        }
+      }
+    ],
+    "feedback_loops": [],
+    "thresholds": []
+  },
+  "decision": {
+    "iteration_choice": "ACT",
+    "recommendation": "Land public experience contracts and transactional theme, accent, density, capability, and onboarding state as the first narrow green shell slice, then compose the responsive native shell against those contracts.",
+    "selected_action_ids": ["action_experience_contracts"],
+    "rejected_options": [
+      "Do not restart from main or mutate the protected owner checkout.",
+      "Do not replace WPF wholesale or import competitor code or trade dress.",
+      "Do not treat Stage 6 automation as Native Instrument completion."
+    ],
+    "decision_claim_ids": ["claim_objective", "claim_source", "claim_capacity"],
+    "remaining_unknown_claim_ids": ["claim_shipping_pending"],
+    "human_owner": "Soltex owner",
+    "consecutive_stable_checks": 0,
+    "reopen_trigger": "Reopen if the public-contract slice cannot preserve schema migration, current design gates, or the 29-state render contract."
+  },
+  "actions": [
+    {
+      "id":"action_experience_contracts",
+      "description":"Add ThemeProfile, FeatureCapability, and OnboardingState with safe normalization, migration, settings controls, and focused tests before changing shell composition.",
+      "status":"VERIFIED",
+      "authorization_status":"AUTHORIZED",
+      "authority_basis":"The current replacement goal explicitly authorizes reversible isolated implementation and validation.",
+      "destructive":false,
+      "production":false,
+      "external_state_change":false,
+      "irreversible":false,
+      "monitoring":"Run focused app tests, strict design and identity gates, a zero-warning Release build, and the canonical render harness after the slice.",
+      "rollback":{"kind":"TRUE_ROLLBACK","procedure":"Apply an inverse patch or revert only the coherent task-owned commit in the isolated finalization branch.","preconditions":["The protected owner checkout remains untouched.","The prior exact head a711d767699c6a5ddbeb289b196e4454452f66cc remains reachable."],"verification":"Rebuild and render the prior exact head in the isolated worktree.","evidence_ids":["evidence_recovery_snapshot","evidence_exact_render"],"irreversible_residue":"None expected; local build and render artifacts are derived evidence only."},
+      "recovery":{"procedure":"Recreate the isolated branch from the remotely preserved Stage 6 source and reapply only verified task-owned commits.","owner":"Task implementation owner","evidence_ids":["evidence_recovery_snapshot","evidence_worktree_add"]},
+      "mitigation_consequence_node_ids":["node_experience_migration_effects"]
+    }
+  ],
+  "verification": {
+    "mechanism": {"status":"PASS","signal":"The first experience-contract slice is implemented and passes focused tests, policy gates, Release build, and native Settings rendering.","evidence_ids":["evidence_experience_tests","evidence_experience_build","evidence_experience_render","evidence_experience_policy"],"rationale":"This pass applies to the first slice mechanism only; the Native Instrument V1 endpoint remains open."},
+    "endpoint": {"status":"UNKNOWN","signal":"Native Instrument V1 is not implemented.","evidence_ids":[],"rationale":"The requested user outcome remains open."},
+    "guardrails": {"status":"PASS","signal":"Protected owner work and Stage 6 evidence remain separate and preserved after worktree creation.","evidence_ids":["evidence_recovery_snapshot","evidence_worktree_add","evidence_stage6_contract"],"rationale":"Current direct evidence verifies the recovery boundary only."},
+    "recovery": {"status":"UNKNOWN","signal":"Source recovery is preserved, but shipping migration and rollback are not implemented.","evidence_ids":["evidence_recovery_snapshot","evidence_worktree_add"],"rationale":"Broader recovery gates remain open."}
+  },
+  "closure": {
+    "status": "OPEN",
+    "summary": "Recovery is durable; implementation, validation, physical checks, and human acceptance remain open.",
+    "residual_risks": [
+      "Native AppWindow, Mica, snap-layout, and live DPI behavior remain unproven by static client rendering.",
+      "C: remains capacity constrained, so future artifacts must stay on the isolated D: worktree or another bounded evidence location.",
+      "Physical-device and subjective acceptance cannot be automated."
+    ],
+    "human_acceptance_required": true,
+    "accepted_by": "",
+    "acceptance_evidence_ids": [],
+    "nonclaims": [
+      "Recovery does not prove Native Instrument functionality.",
+      "Prior Stage 6 tests do not prove the six physical checks.",
+      "No Store, beta, winget, system-wide audio, or production-grade security claim is made."
+    ]
+  }
+}

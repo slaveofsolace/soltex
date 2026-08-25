@@ -32,6 +32,7 @@ public partial class App : Application
     private bool _explicitExitRequested;
     private bool _appearanceTrackingStarted;
     private AppearancePreference _appearancePreference = AppearancePreference.System;
+    private ThemeProfile _themeProfile = ThemeProfile.Default;
     private ResolvedAppearance _resolvedAppearance = ResolvedAppearance.Dark;
 
     public App()
@@ -88,19 +89,29 @@ public partial class App : Application
                 : overlayRequest!.Appearance;
             _appearancePreference = RuntimeLaunchPolicy.ResolveRenderPreference(
                 appearance);
+            _themeProfile = ThemeProfile.Default with
+            {
+                Mode = _appearancePreference switch
+                {
+                    AppearancePreference.Light => global::Soltex.App.ThemeMode.Light,
+                    AppearancePreference.Dark => global::Soltex.App.ThemeMode.Dark,
+                    _ => global::Soltex.App.ThemeMode.System
+                }
+            };
             _resolvedAppearance = RuntimeLaunchPolicy.ResolveRenderAppearance(
                 appearance);
             AppearanceThemeManager.ApplyResolved(Resources, _resolvedAppearance);
         }
         else
         {
-            _appearancePreference = PreferencesStore.CreateDefault()
+            SoltexPreferences preferences = PreferencesStore.CreateDefault()
                 .Load()
-                .Preferences
-                .AppearancePreference;
-            _resolvedAppearance = AppearanceThemeManager.ApplyPreference(
+                .Preferences;
+            _appearancePreference = preferences.AppearancePreference;
+            _themeProfile = preferences.ThemeProfile;
+            _resolvedAppearance = AppearanceThemeManager.ApplyProfile(
                 Resources,
-                _appearancePreference);
+                _themeProfile);
         }
 
         if (overlayRequestParsed)
@@ -262,6 +273,26 @@ public partial class App : Application
         _appearancePreference = Enum.IsDefined(preference)
             ? preference
             : AppearancePreference.System;
+        SetThemeProfile(_themeProfile with
+        {
+            Mode = _appearancePreference switch
+            {
+                AppearancePreference.Light => global::Soltex.App.ThemeMode.Light,
+                AppearancePreference.Dark => global::Soltex.App.ThemeMode.Dark,
+                _ => global::Soltex.App.ThemeMode.System
+            }
+        });
+    }
+
+    internal void SetThemeProfile(ThemeProfile profile)
+    {
+        _themeProfile = profile.Normalize();
+        _appearancePreference = _themeProfile.Mode switch
+        {
+            global::Soltex.App.ThemeMode.Light => AppearancePreference.Light,
+            global::Soltex.App.ThemeMode.Dark => AppearancePreference.Dark,
+            _ => AppearancePreference.System
+        };
         ApplyCurrentAppearance();
     }
 
@@ -328,9 +359,9 @@ public partial class App : Application
 
     private void ApplyCurrentAppearance()
     {
-        _resolvedAppearance = AppearanceThemeManager.ApplyPreference(
+        _resolvedAppearance = AppearanceThemeManager.ApplyProfile(
             Resources,
-            _appearancePreference);
+            _themeProfile);
         _ownedMainWindow?.UpdateAppearanceResolution(
             _resolvedAppearance,
             SystemParameters.HighContrast);

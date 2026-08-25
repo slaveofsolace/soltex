@@ -1478,7 +1478,7 @@ public partial class MainWindow : Window
         bool closeBehaviorChanged =
             requested.CloseBehavior != _preferences.CloseBehavior;
         bool appearanceChanged =
-            requested.AppearancePreference != _preferences.AppearancePreference;
+            requested.ThemeProfile != _preferences.ThemeProfile;
         _preferences = requested;
         Volatile.Write(
             ref _telemetryIntervalMilliseconds,
@@ -1496,7 +1496,7 @@ public partial class MainWindow : Window
             retentionResult.StorageHealthy);
         if (appearanceChanged && Application.Current is App application)
         {
-            application.SetAppearancePreference(_preferences.AppearancePreference);
+            application.SetThemeProfile(_preferences.ThemeProfile);
         }
         try
         {

@@ -272,6 +272,13 @@
     <Thickness x:Key="PadField">10,8</Thickness>
     <Thickness x:Key="PadButton">12,8</Thickness>
 
+    <!-- Active density values are republished through Application.Resources. -->
+    <Thickness x:Key="PadButtonActive">12,8</Thickness>
+    <Thickness x:Key="PadNavActive">11,9</Thickness>
+    <Thickness x:Key="PadTabActive">10,8</Thickness>
+    <Thickness x:Key="PadFieldActive">10,8</Thickness>
+    <Thickness x:Key="PadComboActive">10,7</Thickness>
+
     <!-- ============================================================ -->
     <!-- 5. Type: families and size scale                              -->
     <!-- ============================================================ -->

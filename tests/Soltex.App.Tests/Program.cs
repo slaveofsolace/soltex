@@ -68,6 +68,7 @@ internal static class Program
             ("Windows service inventory is bounded and read-only", () => ServiceInventoryIsBounded(serviceSnapshot)),
             ("Applications view progressively discloses startup and services", () =>
                 ApplicationsViewRenders(applicationSnapshot, serviceSnapshot)),
+            ("Experience contracts normalize capability, theme, and onboarding state", ExperienceContractsAreSafe),
             ("Preference store recovers and round-trips bounded local state", PreferencesRoundTripAndRecovery),
             ("Whisper device selection persists and oversized state fails safe", WhisperSettingsRoundTripAndRecovery),
             ("Whisper capture controls expose only working capture actions", WhisperCaptureControlsAreHonest),
@@ -189,6 +190,20 @@ internal static class Program
                  selectedAccent.Color == lightAccent,
                 "A stateful control did not resolve the live-updated semantic accent resource.");
 
+            AppearanceThemeManager.ApplyProfileResolved(
+                resources,
+                new ThemeProfile(ThemeMode.Dark, ThemeAccent.Windows, InterfaceDensity.Compact),
+                ResolvedAppearance.Dark,
+                Color.FromRgb(0, 120, 215));
+            True((string)resources["ResolvedThemeAccent"] == ThemeAccent.Windows.ToString() &&
+                 (string)resources["ResolvedInterfaceDensity"] == InterfaceDensity.Compact.ToString(),
+                "The active theme profile was not published for runtime consumers.");
+            True((Thickness)resources["PadButtonActive"] == new Thickness(10, 6, 10, 6),
+                "Compact density did not update shared control padding.");
+            True(((SolidColorBrush)resources["AccentBrush"]).Color !=
+                 (Color)Application.Current.FindResource("AccentColor"),
+                "The Windows accent preference did not replace the Glacier interaction accent.");
+
             AppearanceThemeManager.ApplyResolved(resources, ResolvedAppearance.HighContrast);
             True(((SolidColorBrush)Application.Current.FindResource("CanvasBrush")).Color ==
                  SystemColors.WindowColor,
@@ -201,7 +216,10 @@ internal static class Program
         {
             try
             {
-                AppearanceThemeManager.ApplyResolved(resources, ResolvedAppearance.Dark);
+                AppearanceThemeManager.ApplyProfileResolved(
+                    resources,
+                    ThemeProfile.Default with { Mode = ThemeMode.Dark },
+                    ResolvedAppearance.Dark);
             }
             finally
             {
@@ -1066,6 +1084,46 @@ internal static class Program
             "The service attention column did not follow meaningful signal availability.");
     }
 
+    private static void ExperienceContractsAreSafe()
+    {
+        ThemeProfile repairedTheme = new ThemeProfile(
+            (ThemeMode)99,
+            (ThemeAccent)99,
+            (InterfaceDensity)99).Normalize();
+        True(repairedTheme == ThemeProfile.Default,
+            "An invalid theme profile did not repair to the compatible default.");
+
+        FeatureCapability capability = FeatureCapability.Create(
+            "capture.hardware-encode",
+            FeatureCapabilityState.Degraded,
+            "Hardware encoding is unavailable.\r\nSoftware fallback is measured.",
+            "Review encoder evidence.");
+        True(capability.FeatureId == "capture.hardware-encode" &&
+             capability.State == FeatureCapabilityState.Degraded &&
+             !capability.Detail.Contains('\r') &&
+             !capability.Detail.Contains('\n'),
+            "A capability contract did not preserve state while sanitizing display text.");
+        Throws<ArgumentException>(
+            () => FeatureCapability.Create("Capture/Unsafe", FeatureCapabilityState.Available, "detail"),
+            "An unsafe feature identifier was accepted.");
+
+        OnboardingState partial = OnboardingState.Default
+            .MarkReviewed(OnboardingArea.PrivacyAndLocalData | OnboardingArea.Appearance);
+        True(!partial.IsCompleted && partial.CompletedAtUtc is null,
+            "Partial onboarding was treated as complete.");
+        Throws<InvalidOperationException>(
+            () => partial.Complete(DateTimeOffset.UtcNow),
+            "Onboarding completed before every area was reviewed.");
+
+        OnboardingState complete = OnboardingState.Default
+            .MarkReviewed(OnboardingArea.All)
+            .Complete(new DateTimeOffset(2026, 8, 25, 12, 0, 0, TimeSpan.FromHours(-5)));
+        True(complete.IsCompleted &&
+             complete.CompletedAreas == OnboardingArea.All &&
+             complete.CompletedAtUtc?.Offset == TimeSpan.Zero,
+            "Completed onboarding did not retain a normalized UTC receipt.");
+    }
+
     private static void PreferencesRoundTripAndRecovery()
     {
         string directory = Path.Combine(
@@ -1085,7 +1143,12 @@ internal static class Program
                 PreferredPlaybackEndpointKey: new string('a', 64),
                 PreferredRecordingEndpointKey: new string('b', 64),
                 LastWorkspace: "security",
-                AppearancePreference: AppearancePreference.Light);
+                AppearancePreference: AppearancePreference.Light,
+                ThemeAccent: ThemeAccent.Windows,
+                InterfaceDensity: InterfaceDensity.Compact,
+                OnboardingState: OnboardingState.Default
+                    .MarkReviewed(OnboardingArea.All)
+                    .Complete(new DateTimeOffset(2026, 8, 25, 17, 0, 0, TimeSpan.Zero)));
             store.Save(expected);
             PreferencesLoadResult loaded = store.Load();
             True(!loaded.RecoveredFromInvalid,
@@ -1108,6 +1171,9 @@ internal static class Program
                 "Legacy preferences did not migrate to empty audio fallback reminders.");
             True(migrated.Preferences.AppearancePreference == AppearancePreference.System,
                 "Legacy preferences did not migrate to the safe System appearance default.");
+            True(migrated.Preferences.ThemeProfile == ThemeProfile.Default &&
+                 migrated.Preferences.OnboardingState == OnboardingState.Default,
+                "Legacy preferences did not migrate to safe experience defaults.");
 
             File.WriteAllText(
                 filePath,
@@ -1136,6 +1202,24 @@ internal static class Program
             True(invalidAppearance.RecoveredFromInvalid &&
                  invalidAppearance.Preferences.AppearancePreference == AppearancePreference.System,
                 "An unsupported appearance did not repair to the safe System preference.");
+
+            File.WriteAllText(
+                filePath,
+                "{\"schemaVersion\":5,\"telemetryCadence\":\"Balanced\",\"restoreLastWorkspace\":true," +
+                "\"openPerformanceDetails\":false,\"activityRetention\":\"SessionOnly\"," +
+                "\"closeBehavior\":\"Exit\",\"preferredPlaybackEndpointKey\":\"\"," +
+                "\"preferredRecordingEndpointKey\":\"\",\"lastWorkspace\":\"home\"," +
+                "\"appearancePreference\":\"Dark\",\"themeAccent\":\"neon\"," +
+                "\"interfaceDensity\":\"tiny\",\"onboardingContractVersion\":99," +
+                "\"onboardingCompletedAreas\":1024,\"onboardingCompleted\":true}",
+                Encoding.UTF8);
+            PreferencesLoadResult invalidExperience = store.Load();
+            True(invalidExperience.RecoveredFromInvalid &&
+                 invalidExperience.Preferences.AppearancePreference == AppearancePreference.Dark &&
+                 invalidExperience.Preferences.ThemeAccent == ThemeAccent.SoltexGlacier &&
+                 invalidExperience.Preferences.InterfaceDensity == InterfaceDensity.Comfortable &&
+                 invalidExperience.Preferences.OnboardingState == OnboardingState.Default,
+                "Unsupported experience values did not repair independently to safe defaults.");
 
             File.WriteAllText(filePath, "{ invalid", Encoding.UTF8);
             PreferencesLoadResult invalid = store.Load();
@@ -1971,7 +2055,9 @@ internal static class Program
             PreferredPlaybackEndpointKey: string.Empty,
             PreferredRecordingEndpointKey: string.Empty,
             LastWorkspace: "monitoring",
-            AppearancePreference: AppearancePreference.Dark);
+            AppearancePreference: AppearancePreference.Dark,
+            ThemeAccent: ThemeAccent.SoltexGlacier,
+            InterfaceDensity: InterfaceDensity.Comfortable);
         view.UpdateAppearanceStatus(ResolvedAppearance.Dark, highContrastOverride: false);
         view.UpdateNotificationAreaAvailability(available: true);
         view.UpdatePreferences(
@@ -2011,6 +2097,12 @@ internal static class Program
         view.LightAppearanceButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         True(changed?.AppearancePreference == AppearancePreference.Light,
             "Settings did not emit the explicit light appearance.");
+        view.WindowsAccentButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(changed?.ThemeAccent == ThemeAccent.Windows,
+            "Settings did not emit the Windows accent preference.");
+        view.CompactDensityButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(changed?.InterfaceDensity == InterfaceDensity.Compact,
+            "Settings did not emit the compact density preference.");
         view.UpdateAppearanceStatus(ResolvedAppearance.HighContrast, highContrastOverride: true);
         True(view.AppearanceResolvedText.Text.Contains("overrides", StringComparison.Ordinal),
             "Settings did not explain the active Windows High Contrast override.");
@@ -2426,6 +2518,21 @@ internal static class Program
         {
             throw new InvalidOperationException(message);
         }
+    }
+
+    private static void Throws<TException>(Action action, string message)
+        where TException : Exception
+    {
+        try
+        {
+            action();
+        }
+        catch (TException)
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(message);
     }
 
     private static void Near(double expected, double actual, double tolerance)

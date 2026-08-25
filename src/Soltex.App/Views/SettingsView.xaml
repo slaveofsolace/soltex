@@ -86,6 +86,10 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="1" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="1" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="1" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="20" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="1" />
@@ -220,6 +224,70 @@
                                     Content="Light"
                                     AutomationProperties.Name="Use the light Soltex theme"
                                     Click="LightAppearance_Click" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="13"
+                            Margin="0,14,0,14"
+                            Background="{DynamicResource BorderBrush}" />
+
+                    <Grid Grid.Row="14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold" Text="Interaction accent" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="Use the Soltex signal or the current Windows accent." />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="24,0,0,0" Orientation="Horizontal">
+                            <Button x:Name="GlacierAccentButton"
+                                    MinWidth="86"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Glacier"
+                                    AutomationProperties.Name="Use the Soltex Glacier accent"
+                                    Click="GlacierAccent_Click" />
+                            <Button x:Name="WindowsAccentButton"
+                                    Margin="8,0,0,0"
+                                    MinWidth="86"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Windows"
+                                    AutomationProperties.Name="Use the Windows accent"
+                                    Click="WindowsAccent_Click" />
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Grid.Row="15"
+                            Margin="0,14,0,14"
+                            Background="{DynamicResource BorderBrush}" />
+
+                    <Grid Grid.Row="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock FontWeight="SemiBold" Text="Density" />
+                            <TextBlock Margin="0,4,0,0"
+                                       Style="{StaticResource MutedTextStyle}"
+                                       Text="Choose comfortable controls or a tighter instrument layout." />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Margin="24,0,0,0" Orientation="Horizontal">
+                            <Button x:Name="ComfortableDensityButton"
+                                    MinWidth="106"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Comfortable"
+                                    AutomationProperties.Name="Use comfortable interface density"
+                                    Click="ComfortableDensity_Click" />
+                            <Button x:Name="CompactDensityButton"
+                                    Margin="8,0,0,0"
+                                    MinWidth="84"
+                                    Style="{StaticResource SecondaryButton}"
+                                    Content="Compact"
+                                    AutomationProperties.Name="Use compact interface density"
+                                    Click="CompactDensity_Click" />
                         </StackPanel>
                     </Grid>
                 </Grid>

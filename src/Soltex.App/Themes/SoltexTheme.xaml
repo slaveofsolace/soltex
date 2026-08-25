@@ -59,7 +59,7 @@
         <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="{StaticResource PadButton}" />
+        <Setter Property="Padding" Value="{DynamicResource PadButtonActive}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
@@ -106,7 +106,7 @@
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />
         <Setter Property="Margin" Value="0,2" />
-        <Setter Property="Padding" Value="11,9" />
+        <Setter Property="Padding" Value="{DynamicResource PadNavActive}" />
         <Setter Property="FontSize" Value="{StaticResource FontLabel}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
@@ -154,7 +154,7 @@
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Padding" Value="{DynamicResource PadTabActive}" />
         <Setter Property="FontSize" Value="{StaticResource FontLabel}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Cursor" Value="Hand" />
@@ -242,7 +242,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextBrightBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="{StaticResource PadField}" />
+        <Setter Property="Padding" Value="{DynamicResource PadFieldActive}" />
         <Setter Property="CaretBrush" Value="{DynamicResource AccentBrush}" />
         <Setter Property="SelectionBrush" Value="{DynamicResource SelectionBrush}" />
         <Setter Property="FontFamily" Value="{StaticResource MonoFont}" />
@@ -254,7 +254,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="Padding" Value="{DynamicResource PadComboActive}" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="ItemContainerStyle">
             <Setter.Value>

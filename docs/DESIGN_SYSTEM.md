@@ -29,6 +29,26 @@ design gate rejects raw colour literals outside `Tokens.xaml`.
 6. **Quiet by default.** Status colour is reserved for confirmed state; it is
    never decorative. Motion is short, functional, and reduced-motion aware.
 
+## Experience profile
+
+`ThemeProfile` is the single runtime appearance contract. It separates three
+choices that must never be inferred from one another:
+
+- mode follows Windows or explicitly selects Light or Dark;
+- accent uses the Soltex Glacier interaction signal or the current Windows
+  accent, with runtime contrast correction; and
+- density selects Comfortable or Compact shared control spacing without hiding
+  state or changing capability.
+
+Windows High Contrast always overrides the saved colour choices. Status colours
+remain semantic even when the interaction accent follows Windows. The profile is
+versioned through the transactional preferences store so existing accounts retain
+their prior mode while new accent and density fields migrate to safe defaults.
+
+`FeatureCapability` is the visible availability contract. Every module reports
+one of `Available`, `Degraded`, `Unsupported`, or `ConsentRequired`; unavailable
+work is never represented by an enabled-looking inert control.
+
 ## Signature language
 
 The signature element is a thin **signal rail**: a 2–3 px line on the leading
