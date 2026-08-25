@@ -23,6 +23,8 @@ public partial class SettingsView : UserControl
 
     internal event EventHandler<PreferencesChangedEventArgs>? PreferencesChanged;
 
+    internal event EventHandler? SetupRequested;
+
     internal void UpdateNotificationAreaAvailability(bool available)
     {
         _notificationAreaAvailable = available;
@@ -170,6 +172,9 @@ public partial class SettingsView : UserControl
 
     private void ResetDefaults_Click(object sender, RoutedEventArgs e) =>
         Commit(SoltexPreferences.Default);
+
+    private void RunSetup_Click(object sender, RoutedEventArgs e) =>
+        SetupRequested?.Invoke(this, EventArgs.Empty);
 
     private void Commit(SoltexPreferences preferences)
     {

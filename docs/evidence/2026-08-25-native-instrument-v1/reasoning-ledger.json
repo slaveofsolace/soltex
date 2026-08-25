@@ -3,7 +3,7 @@
   "ledger_id": "soltex_native_instrument_v1",
   "created_at": "2026-08-25T15:55:00Z",
   "depth": "DEEP",
-  "iteration": 2,
+  "iteration": 3,
   "root": {
     "kind": "DECISION",
     "node_id": "root_native_instrument",
@@ -253,6 +253,14 @@
       "evidence_ids": ["evidence_experience_tests", "evidence_experience_build", "evidence_experience_render", "evidence_experience_policy"],
       "contradiction_claim_ids": [],
       "confidence": {"level":"HIGH","basis":"Current exact local test, build, policy, and render artifacts."}
+    },
+    {
+      "id": "claim_shell_onboarding",
+      "label": "MEASURED",
+      "statement": "The next Native Instrument slice adds an executable seven-step first-run flow, resumable progress, truthful capability states, Settings re-entry, and width-aware expanded, compact, and narrow navigation with green build, tests, policy checks, and native renders.",
+      "evidence_ids": ["evidence_shell_tests", "evidence_shell_build", "evidence_shell_render_standard", "evidence_shell_render_compact", "evidence_shell_policy"],
+      "contradiction_claim_ids": [],
+      "confidence": {"level":"HIGH","basis":"Current direct source, focused tests, full solution build, staged-source policy checks, and two native WPF renders."}
     }
   ],
   "evidence": [
@@ -375,6 +383,56 @@
       "integrity": "Design-token and identity gates passed; exact source artifact hashes recorded in the evidence summary",
       "supports_claim_ids": ["claim_experience_slice"],
       "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_shell_tests",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\shell-onboarding\\app-tests-2026-08-25T1711Z.log",
+      "captured_at": "2026-08-25T17:07:15Z",
+      "integrity": "SHA-256 7133610a030e4af61b9f7b9ee5b6d126f642cf6e4320acd7f9cacb2f39e048cb; 53/53 passed; bounded PID-owned runner exit 0",
+      "supports_claim_ids": ["claim_shell_onboarding"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_shell_build",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\shell-onboarding\\release-build-2026-08-25T1710Z.log",
+      "captured_at": "2026-08-25T17:07:05Z",
+      "integrity": "SHA-256 899d885e88727c3720a51871ff7839fa6b69cee93709daf13c2e6f69feec32a7; full solution Release build, zero warnings, zero errors, exit 0",
+      "supports_claim_ids": ["claim_shell_onboarding"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_shell_render_standard",
+      "kind": "ARTIFACT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\shell-onboarding\\onboarding-appearance-final.png",
+      "captured_at": "2026-08-25T17:09:00Z",
+      "integrity": "SHA-256 8395881ce3abde3eaf69e201a608988e669f1f8727a260a4c178953cd08afec6; native dark WPF render, 1280 by 820, visually inspected",
+      "supports_claim_ids": ["claim_shell_onboarding"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_shell_render_compact",
+      "kind": "ARTIFACT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\shell-onboarding\\onboarding-privacy-compact-final.png",
+      "captured_at": "2026-08-25T17:10:00Z",
+      "integrity": "SHA-256 e490d56be04316089564eaf225c453f645b717b45e927654e3c30ba9b83e093c; native dark compact WPF render, 1100 by 720, visually inspected",
+      "supports_claim_ids": ["claim_shell_onboarding"],
+      "contradicts_claim_ids": []
+    },
+    {
+      "id": "evidence_shell_policy",
+      "kind": "TEST_RESULT",
+      "access": "GENERATED_CURRENT",
+      "locator": "D:\\soltex-native-instrument-v1\\artifacts\\native-instrument-v1\\shell-onboarding\\policy-gates-2026-08-25T1715Z.log",
+      "captured_at": "2026-08-25T17:12:07Z",
+      "integrity": "SHA-256 13f9b947ba77b1269a7e48ef4abb8f3febd1910cee770af4ca4b6d3997659104; shell-free staged-source execution of the checked-in design-token and identity policies, exit 0",
+      "supports_claim_ids": ["claim_shell_onboarding"],
+      "contradicts_claim_ids": []
     }
   ],
   "hypotheses": [],
@@ -400,6 +458,15 @@
         "kind": "CONSEQUENCE",
         "statement": "The new experience profile changes persisted settings and live semantic resources while legacy users are repaired to safe appearance and onboarding defaults.",
         "claim_id": "claim_experience_slice",
+        "depth": 1,
+        "terminal": true,
+        "closure_reason": "BOUNDED"
+      },
+      {
+        "id": "node_shell_onboarding_effects",
+        "kind": "CONSEQUENCE",
+        "statement": "First launch now presents a modal review flow and compact layouts collapse navigation copy, while persisted completion remains separate from capability availability.",
+        "claim_id": "claim_shell_onboarding",
         "depth": 1,
         "terminal": true,
         "closure_reason": "BOUNDED"
@@ -433,6 +500,34 @@
           "level": "HIGH",
           "basis": "Direct migration tests, focused app coverage, source inspection, and exact native render evidence."
         }
+      },
+      {
+        "id": "edge_shell_onboarding_effects",
+        "relation": "FORWARD",
+        "source_node_id": "root_native_instrument",
+        "target_node_id": "node_shell_onboarding_effects",
+        "source_delta": "The shell consumes the experience contracts through a resumable first-run flow and width-aware layout policy.",
+        "mechanism_status": "KNOWN",
+        "mechanism": "Each reviewed step persists its area independently, completion requires the full area mask, and the layout policy changes only navigation presentation and workspace margins at bounded breakpoints.",
+        "conditions": [
+          "The preference store remains available or reports a recoverable write failure.",
+          "Workspace controls retain their accessible names when visual labels collapse."
+        ],
+        "lag": "At first load, after each setup action, and on each window-size or density change.",
+        "target_delta": "First-run decisions are explicit and resumable, unavailable features stay unavailable, and narrower windows prioritize the active workspace without removing owning safety state.",
+        "affected_refs": ["inv_truthful_claims", "dep_stage6_source", "dep_windows_runtime"],
+        "supporting_claim_ids": ["claim_shell_onboarding"],
+        "contradicting_claim_ids": [],
+        "detection": {
+          "signal": "Focused event tests, layout-policy tests, full solution build, staged-source policy checks, and standard and compact native renders.",
+          "latency": "Within the same bounded verification run.",
+          "failure_to_detect": "Static renders cannot prove live per-monitor DPI, Narrator, every keyboard path, or a future preference-write outage."
+        },
+        "falsifier": "Setup records completion before all areas are reviewed, an unavailable capability appears operable, or compact navigation removes access to a shipped workspace.",
+        "confidence": {
+          "level": "HIGH",
+          "basis": "Direct test, build, policy, source, and two native render artifacts."
+        }
       }
     ],
     "feedback_loops": [],
@@ -440,18 +535,18 @@
   },
   "decision": {
     "iteration_choice": "ACT",
-    "recommendation": "Land public experience contracts and transactional theme, accent, density, capability, and onboarding state as the first narrow green shell slice, then compose the responsive native shell against those contracts.",
-    "selected_action_ids": ["action_experience_contracts"],
+    "recommendation": "Keep the verified experience and first-run slices, then establish native window backdrop and activation behavior before reshaping the Overview and Performance workspaces.",
+    "selected_action_ids": ["action_shell_onboarding"],
     "rejected_options": [
       "Do not restart from main or mutate the protected owner checkout.",
       "Do not replace WPF wholesale or import competitor code or trade dress.",
       "Do not treat Stage 6 automation as Native Instrument completion."
     ],
-    "decision_claim_ids": ["claim_objective", "claim_source", "claim_capacity"],
+    "decision_claim_ids": ["claim_objective", "claim_source", "claim_capacity", "claim_shell_onboarding"],
     "remaining_unknown_claim_ids": ["claim_shipping_pending"],
     "human_owner": "Soltex owner",
     "consecutive_stable_checks": 0,
-    "reopen_trigger": "Reopen if the public-contract slice cannot preserve schema migration, current design gates, or the 29-state render contract."
+    "reopen_trigger": "Reopen the shell slice if setup persistence, capability truth, compact navigation access, or current design and identity gates regress."
   },
   "actions": [
     {
@@ -468,17 +563,32 @@
       "rollback":{"kind":"TRUE_ROLLBACK","procedure":"Apply an inverse patch or revert only the coherent task-owned commit in the isolated finalization branch.","preconditions":["The protected owner checkout remains untouched.","The prior exact head a711d767699c6a5ddbeb289b196e4454452f66cc remains reachable."],"verification":"Rebuild and render the prior exact head in the isolated worktree.","evidence_ids":["evidence_recovery_snapshot","evidence_exact_render"],"irreversible_residue":"None expected; local build and render artifacts are derived evidence only."},
       "recovery":{"procedure":"Recreate the isolated branch from the remotely preserved Stage 6 source and reapply only verified task-owned commits.","owner":"Task implementation owner","evidence_ids":["evidence_recovery_snapshot","evidence_worktree_add"]},
       "mitigation_consequence_node_ids":["node_experience_migration_effects"]
+    },
+    {
+      "id":"action_shell_onboarding",
+      "description":"Compose the versioned first-run flow and responsive navigation against the verified experience contracts, with working Settings re-entry and bounded render states.",
+      "status":"VERIFIED",
+      "authorization_status":"AUTHORIZED",
+      "authority_basis":"The current replacement goal explicitly authorizes reversible isolated native-shell implementation and validation.",
+      "destructive":false,
+      "production":false,
+      "external_state_change":false,
+      "irreversible":false,
+      "monitoring":"Run the full solution Release build, focused application suite, staged-source identity and design policies, standard and compact native renders, and diff validation.",
+      "rollback":{"kind":"TRUE_ROLLBACK","procedure":"Revert only the coherent task-owned shell/onboarding commit while retaining the parent experience-contract commit.","preconditions":["The protected owner checkout remains untouched.","Parent commit 3e02d9e9ade1776c5a4e45c49bbd3cd3f68be689 remains reachable."],"verification":"Build, test, and render parent commit 3e02d9e9ade1776c5a4e45c49bbd3cd3f68be689 in the isolated worktree.","evidence_ids":["evidence_experience_build","evidence_experience_render"],"irreversible_residue":"No user data or machine-wide state is changed by this source slice; derived evidence remains separately removable."},
+      "recovery":{"procedure":"Reset no owner state; recreate the task worktree from the pushed parent and cherry-pick only later verified task-owned commits.","owner":"Task implementation owner","evidence_ids":["evidence_recovery_snapshot","evidence_experience_build","evidence_experience_render"]},
+      "mitigation_consequence_node_ids":["node_shell_onboarding_effects"]
     }
   ],
   "verification": {
-    "mechanism": {"status":"PASS","signal":"The first experience-contract slice is implemented and passes focused tests, policy gates, Release build, and native Settings rendering.","evidence_ids":["evidence_experience_tests","evidence_experience_build","evidence_experience_render","evidence_experience_policy"],"rationale":"This pass applies to the first slice mechanism only; the Native Instrument V1 endpoint remains open."},
+    "mechanism": {"status":"PASS","signal":"The experience-contract and shell/onboarding mechanisms are implemented and pass focused tests, full Release build, staged-source policy checks, and standard and compact native rendering.","evidence_ids":["evidence_experience_tests","evidence_experience_build","evidence_experience_render","evidence_experience_policy","evidence_shell_tests","evidence_shell_build","evidence_shell_render_standard","evidence_shell_render_compact","evidence_shell_policy"],"rationale":"This pass applies to the first two implementation mechanisms only; the Native Instrument V1 endpoint remains open."},
     "endpoint": {"status":"UNKNOWN","signal":"Native Instrument V1 is not implemented.","evidence_ids":[],"rationale":"The requested user outcome remains open."},
     "guardrails": {"status":"PASS","signal":"Protected owner work and Stage 6 evidence remain separate and preserved after worktree creation.","evidence_ids":["evidence_recovery_snapshot","evidence_worktree_add","evidence_stage6_contract"],"rationale":"Current direct evidence verifies the recovery boundary only."},
     "recovery": {"status":"UNKNOWN","signal":"Source recovery is preserved, but shipping migration and rollback are not implemented.","evidence_ids":["evidence_recovery_snapshot","evidence_worktree_add"],"rationale":"Broader recovery gates remain open."}
   },
   "closure": {
     "status": "OPEN",
-    "summary": "Recovery is durable; implementation, validation, physical checks, and human acceptance remain open.",
+    "summary": "Recovery plus the experience-contract and shell/onboarding slices are durable; remaining workspaces, shipping, full validation, physical checks, and human acceptance remain open.",
     "residual_risks": [
       "Native AppWindow, Mica, snap-layout, and live DPI behavior remain unproven by static client rendering.",
       "C: remains capacity constrained, so future artifacts must stay on the isolated D: worktree or another bounded evidence location.",

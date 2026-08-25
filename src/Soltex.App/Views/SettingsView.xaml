@@ -19,6 +19,8 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="10" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel VerticalAlignment="Center">
                 <TextBlock Style="{StaticResource PageTitleStyle}" Text="Settings" />
@@ -446,7 +448,13 @@
                        Foreground="{DynamicResource MutedBrush}"
                        FontSize="{StaticResource FontCaption}"
                        Text="Preferences are ready." />
-            <Button Grid.Column="1"
+            <Button x:Name="RunSetupButton"
+                    Grid.Column="1"
+                    Style="{StaticResource SecondaryButton}"
+                    Content="Run setup"
+                    AutomationProperties.Name="Open the guided Soltex setup"
+                    Click="RunSetup_Click" />
+            <Button Grid.Column="3"
                     Style="{StaticResource SecondaryButton}"
                     Content="Reset defaults"
                     AutomationProperties.Name="Reset Soltex preferences to defaults"

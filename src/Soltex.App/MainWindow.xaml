@@ -5,29 +5,31 @@
         Title="Soltex"
         Width="1360"
         Height="860"
-        MinWidth="1100"
-        MinHeight="720"
+        MinWidth="860"
+        MinHeight="640"
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource CanvasBrush}"
         Foreground="{DynamicResource TextBrush}"
         FontFamily="{StaticResource UiFont}"
         Loaded="Window_Loaded"
         Closed="Window_Closed"
+        SizeChanged="Window_SizeChanged"
         PreviewKeyDown="Window_PreviewKeyDown">
 
     <Grid Background="{DynamicResource CanvasBrush}">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="220" />
+            <ColumnDefinition x:Name="NavigationColumn" Width="220" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0"
+        <Border x:Name="NavigationRail"
+                Grid.Column="0"
                 Background="{DynamicResource SidebarBrush}"
                 BorderBrush="{DynamicResource TrackBrush}"
                 BorderThickness="0,0,1,0"
                 TextElement.Foreground="{DynamicResource TextBrush}"
                 TextElement.FontFamily="{StaticResource UiFont}">
-            <Grid Margin="14,18">
+            <Grid x:Name="NavigationRailContent" Margin="14,18">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="22" />
@@ -40,7 +42,7 @@
                     <Border Width="30" Height="30" Background="{DynamicResource AccentQuietBrush}" BorderBrush="{DynamicResource AccentDimBrush}" BorderThickness="1" CornerRadius="{StaticResource RadiusSm}">
                         <TextBlock Text="S" Foreground="{DynamicResource AccentFocusBrush}" FontFamily="{StaticResource DisplayFont}" FontWeight="SemiBold" FontSize="17" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
-                    <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                    <StackPanel x:Name="BrandTextPanel" Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
                         <TextBlock Text="Soltex" Foreground="{DynamicResource TextBrightBrush}" FontFamily="{StaticResource DisplayFont}" FontSize="18" FontWeight="SemiBold" />
                         <TextBlock Text="Local control" Margin="0,2,0,0" Foreground="{DynamicResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" />
                     </StackPanel>
@@ -51,87 +53,87 @@
                               HorizontalScrollBarVisibility="Disabled"
                               Focusable="False">
                     <StackPanel>
-                    <TextBlock Margin="10,0,0,6" Text="System" Foreground="{DynamicResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
+                    <TextBlock Tag="NavGroup" Margin="10,0,0,6" Text="System" Foreground="{DynamicResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                     <Button x:Name="HomeNavButton" Tag="Selected" Style="{StaticResource NavButton}" AutomationProperties.Name="Overview" Click="HomeNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE80F;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Overview" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Overview" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Button x:Name="MonitoringNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Performance" Click="MonitoringNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE9D9;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Performance" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Performance" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Button x:Name="ApplicationsNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Applications" Click="ApplicationsNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE71D;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Applications" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Applications" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
-                    <TextBlock Margin="10,17,0,6" Text="Control" Foreground="{DynamicResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
+                    <TextBlock Tag="NavGroup" Margin="10,17,0,6" Text="Control" Foreground="{DynamicResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                     <Button x:Name="MixerNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Audio" Click="MixerNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE767;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Audio" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Audio" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Button x:Name="SecurityNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Security" Click="SecurityNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE72E;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Security" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Security" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Button x:Name="WhisperNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Whisper dictation" Click="WhisperNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE720;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Whisper" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="2" Margin="8,0,0,0" Text="SCAFFOLD" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Whisper" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="2" Tag="NavDetail" Margin="8,0,0,0" Text="SCAFFOLD" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Grid>
                     </Button>
                     <Button x:Name="RemoteNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Remote Assist" Click="RemoteNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE8AF;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Remote Assist" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Remote Assist" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
-                    <TextBlock Margin="10,17,0,6" Text="Maintain" Foreground="{DynamicResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
+                    <TextBlock Tag="NavGroup" Margin="10,17,0,6" Text="Maintain" Foreground="{DynamicResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" FontWeight="SemiBold" />
                     <Button x:Name="DevicesNavButton" Visibility="Collapsed" Style="{StaticResource NavButton}" AutomationProperties.Name="Device mesh preview" Click="DevicesNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE772;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Device mesh" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="2" Margin="8,0,0,0" Text="PREVIEW" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Device mesh" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="2" Tag="NavDetail" Margin="8,0,0,0" Text="PREVIEW" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Grid>
                     </Button>
                     <Button x:Name="ClipsNavButton" Visibility="Collapsed" Style="{StaticResource NavButton}" AutomationProperties.Name="Capture preview" Click="ClipsNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE714;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Capture" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="2" Margin="8,0,0,0" Text="PREVIEW" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Capture" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="2" Tag="NavDetail" Margin="8,0,0,0" Text="PREVIEW" Foreground="{DynamicResource WarningBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Grid>
                     </Button>
                     <Button x:Name="ActivityNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Activity" Click="ActivityNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE81C;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Activity" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Activity" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Button x:Name="UpdateNavButton" Style="{StaticResource NavButton}" AutomationProperties.Name="Updates" Click="UpdateNav_Click">
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE895;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Updates" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Updates" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     </StackPanel>
@@ -146,8 +148,8 @@
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE721;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Find a tool" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="2" Text="Ctrl+K" Foreground="{DynamicResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Find a tool" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="2" Tag="NavDetail" Text="Ctrl+K" Foreground="{DynamicResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
                         </Grid>
                     </Button>
                     <Button x:Name="SettingsNavButton"
@@ -158,7 +160,7 @@
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
                             <TextBlock Text="&#xE713;" FontFamily="{StaticResource IconFont}" FontSize="15" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
-                            <TextBlock Grid.Column="1" Text="Settings" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
+                            <TextBlock Grid.Column="1" Tag="NavLabel" Text="Settings" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type Button}}}" />
                         </Grid>
                     </Button>
                     <Border x:Name="ProtectionSummaryBorder"
@@ -177,7 +179,7 @@
                             <TextBlock x:Name="ProtectionSummaryDetail" Margin="15,5,0,0" Text="Reading Windows Security" Foreground="{DynamicResource MutedBrush}" FontSize="{StaticResource FontCaption}" TextTrimming="CharacterEllipsis" />
                         </StackPanel>
                     </Border>
-                    <Grid Margin="3,10,3,0">
+                    <Grid x:Name="NavigationFooter" Margin="3,10,3,0">
                         <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
                         <TextBlock Text="Local workspace" Foreground="{DynamicResource QuietTextBrush}" FontSize="{StaticResource FontCaption}" />
                         <TextBlock x:Name="ShellBuildText" Grid.Column="1" Text="1.0.0" Foreground="{DynamicResource QuietTextBrush}" FontFamily="{StaticResource MonoFont}" FontSize="{StaticResource FontMicro}" />
@@ -186,7 +188,8 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Column="1"
+        <Grid x:Name="WorkspaceHost"
+              Grid.Column="1"
               Margin="28,22,28,24"
               ClipToBounds="True"
               TextElement.Foreground="{DynamicResource TextBrush}"
@@ -743,6 +746,28 @@
                     </Border>
                 </StackPanel>
             </Grid>
+        </Grid>
+
+        <Grid x:Name="OnboardingOverlay"
+              Grid.ColumnSpan="2"
+              Panel.ZIndex="110"
+              Background="{DynamicResource ModalScrimBrush}"
+              Visibility="Collapsed"
+              AutomationProperties.Name="Soltex first-run setup"
+              KeyboardNavigation.TabNavigation="Cycle"
+              KeyboardNavigation.ControlTabNavigation="Cycle">
+            <Border Margin="24"
+                    MaxWidth="920"
+                    MaxHeight="720"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource ElevatedBrush}"
+                    BorderBrush="{DynamicResource AccentDimBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{StaticResource RadiusLg}"
+                    Padding="24">
+                <views:OnboardingView x:Name="OnboardingPanel" />
+            </Border>
         </Grid>
 
         <Grid x:Name="CommandPaletteOverlay"

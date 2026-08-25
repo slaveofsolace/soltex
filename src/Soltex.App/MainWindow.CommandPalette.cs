@@ -13,6 +13,11 @@ public partial class MainWindow
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (TryHandleOnboardingShortcut(e))
+        {
+            return;
+        }
+
         if (e.Key == Key.Escape && CommandPaletteOverlay.Visibility == Visibility.Visible)
         {
             CloseCommandPalette(restoreFocus: true);

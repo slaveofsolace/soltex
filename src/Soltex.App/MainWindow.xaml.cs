@@ -162,7 +162,9 @@ public partial class MainWindow : Window
         MixerPanel.ApplyMixSnapshotRequested += MixerPanel_ApplyMixSnapshotRequested;
         MixerPanel.ClearMixSnapshotRequested += MixerPanel_ClearMixSnapshotRequested;
         SettingsPanel.PreferencesChanged += SettingsPanel_PreferencesChanged;
+        SettingsPanel.SetupRequested += (_, _) => ShowOnboarding();
         ActivityPanel.ClearRequested += ActivityPanel_ClearRequested;
+        InitializeNativeShellExperience();
     }
 
     internal void SetNotificationAreaAvailability(bool available)
@@ -177,6 +179,11 @@ public partial class MainWindow : Window
         {
             _startupCompleted.TrySetResult(true);
             return;
+        }
+
+        if (!_renderSmokeMode && !_preferences.OnboardingState.IsCompleted)
+        {
+            ShowOnboarding();
         }
 
         _startupTask ??= InitializeWorkspaceAsync();
@@ -470,6 +477,8 @@ public partial class MainWindow : Window
         ProtectionSummaryDetail.Text = health.IsProtected
             ? "Windows provider reports healthy"
             : "Open Security for provider details";
+        SecurityNavButton.ToolTip =
+            $"{ProtectionSummaryTitle.Text}: {ProtectionSummaryDetail.Text}";
         string wsc = health.WindowsSecurityCenterHealth.ToString();
         string mode = string.IsNullOrWhiteSpace(health.AMRunningMode)
             ? "mode unavailable"
@@ -1498,6 +1507,10 @@ public partial class MainWindow : Window
         {
             application.SetThemeProfile(_preferences.ThemeProfile);
         }
+        if (appearanceChanged)
+        {
+            ApplyShellLayout(ActualWidth);
+        }
         try
         {
             _preferencesStore.Save(_preferences);
@@ -1604,6 +1617,24 @@ public partial class MainWindow : Window
     internal bool TrySelectRenderSmokePanel(string panelName)
     {
         string normalized = panelName.Trim();
+        int onboardingIndex = normalized.ToLowerInvariant() switch
+        {
+            "onboarding" or "onboarding-privacy" => 0,
+            "onboarding-appearance" => 1,
+            "onboarding-audio" => 2,
+            "onboarding-whisper" => 3,
+            "onboarding-capture" => 4,
+            "onboarding-shortcuts" => 5,
+            "onboarding-advanced-lab" => 6,
+            _ => -1
+        };
+        if (onboardingIndex >= 0)
+        {
+            ShowOnboarding(onboardingIndex);
+            _renderSmokeFocusTarget = OnboardingPanel.RenderFocusTarget;
+            return true;
+        }
+
         if (string.Equals(normalized, "home", StringComparison.OrdinalIgnoreCase))
         {
             ShowPanel(HomePanel, HomeNavButton);

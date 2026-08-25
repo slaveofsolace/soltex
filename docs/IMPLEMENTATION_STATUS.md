@@ -14,6 +14,16 @@ Release build, design-token and identity gates, plus a focused 1280x820 native W
 Settings render. This is not yet the native-shell, Mica, Capture, Audio DSP,
 packaging, accessibility, physical-device, or owner-acceptance gate.
 
+The next shell slice now adds a working seven-step first-run flow with resumable
+progress, explicit safe defaults, truthful capability states, live appearance
+choices, Settings re-entry, and Escape dismissal without a false completion
+receipt. The navigation rail resolves expanded, compact, and narrow layouts;
+compact modes reclaim workspace width while retaining accessible navigation names
+and a Security status tooltip. Focused verification is 53/53 application tests,
+zero-warning compilation, and native dark renders at 1280x820 and compact
+1100x720. Native Mica/AppWindow activation, live per-monitor DPI, high-contrast
+and assistive-technology acceptance remain separate open gates.
+
 Snapshot: 2026-08-12
 Product: **Soltex**  
 Repository: `slaveofsolace/soltex`  

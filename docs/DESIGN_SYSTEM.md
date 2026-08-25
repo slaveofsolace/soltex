@@ -49,6 +49,41 @@ their prior mode while new accent and density fields migrate to safe defaults.
 one of `Available`, `Degraded`, `Unsupported`, or `ConsentRequired`; unavailable
 work is never represented by an enabled-looking inert control.
 
+### First-run and adaptive shell
+
+The first-run surface is a seven-decision instrument, not a marketing carousel.
+It covers local data, appearance, audio discovery, Whisper, Capture storage,
+shortcuts, and Advanced Lab safety. Each step states the safe default and current
+capability independently. Reviewing an unavailable capability records that the
+user saw its boundary; it does not promote that capability to available.
+
+Progress is versioned and saved after every reviewed decision. Setup can be
+closed without a completion receipt, resumes at the first unreviewed decision,
+and can be reopened from Settings. Completion is valid only after all seven
+areas were reviewed.
+
+The shell has three width-aware layouts. Expanded mode retains labels and the
+protection summary. Compact and narrow modes collapse explanatory navigation
+text into a centred icon rail while keeping accessible names and the Security
+status tooltip. The primary workspace receives the reclaimed width; capability
+and safety state are never removed from the owning workspace.
+
+### Elegance reference layer
+
+Soltex uses Apple's public Human Interface Guidelines as a **reference-only**
+quality lens, not as a platform skin. The retained principles are clear visual
+hierarchy, direct language, purposeful restraint, consistent feedback,
+recoverable actions, generous but efficient spacing, a small typographic scale,
+and progressive disclosure. Every visible element must earn its place, but
+simplicity must not hide capability, risk, provenance, or recovery.
+
+The implementation remains deliberately Windows-native: Segoe UI Variable,
+Fluent controls and glyphs, Windows caption and snap behavior, system theme and
+accessibility settings, keyboard conventions, and Mica with a solid/high-
+contrast fallback. Soltex Glacier supplies the independent product identity.
+Apple assets, fonts, measurements, materials, copy, component geometry, and
+distinctive layouts are not used or reproduced.
+
 ## Signature language
 
 The signature element is a thin **signal rail**: a 2–3 px line on the leading
@@ -342,6 +377,8 @@ Reference systems are studied for general interaction principles only:
 - Zen Browser: low-chrome focus, shallow workspaces, transient detail layers.
 - NZXT CAM: telemetry grouped around a small number of legible live instruments.
 - AppControl: process/history clarity and focused utilities.
+- Apple Human Interface Guidelines: hierarchy, simplicity, agency, consistency,
+  purposeful detail, and progressive disclosure as a clean-room quality lens.
 - Microsoft Windows guidance: shallow NavigationView hierarchy, stable command
   placement, appropriate slider use, and immediate settings changes.
 

@@ -69,6 +69,8 @@ internal static class Program
             ("Applications view progressively discloses startup and services", () =>
                 ApplicationsViewRenders(applicationSnapshot, serviceSnapshot)),
             ("Experience contracts normalize capability, theme, and onboarding state", ExperienceContractsAreSafe),
+            ("Shell layout responds without hiding capability state", ShellLayoutIsResponsive),
+            ("First-run setup is complete, truthful, and executable", OnboardingExperienceIsBounded),
             ("Preference store recovers and round-trips bounded local state", PreferencesRoundTripAndRecovery),
             ("Whisper device selection persists and oversized state fails safe", WhisperSettingsRoundTripAndRecovery),
             ("Whisper capture controls expose only working capture actions", WhisperCaptureControlsAreHonest),
@@ -309,6 +311,9 @@ internal static class Program
         IReadOnlyList<WorkspaceCommand> whisper = WorkspaceCommandCatalog.Query("dictation speech");
         True(whisper.Count == 1 && whisper[0].Workspace == "whisper",
             "The command query did not route Whisper synonyms.");
+        IReadOnlyList<WorkspaceCommand> setup = WorkspaceCommandCatalog.Query("onboarding");
+        True(setup.Count == 1 && setup[0].Workspace == "settings",
+            "The command query did not route setup back to its working Settings entry point.");
         True(WorkspaceCommandCatalog.Query("not-a-soltex-tool").Count == 0,
             "An unknown command query produced a fabricated result.");
     }
@@ -1122,6 +1127,88 @@ internal static class Program
              complete.CompletedAreas == OnboardingArea.All &&
              complete.CompletedAtUtc?.Offset == TimeSpan.Zero,
             "Completed onboarding did not retain a normalized UTC receipt.");
+    }
+
+    private static void ShellLayoutIsResponsive()
+    {
+        ShellLayout expanded = ShellLayoutPolicy.Resolve(
+            1360,
+            InterfaceDensity.Comfortable);
+        True(expanded.Mode == ShellLayoutMode.Expanded &&
+             expanded.NavigationWidth == 220 &&
+             expanded.ShowNavigationLabels &&
+             expanded.ShowProtectionSummary,
+            "The normal desktop shell did not preserve its full navigation hierarchy.");
+
+        ShellLayout dense = ShellLayoutPolicy.Resolve(
+            1360,
+            InterfaceDensity.Compact);
+        True(dense.Mode == ShellLayoutMode.Compact &&
+             dense.NavigationWidth == 76 &&
+             !dense.ShowNavigationLabels &&
+             !dense.ShowProtectionSummary,
+            "Compact density did not produce the bounded instrument rail.");
+
+        ShellLayout narrow = ShellLayoutPolicy.Resolve(
+            860,
+            InterfaceDensity.Comfortable);
+        True(narrow.Mode == ShellLayoutMode.Narrow &&
+             narrow.NavigationWidth == 64 &&
+             narrow.WorkspaceMargin.Left == 14,
+            "The minimum-width shell did not protect the primary workspace.");
+        True(ShellLayoutPolicy.Resolve(double.NaN, (InterfaceDensity)99) == expanded,
+            "Invalid shell inputs did not repair to the compatible desktop layout.");
+    }
+
+    private static void OnboardingExperienceIsBounded()
+    {
+        IReadOnlyList<OnboardingStepDefinition> steps = OnboardingExperienceCatalog.All;
+        True(steps.Count == 7,
+            "First-run setup must cover the seven approved V1 decisions exactly once.");
+        OnboardingArea covered = steps.Aggregate(
+            OnboardingArea.None,
+            (areas, step) => areas | step.Area);
+        True(covered == OnboardingArea.All &&
+             steps.Select(step => step.Area).Distinct().Count() == steps.Count,
+            "First-run setup omitted or duplicated an approved area.");
+        True(steps.Single(step => step.Area == OnboardingArea.CaptureStorage)
+                 .Capability.State == FeatureCapabilityState.Unsupported &&
+             steps.Single(step => step.Area == OnboardingArea.AdvancedLabSafety)
+                 .Capability.State == FeatureCapabilityState.Unsupported,
+            "First-run setup overstated an unfinished high-impact capability.");
+        True(OnboardingExperienceCatalog.FindFirstIncompleteIndex(
+                OnboardingState.Default.MarkReviewed(
+                    OnboardingArea.PrivacyAndLocalData | OnboardingArea.Appearance)) == 2,
+            "First-run setup did not resume at the first unreviewed decision.");
+
+        OnboardingView view = new();
+        ThemeProfile? selectedProfile = null;
+        OnboardingState? progress = null;
+        view.ThemeChanged += (_, args) => selectedProfile = args.Profile;
+        view.ProgressChanged += (_, args) => progress = args.State;
+        view.ShowState(OnboardingState.Default, ThemeProfile.Default, requestedStepIndex: 1);
+        True(view.AppearanceOptions.Visibility == Visibility.Visible,
+            "The Appearance step did not expose its working controls.");
+        view.DarkThemeButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        view.WindowsAccentButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        view.CompactDensityButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(selectedProfile == new ThemeProfile(
+                ThemeMode.Dark,
+                ThemeAccent.Windows,
+                InterfaceDensity.Compact),
+            "A first-run appearance control did not emit the selected profile.");
+        view.ContinueButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(progress is { IsCompleted: false } &&
+             (progress.Value.CompletedAreas & OnboardingArea.Appearance) != 0,
+            "Continuing setup did not persist the reviewed decision.");
+
+        view.ShowState(OnboardingState.Default, ThemeProfile.Default, requestedStepIndex: 4);
+        True(view.CapabilityStateText.Text == "UNAVAILABLE" &&
+             view.ContinueButton.IsEnabled,
+            "An unavailable capability was hidden or presented as an operable feature.");
+        byte[] pixels = Render(view, 840, 570);
+        True(CountVisiblePixels(pixels) > 8_000,
+            "The first-run setup surface rendered unexpectedly empty.");
     }
 
     private static void PreferencesRoundTripAndRecovery()
@@ -2106,6 +2193,11 @@ internal static class Program
         view.UpdateAppearanceStatus(ResolvedAppearance.HighContrast, highContrastOverride: true);
         True(view.AppearanceResolvedText.Text.Contains("overrides", StringComparison.Ordinal),
             "Settings did not explain the active Windows High Contrast override.");
+        bool setupRequested = false;
+        view.SetupRequested += (_, _) => setupRequested = true;
+        view.RunSetupButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+        True(setupRequested,
+            "Settings exposed a setup control that did not open the guided flow.");
         byte[] pixels = Render(view, 980, 720);
         True(CountVisiblePixels(pixels) > 5_000,
             "The Settings view render was unexpectedly empty.");

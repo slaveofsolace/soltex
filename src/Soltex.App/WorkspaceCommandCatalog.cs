@@ -22,7 +22,7 @@ internal static class WorkspaceCommandCatalog
         new("whisper", "Whisper", "Control", "Ctrl+0", "whisper dictation voice speech transcribe microphone shortcut scratchpad"),
         new("activity", "Activity", "Maintain", "Ctrl+7", "activity history events recovery"),
         new("updates", "Updates", "Maintain", "Ctrl+8", "updates release planning recovery"),
-        new("settings", "Settings", "Maintain", "Ctrl+9", "settings preferences window activity boundaries")
+        new("settings", "Settings", "Maintain", "Ctrl+9", "settings preferences window activity boundaries setup onboarding")
     ];
 
     internal static IReadOnlyList<WorkspaceCommand> Query(string? query)
